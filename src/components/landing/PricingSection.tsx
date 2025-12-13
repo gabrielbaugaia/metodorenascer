@@ -6,27 +6,46 @@ import { Link } from "react-router-dom";
 
 const plans = [
   {
+    id: "elite-fundador",
+    name: "ELITE Fundador",
+    price: 49.90,
+    originalPrice: 197.00,
+    interval: "mês",
+    description: "Vagas limitadas - Primeiros 25 membros",
+    features: [
+      "Treino personalizado",
+      "Plano nutricional estratégico",
+      "Suporte WhatsApp 24h",
+      "Acesso à comunidade VIP",
+      "Acompanhamento semanal",
+    ],
+    popular: true,
+    icon: Crown,
+    priceId: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
+  },
+  {
     id: "mensal",
     name: "Mensal",
-    price: 49.90,
-    interval: "mes",
-    description: "Perfeito para comecar",
+    price: 197.00,
+    interval: "mês",
+    description: "Compromisso mínimo",
     features: [
       "Treino personalizado",
       "Plano nutricional",
       "Suporte WhatsApp",
-      "Acesso a comunidade",
+      "Acesso à comunidade",
     ],
     popular: false,
     icon: Zap,
+    priceId: "price_1ScZrECuFZvf5xFdfS9W8kvY",
   },
   {
     id: "trimestral",
     name: "Trimestral",
-    price: 129.90,
-    originalPrice: 149.70,
+    price: 497.00,
+    originalPrice: 591.00,
     interval: "trimestre",
-    description: "Economia de 13%",
+    description: "Economia de 16%",
     features: [
       "Tudo do plano mensal",
       "Receitas exclusivas",
@@ -35,55 +54,41 @@ const plans = [
     ],
     popular: false,
     icon: Star,
+    priceId: "price_1ScZsTCuFZvf5xFdbW8kJeQF",
   },
   {
     id: "semestral",
     name: "Semestral",
-    price: 239.90,
-    originalPrice: 299.40,
+    price: 697.00,
+    originalPrice: 1182.00,
     interval: "semestre",
-    description: "Economia de 20%",
+    description: "Economia de 41%",
     features: [
       "Tudo do trimestral",
       "Consultoria nutricional",
-      "Analise de progresso mensal",
-      "Bonus: E-book fitness",
+      "Análise de progresso mensal",
+      "Bônus: E-book fitness",
     ],
-    popular: true,
-    icon: Crown,
+    popular: false,
+    icon: Star,
+    priceId: "price_1ScZtrCuFZvf5xFd8iXDfbEp",
   },
   {
     id: "anual",
     name: "Anual",
-    price: 399.90,
-    originalPrice: 598.80,
+    price: 997.00,
+    originalPrice: 2364.00,
     interval: "ano",
-    description: "Economia de 33%",
+    description: "Economia de 58%",
     features: [
       "Tudo do semestral",
       "Mentoria individual",
       "Plano 100% personalizado",
-      "Acesso vitalicio a bonus",
+      "Acesso vitalício a bônus",
     ],
     popular: false,
     icon: Crown,
-  },
-  {
-    id: "embaixador",
-    name: "Embaixador",
-    price: 99.90,
-    interval: "mes",
-    description: "Para influenciadores",
-    features: [
-      "Tudo do plano anual",
-      "Comissao por indicacoes",
-      "Material de divulgacao",
-      "Suporte prioritario VIP",
-      "Presenca em eventos",
-    ],
-    popular: false,
-    icon: Star,
-    special: true,
+    priceId: "price_1ScZvCCuFZvf5xFdjrs51JQB",
   },
 ];
 
@@ -109,19 +114,12 @@ export function PricingSection() {
               className={`relative flex flex-col transition-all duration-300 hover:scale-105 ${
                 plan.popular 
                   ? "border-primary shadow-lg shadow-primary/20 scale-105" 
-                  : plan.special 
-                    ? "border-accent bg-gradient-to-b from-accent/10 to-transparent" 
-                    : "border-border"
+                  : "border-border"
               }`}
             >
               {plan.popular && (
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground">
                   Mais Popular
-                </Badge>
-              )}
-              {plan.special && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground">
-                  Especial
                 </Badge>
               )}
               
@@ -166,7 +164,7 @@ export function PricingSection() {
                   asChild
                 >
                   <Link to="/auth?mode=signup">
-                    {plan.special ? "Candidatar-se" : "Assinar Agora"}
+                    Assinar Agora
                   </Link>
                 </Button>
               </CardFooter>
