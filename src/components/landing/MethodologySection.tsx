@@ -20,7 +20,7 @@ const pillars = [
   {
     icon: BookOpen,
     title: "Receitas",
-    description: "Mais de 100 receitas fitness praticas e deliciosas. Comer bem nao precisa ser chato.",
+    description: "Escolha os ingredientes e peça para nosso gerador de receitas que ela gera na hora!",
   },
 ];
 
