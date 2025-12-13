@@ -7,17 +7,16 @@ import { Link } from "react-router-dom";
 const plans = [
   {
     id: "elite-fundador",
-    name: "ELITE Fundador",
+    name: "Membro ELITE - Fundador",
     price: 49.90,
-    originalPrice: 197.00,
     interval: "mês",
-    description: "Vagas limitadas - Primeiros 25 membros",
+    description: "Desconto especial para 25 membros fundadores",
     features: [
-      "Treino personalizado",
-      "Plano nutricional estratégico",
-      "Suporte WhatsApp 24h",
-      "Acesso à comunidade VIP",
-      "Acompanhamento semanal",
+      "Acesso vitalício ao preço de fundador",
+      "Prioridade máxima no suporte",
+      "Acesso a grupo exclusivo de fundadores",
+      "Consultoria estratégica mensal",
+      "Renovação automática mensal",
     ],
     popular: true,
     icon: Crown,
@@ -25,15 +24,16 @@ const plans = [
   },
   {
     id: "mensal",
-    name: "Mensal",
+    name: "Plano Mensal",
     price: 197.00,
     interval: "mês",
-    description: "Compromisso mínimo",
+    description: "Acesso completo ao Método Renascer por 30 dias",
     features: [
-      "Treino personalizado",
-      "Plano nutricional",
-      "Suporte WhatsApp",
-      "Acesso à comunidade",
+      "Plano de treino personalizado",
+      "Plano nutricional estratégico",
+      "Programa de mindset",
+      "Suporte 24h via chat",
+      "Acesso a todas as receitas",
     ],
     popular: false,
     icon: Zap,
@@ -41,16 +41,16 @@ const plans = [
   },
   {
     id: "trimestral",
-    name: "Trimestral",
+    name: "Plano Trimestral",
     price: 497.00,
-    originalPrice: 591.00,
-    interval: "trimestre",
-    description: "Economia de 16%",
+    interval: "3 meses",
+    description: "Até 3x sem juros",
     features: [
       "Tudo do plano mensal",
-      "Receitas exclusivas",
-      "Aulas de mindset",
+      "Reavaliação de progresso",
+      "Ajustes de planos conforme evolução",
       "Prioridade no suporte",
+      "Acesso a comunidade privada",
     ],
     popular: false,
     icon: Star,
@@ -58,16 +58,16 @@ const plans = [
   },
   {
     id: "semestral",
-    name: "Semestral",
+    name: "Plano Semestral",
     price: 697.00,
-    originalPrice: 1182.00,
-    interval: "semestre",
-    description: "Economia de 41%",
+    interval: "6 meses",
+    description: "Até 3x sem juros",
     features: [
-      "Tudo do trimestral",
-      "Consultoria nutricional",
-      "Análise de progresso mensal",
-      "Bônus: E-book fitness",
+      "Tudo do plano trimestral",
+      "Consultoria estratégica personalizada",
+      "Acompanhamento quinzenal",
+      "Acesso a conteúdo exclusivo",
+      "Bônus: 1 sessão de coaching",
     ],
     popular: false,
     icon: Star,
@@ -75,16 +75,16 @@ const plans = [
   },
   {
     id: "anual",
-    name: "Anual",
+    name: "Plano Anual",
     price: 997.00,
-    originalPrice: 2364.00,
-    interval: "ano",
-    description: "Economia de 58%",
+    interval: "12 meses",
+    description: "Até 3x sem juros",
     features: [
-      "Tudo do semestral",
-      "Mentoria individual",
-      "Plano 100% personalizado",
-      "Acesso vitalício a bônus",
+      "Tudo do plano semestral",
+      "Suporte prioritário 24/7",
+      "Renovação automática anual",
+      "Acesso vitalício a conteúdo exclusivo",
+      "Bônus: 3 sessões de coaching",
     ],
     popular: false,
     icon: Crown,
@@ -133,11 +133,12 @@ export function PricingSection() {
               
               <CardContent className="flex-1">
                 <div className="text-center mb-6">
-                  {plan.originalPrice && (
-                    <span className="text-sm text-muted-foreground line-through block">
-                      R$ {plan.originalPrice.toFixed(2).replace(".", ",")}
+                  <div className="flex items-baseline justify-center gap-1">
+                    <span className="text-muted-foreground">R$</span>
+                    <span className="font-display text-4xl text-gradient">
+                      {plan.price.toFixed(2).replace(".", ",")}
                     </span>
-                  )}
+                  </div>
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="text-muted-foreground">R$</span>
                     <span className="font-display text-4xl text-gradient">
