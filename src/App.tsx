@@ -9,6 +9,10 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Anamnese from "./pages/Anamnese";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import Treino from "./pages/Treino";
+import Nutricao from "./pages/Nutricao";
+import Mindset from "./pages/Mindset";
+import Receitas from "./pages/Receitas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +30,10 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/anamnese" element={<Anamnese />} />
             <Route path="/checkout-success" element={<CheckoutSuccess />} />
+            <Route path="/treino" element={<Treino />} />
+            <Route path="/nutricao" element={<Nutricao />} />
+            <Route path="/mindset" element={<Mindset />} />
+            <Route path="/receitas" element={<Receitas />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
