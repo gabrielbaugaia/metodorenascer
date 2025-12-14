@@ -1,16 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-
 export function HeroSection() {
   const whatsappLink = "https://wa.me/5511999999999?text=Quero%20reservar%20minha%20vaga%20no%20Método%20Renascer";
-  
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+  return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background with radial gradient */}
       <div className="absolute inset-0 bg-background">
         <div className="absolute inset-0" style={{
-          background: 'radial-gradient(ellipse at center, hsl(25 100% 15% / 0.6) 0%, hsl(0 0% 0%) 70%)'
-        }} />
+        background: 'radial-gradient(ellipse at center, hsl(25 100% 15% / 0.6) 0%, hsl(0 0% 0%) 70%)'
+      }} />
       </div>
 
       {/* Content */}
@@ -30,23 +27,22 @@ export function HeroSection() {
 
           {/* Subtitle */}
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in leading-relaxed" style={{
-            animationDelay: "0.2s"
-          }}>
-            CANSOU de dietas que <span className="text-primary font-semibold">FALHAM</span>? 
+          animationDelay: "0.2s"
+        }}>CANSOU de dietas que FALHAM? Renasça com -15kg em 90 DIAS. 
+Seu plano personalizado + Coach 24h/7.<span className="text-primary font-semibold">FALHAM</span>? 
             Renasça com <span className="text-primary font-semibold">-15kg em 90 DIAS</span>. 
             Seu plano personalizado + Coach 24h/7.
           </p>
 
           <p className="text-base md:text-lg text-muted-foreground/80 max-w-2xl mx-auto animate-fade-in" style={{
-            animationDelay: "0.3s"
-          }}>
-            Treino personalizado, receitas exclusivas, análise de fotos e vídeos em tempo real. Sem academia.
-          </p>
+          animationDelay: "0.3s"
+        }}>Treino personalizado, receitas exclusivas, análise 
+de fotos e vídeos em tempo real. .</p>
 
           {/* CTA */}
           <div className="animate-fade-in pt-4" style={{
-            animationDelay: "0.4s"
-          }}>
+          animationDelay: "0.4s"
+        }}>
             <Button variant="fire" size="xl" asChild className="group text-lg px-10 py-6">
               <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                 <span className="relative z-10">APLICAR PARA O MÉTODO RENASCER</span>
@@ -63,6 +59,5 @@ export function HeroSection() {
           <div className="w-1.5 h-3 rounded-full bg-primary animate-pulse" />
         </div>
       </div>
-    </section>
-  );
+    </section>;
 }
