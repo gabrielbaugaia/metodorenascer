@@ -1,39 +1,39 @@
-import { Target, Utensils, Brain, BookOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Camera, Utensils, MessageCircle, Trophy } from "lucide-react";
 
 const pillars = [
   {
-    icon: Target,
-    title: "Treino",
-    description: "Planos de treino personalizados para seu nivel e objetivos. Adaptamos semanalmente baseado no seu progresso.",
+    icon: Camera,
+    title: "IA Analisa Seu Treino/Foto",
+    description: "Tecnologia de ponta que avalia sua execucao e progresso em tempo real, corrigindo e otimizando cada movimento."
   },
   {
     icon: Utensils,
-    title: "Nutricao",
-    description: "Cardapios flexiveis que se encaixam na sua rotina. Sem dietas malucas, foco em habitos sustentaveis.",
+    title: "Receitas 100% Suas",
+    description: "Plano nutricional personalizado com receitas geradas por IA baseadas nos seus gostos e objetivos."
   },
   {
-    icon: Brain,
-    title: "Mindset",
-    description: "Tecnicas de disciplina mental e motivacao. O corpo muda quando a mente esta preparada.",
+    icon: MessageCircle,
+    title: "Coach WhatsApp 24h",
+    description: "Suporte continuo via WhatsApp. Tire duvidas, receba motivacao e ajustes no seu plano a qualquer momento."
   },
   {
-    icon: BookOpen,
-    title: "Receitas",
-    description: "Escolha os ingredientes e peça para nosso gerador de receitas que ela gera na hora!",
-  },
+    icon: Trophy,
+    title: "Progresso Gamificado",
+    description: "Sistema de conquistas e badges que transforma sua jornada em um jogo. Cada meta batida e celebrada."
+  }
 ];
 
 export function MethodologySection() {
   return (
-    <section id="metodologia" className="py-24">
+    <section id="metodologia" className="py-24 section-dark">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="font-display text-4xl md:text-5xl text-foreground mb-4">
-            OS 4 <span className="text-gradient">PILARES</span>
+          <h2 className="font-display text-4xl md:text-6xl text-foreground mb-4 italic">
+            MATE SUA <span className="text-primary">VERSAO ANTIGA</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Uma abordagem completa para transformacao fisica e mental
+          <p className="text-muted-foreground max-w-3xl mx-auto text-lg">
+            Para construir o novo, o velho precisa deixar de existir. O Metodo Renascer e uma abordagem integrada focada em alta performance.
           </p>
         </div>
 
@@ -41,18 +41,15 @@ export function MethodologySection() {
           {pillars.map((pillar, index) => (
             <Card 
               key={pillar.title} 
-              variant="dashboard"
-              className="group text-center animate-fade-in"
+              className="bg-primary/10 border-primary/30 animate-fade-in group hover:bg-primary/20 hover:border-primary/50 transition-all duration-300"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <CardContent className="p-8 flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <CardContent className="p-6 space-y-4 text-center">
+                <div className="w-16 h-16 mx-auto rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
                   <pillar.icon className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="font-display text-2xl text-foreground">{pillar.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {pillar.description}
-                </p>
+                <h3 className="font-display text-xl text-foreground">{pillar.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{pillar.description}</p>
               </CardContent>
             </Card>
           ))}
