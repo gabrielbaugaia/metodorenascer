@@ -28,8 +28,8 @@ export function HeroSection() {
           {/* Subtitle */}
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in leading-relaxed" style={{
           animationDelay: "0.2s"
-        }}>CANSOU de dietas que FALHAM? Renasça EXTERMINANDO
-até -15kg em 90 DIAS.  Seu plano personalizado + Coach 24h/7.<span className="text-primary font-semibold">FALHAM</span>? 
+        }}>CANSOU de dietas que FALHAM? Renasça EXTERMINANDO até -15kg 
+em 90 DIAS.  Seu plano personalizado + Coach 24h/7.<span className="text-primary font-semibold">FALHAM</span>? 
             Renasca com <span className="text-primary font-semibold">-15kg em 90 DIAS</span>. 
             Seu plano personalizado + Coach 24h/7.
           </p>
