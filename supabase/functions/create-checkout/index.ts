@@ -12,6 +12,15 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
+// Price IDs for each plan
+const VALID_PRICE_IDS = [
+  "price_1ScZqTCuFZvf5xFdZuOBMzpt", // Embaixador
+  "price_1ScZrECuFZvf5xFdfS9W8kvY", // Mensal
+  "price_1ScZsTCuFZvf5xFdbW8kJeQF", // Trimestral
+  "price_1ScZtrCuFZvf5xFd8iXDfbEp", // Semestral
+  "price_1ScZvCCuFZvf5xFdjrs51JQB", // Anual
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -19,6 +28,15 @@ serve(async (req) => {
 
   try {
     logStep("Function started");
+
+    // Get price_id from request body
+    const body = await req.json().catch(() => ({}));
+    const priceId = body.price_id || "price_1ScZqTCuFZvf5xFdZuOBMzpt"; // Default to Embaixador
+    
+    if (!VALID_PRICE_IDS.includes(priceId)) {
+      throw new Error("Invalid price ID");
+    }
+    logStep("Price ID received", { priceId });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
@@ -69,13 +87,12 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://lxdosmjenbaugmhyfanx.lovableproject.com";
     
-    // Plano Elite Fundador - R$49,90/mês
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
+          price: priceId,
           quantity: 1,
         },
       ],

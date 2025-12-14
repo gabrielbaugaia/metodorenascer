@@ -2,6 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Flame } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const plans = [
   {
@@ -9,6 +13,7 @@ const plans = [
     price: "49,90",
     period: "/mes",
     badge: "25 VAGAS",
+    priceId: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
     features: [
       "Treino personalizado",
       "Receitas exclusivas",
@@ -24,6 +29,7 @@ const plans = [
     name: "MENSAL",
     price: "197",
     period: "/mes",
+    priceId: "price_1ScZrECuFZvf5xFdfS9W8kvY",
     features: [
       "Treino personalizado",
       "Receitas exclusivas",
@@ -37,6 +43,7 @@ const plans = [
     name: "TRIMESTRAL",
     price: "497",
     period: "/3 meses",
+    priceId: "price_1ScZsTCuFZvf5xFdbW8kJeQF",
     savings: "Economize R$94",
     features: [
       "Tudo do plano Mensal",
@@ -50,6 +57,7 @@ const plans = [
     name: "SEMESTRAL",
     price: "697",
     period: "/6 meses",
+    priceId: "price_1ScZtrCuFZvf5xFd8iXDfbEp",
     savings: "Economize R$485",
     features: [
       "Tudo do plano Trimestral",
@@ -63,6 +71,7 @@ const plans = [
     name: "ANUAL",
     price: "997",
     period: "/ano",
+    priceId: "price_1ScZvCCuFZvf5xFdjrs51JQB",
     savings: "Economize R$1.367",
     features: [
       "Tudo do plano Semestral",
@@ -75,8 +84,25 @@ const plans = [
 ];
 
 export function PricingSection() {
-  const whatsappLink = "https://wa.me/5511999999999?text=Quero%20reservar%20minha%20vaga%20no%20Método%20Renascer";
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 });
+  const { createCheckout } = useSubscription();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSelectPlan = async (priceId: string) => {
+    if (!user) {
+      toast.info("Faça login para continuar com a assinatura");
+      navigate("/auth");
+      return;
+    }
+
+    try {
+      await createCheckout(priceId);
+    } catch (error) {
+      console.error("Error creating checkout:", error);
+      toast.error("Erro ao iniciar checkout. Tente novamente.");
+    }
+  };
 
   return (
     <section ref={ref} id="preco" className={`py-24 section-dark transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
@@ -143,11 +169,9 @@ export function PricingSection() {
                   variant={plan.popular ? "fire" : "outline"} 
                   size="sm" 
                   className="w-full"
-                  asChild
+                  onClick={() => handleSelectPlan(plan.priceId)}
                 >
-                  <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                    {plan.promotional ? "Garantir Vaga" : "Escolher Plano"}
-                  </a>
+                  {plan.promotional ? "Garantir Vaga" : "Escolher Plano"}
                 </Button>
               </CardContent>
             </Card>
