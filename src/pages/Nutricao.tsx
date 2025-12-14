@@ -1,57 +1,91 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Utensils, Flame, Droplets, Beef, Cookie } from "lucide-react";
+import { ArrowLeft, Utensils, Flame, Droplets, Beef, Cookie, Loader2 } from "lucide-react";
 
-const dailyMeals = [
-  {
-    time: "07:00",
-    meal: "Café da Manhã",
-    foods: ["3 ovos mexidos", "2 fatias de pão integral", "1 banana", "200ml de café"],
-    calories: 450,
-  },
-  {
-    time: "10:00",
-    meal: "Lanche da Manhã",
-    foods: ["1 scoop de whey", "1 maçã", "30g de amendoim"],
-    calories: 280,
-  },
-  {
-    time: "13:00",
-    meal: "Almoço",
-    foods: ["150g de frango grelhado", "100g de arroz integral", "Salada verde à vontade", "1 colher de azeite"],
-    calories: 520,
-  },
-  {
-    time: "16:00",
-    meal: "Lanche da Tarde",
-    foods: ["200g de iogurte natural", "50g de granola", "1 banana"],
-    calories: 350,
-  },
-  {
-    time: "19:00",
-    meal: "Jantar",
-    foods: ["150g de salmão", "200g de batata doce", "Brócolis refogado", "Azeite"],
-    calories: 550,
-  },
-  {
-    time: "21:30",
-    meal: "Ceia",
-    foods: ["Caseína ou 150g de cottage", "1 colher de pasta de amendoim"],
-    calories: 200,
-  },
-];
+interface Meal {
+  time: string;
+  meal: string;
+  foods: string[];
+  calories: number;
+}
 
-const macros = {
-  calories: { current: 2350, target: 2400, unit: "kcal", icon: Flame, color: "text-orange-500" },
-  protein: { current: 180, target: 190, unit: "g", icon: Beef, color: "text-red-500" },
-  carbs: { current: 250, target: 280, unit: "g", icon: Cookie, color: "text-yellow-500" },
-  water: { current: 2.5, target: 3, unit: "L", icon: Droplets, color: "text-blue-500" },
-};
+interface Macros {
+  calories: { current: number; target: number };
+  protein: { current: number; target: number };
+  carbs: { current: number; target: number };
+  water: { current: number; target: number };
+}
+
+interface NutritionProtocol {
+  id: string;
+  conteudo: {
+    refeicoes?: Meal[];
+    macros?: Macros;
+    dicas?: string[];
+  };
+}
 
 export default function Nutricao() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [protocol, setProtocol] = useState<NutritionProtocol | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProtocol = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("protocolos")
+          .select("id, conteudo")
+          .eq("user_id", user.id)
+          .eq("tipo", "nutricao")
+          .eq("ativo", true)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching nutrition protocol:", error);
+        } else if (data) {
+          setProtocol(data as NutritionProtocol);
+        }
+      } catch (err) {
+        console.error("Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProtocol();
+  }, [user]);
+
+  const meals = protocol?.conteudo?.refeicoes || [];
+  const macros = protocol?.conteudo?.macros;
+
+  const macroIcons = {
+    calories: { icon: Flame, color: "text-orange-500", unit: "kcal", label: "Calorias" },
+    protein: { icon: Beef, color: "text-red-500", unit: "g", label: "Proteína" },
+    carbs: { icon: Cookie, color: "text-yellow-500", unit: "g", label: "Carboidratos" },
+    water: { icon: Droplets, color: "text-blue-500", unit: "L", label: "Água" },
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-24 pb-12 px-4 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,73 +114,98 @@ export default function Nutricao() {
               </h1>
             </div>
             <p className="text-muted-foreground">
-              Seu cardápio estratégico para máxima performance
+              {meals.length > 0 
+                ? "Seu cardápio estratégico para máxima performance"
+                : "Seu protocolo nutricional será gerado em breve"}
             </p>
           </div>
 
-          {/* Macros overview */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {Object.entries(macros).map(([key, value]) => (
-              <Card key={key} variant="glass" className="p-4 text-center">
-                <value.icon className={`w-6 h-6 mx-auto mb-2 ${value.color}`} />
-                <p className="text-2xl font-bold text-foreground">
-                  {value.current}
-                  <span className="text-sm text-muted-foreground">{value.unit}</span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  de {value.target}{value.unit}
-                </p>
-                <div className="progress-bar mt-2 h-1">
-                  <div
-                    className="progress-bar-fill"
-                    style={{ width: `${(value.current / value.target) * 100}%` }}
-                  />
+          {meals.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Utensils className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Nenhum plano nutricional disponível</h3>
+              <p className="text-muted-foreground mb-4">
+                Complete sua anamnese para receber seu protocolo nutricional personalizado.
+              </p>
+              <Button variant="fire" onClick={() => navigate("/anamnese")}>
+                Completar Anamnese
+              </Button>
+            </Card>
+          ) : (
+            <>
+              {/* Macros overview */}
+              {macros && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  {Object.entries(macros).map(([key, value]) => {
+                    const macroInfo = macroIcons[key as keyof typeof macroIcons];
+                    if (!macroInfo || !value) return null;
+                    const Icon = macroInfo.icon;
+                    return (
+                      <Card key={key} variant="glass" className="p-4 text-center">
+                        <Icon className={`w-6 h-6 mx-auto mb-2 ${macroInfo.color}`} />
+                        <p className="text-2xl font-bold text-foreground">
+                          {value.current}
+                          <span className="text-sm text-muted-foreground">{macroInfo.unit}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          de {value.target}{macroInfo.unit}
+                        </p>
+                        <div className="progress-bar mt-2 h-1">
+                          <div
+                            className="progress-bar-fill"
+                            style={{ width: `${Math.min(100, (value.current / value.target) * 100)}%` }}
+                          />
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
-              </Card>
-            ))}
-          </div>
+              )}
 
-          {/* Meals */}
-          <div className="space-y-4">
-            {dailyMeals.map((meal, index) => (
-              <Card
-                key={meal.meal}
-                variant="dashboard"
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-3">
-                      <span className="text-sm text-primary font-mono">{meal.time}</span>
-                      <span className="font-display">{meal.meal}</span>
-                    </CardTitle>
-                    <span className="text-sm text-muted-foreground">
-                      {meal.calories} kcal
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-1">
-                    {meal.foods.map((food) => (
-                      <li key={food} className="text-sm text-muted-foreground flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        {food}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+              {/* Meals */}
+              <div className="space-y-4">
+                {meals.map((meal, index) => (
+                  <Card
+                    key={`${meal.meal}-${index}`}
+                    variant="dashboard"
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-3">
+                          <span className="text-sm text-primary font-mono">{meal.time}</span>
+                          <span className="font-display">{meal.meal}</span>
+                        </CardTitle>
+                        <span className="text-sm text-muted-foreground">
+                          {meal.calories} kcal
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-1">
+                        {meal.foods.map((food, foodIndex) => (
+                          <li key={foodIndex} className="text-sm text-muted-foreground flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            {food}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
 
-          {/* Tips */}
-          <Card variant="glass" className="mt-6 p-4">
-            <p className="text-sm text-muted-foreground">
-              <strong className="text-foreground">Dica do dia:</strong> Mantenha-se hidratado! 
-              Beba água antes das refeições para melhorar a digestão e controlar o apetite.
-            </p>
-          </Card>
+              {/* Tips */}
+              {protocol?.conteudo?.dicas && protocol.conteudo.dicas.length > 0 && (
+                <Card variant="glass" className="mt-6 p-4">
+                  <p className="text-sm text-muted-foreground">
+                    <strong className="text-foreground">Dica do dia:</strong> {protocol.conteudo.dicas[0]}
+                  </p>
+                </Card>
+              )}
+            </>
+          )}
         </div>
       </main>
     </div>
