@@ -124,8 +124,8 @@ export default function Dashboard() {
     );
   }
 
-  // Show subscription required screen
-  if (!subscribed) {
+  // Show subscription required screen (admins bypass this)
+  if (!subscribed && !isAdmin) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
