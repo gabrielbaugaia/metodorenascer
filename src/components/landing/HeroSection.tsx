@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Dumbbell, Utensils, MessageCircle } from "lucide-react";
 
 export function HeroSection() {
-  const whatsappLink = "https://wa.me/5511999999999?text=Quero%20reservar%20minha%20vaga%20no%20Método%20Renascer";
-  
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Clean dark background with subtle gradient */}
@@ -72,7 +70,7 @@ export function HeroSection() {
               asChild 
               className="group text-base md:text-lg px-10 md:px-14 py-6 md:py-7"
             >
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+              <a href="#preco">
                 <span className="relative z-10 tracking-wide font-semibold">QUERO RENASCER</span>
                 <ArrowRight className="w-5 h-5 relative z-10 ml-2 group-hover:translate-x-1 transition-transform" />
               </a>
