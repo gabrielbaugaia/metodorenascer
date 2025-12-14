@@ -211,7 +211,7 @@ export default function Suporte() {
               <CardHeader className="border-b border-border/50">
                 <CardTitle className="flex items-center gap-2 text-lg uppercase">
                   <Bot className="h-5 w-5 text-primary" />
-                  Mentor IA - Gabriel Baú
+                  Como posso te ajudar?
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col p-0">
@@ -221,9 +221,9 @@ export default function Suporte() {
                       <div className="space-y-4">
                         <Bot className="h-16 w-16 mx-auto text-muted-foreground" />
                         <div>
-                          <h3 className="font-semibold">Olá, {profile?.full_name?.split(" ")[0] || "Guerreiro"}!</h3>
+                          <h3 className="font-semibold uppercase">Olá, Guerreiro!</h3>
                           <p className="text-sm text-muted-foreground">
-                            Sou seu mentor IA. Pode me perguntar sobre treino, nutrição, mindset ou qualquer dúvida!
+                            Sou seu mentor. Você pode me perguntar sobre seu treino, nutrição, mindset ou qualquer dúvida relacionada que estou aqui para te ajudar!
                           </p>
                         </div>
                       </div>
