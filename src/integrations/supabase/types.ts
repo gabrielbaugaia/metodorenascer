@@ -38,6 +38,69 @@ export type Database = {
         }
         Relationships: []
       }
+      checkins: {
+        Row: {
+          created_at: string | null
+          data_checkin: string | null
+          foto_url: string | null
+          id: string
+          medidas: Json | null
+          notas: string | null
+          peso_atual: number | null
+          semana_numero: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data_checkin?: string | null
+          foto_url?: string | null
+          id?: string
+          medidas?: Json | null
+          notas?: string | null
+          peso_atual?: number | null
+          semana_numero?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data_checkin?: string | null
+          foto_url?: string | null
+          id?: string
+          medidas?: Json | null
+          notas?: string | null
+          peso_atual?: number | null
+          semana_numero?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      conversas: {
+        Row: {
+          created_at: string | null
+          id: string
+          mensagens: Json
+          tipo: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mensagens?: Json
+          tipo?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mensagens?: Json
+          tipo?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           created_at: string | null
@@ -69,39 +132,63 @@ export type Database = {
         Row: {
           age: number | null
           availability: string | null
+          client_status: Database["public"]["Enums"]["client_status"] | null
           created_at: string | null
+          data_nascimento: string | null
           email: string | null
           full_name: string
           goals: string | null
           height: number | null
           id: string
           injuries: string | null
+          medidas: Json | null
+          nivel_experiencia: string | null
+          objetivos_detalhados: Json | null
+          restricoes_medicas: string | null
+          sexo: string | null
+          telefone: string | null
           updated_at: string | null
           weight: number | null
         }
         Insert: {
           age?: number | null
           availability?: string | null
+          client_status?: Database["public"]["Enums"]["client_status"] | null
           created_at?: string | null
+          data_nascimento?: string | null
           email?: string | null
           full_name: string
           goals?: string | null
           height?: number | null
           id: string
           injuries?: string | null
+          medidas?: Json | null
+          nivel_experiencia?: string | null
+          objetivos_detalhados?: Json | null
+          restricoes_medicas?: string | null
+          sexo?: string | null
+          telefone?: string | null
           updated_at?: string | null
           weight?: number | null
         }
         Update: {
           age?: number | null
           availability?: string | null
+          client_status?: Database["public"]["Enums"]["client_status"] | null
           created_at?: string | null
+          data_nascimento?: string | null
           email?: string | null
           full_name?: string
           goals?: string | null
           height?: number | null
           id?: string
           injuries?: string | null
+          medidas?: Json | null
+          nivel_experiencia?: string | null
+          objetivos_detalhados?: Json | null
+          restricoes_medicas?: string | null
+          sexo?: string | null
+          telefone?: string | null
           updated_at?: string | null
           weight?: number | null
         }
@@ -134,6 +221,42 @@ export type Database = {
           recorded_at?: string | null
           user_id?: string
           weight?: number | null
+        }
+        Relationships: []
+      }
+      protocolos: {
+        Row: {
+          ativo: boolean | null
+          conteudo: Json
+          created_at: string | null
+          data_geracao: string | null
+          id: string
+          tipo: string
+          titulo: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          conteudo: Json
+          created_at?: string | null
+          data_geracao?: string | null
+          id?: string
+          tipo: string
+          titulo: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          conteudo?: Json
+          created_at?: string | null
+          data_geracao?: string | null
+          id?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -212,6 +335,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      client_status: "active" | "paused" | "blocked" | "canceled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -340,6 +464,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      client_status: ["active", "paused", "blocked", "canceled"],
     },
   },
 } as const

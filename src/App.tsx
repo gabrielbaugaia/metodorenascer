@@ -1,5 +1,4 @@
 import { Toaster } from "@/components/ui/toaster";
-import Admin from "@/pages/Admin";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -15,6 +14,13 @@ import Nutricao from "./pages/Nutricao";
 import Mindset from "./pages/Mindset";
 import Receitas from "./pages/Receitas";
 import NotFound from "./pages/NotFound";
+import AreaCliente from "./pages/AreaCliente";
+import Protocolos from "./pages/Protocolos";
+import Suporte from "./pages/Suporte";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminClientes from "./pages/admin/AdminClientes";
+import AdminCriarCliente from "./pages/admin/AdminCriarCliente";
+import AdminPlanos from "./pages/admin/AdminPlanos";
 
 const queryClient = new QueryClient();
 
@@ -35,7 +41,13 @@ const App = () => (
             <Route path="/nutricao" element={<Nutricao />} />
             <Route path="/mindset" element={<Mindset />} />
             <Route path="/receitas" element={<Receitas />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/area-cliente" element={<AreaCliente />} />
+            <Route path="/protocolos" element={<Protocolos />} />
+            <Route path="/suporte" element={<Suporte />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/clientes" element={<AdminClientes />} />
+            <Route path="/admin/criar-cliente" element={<AdminCriarCliente />} />
+            <Route path="/admin/planos" element={<AdminPlanos />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
