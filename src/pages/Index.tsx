@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { ProblemSection } from "@/components/landing/ProblemSection";
 import { MethodologySection } from "@/components/landing/MethodologySection";
+import TransformationsGallery from "@/components/landing/TransformationsGallery";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { CTASection } from "@/components/landing/CTASection";
@@ -27,6 +28,7 @@ const Index = () => {
         <HeroSection />
         <ProblemSection />
         <MethodologySection />
+        <TransformationsGallery />
         <TestimonialsSection />
         <PricingSection />
         <CTASection />
