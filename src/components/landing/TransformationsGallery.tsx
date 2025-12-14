@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 import transform1 from "@/assets/transformations/transform-1.jpeg";
 import transform2 from "@/assets/transformations/transform-2.jpeg";
@@ -23,6 +24,7 @@ const transformations = [
 
 const TransformationsGallery = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 });
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % transformations.length);
@@ -33,7 +35,7 @@ const TransformationsGallery = () => {
   };
 
   return (
-    <section className="py-20 md:py-32 bg-black">
+    <section ref={ref} className={`py-20 md:py-32 bg-black transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-black text-white mb-4">

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const testimonials = [
   {
@@ -34,6 +35,7 @@ const testimonials = [
 export function TestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 });
 
   useEffect(() => {
     if (!isAutoPlaying) return;
@@ -56,7 +58,7 @@ export function TestimonialsSection() {
   };
 
   return (
-    <section className="py-24 bg-background">
+    <section ref={ref} className={`py-24 bg-background transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="font-display text-4xl md:text-6xl text-foreground mb-4 italic">

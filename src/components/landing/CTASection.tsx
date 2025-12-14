@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 export function CTASection() {
   const whatsappLink = "https://wa.me/5511999999999?text=Quero%20reservar%20minha%20transformação%20no%20Método%20Renascer";
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 });
 
   return (
-    <section className="py-24 bg-background relative overflow-hidden">
+    <section ref={ref} className={`py-24 bg-background relative overflow-hidden transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
       {/* Background glow effect */}
       <div 
         className="absolute inset-0 pointer-events-none"
