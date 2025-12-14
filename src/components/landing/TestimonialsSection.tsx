@@ -58,34 +58,38 @@ export function TestimonialsSection() {
   };
 
   return (
-    <section ref={ref} className={`py-24 bg-background transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+    <section 
+      ref={ref} 
+      className={`py-20 md:py-28 bg-background transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+    >
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="font-display text-4xl md:text-6xl text-foreground mb-4 italic">
-            RESULTADOS <span className="text-primary">REAIS</span>
+        {/* Section Header */}
+        <div className="text-center mb-14 max-w-3xl mx-auto">
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground mb-5 tracking-wide">
+            Resultados <span className="text-primary">Reais</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+          <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
             Veja quem decidiu parar de dar desculpas e assumiu o controle.
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <div className="relative">
             <Card className="bg-card border-border/50">
-              <CardContent className="p-8 md:p-12">
-                <Quote className="w-12 h-12 text-primary/30 mb-6" />
+              <CardContent className="p-8 md:p-10">
+                <Quote className="w-10 h-10 text-primary/20 mb-5" />
                 
-                <div className="min-h-[200px] flex flex-col justify-center">
-                  <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
+                <div className="min-h-[180px] flex flex-col justify-center">
+                  <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-6">
                     "{testimonials[currentIndex].content}"
                   </p>
                   
-                  <div className="border-t border-border pt-6">
-                    <p className="font-display text-2xl text-primary">
+                  <div className="border-t border-border pt-5">
+                    <p className="text-primary font-semibold text-lg">
                       {testimonials[currentIndex].result}
                     </p>
-                    <p className="text-foreground font-semibold mt-1">
-                      - {testimonials[currentIndex].name}
+                    <p className="text-foreground text-sm mt-1">
+                      — {testimonials[currentIndex].name}
                     </p>
                   </div>
                 </div>
@@ -96,30 +100,30 @@ export function TestimonialsSection() {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 text-muted-foreground hover:text-primary"
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-10 text-muted-foreground hover:text-primary"
               onClick={goToPrevious}
             >
-              <ChevronLeft className="w-8 h-8" />
+              <ChevronLeft className="w-7 h-7" />
             </Button>
             
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 text-muted-foreground hover:text-primary"
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-10 text-muted-foreground hover:text-primary"
               onClick={goToNext}
             >
-              <ChevronRight className="w-8 h-8" />
+              <ChevronRight className="w-7 h-7" />
             </Button>
           </div>
 
           {/* Dots indicator */}
-          <div className="flex justify-center gap-2 mt-8">
+          <div className="flex justify-center gap-2 mt-6">
             {testimonials.map((_, index) => (
               <button
                 key={index}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
                   index === currentIndex 
-                    ? 'bg-primary w-8' 
+                    ? 'bg-primary w-6' 
                     : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
                 }`}
                 onClick={() => {
