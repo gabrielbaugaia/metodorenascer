@@ -54,7 +54,7 @@ export function useSubscription() {
     }
   }, [session?.access_token]);
 
-  const createCheckout = useCallback(async () => {
+  const createCheckout = useCallback(async (priceId?: string) => {
     if (!session?.access_token) {
       throw new Error("User not authenticated");
     }
@@ -63,6 +63,7 @@ export function useSubscription() {
       headers: {
         Authorization: `Bearer ${session.access_token}`,
       },
+      body: { price_id: priceId },
     });
 
     if (error) throw error;
