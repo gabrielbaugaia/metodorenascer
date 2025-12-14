@@ -297,8 +297,8 @@ export default function Treino() {
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
                 <Target className="w-6 h-6 text-white" />
               </div>
-              <h1 className="font-display text-4xl text-foreground">
-                Seu <span className="text-gradient">Treino</span>
+              <h1 className="text-3xl font-bold uppercase text-foreground">
+                Seu <span className="text-primary">Treino</span>
               </h1>
             </div>
             <p className="text-muted-foreground">

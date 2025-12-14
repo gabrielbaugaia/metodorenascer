@@ -100,8 +100,8 @@ export default function Receitas() {
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                 <ChefHat className="w-6 h-6 text-white" />
               </div>
-              <h1 className="font-display text-4xl text-foreground">
-                Gerador de <span className="text-gradient">Receitas</span>
+              <h1 className="text-3xl font-bold uppercase text-foreground">
+                Gerador de <span className="text-primary">Receitas</span>
               </h1>
             </div>
             <p className="text-muted-foreground">
@@ -112,7 +112,7 @@ export default function Receitas() {
           {/* Ingredient input */}
           <Card variant="dashboard" className="mb-6">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg uppercase">
                 <Sparkles className="w-5 h-5 text-primary" />
                 Selecione seus ingredientes
               </CardTitle>

@@ -90,8 +90,8 @@ export default function AreaCliente() {
       <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-display font-bold">
-            Olá, <span className="text-gradient">{profile?.full_name?.split(" ")[0] || "Guerreiro"}</span>!
+          <h1 className="text-3xl font-bold uppercase">
+            Olá, <span className="text-primary">{profile?.full_name?.split(" ")[0] || "Guerreiro"}</span>!
           </h1>
           <p className="text-muted-foreground">
             Continue sua jornada de transformação. Você está no caminho certo!

@@ -190,7 +190,7 @@ export default function Suporte() {
     <ClientLayout>
       <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-display font-bold">Suporte</h1>
+          <h1 className="text-3xl font-bold uppercase">Suporte</h1>
           <p className="text-muted-foreground">Tire suas dúvidas com nosso mentor IA ou consulte o FAQ</p>
         </div>
 
@@ -209,7 +209,7 @@ export default function Suporte() {
           <TabsContent value="chat">
             <Card variant="glass" className="h-[600px] flex flex-col">
               <CardHeader className="border-b border-border/50">
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg uppercase">
                   <Bot className="h-5 w-5 text-primary" />
                   Mentor IA - Gabriel Baú
                 </CardTitle>

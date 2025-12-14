@@ -162,8 +162,8 @@ export default function Dashboard() {
           {/* Welcome */}
           <div className="mb-8 flex items-start justify-between">
             <div>
-              <h1 className="font-display text-4xl md:text-5xl text-foreground mb-2">
-                BEM-VINDO, <span className="text-gradient">GUERREIRO</span>
+              <h1 className="text-3xl md:text-4xl font-bold uppercase text-foreground mb-2">
+                BEM-VINDO, <span className="text-primary">GUERREIRO</span>
               </h1>
               <p className="text-muted-foreground">Sua jornada de transformacao continua hoje</p>
             </div>
