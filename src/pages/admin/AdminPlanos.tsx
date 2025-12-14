@@ -21,24 +21,38 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { 
   Search, 
   Dumbbell, 
   Apple, 
-  Eye, 
-  RefreshCw,
+  Edit,
   Loader2,
-  Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ProtocolEditor } from "@/components/admin/ProtocolEditor";
+import { NutritionProtocolEditor } from "@/components/admin/NutritionProtocolEditor";
+import { ClientAnamneseCard } from "@/components/admin/ClientAnamneseCard";
+
+interface Profile {
+  full_name: string;
+  email: string;
+  weight?: number;
+  height?: number;
+  age?: number;
+  sexo?: string;
+  goals?: string;
+  injuries?: string;
+  availability?: string;
+  nivel_experiencia?: string;
+  restricoes_medicas?: string;
+  objetivos_detalhados?: any;
+  medidas?: any;
+}
 
 interface Protocol {
   id: string;
@@ -48,10 +62,7 @@ interface Protocol {
   conteudo: any;
   data_geracao: string;
   ativo: boolean;
-  profile?: {
-    full_name: string;
-    email: string;
-  };
+  profile?: Profile;
 }
 
 export default function AdminPlanos() {
@@ -64,23 +75,11 @@ export default function AdminPlanos() {
   const [protocols, setProtocols] = useState<Protocol[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [regenerating, setRegenerating] = useState<string | null>(null);
-  const [viewDialog, setViewDialog] = useState<{ open: boolean; protocol: Protocol | null }>({
+  const [saving, setSaving] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [editDialog, setEditDialog] = useState<{ open: boolean; protocol: Protocol | null }>({
     open: false,
     protocol: null,
-  });
-  const [regenerateDialog, setRegenerateDialog] = useState<{
-    open: boolean;
-    protocolId: string;
-    userId: string;
-    tipo: string;
-    adjustments: string;
-  }>({
-    open: false,
-    protocolId: "",
-    userId: "",
-    tipo: "",
-    adjustments: "",
   });
 
   useEffect(() => {
@@ -116,7 +115,7 @@ export default function AdminPlanos() {
         (data || []).map(async (protocol) => {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("full_name, email")
+            .select("full_name, email, weight, height, age, sexo, goals, injuries, availability, nivel_experiencia, restricoes_medicas, objetivos_detalhados, medidas")
             .eq("id", protocol.user_id)
             .single();
 
@@ -133,21 +132,55 @@ export default function AdminPlanos() {
     }
   };
 
-  const handleRegenerate = async () => {
-    setRegenerating(regenerateDialog.protocolId);
+  const handleSaveProtocol = async (content: any) => {
+    if (!editDialog.protocol) return;
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("protocolos")
+        .update({ conteudo: content })
+        .eq("id", editDialog.protocol.id);
+
+      if (error) throw error;
+      
+      // Update local state
+      setProtocols(protocols.map(p => 
+        p.id === editDialog.protocol?.id 
+          ? { ...p, conteudo: content }
+          : p
+      ));
+      
+      // Update dialog protocol
+      setEditDialog({
+        ...editDialog,
+        protocol: { ...editDialog.protocol, conteudo: content }
+      });
+    } catch (error) {
+      console.error("Error saving protocol:", error);
+      throw error;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRegenerate = async (adjustments: string) => {
+    if (!editDialog.protocol) return;
+    
+    setRegenerating(true);
     try {
       // Fetch user profile for context
       const { data: profile } = await supabase
         .from("profiles")
         .select("weight, height, goals, injuries, availability, nivel_experiencia, restricoes_medicas")
-        .eq("id", regenerateDialog.userId)
+        .eq("id", editDialog.protocol.user_id)
         .single();
 
       const { data, error } = await supabase.functions.invoke("generate-protocol", {
         body: {
-          tipo: regenerateDialog.tipo,
-          userId: regenerateDialog.userId,
-          adjustments: regenerateDialog.adjustments,
+          tipo: editDialog.protocol.tipo,
+          userId: editDialog.protocol.user_id,
+          adjustments,
           userContext: profile,
         },
       });
@@ -158,16 +191,16 @@ export default function AdminPlanos() {
       await supabase
         .from("protocolos")
         .update({ ativo: false })
-        .eq("id", regenerateDialog.protocolId);
+        .eq("id", editDialog.protocol.id);
 
-      toast.success("Protocolo regenerado com sucesso!");
+      toast.success("Novo protocolo gerado com sucesso!");
+      setEditDialog({ open: false, protocol: null });
       fetchProtocols();
     } catch (error: any) {
       console.error("Error regenerating protocol:", error);
       toast.error(error.message || "Erro ao regenerar protocolo");
     } finally {
-      setRegenerating(null);
-      setRegenerateDialog({ open: false, protocolId: "", userId: "", tipo: "", adjustments: "" });
+      setRegenerating(false);
     }
   };
 
@@ -224,30 +257,14 @@ export default function AdminPlanos() {
                 {format(new Date(protocol.data_geracao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setViewDialog({ open: true, protocol })}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      setRegenerateDialog({
-                        open: true,
-                        protocolId: protocol.id,
-                        userId: protocol.user_id,
-                        tipo: protocol.tipo,
-                        adjustments: "",
-                      })
-                    }
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditDialog({ open: true, protocol })}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
               </TableCell>
             </TableRow>
           ))}
@@ -317,74 +334,49 @@ export default function AdminPlanos() {
           </CardContent>
         </Card>
 
-        {/* View Protocol Dialog */}
-        <Dialog open={viewDialog.open} onOpenChange={(open) => setViewDialog({ ...viewDialog, open })}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        {/* Edit Protocol Dialog */}
+        <Dialog open={editDialog.open} onOpenChange={(open) => setEditDialog({ ...editDialog, open })}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{viewDialog.protocol?.titulo}</DialogTitle>
-              <DialogDescription>
-                Cliente: {viewDialog.protocol?.profile?.full_name} | 
-                Gerado em: {viewDialog.protocol && format(new Date(viewDialog.protocol.data_geracao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="bg-muted/50 p-4 rounded-lg overflow-x-auto">
-              <pre className="text-sm whitespace-pre-wrap">
-                {JSON.stringify(viewDialog.protocol?.conteudo, null, 2)}
-              </pre>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Regenerate Protocol Dialog */}
-        <Dialog
-          open={regenerateDialog.open}
-          onOpenChange={(open) => setRegenerateDialog({ ...regenerateDialog, open })}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Regenerar Protocolo</DialogTitle>
-              <DialogDescription>
-                Adicione ajustes ou instruções para a IA gerar um novo protocolo
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Ajustes/Instruções (opcional)</Label>
-                <Textarea
-                  placeholder="Ex: Adicionar mais exercícios de cardio, focar em hipertrofia..."
-                  value={regenerateDialog.adjustments}
-                  onChange={(e) =>
-                    setRegenerateDialog({ ...regenerateDialog, adjustments: e.target.value })
-                  }
-                  rows={4}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setRegenerateDialog({ ...regenerateDialog, open: false })}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="fire"
-                onClick={handleRegenerate}
-                disabled={regenerating !== null}
-              >
-                {regenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Gerando...
-                  </>
+              <DialogTitle className="flex items-center gap-2">
+                {editDialog.protocol?.tipo === "treino" ? (
+                  <Dumbbell className="h-5 w-5 text-primary" />
                 ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Regenerar com IA
-                  </>
+                  <Apple className="h-5 w-5 text-primary" />
                 )}
-              </Button>
-            </DialogFooter>
+                Editar Protocolo
+              </DialogTitle>
+              <DialogDescription>
+                Cliente: {editDialog.protocol?.profile?.full_name} | 
+                Gerado em: {editDialog.protocol && format(new Date(editDialog.protocol.data_geracao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {/* Client Anamnese */}
+            {editDialog.protocol?.profile && (
+              <ClientAnamneseCard profile={editDialog.protocol.profile} />
+            )}
+
+            {/* Protocol Editor */}
+            {editDialog.protocol && editDialog.protocol.tipo === "treino" && (
+              <ProtocolEditor
+                protocol={editDialog.protocol}
+                onSave={handleSaveProtocol}
+                onRegenerate={handleRegenerate}
+                saving={saving}
+                regenerating={regenerating}
+              />
+            )}
+            
+            {editDialog.protocol && editDialog.protocol.tipo === "nutricao" && (
+              <NutritionProtocolEditor
+                protocol={editDialog.protocol}
+                onSave={handleSaveProtocol}
+                onRegenerate={handleRegenerate}
+                saving={saving}
+                regenerating={regenerating}
+              />
+            )}
           </DialogContent>
         </Dialog>
       </div>
