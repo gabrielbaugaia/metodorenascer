@@ -139,7 +139,7 @@ export default function Protocolos() {
           {conteudo.semanas?.map((semana: any, sIndex: number) => (
             <AccordionItem key={sIndex} value={`semana-${sIndex}`} className="border rounded-lg">
               <AccordionTrigger className="px-4 hover:no-underline">
-                <span className="font-semibold">Semana {semana.semana}</span>
+                <span className="font-semibold uppercase">Semana {semana.semana}</span>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-4">
@@ -238,7 +238,7 @@ export default function Protocolos() {
       <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold">Meus Protocolos</h1>
+            <h1 className="text-3xl font-bold uppercase">Meus Protocolos</h1>
             <p className="text-muted-foreground">Seus planos de treino e nutrição personalizados pela IA</p>
           </div>
           <div className="flex gap-2">

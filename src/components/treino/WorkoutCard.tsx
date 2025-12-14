@@ -92,7 +92,7 @@ export function WorkoutCard({
 
                   {/* Info */}
                   <div>
-                    <CardTitle className="text-lg font-display mb-1">
+                    <CardTitle className="text-lg mb-1 uppercase">
                       {focus}
                     </CardTitle>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">

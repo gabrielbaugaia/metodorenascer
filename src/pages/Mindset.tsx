@@ -214,9 +214,9 @@ export default function Mindset() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-2">
             <Brain className="h-10 w-10 text-primary" />
-            <h1 className="font-display text-4xl text-foreground">MINDSET</h1>
+            <h1 className="text-3xl font-bold uppercase text-foreground">MINDSET</h1>
           </div>
-          <p className="text-muted-foreground uppercase tracking-wider text-sm">
+          <p className="text-muted-foreground uppercase text-sm">
             Reprogramação Mental para Transformação
           </p>
         </div>
@@ -240,7 +240,7 @@ export default function Mindset() {
             <CardContent className="py-6">
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="h-5 w-5 text-yellow-500" />
-                <span className="font-display text-sm uppercase tracking-wider">
+                <span className="text-sm font-semibold uppercase">
                   Mentalidade Necessária
                 </span>
               </div>

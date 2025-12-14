@@ -284,9 +284,9 @@ export default function Anamnese() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Flame className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold tracking-tight">MÉTODO RENASCER</span>
+            <span className="text-2xl font-bold">MÉTODO RENASCER</span>
           </div>
-          <h1 className="text-3xl font-display font-bold mb-2">Complete sua Anamnese</h1>
+          <h1 className="text-3xl font-bold uppercase mb-2">Complete sua Anamnese</h1>
           <p className="text-muted-foreground">
             Preencha os dados abaixo para personalizar seu programa
           </p>

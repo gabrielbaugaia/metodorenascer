@@ -194,7 +194,7 @@ export default function AdminClientes() {
       <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold">Clientes</h1>
+            <h1 className="text-3xl font-bold uppercase">Clientes</h1>
             <p className="text-muted-foreground">Gerencie todos os clientes do Método Renascer</p>
           </div>
           <div className="flex gap-2">
