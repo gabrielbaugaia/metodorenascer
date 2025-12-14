@@ -19,6 +19,7 @@ import Protocolos from "./pages/Protocolos";
 import Suporte from "./pages/Suporte";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminClientes from "./pages/admin/AdminClientes";
+import AdminClienteDetalhes from "./pages/admin/AdminClienteDetalhes";
 import AdminCriarCliente from "./pages/admin/AdminCriarCliente";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminSuporteChats from "./pages/admin/AdminSuporteChats";
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/suporte" element={<Suporte />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/clientes" element={<AdminClientes />} />
+            <Route path="/admin/clientes/:id" element={<AdminClienteDetalhes />} />
             <Route path="/admin/criar-cliente" element={<AdminCriarCliente />} />
             <Route path="/admin/planos" element={<AdminPlanos />} />
             <Route path="/admin/suporte" element={<AdminSuporteChats />} />
