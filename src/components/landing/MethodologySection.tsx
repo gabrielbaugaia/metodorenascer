@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, Utensils, MessageCircle, Trophy } from "lucide-react";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const pillars = [
   {
@@ -25,8 +26,10 @@ const pillars = [
 ];
 
 export function MethodologySection() {
+  const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 });
+
   return (
-    <section id="metodologia" className="py-24 section-dark">
+    <section ref={ref} id="metodologia" className={`py-24 section-dark transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="font-display text-4xl md:text-6xl text-foreground mb-4 italic">
