@@ -1,34 +1,71 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import transform1 from "@/assets/transformations/transform-1.jpeg";
+import transform2 from "@/assets/transformations/transform-2.jpeg";
+import transform3 from "@/assets/transformations/transform-3.jpeg";
+import transform4 from "@/assets/transformations/transform-4.jpeg";
+import transform5 from "@/assets/transformations/transform-5.jpeg";
+import transform6 from "@/assets/transformations/transform-6.jpeg";
+import transform7 from "@/assets/transformations/transform-7.jpeg";
+import transform8 from "@/assets/transformations/transform-8.jpeg";
+
 const transformations = [
   {
-    name: "Ana Silva",
-    location: "São Paulo, SP",
+    id: "cliente-01",
+    image: transform1,
     weightLost: "18kg",
     duration: "4 meses",
     testimonial: "Recuperei minha autoestima e energia para viver!",
   },
   {
-    name: "João Santos",
-    location: "Rio de Janeiro, RJ",
+    id: "cliente-02",
+    image: transform2,
     weightLost: "22kg",
     duration: "5 meses",
     testimonial: "Força voltou e mente mais forte que nunca.",
   },
   {
-    name: "Maria Oliveira",
-    location: "Belo Horizonte, MG",
+    id: "cliente-03",
+    image: transform3,
     weightLost: "15kg",
     duration: "3 meses",
     testimonial: "Transformação completa em corpo e mente.",
   },
   {
-    name: "Carlos Lima",
-    location: "Curitiba, PR",
-    weightLost: "25kg",
+    id: "cliente-04",
+    image: transform4,
+    weightLost: "12kg",
+    duration: "3 meses",
+    testimonial: "Definição muscular que sempre sonhei.",
+  },
+  {
+    id: "cliente-05",
+    image: transform5,
+    weightLost: "8kg",
+    duration: "4 meses",
+    testimonial: "Ganho de massa e definição impressionante.",
+  },
+  {
+    id: "cliente-06",
+    image: transform6,
+    weightLost: "15kg",
+    duration: "5 meses",
+    testimonial: "Corpo totalmente transformado.",
+  },
+  {
+    id: "cliente-07",
+    image: transform7,
+    weightLost: "20kg",
     duration: "6 meses",
     testimonial: "Nunca imaginei que seria possível. Agora vivo!",
+  },
+  {
+    id: "cliente-08",
+    image: transform8,
+    weightLost: "25kg",
+    duration: "5 meses",
+    testimonial: "Minha vida mudou completamente.",
   },
 ];
 
@@ -57,45 +94,32 @@ const TransformationsGallery = () => {
 
         {/* Desktop Grid */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {transformations.map((transformation, index) => (
+          {transformations.map((transformation) => (
             <div
-              key={index}
-              className="group relative bg-gradient-to-b from-zinc-900 to-black border border-zinc-800 rounded-2xl overflow-hidden hover:border-[#FF6200]/50 transition-all duration-300"
+              key={transformation.id}
+              className="group relative bg-gradient-to-b from-zinc-900 to-black border border-zinc-800 rounded-2xl overflow-hidden hover:border-[#FF6200]/50 transition-all duration-300 hover:scale-[1.02]"
             >
-              {/* Before/After Placeholder */}
-              <div className="relative aspect-[3/4] bg-zinc-900">
-                <div className="absolute inset-0 flex">
-                  {/* Before Side */}
-                  <div className="w-1/2 bg-zinc-800 flex items-center justify-center border-r border-zinc-700">
-                    <div className="text-center">
-                      <span className="text-xs text-zinc-500 uppercase tracking-wider">Antes</span>
-                      <div className="w-16 h-16 mt-2 rounded-full bg-zinc-700 flex items-center justify-center">
-                        <span className="text-2xl text-zinc-500">?</span>
-                      </div>
-                    </div>
-                  </div>
-                  {/* After Side */}
-                  <div className="w-1/2 bg-gradient-to-br from-[#FF6200]/20 to-zinc-900 flex items-center justify-center">
-                    <div className="text-center">
-                      <span className="text-xs text-[#FF6200] uppercase tracking-wider">Depois</span>
-                      <div className="w-16 h-16 mt-2 rounded-full bg-[#FF6200]/30 flex items-center justify-center border-2 border-[#FF6200]">
-                        <span className="text-2xl text-[#FF6200]">★</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {/* Real Transformation Image */}
+              <div className="relative aspect-square overflow-hidden">
+                <img
+                  src={transformation.image}
+                  alt={`Transformação ${transformation.id}`}
+                  className="w-full h-full object-cover object-top"
+                  loading="lazy"
+                />
                 
                 {/* Weight Lost Badge */}
-                <div className="absolute top-3 right-3 bg-[#FF6200] text-black font-bold px-3 py-1 rounded-full text-sm">
+                <div className="absolute top-3 right-3 bg-[#FF6200] text-black font-bold px-3 py-1 rounded-full text-sm shadow-lg">
                   -{transformation.weightLost}
                 </div>
+
+                {/* Gradient overlay at bottom */}
+                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black to-transparent" />
               </div>
 
               {/* Info */}
-              <div className="p-5">
-                <h3 className="text-white font-bold text-lg">{transformation.name}</h3>
-                <p className="text-zinc-500 text-sm mb-3">{transformation.location}</p>
-                <div className="flex items-center gap-2 mb-3">
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
                   <span className="text-[#FF6200] text-sm font-semibold">
                     {transformation.duration}
                   </span>
@@ -104,7 +128,7 @@ const TransformationsGallery = () => {
                     -{transformation.weightLost}
                   </span>
                 </div>
-                <p className="text-zinc-400 text-sm italic">
+                <p className="text-zinc-400 text-sm italic line-clamp-2">
                   "{transformation.testimonial}"
                 </p>
               </div>
@@ -114,43 +138,32 @@ const TransformationsGallery = () => {
 
         {/* Mobile Carousel */}
         <div className="md:hidden relative">
-          <div className="overflow-hidden">
+          <div className="overflow-hidden rounded-2xl">
             <div
               className="flex transition-transform duration-300 ease-out"
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
-              {transformations.map((transformation, index) => (
-                <div key={index} className="w-full flex-shrink-0 px-2">
+              {transformations.map((transformation) => (
+                <div key={transformation.id} className="w-full flex-shrink-0 px-1">
                   <div className="bg-gradient-to-b from-zinc-900 to-black border border-zinc-800 rounded-2xl overflow-hidden">
-                    {/* Before/After Placeholder */}
-                    <div className="relative aspect-[4/3] bg-zinc-900">
-                      <div className="absolute inset-0 flex">
-                        <div className="w-1/2 bg-zinc-800 flex items-center justify-center border-r border-zinc-700">
-                          <div className="text-center">
-                            <span className="text-xs text-zinc-500 uppercase tracking-wider">Antes</span>
-                            <div className="w-12 h-12 mt-2 rounded-full bg-zinc-700 flex items-center justify-center">
-                              <span className="text-xl text-zinc-500">?</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="w-1/2 bg-gradient-to-br from-[#FF6200]/20 to-zinc-900 flex items-center justify-center">
-                          <div className="text-center">
-                            <span className="text-xs text-[#FF6200] uppercase tracking-wider">Depois</span>
-                            <div className="w-12 h-12 mt-2 rounded-full bg-[#FF6200]/30 flex items-center justify-center border-2 border-[#FF6200]">
-                              <span className="text-xl text-[#FF6200]">★</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute top-3 right-3 bg-[#FF6200] text-black font-bold px-3 py-1 rounded-full text-sm">
+                    {/* Real Transformation Image */}
+                    <div className="relative aspect-square overflow-hidden">
+                      <img
+                        src={transformation.image}
+                        alt={`Transformação ${transformation.id}`}
+                        className="w-full h-full object-cover object-top"
+                        loading="lazy"
+                      />
+                      
+                      <div className="absolute top-3 right-3 bg-[#FF6200] text-black font-bold px-3 py-1 rounded-full text-sm shadow-lg">
                         -{transformation.weightLost}
                       </div>
+
+                      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black to-transparent" />
                     </div>
 
-                    <div className="p-5">
-                      <h3 className="text-white font-bold text-lg">{transformation.name}</h3>
-                      <p className="text-zinc-500 text-sm mb-3">{transformation.location}</p>
-                      <div className="flex items-center gap-2 mb-3">
+                    <div className="p-4">
+                      <div className="flex items-center gap-2 mb-2">
                         <span className="text-[#FF6200] text-sm font-semibold">
                           {transformation.duration}
                         </span>
@@ -172,13 +185,13 @@ const TransformationsGallery = () => {
           {/* Navigation Buttons */}
           <button
             onClick={prevSlide}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 w-10 h-10 bg-[#FF6200] rounded-full flex items-center justify-center text-black hover:bg-[#FF8533] transition-colors"
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#FF6200] rounded-full flex items-center justify-center text-black hover:bg-[#FF8533] transition-colors shadow-lg"
           >
             <ChevronLeft size={20} />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 w-10 h-10 bg-[#FF6200] rounded-full flex items-center justify-center text-black hover:bg-[#FF8533] transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#FF6200] rounded-full flex items-center justify-center text-black hover:bg-[#FF8533] transition-colors shadow-lg"
           >
             <ChevronRight size={20} />
           </button>
