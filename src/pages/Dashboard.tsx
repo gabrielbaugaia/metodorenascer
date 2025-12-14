@@ -39,6 +39,13 @@ const dashboardCards = [
     color: "from-blue-500 to-cyan-500",
     href: "/receitas",
   },
+  {
+    icon: MessageCircle,
+    title: "Fale com Mentor",
+    description: "Tire suas dúvidas com seu mentor 24h",
+    color: "from-primary to-orange-600",
+    href: "/suporte",
+  },
 ];
 
 export default function Dashboard() {
