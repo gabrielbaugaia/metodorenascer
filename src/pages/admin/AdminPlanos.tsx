@@ -30,12 +30,14 @@ import {
   Apple, 
   Edit,
   Loader2,
+  Brain,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ProtocolEditor } from "@/components/admin/ProtocolEditor";
 import { NutritionProtocolEditor } from "@/components/admin/NutritionProtocolEditor";
+import { MindsetProtocolEditor } from "@/components/admin/MindsetProtocolEditor";
 import { ClientAnamneseCard } from "@/components/admin/ClientAnamneseCard";
 
 interface Profile {
@@ -235,6 +237,7 @@ export default function AdminPlanos() {
 
   const treinoProtocols = filteredProtocols.filter((p) => p.tipo === "treino");
   const nutricaoProtocols = filteredProtocols.filter((p) => p.tipo === "nutricao");
+  const mindsetProtocols = filteredProtocols.filter((p) => p.tipo === "mindset");
 
   if (authLoading || adminLoading || loading) {
     return (
@@ -334,7 +337,7 @@ export default function AdminPlanos() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="treino" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2 max-w-md">
+              <TabsList className="grid w-full grid-cols-3 max-w-lg">
                 <TabsTrigger value="treino" className="gap-2">
                   <Dumbbell className="h-4 w-4" />
                   Treinos ({treinoProtocols.length})
@@ -342,6 +345,10 @@ export default function AdminPlanos() {
                 <TabsTrigger value="nutricao" className="gap-2">
                   <Apple className="h-4 w-4" />
                   Nutrição ({nutricaoProtocols.length})
+                </TabsTrigger>
+                <TabsTrigger value="mindset" className="gap-2">
+                  <Brain className="h-4 w-4" />
+                  Mindset ({mindsetProtocols.length})
                 </TabsTrigger>
               </TabsList>
 
@@ -351,6 +358,10 @@ export default function AdminPlanos() {
 
               <TabsContent value="nutricao">
                 <ProtocolTable protocols={nutricaoProtocols} tipo="nutricao" />
+              </TabsContent>
+
+              <TabsContent value="mindset">
+                <ProtocolTable protocols={mindsetProtocols} tipo="mindset" />
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -363,8 +374,10 @@ export default function AdminPlanos() {
               <DialogTitle className="flex items-center gap-2">
                 {editDialog.protocol?.tipo === "treino" ? (
                   <Dumbbell className="h-5 w-5 text-primary" />
-                ) : (
+                ) : editDialog.protocol?.tipo === "nutricao" ? (
                   <Apple className="h-5 w-5 text-primary" />
+                ) : (
+                  <Brain className="h-5 w-5 text-primary" />
                 )}
                 Editar Protocolo
               </DialogTitle>
@@ -392,6 +405,16 @@ export default function AdminPlanos() {
             
             {editDialog.protocol && editDialog.protocol.tipo === "nutricao" && (
               <NutritionProtocolEditor
+                protocol={editDialog.protocol}
+                onSave={handleSaveProtocol}
+                onRegenerate={handleRegenerate}
+                saving={saving}
+                regenerating={regenerating}
+              />
+            )}
+
+            {editDialog.protocol && editDialog.protocol.tipo === "mindset" && (
+              <MindsetProtocolEditor
                 protocol={editDialog.protocol}
                 onSave={handleSaveProtocol}
                 onRegenerate={handleRegenerate}
