@@ -13,9 +13,7 @@ import {
   Loader2, 
   FileText,
   Calendar,
-  ChevronDown,
-  ChevronUp,
-  RefreshCw
+  Download
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -26,6 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
 
 interface Protocol {
   id: string;
@@ -321,7 +320,17 @@ export default function Protocolos() {
                             Gerado em {format(new Date(protocol.data_geracao), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                           </CardDescription>
                         </div>
-                        <Badge variant="secondary">{protocol.conteudo?.nivel || "Personalizado"}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">{protocol.conteudo?.nivel || "Personalizado"}</Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => generateProtocolPdf(protocol)}
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            PDF
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -366,6 +375,14 @@ export default function Protocolos() {
                             Gerado em {format(new Date(protocol.data_geracao), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                           </CardDescription>
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generateProtocolPdf(protocol)}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          PDF
+                        </Button>
                       </div>
                     </CardHeader>
                     <CardContent>
