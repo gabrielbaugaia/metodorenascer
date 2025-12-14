@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, UserPlus, ArrowLeft } from "lucide-react";
+import { Loader2, UserPlus, ArrowLeft, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -33,10 +33,12 @@ const clientSchema = z.object({
 });
 
 export default function AdminCriarCliente() {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const { isAdmin } = useAdminCheck();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [createdUser, setCreatedUser] = useState<{ email: string; password: string } | null>(null);
+  const [copied, setCopied] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     full_name: "",
@@ -53,12 +55,20 @@ export default function AdminCriarCliente() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const copyCredentials = () => {
+    if (createdUser) {
+      navigator.clipboard.writeText(`Email: ${createdUser.email}\nSenha: ${createdUser.password}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success("Credenciais copiadas!");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Validate form data
       const validation = clientSchema.safeParse({
         ...formData,
         age: formData.age ? parseInt(formData.age) : undefined,
@@ -72,29 +82,34 @@ export default function AdminCriarCliente() {
         return;
       }
 
-      // Create user in Supabase Auth (admin can create users)
-      // Note: This requires admin privileges - in production, use a server-side function
-      
-      // For now, we'll create a profile directly (assuming user already exists or will be invited)
-      // In production, you'd want to send an invite email
+      const { data, error } = await supabase.functions.invoke("admin-create-user", {
+        body: {
+          email: formData.email,
+          full_name: formData.full_name,
+          telefone: formData.telefone || null,
+          age: formData.age ? parseInt(formData.age) : null,
+          weight: formData.weight ? parseFloat(formData.weight) : null,
+          height: formData.height ? parseFloat(formData.height) : null,
+          goals: formData.goals || null,
+          nivel_experiencia: formData.nivel_experiencia || null,
+          plan_type: formData.plan_type,
+        },
+      });
 
-      // Check if user exists
-      const { data: existingUser } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", formData.email)
-        .single();
-
-      if (existingUser) {
-        toast.error("Usuário já existe com este email");
-        setLoading(false);
-        return;
+      if (error) {
+        throw new Error(error.message);
       }
 
-      toast.success("Para criar um novo cliente, o usuário precisa se registrar primeiro. Envie o link de cadastro!");
-      toast.info(`Link: ${window.location.origin}/auth?mode=signup`);
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setCreatedUser({
+        email: data.user.email,
+        password: data.user.temporary_password,
+      });
       
-      navigate("/admin/clientes");
+      toast.success("Cliente criado com sucesso!");
     } catch (error: any) {
       console.error("Error creating client:", error);
       toast.error(error.message || "Erro ao criar cliente");
@@ -120,6 +135,30 @@ export default function AdminCriarCliente() {
           <h1 className="text-3xl font-display font-bold">Criar Novo Cliente</h1>
           <p className="text-muted-foreground">Cadastre um novo cliente no Método Renascer</p>
         </div>
+
+        {createdUser && (
+          <Card className="border-green-500/50 bg-green-500/10">
+            <CardHeader>
+              <CardTitle className="text-green-400">Cliente Criado com Sucesso!</CardTitle>
+              <CardDescription>Anote ou copie as credenciais abaixo para enviar ao cliente:</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-background/50 p-4 rounded-lg space-y-2 font-mono text-sm">
+                <p><span className="text-muted-foreground">Email:</span> {createdUser.email}</p>
+                <p><span className="text-muted-foreground">Senha:</span> {createdUser.password}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={copyCredentials}>
+                  {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                  {copied ? "Copiado!" : "Copiar Credenciais"}
+                </Button>
+                <Button variant="fire" onClick={() => navigate("/admin/clientes")}>
+                  Ver Clientes
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card variant="glass">
           <CardHeader>
