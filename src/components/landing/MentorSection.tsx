@@ -1,4 +1,5 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import gabrielBauPhoto from "@/assets/gabriel-bau.png";
 
 export const MentorSection = () => {
   const { ref, isVisible } = useScrollAnimation();
@@ -16,17 +17,11 @@ export const MentorSection = () => {
           {/* Photo */}
           <div className="relative flex-shrink-0">
             <div className="w-64 h-64 md:w-80 md:h-80 rounded-lg overflow-hidden border-4 border-primary shadow-2xl shadow-primary/20">
-              <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                {/* Placeholder - o usuário pode adicionar a foto real depois */}
-                <div className="text-center">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                    </svg>
-                  </div>
-                  <span className="text-muted-foreground text-sm">Gabriel Baú</span>
-                </div>
-              </div>
+              <img 
+                src={gabrielBauPhoto} 
+                alt="Gabriel Baú - CEO e criador do Método Renascer" 
+                className="w-full h-full object-cover object-top"
+              />
             </div>
             {/* Phoenix icon overlay */}
             <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-lg">
