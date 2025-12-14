@@ -301,19 +301,8 @@ export default function Dashboard() {
             </Card>
           )}
 
-          {/* Progress bar */}
-          <Card variant="glass" className="mb-8 p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <TrendingUp className="w-6 h-6 text-primary" />
-              <div>
-                <h3 className="font-semibold text-foreground">Progresso do Mes</h3>
-                <p className="text-sm text-muted-foreground">15 dias de treino completados</p>
-              </div>
-            </div>
-            <div className="progress-bar">
-              <div className="progress-bar-fill" style={{ width: "50%" }} />
-            </div>
-          </Card>
+          {/* Progress bar - only show when there's actual progress */}
+          {/* TODO: Replace with real progress data from check-ins */}
 
           {/* Main cards grid */}
           <div className="grid md:grid-cols-2 gap-6 mb-8">
