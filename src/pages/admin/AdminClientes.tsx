@@ -122,7 +122,7 @@ export default function AdminClientes() {
     }
   };
 
-  const handleStatusChange = async (clientId: string, newStatus: string) => {
+  const handleStatusChange = async (clientId: string, newStatus: "active" | "paused" | "blocked" | "canceled") => {
     try {
       const { error } = await supabase
         .from("profiles")
@@ -360,7 +360,7 @@ export default function AdminClientes() {
               </Button>
               <Button
                 variant={confirmDialog.action === "blocked" ? "destructive" : "default"}
-                onClick={() => handleStatusChange(confirmDialog.clientId, confirmDialog.action)}
+                onClick={() => handleStatusChange(confirmDialog.clientId, confirmDialog.action as "active" | "paused" | "blocked" | "canceled")}
               >
                 Confirmar
               </Button>
