@@ -5,18 +5,18 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 const pillars = [
   {
     icon: Camera,
-    title: "IA Analisa Seu Treino/Foto",
-    description: "Tecnologia de ponta que avalia sua execucao e progresso em tempo real, corrigindo e otimizando cada movimento."
+    title: "Analise de Treino e Fotos",
+    description: "Acompanhamento que avalia sua execucao e progresso em tempo real, corrigindo e otimizando cada movimento."
   },
   {
     icon: Utensils,
     title: "Receitas 100% Suas",
-    description: "Plano nutricional personalizado com receitas geradas por IA baseadas nos seus gostos e objetivos."
+    description: "Plano nutricional personalizado com receitas baseadas nos seus gostos e objetivos."
   },
   {
     icon: MessageCircle,
-    title: "Coach WhatsApp 24h",
-    description: "Suporte continuo via WhatsApp. Tire duvidas, receba motivacao e ajustes no seu plano a qualquer momento."
+    title: "Fale com Mentor 24h",
+    description: "Suporte continuo pelo app. Tire duvidas, receba motivacao e ajustes no seu plano a qualquer momento."
   },
   {
     icon: Trophy,
