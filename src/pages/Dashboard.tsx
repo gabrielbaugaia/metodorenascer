@@ -331,18 +331,6 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* WhatsApp support card */}
-          <Card variant="glass" className="p-6 cursor-pointer hover:border-primary/30 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <MessageCircle className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground">Suporte 24h via WhatsApp</h3>
-                <p className="text-sm text-muted-foreground">Tire suas duvidas a qualquer momento</p>
-              </div>
-            </div>
-          </Card>
         </div>
       </main>
     </div>
