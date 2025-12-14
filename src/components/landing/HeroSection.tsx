@@ -26,12 +26,12 @@ export function HeroSection() {
           </div>
 
           {/* Subtitle */}
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in leading-relaxed" style={{
-          animationDelay: "0.2s"
-        }}>CANSOU de dietas que FALHAM? Renasça com -15kg em 90 DIAS. 
-Seu plano personalizado + Coach 24h/7.<span className="text-primary font-semibold">FALHAM</span>? 
-            Renasça com <span className="text-primary font-semibold">-15kg em 90 DIAS</span>. 
-            Seu plano personalizado + Coach 24h/7.
+          <p
+            className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in leading-relaxed"
+            style={{ animationDelay: "0.2s" }}
+          >
+            CANSEI de dietas que <span className="text-primary font-semibold">FALHAM</span>? Renasça com
+            <span className="text-primary font-semibold"> -15kg em 90 DIAS</span>. Seu plano personalizado + Coach 24h/7.
           </p>
 
           <p className="text-base md:text-lg text-muted-foreground/80 max-w-2xl mx-auto animate-fade-in" style={{
