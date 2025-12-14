@@ -5,6 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { Button } from "@/components/ui/button";
 
 const faqs = [
   {
@@ -53,29 +54,33 @@ export const FAQSection = () => {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 });
 
   return (
-    <section ref={ref} className={`py-20 md:py-32 bg-zinc-950 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+    <section 
+      ref={ref} 
+      className={`py-20 md:py-28 bg-background transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+    >
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-black text-white mb-4">
-            PERGUNTAS <span className="text-[#FF6200]">FREQUENTES</span>
+        {/* Section Header */}
+        <div className="text-center mb-14 max-w-3xl mx-auto">
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground mb-5 tracking-wide">
+            Perguntas <span className="text-primary">Frequentes</span>
           </h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
             Tire suas dúvidas sobre o Método Renascer
           </p>
         </div>
 
         <div className="max-w-3xl mx-auto">
-          <Accordion type="single" collapsible className="space-y-4">
+          <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl px-6 overflow-hidden data-[state=open]:border-[#FF6200]/50"
+                className="bg-card border border-border/50 rounded-lg px-5 overflow-hidden data-[state=open]:border-primary/40"
               >
-                <AccordionTrigger className="text-left text-white font-semibold text-base md:text-lg hover:text-[#FF6200] hover:no-underline py-5">
+                <AccordionTrigger className="text-left text-foreground font-medium text-sm md:text-base hover:text-primary hover:no-underline py-4">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-zinc-400 text-sm md:text-base pb-5 leading-relaxed">
+                <AccordionContent className="text-muted-foreground text-sm pb-4 leading-relaxed">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -85,15 +90,16 @@ export const FAQSection = () => {
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <p className="text-zinc-400 mb-4">Ainda tem dúvidas?</p>
-          <a
-            href="https://wa.me/5511999999999"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block bg-[#FF6200] hover:bg-[#FF8533] text-black font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105"
-          >
-            Fale Conosco no WhatsApp
-          </a>
+          <p className="text-muted-foreground text-sm mb-4">Ainda tem dúvidas?</p>
+          <Button variant="fire" size="lg" asChild>
+            <a
+              href="https://wa.me/5511999999999"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              FALE CONOSCO NO WHATSAPP
+            </a>
+          </Button>
         </div>
       </div>
     </section>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { Button } from "@/components/ui/button";
 
 import transform1 from "@/assets/transformations/transform-1.jpeg";
 import transform2 from "@/assets/transformations/transform-2.jpeg";
@@ -35,23 +36,27 @@ const TransformationsGallery = () => {
   };
 
   return (
-    <section ref={ref} className={`py-20 md:py-32 bg-black transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+    <section 
+      ref={ref} 
+      className={`py-20 md:py-28 section-dark transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+    >
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-black text-white mb-4">
-            TRANSFORMAÇÕES <span className="text-[#FF6200]">REAIS</span>
+        {/* Section Header */}
+        <div className="text-center mb-14 max-w-3xl mx-auto">
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground mb-5 tracking-wide">
+            Transformações <span className="text-primary">Reais</span>
           </h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
             Resultados comprovados de quem já passou pelo Método Renascer
           </p>
         </div>
 
         {/* Desktop Grid */}
-        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
           {transformations.map((transformation) => (
             <div
               key={transformation.id}
-              className="group relative rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-300"
+              className="relative rounded-lg overflow-hidden hover:scale-[1.02] transition-transform duration-300"
             >
               <img
                 src={transformation.image}
@@ -65,7 +70,7 @@ const TransformationsGallery = () => {
 
         {/* Mobile Carousel */}
         <div className="md:hidden relative">
-          <div className="overflow-hidden rounded-xl">
+          <div className="overflow-hidden rounded-lg">
             <div
               className="flex transition-transform duration-300 ease-out"
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -75,7 +80,7 @@ const TransformationsGallery = () => {
                   <img
                     src={transformation.image}
                     alt="Transformação real"
-                    className="w-full aspect-square object-cover object-top rounded-xl"
+                    className="w-full aspect-square object-cover object-top rounded-lg"
                     loading="lazy"
                   />
                 </div>
@@ -86,13 +91,13 @@ const TransformationsGallery = () => {
           {/* Navigation Buttons */}
           <button
             onClick={prevSlide}
-            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#FF6200] rounded-full flex items-center justify-center text-black hover:bg-[#FF8533] transition-colors shadow-lg"
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/80 transition-colors shadow-lg"
           >
             <ChevronLeft size={20} />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#FF6200] rounded-full flex items-center justify-center text-black hover:bg-[#FF8533] transition-colors shadow-lg"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/80 transition-colors shadow-lg"
           >
             <ChevronRight size={20} />
           </button>
@@ -104,7 +109,7 @@ const TransformationsGallery = () => {
                 key={index}
                 onClick={() => setCurrentIndex(index)}
                 className={`w-2 h-2 rounded-full transition-all ${
-                  index === currentIndex ? "bg-[#FF6200] w-6" : "bg-zinc-600"
+                  index === currentIndex ? "bg-primary w-6" : "bg-muted-foreground/30"
                 }`}
               />
             ))}
@@ -113,15 +118,16 @@ const TransformationsGallery = () => {
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <p className="text-zinc-400 mb-4">Você pode ser o próximo</p>
-          <a
-            href="https://wa.me/5511999999999"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block bg-[#FF6200] hover:bg-[#FF8533] text-black font-bold py-4 px-8 rounded-full text-lg transition-all hover:scale-105"
-          >
-            Quero Minha Transformação
-          </a>
+          <p className="text-muted-foreground text-sm mb-4">Você pode ser o próximo</p>
+          <Button variant="fire" size="lg" asChild>
+            <a
+              href="https://wa.me/5511999999999"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              QUERO MINHA TRANSFORMAÇÃO
+            </a>
+          </Button>
         </div>
       </div>
     </section>
