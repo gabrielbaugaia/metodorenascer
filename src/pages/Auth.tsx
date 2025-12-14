@@ -11,9 +11,9 @@ import { Flame, Mail, Lock, User } from "lucide-react";
 import { z } from "zod";
 
 const authSchema = z.object({
-  email: z.string().email("Email invalido"),
-  password: z.string().min(6, "Senha deve ter no minimo 6 caracteres"),
-  fullName: z.string().optional(),
+  email: z.string().trim().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+  fullName: z.string().trim().min(2, "Nome deve ter no mínimo 2 caracteres").optional(),
 });
 
 export default function Auth() {
@@ -149,14 +149,36 @@ export default function Auth() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-2">
               <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >
-                {isSignUp ? "Ja tem conta? Entre aqui" : "Nao tem conta? Cadastre-se"}
+                {isSignUp ? "Já tem conta? Entre aqui" : "Não tem conta? Cadastre-se"}
               </button>
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!email) {
+                      toast.error("Digite seu email primeiro");
+                      return;
+                    }
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: `${window.location.origin}/auth`,
+                    });
+                    if (error) {
+                      toast.error("Erro ao enviar email de recuperação");
+                    } else {
+                      toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+                    }
+                  }}
+                  className="block w-full text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Esqueceu sua senha?
+                </button>
+              )}
             </div>
           </CardContent>
         </Card>

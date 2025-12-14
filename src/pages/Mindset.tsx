@@ -386,11 +386,44 @@ export default function Mindset() {
           </Card>
         )}
 
-        {/* Download Button */}
-        <Button variant="default" className="w-full" size="lg">
-          <Download className="h-4 w-4 mr-2" />
-          BAIXAR PDF DE MINDSET
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            className="flex-1" 
+            size="lg"
+            onClick={generateProtocol}
+            disabled={generating}
+          >
+            {generating ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Sparkles className="h-4 w-4 mr-2" />
+            )}
+            GERAR NOVO PROTOCOLO
+          </Button>
+          <Button 
+            variant="default" 
+            className="flex-1" 
+            size="lg"
+            onClick={() => {
+              if (protocol) {
+                import("@/lib/generateProtocolPdf").then(({ generateProtocolPdf }) => {
+                  generateProtocolPdf({
+                    id: protocol.id,
+                    tipo: "mindset",
+                    titulo: protocol.conteudo.titulo || "Protocolo de Mindset",
+                    conteudo: protocol.conteudo,
+                    data_geracao: protocol.data_geracao,
+                  });
+                });
+              }
+            }}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            BAIXAR PDF
+          </Button>
+        </div>
       </div>
     </ClientLayout>
   );
