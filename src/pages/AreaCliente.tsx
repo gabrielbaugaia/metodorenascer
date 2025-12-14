@@ -16,8 +16,10 @@ import {
   MessageCircle,
   Trophy,
   Clock,
-  ChevronRight
+  ChevronRight,
+  ClipboardList
 } from "lucide-react";
+import { AnamneseSection } from "@/components/client/AnamneseSection";
 import { useNavigate } from "react-router-dom";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -213,6 +215,15 @@ export default function AreaCliente() {
             </CardContent>
           </Card>
         )}
+
+        {/* Anamnese Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold uppercase">Minha Anamnese</h2>
+          </div>
+          <AnamneseSection />
+        </div>
       </div>
     </ClientLayout>
   );
