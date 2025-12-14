@@ -8,27 +8,27 @@ const testimonials = [
   {
     name: "Ana SP",
     result: "Perdi 18kg sem sair de casa",
-    content: "O Metodo Renascer mudou completamente minha relacao com exercicio. Com o acompanhamento via WhatsApp e os treinos personalizados, consegui perder 18kg treinando em casa. Nunca imaginei que seria possivel."
+    content: "O Método Renascer mudou completamente minha relação com exercício. Com o acompanhamento via WhatsApp e os treinos personalizados, consegui perder 18kg treinando em casa. Nunca imaginei que seria possível."
   },
   {
-    name: "Joao RJ",
-    result: "Forca voltou + mente forte",
-    content: "Depois de anos sedentario, recuperei minha forca e, mais importante, minha confianca. O trabalho de mindset fez toda diferenca. Hoje me sinto renovado, como se tivesse renascido."
+    name: "João RJ",
+    result: "Força voltou + mente forte",
+    content: "Depois de anos sedentário, recuperei minha força e, mais importante, minha confiança. O trabalho de mindset fez toda diferença. Hoje me sinto renovado, como se tivesse renascido."
   },
   {
     name: "Maria BH",
     result: "15kg em 3 meses",
-    content: "Em apenas 3 meses consegui resultados que nunca tive em anos tentando sozinha. O suporte 24h e as receitas personalizadas fizeram toda diferenca. Recomendo para todos."
+    content: "Em apenas 3 meses consegui resultados que nunca tive em anos tentando sozinha. O suporte 24h e as receitas personalizadas fizeram toda diferença. Recomendo para todos."
   },
   {
     name: "Dr. Leonardo Higashi",
-    result: "Medico Endocrinologista",
-    content: "Treino com o Bau desde 2014 e os resultados foram excelentes. Profissional dedicado, comprometido, atualizado e que se preocupa nao so com o resultado fisico, mas tambem com a saude."
+    result: "Médico Endocrinologista",
+    content: "Treino com o Baú desde 2014 e os resultados foram excelentes. Profissional dedicado, comprometido, atualizado e que se preocupa não só com o resultado físico, mas também com a saúde."
   },
   {
     name: "Rafael Susin",
-    result: "Empresario",
-    content: "O Gabriel Bau e extremamente profissional, assiduo, competente e - o melhor - traz resultados. Minha qualidade de vida melhorou significativamente."
+    result: "Empresário",
+    content: "O Gabriel Baú é extremamente profissional, assíduo, competente e - o melhor - traz resultados. Minha qualidade de vida melhorou significativamente."
   }
 ];
 
