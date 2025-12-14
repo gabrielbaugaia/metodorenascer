@@ -12,7 +12,7 @@ interface Exercise {
   sets: number;
   reps: string;
   rest: string;
-  videoUrl: string;
+  videoUrl?: string;
   tips?: string;
 }
 
@@ -41,15 +41,21 @@ export function ExerciseVideoModal({
 
         <div className="space-y-4">
           {/* Video */}
-          <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
-            <iframe
-              src={exercise.videoUrl}
-              title={exercise.name}
-              className="absolute inset-0 w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
+          {exercise.videoUrl ? (
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
+              <iframe
+                src={exercise.videoUrl}
+                title={exercise.name}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+              <p className="text-muted-foreground">Vídeo não disponível</p>
+            </div>
+          )}
 
           {/* Exercise info */}
           <div className="flex flex-wrap gap-3">

@@ -14,7 +14,7 @@ interface Exercise {
   sets: number;
   reps: string;
   rest: string;
-  videoUrl: string;
+  videoUrl?: string;
   tips?: string;
   completed?: boolean;
 }
