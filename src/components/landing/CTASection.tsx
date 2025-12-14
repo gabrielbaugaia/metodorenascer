@@ -3,7 +3,6 @@ import { ArrowRight } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 export function CTASection() {
-  const whatsappLink = "https://wa.me/5511999999999?text=Quero%20reservar%20minha%20transformação%20no%20Método%20Renascer";
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 });
 
   return (
@@ -39,7 +38,7 @@ export function CTASection() {
               asChild 
               className="group text-base md:text-lg px-10 md:px-14 py-6 md:py-7"
             >
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+              <a href="#preco">
                 <span className="relative z-10 font-semibold tracking-wide">
                   RESERVAR MINHA TRANSFORMAÇÃO
                 </span>
@@ -47,10 +46,6 @@ export function CTASection() {
               </a>
             </Button>
           </div>
-
-          <p className="text-muted-foreground/60 text-xs">
-            Ao clicar, você será direcionado para nosso WhatsApp
-          </p>
         </div>
       </div>
     </section>
