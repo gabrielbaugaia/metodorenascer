@@ -9,13 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Dumbbell, 
   Apple, 
-  Sparkles, 
   Loader2, 
-  FileText,
   Calendar,
-  Download
+  Download,
+  MessageCircle
 } from "lucide-react";
-import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -25,6 +23,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
+import { useNavigate } from "react-router-dom";
 
 interface Protocol {
   id: string;
@@ -35,22 +34,11 @@ interface Protocol {
   ativo: boolean;
 }
 
-interface Profile {
-  weight: number | null;
-  height: number | null;
-  goals: string | null;
-  injuries: string | null;
-  availability: string | null;
-  nivel_experiencia: string | null;
-  restricoes_medicas: string | null;
-}
-
 export default function Protocolos() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [protocols, setProtocols] = useState<Protocol[]>([]);
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -61,7 +49,6 @@ export default function Protocolos() {
 
     setLoading(true);
     try {
-      // Fetch protocols
       const { data: protocolsData } = await supabase
         .from("protocolos")
         .select("*")
@@ -70,55 +57,10 @@ export default function Protocolos() {
         .order("data_geracao", { ascending: false });
 
       setProtocols(protocolsData || []);
-
-      // Fetch profile for context
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("weight, height, goals, injuries, availability, nivel_experiencia, restricoes_medicas")
-        .eq("id", user.id)
-        .single();
-
-      setProfile(profileData);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const generateProtocol = async (tipo: "treino" | "nutricao") => {
-    if (!user || !profile) {
-      toast.error("Complete sua anamnese primeiro");
-      return;
-    }
-
-    setGenerating(tipo);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-protocol", {
-        body: {
-          tipo,
-          userId: user.id,
-          userContext: {
-            peso: profile.weight,
-            altura: profile.height,
-            objetivos: profile.goals,
-            lesoes: profile.injuries,
-            disponibilidade: profile.availability,
-            nivel: profile.nivel_experiencia,
-            restricoes: profile.restricoes_medicas,
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      toast.success(`Protocolo de ${tipo} gerado com sucesso!`);
-      fetchData();
-    } catch (error: any) {
-      console.error("Error generating protocol:", error);
-      toast.error(error.message || "Erro ao gerar protocolo");
-    } finally {
-      setGenerating(null);
     }
   };
 
@@ -239,33 +181,7 @@ export default function Protocolos() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold uppercase">Meus Protocolos</h1>
-            <p className="text-muted-foreground">Seus planos de treino e nutrição personalizados pela IA</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => generateProtocol("treino")}
-              disabled={generating !== null}
-            >
-              {generating === "treino" ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Dumbbell className="h-4 w-4 mr-2" />
-              )}
-              Gerar Treino
-            </Button>
-            <Button
-              variant="fire"
-              onClick={() => generateProtocol("nutricao")}
-              disabled={generating !== null}
-            >
-              {generating === "nutricao" ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Apple className="h-4 w-4 mr-2" />
-              )}
-              Gerar Nutrição
-            </Button>
+            <p className="text-muted-foreground">Seus planos de treino e nutrição personalizados</p>
           </div>
         </div>
 
@@ -293,15 +209,11 @@ export default function Protocolos() {
                     <Dumbbell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-lg font-semibold mb-2">Nenhum protocolo de treino</h3>
                     <p className="text-muted-foreground mb-4">
-                      Clique no botão acima para gerar seu primeiro protocolo de treino personalizado!
+                      Seu protocolo de treino ainda não foi gerado. Entre em contato com seu mentor para solicitar.
                     </p>
-                    <Button variant="fire" onClick={() => generateProtocol("treino")} disabled={generating !== null}>
-                      {generating === "treino" ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <Sparkles className="h-4 w-4 mr-2" />
-                      )}
-                      Gerar Protocolo de Treino
+                    <Button variant="outline" onClick={() => navigate("/suporte")}>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Falar com Mentor
                     </Button>
                   </CardContent>
                 </Card>
@@ -348,15 +260,11 @@ export default function Protocolos() {
                     <Apple className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-lg font-semibold mb-2">Nenhum protocolo nutricional</h3>
                     <p className="text-muted-foreground mb-4">
-                      Clique no botão acima para gerar seu primeiro plano alimentar personalizado!
+                      Seu protocolo nutricional ainda não foi gerado. Entre em contato com seu mentor para solicitar.
                     </p>
-                    <Button variant="fire" onClick={() => generateProtocol("nutricao")} disabled={generating !== null}>
-                      {generating === "nutricao" ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <Sparkles className="h-4 w-4 mr-2" />
-                      )}
-                      Gerar Plano Nutricional
+                    <Button variant="outline" onClick={() => navigate("/suporte")}>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Falar com Mentor
                     </Button>
                   </CardContent>
                 </Card>
