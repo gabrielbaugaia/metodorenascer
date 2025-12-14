@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Target, Utensils, Brain, BookOpen, MessageCircle, TrendingUp, Loader2, Crown, Settings } from "lucide-react";
+import { Target, Utensils, Brain, BookOpen, MessageCircle, TrendingUp, Loader2, Crown, Settings, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const dashboardCards = [
@@ -43,6 +44,7 @@ const dashboardCards = [
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const { subscribed, loading: subLoading, createCheckout, openCustomerPortal, subscriptionEnd } = useSubscription();
+  const { isAdmin } = useAdminCheck();
   const navigate = useNavigate();
   const [checkingAnamnese, setCheckingAnamnese] = useState(true);
   const [hasAnamnese, setHasAnamnese] = useState(false);
@@ -165,10 +167,18 @@ export default function Dashboard() {
               </h1>
               <p className="text-muted-foreground">Sua jornada de transformacao continua hoje</p>
             </div>
-            <Button variant="outline" size="sm" onClick={handleManageSubscription}>
-              <Settings className="w-4 h-4 mr-2" />
-              Gerenciar Assinatura
-            </Button>
+            <div className="flex gap-2">
+              {isAdmin && (
+                <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
+                  <ShieldCheck className="w-4 h-4 mr-2" />
+                  Admin
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={handleManageSubscription}>
+                <Settings className="w-4 h-4 mr-2" />
+                Gerenciar Assinatura
+              </Button>
+            </div>
           </div>
 
           {/* Subscription status */}
