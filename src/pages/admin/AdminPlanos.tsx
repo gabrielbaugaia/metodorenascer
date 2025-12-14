@@ -21,12 +21,25 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Search, 
-  Dumbbell, 
+  Dumbbell,
+  Trash2,
+  Sparkles,
   Apple, 
   Edit,
   Loader2,
@@ -101,6 +114,11 @@ export default function AdminPlanos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [generatingMindset, setGeneratingMindset] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; protocolId: string | null }>({
+    open: false,
+    protocolId: null,
+  });
   const [editDialog, setEditDialog] = useState<{ open: boolean; protocol: Protocol | null }>({
     open: false,
     protocol: null,
@@ -228,6 +246,57 @@ export default function AdminPlanos() {
     }
   };
 
+  const handleDeleteProtocol = async () => {
+    if (!deleteDialog.protocolId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("protocolos")
+        .delete()
+        .eq("id", deleteDialog.protocolId);
+
+      if (error) throw error;
+      
+      toast.success("Protocolo excluído com sucesso!");
+      setDeleteDialog({ open: false, protocolId: null });
+      fetchProtocols();
+    } catch (error) {
+      console.error("Error deleting protocol:", error);
+      toast.error("Erro ao excluir protocolo");
+    }
+  };
+
+  const handleGenerateMindset = async (targetUserId: string) => {
+    if (!targetUserId) return;
+    
+    setGeneratingMindset(true);
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", targetUserId)
+        .single();
+
+      const { data, error } = await supabase.functions.invoke("generate-protocol", {
+        body: {
+          tipo: "mindset",
+          userId: targetUserId,
+          userContext: profile,
+        },
+      });
+
+      if (error) throw error;
+      
+      toast.success("Protocolo de mindset gerado com sucesso!");
+      fetchProtocols();
+    } catch (error: any) {
+      console.error("Error generating mindset:", error);
+      toast.error(error.message || "Erro ao gerar protocolo de mindset");
+    } finally {
+      setGeneratingMindset(false);
+    }
+  };
+
   const filteredProtocols = protocols.filter(
     (p) =>
       p.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -282,14 +351,24 @@ export default function AdminPlanos() {
                 {format(new Date(protocol.data_geracao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
               </TableCell>
               <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditDialog({ open: true, protocol })}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditDialog({ open: true, protocol })}
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setDeleteDialog({ open: true, protocolId: protocol.id })}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -361,11 +440,45 @@ export default function AdminPlanos() {
               </TabsContent>
 
               <TabsContent value="mindset">
+                {userId && mindsetProtocols.length === 0 && (
+                  <div className="mb-4">
+                    <Button 
+                      variant="fire" 
+                      onClick={() => handleGenerateMindset(userId)}
+                      disabled={generatingMindset}
+                    >
+                      {generatingMindset ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      Gerar Protocolo de Mindset
+                    </Button>
+                  </div>
+                )}
                 <ProtocolTable protocols={mindsetProtocols} tipo="mindset" />
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Delete Protocol Dialog */}
+        <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Protocolo</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este protocolo? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteProtocol} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Edit Protocol Dialog */}
         <Dialog open={editDialog.open} onOpenChange={(open) => setEditDialog({ ...editDialog, open })}>

@@ -124,29 +124,127 @@ export default function Dashboard() {
     );
   }
 
+  // Subscription plans for non-subscribers
+  const subscriptionPlans = [
+    {
+      name: "Embaixador",
+      price: "49,90",
+      period: "/mês",
+      badge: "25 VAGAS",
+      priceId: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
+      features: ["Treino personalizado", "Receitas exclusivas", "Fale com Mentor 24h", "Dashboard de progresso", "Análise de fotos", "Preço vitalício"],
+      popular: true,
+    },
+    {
+      name: "Mensal",
+      price: "197",
+      period: "/mês",
+      priceId: "price_1ScZrECuFZvf5xFdfS9W8kvY",
+      features: ["Treino personalizado", "Receitas exclusivas", "Fale com Mentor 24h", "Dashboard de progresso", "Análise de fotos"],
+      popular: false,
+    },
+    {
+      name: "Trimestral",
+      price: "497",
+      period: "/3 meses",
+      priceId: "price_1ScZsTCuFZvf5xFdbW8kJeQF",
+      savings: "Economize R$94",
+      features: ["Tudo do Mensal", "Check-ins semanais", "Ajustes de protocolo", "Consultoria nutricional"],
+      popular: false,
+    },
+    {
+      name: "Semestral",
+      price: "697",
+      period: "/6 meses",
+      priceId: "price_1ScZtrCuFZvf5xFd8iXDfbEp",
+      savings: "Economize R$485",
+      features: ["Tudo do Trimestral", "Plano nutricional avançado", "Suporte prioritário"],
+      popular: false,
+    },
+    {
+      name: "Anual",
+      price: "997",
+      period: "/ano",
+      priceId: "price_1ScZvCCuFZvf5xFdjrs51JQB",
+      savings: "Economize R$1.367",
+      features: ["Tudo do Semestral", "Mentoria exclusiva", "Comunidade VIP"],
+      popular: false,
+    },
+  ];
+
+  const handleSelectPlan = async (priceId: string) => {
+    try {
+      await createCheckout(priceId);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível iniciar o checkout",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Show subscription required screen (admins bypass this)
   if (!subscribed && !isAdmin) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <main className="pt-24 pb-12 px-4">
-          <div className="container mx-auto max-w-lg text-center">
-            <Card className="p-8">
+          <div className="container mx-auto max-w-6xl">
+            <div className="text-center mb-10">
               <div className="mx-auto w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-6">
                 <Crown className="w-8 h-8 text-primary" />
               </div>
-              <h1 className="text-2xl font-bold mb-4">Assinatura Necessária</h1>
-              <p className="text-muted-foreground mb-6">
-                Para acessar todo o conteúdo do Método Renascer, você precisa de uma assinatura ativa.
+              <h1 className="text-3xl font-bold mb-4">Escolha seu Plano</h1>
+              <p className="text-muted-foreground max-w-lg mx-auto">
+                Para acessar todo o conteúdo do Método Renascer, escolha o plano que melhor se adapta a você.
               </p>
-              <div className="bg-muted/50 rounded-lg p-4 mb-6">
-                <p className="text-3xl font-bold text-primary">R$ 49,90</p>
-                <p className="text-sm text-muted-foreground">por mês</p>
-              </div>
-              <Button onClick={handleSubscribe} size="lg" className="w-full">
-                Assinar Agora
-              </Button>
-            </Card>
+            </div>
+
+            <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {subscriptionPlans.map((plan) => (
+                <Card 
+                  key={plan.name} 
+                  className={`relative p-5 flex flex-col ${plan.popular ? 'border-primary ring-1 ring-primary' : ''}`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold rounded-full">
+                      {plan.badge}
+                    </div>
+                  )}
+                  {plan.savings && (
+                    <div className="absolute top-2 right-2 bg-muted text-muted-foreground px-2 py-0.5 text-[10px] rounded">
+                      {plan.savings}
+                    </div>
+                  )}
+                  
+                  <h3 className="font-bold text-lg mb-2">{plan.name}</h3>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-sm text-muted-foreground">R$</span>
+                    <span className="text-2xl font-bold text-primary">{plan.price}</span>
+                    <span className="text-xs text-muted-foreground">{plan.period}</span>
+                  </div>
+                  
+                  <ul className="space-y-2 mb-4 flex-1 text-sm">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2">
+                        <span className="text-primary">✓</span>
+                        <span className="text-muted-foreground text-xs">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  <Button 
+                    variant={plan.popular ? "fire" : "outline"} 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => handleSelectPlan(plan.priceId)}
+                  >
+                    {plan.popular ? "GARANTIR VAGA" : "ESCOLHER"}
+                  </Button>
+                </Card>
+              ))}
+            </div>
           </div>
         </main>
       </div>
