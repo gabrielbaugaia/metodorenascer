@@ -18,10 +18,12 @@ import {
   Save, 
   User, 
   FileText,
-  Camera
+  Camera,
+  Sparkles,
+  CreditCard
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface Profile {
@@ -66,14 +68,34 @@ interface Profile {
   data_nascimento: string | null;
 }
 
+interface Subscription {
+  id: string;
+  status: string;
+  plan_type: string;
+  current_period_start: string | null;
+  current_period_end: string | null;
+}
+
+const PLAN_OPTIONS = [
+  { value: "embaixador", label: "Embaixador - R$49,90/mês", days: 30 },
+  { value: "mensal", label: "Mensal - R$197/mês", days: 30 },
+  { value: "trimestral", label: "Trimestral - R$497", days: 90 },
+  { value: "semestral", label: "Semestral - R$697", days: 180 },
+  { value: "anual", label: "Anual - R$997", days: 365 },
+];
+
 export default function AdminClienteDetalhes() {
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generatingProtocols, setGeneratingProtocols] = useState(false);
+  const [assigningPlan, setAssigningPlan] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -86,6 +108,7 @@ export default function AdminClienteDetalhes() {
   useEffect(() => {
     if (isAdmin && id) {
       fetchProfile();
+      fetchSubscription();
     }
   }, [isAdmin, id]);
 
@@ -105,6 +128,113 @@ export default function AdminClienteDetalhes() {
       navigate("/admin/clientes");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubscription = async () => {
+    if (!id) return;
+    try {
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .eq("user_id", id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setSubscription(data);
+        setSelectedPlan(data.plan_type || "");
+      }
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+    }
+  };
+
+  const handleAssignPlan = async () => {
+    if (!id || !selectedPlan) {
+      toast.error("Selecione um plano");
+      return;
+    }
+
+    setAssigningPlan(true);
+    try {
+      const planInfo = PLAN_OPTIONS.find(p => p.value === selectedPlan);
+      const now = new Date();
+      const periodEnd = addDays(now, planInfo?.days || 30);
+
+      // Check if subscription exists
+      if (subscription) {
+        // Update existing subscription
+        const { error } = await supabase
+          .from("subscriptions")
+          .update({
+            status: "active",
+            plan_type: selectedPlan,
+            current_period_start: now.toISOString(),
+            current_period_end: periodEnd.toISOString(),
+          })
+          .eq("id", subscription.id);
+
+        if (error) throw error;
+      } else {
+        // Create new subscription
+        const { error } = await supabase
+          .from("subscriptions")
+          .insert({
+            user_id: id,
+            status: "active",
+            plan_type: selectedPlan,
+            current_period_start: now.toISOString(),
+            current_period_end: periodEnd.toISOString(),
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success("Plano atribuído com sucesso!");
+      fetchSubscription();
+    } catch (error) {
+      console.error("Error assigning plan:", error);
+      toast.error("Erro ao atribuir plano");
+    } finally {
+      setAssigningPlan(false);
+    }
+  };
+
+  const handleGenerateAllProtocols = async () => {
+    if (!id) return;
+
+    setGeneratingProtocols(true);
+    try {
+      // Fetch profile for context
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      // Generate all 3 protocols
+      const types = ["treino", "nutricao", "mindset"];
+      
+      for (const tipo of types) {
+        const { error } = await supabase.functions.invoke("generate-protocol", {
+          body: {
+            tipo,
+            userId: id,
+            userContext: profileData,
+          },
+        });
+
+        if (error) throw error;
+      }
+
+      toast.success("Todos os protocolos gerados com sucesso!");
+    } catch (error: any) {
+      console.error("Error generating protocols:", error);
+      toast.error(error.message || "Erro ao gerar protocolos");
+    } finally {
+      setGeneratingProtocols(false);
     }
   };
 
@@ -180,19 +310,20 @@ export default function AdminClienteDetalhes() {
     <ClientLayout>
       <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/admin/clientes")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">{profile.full_name}</h1>
-              <p className="text-muted-foreground text-sm">{profile.email}</p>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/admin/clientes")}>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold">{profile.full_name}</h1>
+                <p className="text-muted-foreground text-sm">{profile.email}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate(`/admin/planos?userId=${id}`)}>
-              <FileText className="h-4 w-4 mr-2" />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate(`/admin/planos?userId=${id}`)}>
+                <FileText className="h-4 w-4 mr-2" />
               Ver Protocolos
             </Button>
             <Button variant="fire" onClick={handleSave} disabled={saving}>
@@ -200,6 +331,81 @@ export default function AdminClienteDetalhes() {
               Salvar
             </Button>
           </div>
+        </div>
+
+        {/* Actions Card */}
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Ações Rápidas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Assign Plan */}
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="flex-1">
+                <Label className="mb-2 block">Atribuir Plano</Label>
+                <div className="flex gap-2">
+                  <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Selecione um plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PLAN_OPTIONS.map((plan) => (
+                        <SelectItem key={plan.value} value={plan.value}>
+                          {plan.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleAssignPlan} disabled={assigningPlan || !selectedPlan}>
+                    {assigningPlan ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CreditCard className="h-4 w-4 mr-2" />
+                    )}
+                    Atribuir
+                  </Button>
+                </div>
+                {subscription && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
+                      {subscription.status === "active" ? "Ativo" : subscription.status}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {subscription.plan_type}
+                      {subscription.current_period_end && (
+                        <> - Até {format(new Date(subscription.current_period_end), "dd/MM/yyyy", { locale: ptBR })}</>
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Generate Protocols */}
+            <div>
+              <Label className="mb-2 block">Gerar Protocolos</Label>
+              <Button 
+                variant="fire" 
+                onClick={handleGenerateAllProtocols} 
+                disabled={generatingProtocols}
+                className="w-full md:w-auto"
+              >
+                {generatingProtocols ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Sparkles className="h-4 w-4 mr-2" />
+                )}
+                Gerar Todos os Protocolos (Treino + Nutrição + Mindset)
+              </Button>
+              <p className="text-xs text-muted-foreground mt-1">
+                Gera automaticamente os 3 protocolos baseados na anamnese do cliente
+              </p>
+            </div>
+          </CardContent>
+        </Card>
         </div>
 
         {/* Status & Info */}
