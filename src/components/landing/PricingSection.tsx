@@ -5,31 +5,72 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const plans = [
   {
-    name: "INICIAL",
-    price: "97",
+    name: "EMBAIXADOR",
+    price: "49,90",
+    period: "/mes",
+    badge: "25 VAGAS",
+    features: [
+      "Treino personalizado IA",
+      "Receitas geradas por IA",
+      "Suporte WhatsApp 24h",
+      "Dashboard de progresso",
+      "Analise de fotos",
+      "Acesso vitalicio ao preco"
+    ],
+    popular: true,
+    promotional: true
+  },
+  {
+    name: "MENSAL",
+    price: "197",
     period: "/mes",
     features: [
       "Treino personalizado IA",
       "Receitas geradas por IA",
-      "Suporte WhatsApp",
+      "Suporte WhatsApp 24h",
       "Dashboard de progresso",
-      "Analise de fotos"
+      "Analise de fotos e videos"
     ],
     popular: false
   },
   {
-    name: "PREMIUM",
-    price: "197",
-    period: "/mes",
+    name: "TRIMESTRAL",
+    price: "497",
+    period: "/3 meses",
+    savings: "Economize R$94",
     features: [
-      "Tudo do plano Inicial",
-      "Consultoria individual",
-      "Video-chamadas semanais",
-      "Analise de video em tempo real",
-      "Plano nutricional avancado",
-      "Acesso prioritario"
+      "Tudo do plano Mensal",
+      "Check-ins semanais",
+      "Ajustes de protocolo",
+      "Consultoria nutricional"
     ],
-    popular: true
+    popular: false
+  },
+  {
+    name: "SEMESTRAL",
+    price: "697",
+    period: "/6 meses",
+    savings: "Economize R$485",
+    features: [
+      "Tudo do plano Trimestral",
+      "Video-chamadas mensais",
+      "Plano nutricional avancado",
+      "Suporte prioritario"
+    ],
+    popular: false
+  },
+  {
+    name: "ANUAL",
+    price: "997",
+    period: "/ano",
+    savings: "Economize R$1.367",
+    features: [
+      "Tudo do plano Semestral",
+      "Mentoria exclusiva",
+      "Acesso a comunidade VIP",
+      "Bonus: E-books exclusivos"
+    ],
+    popular: false
   }
 ];
 
@@ -57,49 +98,55 @@ export function PricingSection() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mt-12">
+        <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-6 max-w-7xl mx-auto mt-12">
           {plans.map((plan, index) => (
             <Card 
               key={plan.name}
               className={`relative overflow-hidden animate-fade-in transition-all duration-300 ${
                 plan.popular 
-                  ? 'bg-primary/10 border-primary/50 scale-105' 
+                  ? 'bg-primary/10 border-primary/50 md:scale-105' 
                   : 'bg-card border-border/50'
               }`}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               {plan.popular && (
-                <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-4 py-1 text-sm font-bold">
-                  RECOMENDADO
+                <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-bold">
+                  {plan.badge || "RECOMENDADO"}
                 </div>
               )}
               
-              <CardContent className="p-8">
-                <h3 className="font-display text-2xl text-foreground mb-4">{plan.name}</h3>
+              {plan.savings && (
+                <div className="absolute top-0 left-0 bg-green-600 text-white px-2 py-1 text-xs font-bold">
+                  {plan.savings}
+                </div>
+              )}
+              
+              <CardContent className="p-6">
+                <h3 className="font-display text-xl text-foreground mb-3">{plan.name}</h3>
                 
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-2xl text-muted-foreground">R$</span>
-                  <span className="font-display text-6xl text-primary">{plan.price}</span>
-                  <span className="text-muted-foreground">{plan.period}</span>
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-lg text-muted-foreground">R$</span>
+                  <span className="font-display text-4xl text-primary">{plan.price}</span>
+                  <span className="text-sm text-muted-foreground">{plan.period}</span>
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-2 mb-6">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3">
-                      <Check className="w-5 h-5 text-primary flex-shrink-0" />
-                      <span className="text-muted-foreground">{feature}</span>
+                    <li key={feature} className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-muted-foreground">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
                 <Button 
                   variant={plan.popular ? "fire" : "outline"} 
-                  size="lg" 
+                  size="sm" 
                   className="w-full"
                   asChild
                 >
                   <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                    Escolher Plano
+                    {plan.promotional ? "Garantir Vaga" : "Escolher Plano"}
                   </a>
                 </Button>
               </CardContent>
