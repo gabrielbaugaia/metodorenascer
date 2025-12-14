@@ -10,9 +10,9 @@ const plans = [
     period: "/mes",
     badge: "25 VAGAS",
     features: [
-      "Treino personalizado IA",
-      "Receitas geradas por IA",
-      "Suporte WhatsApp 24h",
+      "Treino personalizado",
+      "Receitas exclusivas",
+      "Fale com Mentor 24h",
       "Dashboard de progresso",
       "Analise de fotos",
       "Acesso vitalicio ao preco"
@@ -25,9 +25,9 @@ const plans = [
     price: "197",
     period: "/mes",
     features: [
-      "Treino personalizado IA",
-      "Receitas geradas por IA",
-      "Suporte WhatsApp 24h",
+      "Treino personalizado",
+      "Receitas exclusivas",
+      "Fale com Mentor 24h",
       "Dashboard de progresso",
       "Analise de fotos e videos"
     ],
@@ -53,9 +53,9 @@ const plans = [
     savings: "Economize R$485",
     features: [
       "Tudo do plano Trimestral",
-      "Video-chamadas mensais",
       "Plano nutricional avancado",
-      "Suporte prioritario"
+      "Suporte prioritario",
+      "Acesso a comunidade"
     ],
     popular: false
   },
