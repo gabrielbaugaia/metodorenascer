@@ -6,13 +6,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Mapear tipo de plano para duração em semanas
+const planDurationWeeks: Record<string, number> = {
+  "embaixador": 4,
+  "mensal": 4,
+  "trimestral": 12,
+  "semestral": 24,
+  "anual": 48,
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { tipo, userContext, userId, adjustments } = await req.json();
+    const { tipo, userContext, userId, adjustments, planType } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -24,21 +33,39 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // Determinar duração do protocolo baseado no plano
+    const durationWeeks = planDurationWeeks[planType?.toLowerCase()] || 4;
+    
+    // Calcular quantas semanas liberar (máximo 4 por ciclo)
+    const weeksPerCycle = 4;
+    const totalCycles = Math.ceil(durationWeeks / weeksPerCycle);
+
     let systemPrompt = "";
     let userPrompt = "";
 
     if (tipo === "treino") {
       systemPrompt = `Você é um personal trainer especializado do Método Renascer. Crie um protocolo de treino completo e personalizado.
 
+IMPORTANTE: 
+- O plano deve ter ${durationWeeks} semanas no total
+- Divida em ciclos de ${weeksPerCycle} semanas cada
+- O aluno deve enviar fotos e feedback a cada ${weeksPerCycle} semanas para ajustes
+- Inclua observação sobre possíveis ajustes após análise das fotos mensais
+
 RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
 {
   "titulo": "Protocolo de Treino Personalizado",
-  "duracao_semanas": 4,
+  "duracao_semanas": ${durationWeeks},
+  "ciclo_atual": 1,
+  "total_ciclos": ${totalCycles},
   "nivel": "iniciante|intermediario|avancado",
   "objetivo": "...",
+  "observacao_ajustes": "Este protocolo pode ser ajustado após o envio das fotos e feedback a cada ${weeksPerCycle} semanas. O acompanhamento contínuo garante resultados otimizados.",
   "semanas": [
     {
       "semana": 1,
+      "ciclo": 1,
+      "bloqueada": false,
       "dias": [
         {
           "dia": "Segunda-feira",
@@ -60,26 +87,37 @@ RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
   ],
   "observacoes_gerais": "...",
   "aquecimento": "5-10 min de cardio leve",
-  "alongamento": "10 min ao final"
+  "alongamento": "10 min ao final",
+  "proxima_avaliacao": "Enviar fotos e feedback após semana 4 para ajustes do próximo ciclo"
 }`;
 
       userPrompt = `Crie um protocolo de treino para este cliente:
 ${JSON.stringify(userContext, null, 2)}
 
+Plano contratado: ${planType || 'mensal'} (${durationWeeks} semanas)
 ${adjustments ? `Ajustes solicitados: ${adjustments}` : ""}
 
 Considere:
 - Nível de experiência do cliente
 - Objetivos específicos
 - Lesões ou restrições
-- Disponibilidade semanal`;
+- Disponibilidade semanal
+- Gerar apenas as primeiras ${weeksPerCycle} semanas detalhadas (as próximas serão liberadas após envio de feedback)`;
     } else if (tipo === "nutricao") {
       systemPrompt = `Você é um nutricionista esportivo do Método Renascer. Crie um plano alimentar completo e personalizado.
+
+IMPORTANTE:
+- O plano é para ${durationWeeks} semanas
+- Pode ser ajustado a cada ${weeksPerCycle} semanas após análise de fotos e feedback
+- Inclua observação sobre ajustes periódicos
 
 RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
 {
   "titulo": "Plano Nutricional Personalizado",
+  "duracao_semanas": ${durationWeeks},
+  "ciclo_atual": 1,
   "objetivo": "...",
+  "observacao_ajustes": "Este plano será ajustado a cada ${weeksPerCycle} semanas conforme seu progresso e envio de fotos.",
   "calorias_diarias": 2000,
   "macros": {
     "proteinas": "150g",
@@ -96,12 +134,14 @@ RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
   ],
   "suplementacao": ["Whey Protein pós-treino", "Creatina 5g/dia"],
   "hidratacao": "Mínimo 2.5L água/dia",
-  "dicas_gerais": ["Coma devagar", "Evite distrações durante refeições"]
+  "dicas_gerais": ["Coma devagar", "Evite distrações durante refeições"],
+  "proxima_avaliacao": "Enviar fotos e feedback após semana ${weeksPerCycle} para ajustes"
 }`;
 
       userPrompt = `Crie um plano nutricional para este cliente:
 ${JSON.stringify(userContext, null, 2)}
 
+Plano contratado: ${planType || 'mensal'} (${durationWeeks} semanas)
 ${adjustments ? `Ajustes solicitados: ${adjustments}` : ""}
 
 Considere:
@@ -115,6 +155,7 @@ Considere:
 RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
 {
   "titulo": "Protocolo de Mindset - Reprogramação Mental",
+  "duracao_semanas": ${durationWeeks},
   "mentalidade_necessaria": {
     "titulo": "Disciplina supera motivação",
     "descricao": "A transformação física é 80% mental. Você não precisa estar motivado todos os dias, mas precisa ser disciplinado.",
@@ -141,16 +182,6 @@ RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
       "crenca": "Não tenho tempo para treinar",
       "reformulacao": "Tenho as mesmas 24 horas que pessoas de sucesso. Minha saúde é prioridade e encontro tempo para o que é importante.",
       "acao": "Bloquear 30 minutos no calendário como compromisso inegociável"
-    },
-    {
-      "crenca": "Minha genética não ajuda",
-      "reformulacao": "Genética define meu ponto de partida, não meu destino. Com consistência, supero qualquer predisposição.",
-      "acao": "Focar no que posso controlar: alimentação, treino e descanso"
-    },
-    {
-      "crenca": "Já tentei antes e não funcionou",
-      "reformulacao": "Cada tentativa foi um aprendizado. Desta vez tenho mais conhecimento e um método comprovado.",
-      "acao": "Identificar o que deu errado antes e evitar os mesmos erros"
     }
   ],
   "habitos_semanais": [
@@ -168,6 +199,7 @@ RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
       userPrompt = `Crie um protocolo de mindset personalizado para este cliente:
 ${JSON.stringify(userContext, null, 2)}
 
+Plano contratado: ${planType || 'mensal'} (${durationWeeks} semanas)
 ${adjustments ? `Ajustes solicitados: ${adjustments}` : ""}
 
 Considere:
@@ -212,13 +244,20 @@ Considere:
     // Parse JSON from response
     let protocolData;
     try {
-      // Remove markdown code blocks if present
       const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim();
       protocolData = JSON.parse(cleanContent);
     } catch (e) {
       console.error("Failed to parse protocol JSON:", content);
       throw new Error("Erro ao processar protocolo gerado");
     }
+
+    // Adicionar metadados de controle de ciclos
+    protocolData.plan_type = planType || 'mensal';
+    protocolData.duracao_semanas = durationWeeks;
+    protocolData.semanas_por_ciclo = weeksPerCycle;
+    protocolData.ciclo_atual = 1;
+    protocolData.total_ciclos = totalCycles;
+    protocolData.data_proxima_avaliacao = new Date(Date.now() + weeksPerCycle * 7 * 24 * 60 * 60 * 1000).toISOString();
 
     // Save protocol to database
     const { data: savedProtocol, error: saveError } = await supabaseClient
