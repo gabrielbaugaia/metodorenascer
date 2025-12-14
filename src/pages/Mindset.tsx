@@ -2,234 +2,169 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Progress } from "@/components/ui/progress";
 import { 
   Brain, 
-  Target, 
-  Clock, 
-  Coffee, 
-  Moon, 
   Sun, 
-  Utensils,
-  Dumbbell,
-  Heart,
+  Moon, 
+  Zap, 
+  X,
+  Download,
   Loader2,
-  AlertCircle,
+  Sparkles,
   CheckCircle,
-  Lightbulb
+  Target
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
-interface Profile {
-  full_name: string;
-  goals?: string;
-  availability?: string;
-  nivel_experiencia?: string;
-  injuries?: string;
-  restricoes_medicas?: string;
-  objetivos_detalhados?: any;
+interface MindsetPratica {
+  nome: string;
+  descricao: string;
 }
 
-interface Orientation {
-  icon: typeof Brain;
-  title: string;
-  description: string;
-  tips: string[];
-  color: string;
+interface MindsetProtocol {
+  titulo: string;
+  mentalidade_necessaria: {
+    titulo: string;
+    descricao: string;
+    reflexao: string;
+  };
+  rotina_manha: {
+    duracao: string;
+    praticas: MindsetPratica[];
+  };
+  rotina_noite: {
+    duracao: string;
+    praticas: MindsetPratica[];
+  };
+  crencas_limitantes: {
+    crenca: string;
+    reformulacao: string;
+    acao: string;
+  }[];
+  habitos_semanais?: string[];
+  afirmacoes_personalizadas?: string[];
+}
+
+interface Protocol {
+  id: string;
+  tipo: string;
+  titulo: string;
+  conteudo: MindsetProtocol;
+  data_geracao: string;
+  ativo: boolean;
 }
 
 export default function Mindset() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [protocol, setProtocol] = useState<Protocol | null>(null);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (user) {
-      fetchProfile();
+      fetchProtocol();
+      loadCheckedItems();
     }
   }, [user]);
 
-  const fetchProfile = async () => {
+  const fetchProtocol = async () => {
     try {
       const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name, goals, availability, nivel_experiencia, injuries, restricoes_medicas, objetivos_detalhados")
-        .eq("id", user?.id)
-        .single();
+        .from("protocolos")
+        .select("*")
+        .eq("user_id", user?.id)
+        .eq("tipo", "mindset")
+        .eq("ativo", true)
+        .order("data_geracao", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
-      setProfile(data);
+      if (data) {
+        setProtocol({
+          ...data,
+          conteudo: data.conteudo as unknown as MindsetProtocol,
+          ativo: data.ativo ?? false
+        });
+      }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error("Error fetching mindset protocol:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Generate personalized orientations based on profile
-  const generateOrientations = (): Orientation[] => {
-    const orientations: Orientation[] = [];
-
-    // Base orientations for everyone
-    orientations.push({
-      icon: Sun,
-      title: "Rotina Matinal",
-      description: "Comece o dia com energia e foco para maximizar seus resultados.",
-      tips: [
-        "Acorde no mesmo horário todos os dias, inclusive fins de semana",
-        "Tome água logo ao acordar para hidratar o corpo",
-        "Reserve 5-10 minutos para alongamento ou meditação",
-        "Evite celular nos primeiros 30 minutos do dia"
-      ],
-      color: "text-yellow-500"
-    });
-
-    orientations.push({
-      icon: Moon,
-      title: "Qualidade do Sono",
-      description: "O sono é fundamental para recuperação muscular e saúde mental.",
-      tips: [
-        "Durma de 7 a 9 horas por noite",
-        "Evite telas 1 hora antes de dormir",
-        "Mantenha o quarto escuro e fresco",
-        "Evite cafeína após 14h"
-      ],
-      color: "text-indigo-500"
-    });
-
-    // Based on availability
-    if (profile?.availability?.toLowerCase().includes("pouco") || 
-        profile?.availability?.toLowerCase().includes("limitad")) {
-      orientations.push({
-        icon: Clock,
-        title: "Otimização do Tempo",
-        description: "Estratégias para quem tem pouco tempo disponível.",
-        tips: [
-          "Prepare refeições em batch no domingo",
-          "Treinos de 20-30 minutos são efetivos se intensos",
-          "Use deslocamentos para exercícios leves",
-          "Priorize exercícios compostos que trabalham mais músculos"
-        ],
-        color: "text-blue-500"
-      });
+  const loadCheckedItems = () => {
+    const stored = localStorage.getItem(`mindset-progress-${user?.id}`);
+    if (stored) {
+      setCheckedItems(JSON.parse(stored));
     }
-
-    // Based on injuries
-    if (profile?.injuries) {
-      orientations.push({
-        icon: AlertCircle,
-        title: "Cuidados com Lesões",
-        description: "Orientações específicas considerando suas limitações físicas.",
-        tips: [
-          "Sempre faça aquecimento adequado antes dos treinos",
-          "Comunique qualquer desconforto imediatamente",
-          "Priorize exercícios de baixo impacto quando necessário",
-          "Fortaleça músculos estabilizadores",
-          "Não force movimentos que causam dor"
-        ],
-        color: "text-orange-500"
-      });
-    }
-
-    // Based on experience level
-    if (profile?.nivel_experiencia?.toLowerCase().includes("inici")) {
-      orientations.push({
-        icon: Target,
-        title: "Mentalidade de Iniciante",
-        description: "Construa uma base sólida para resultados duradouros.",
-        tips: [
-          "Foque em aprender a técnica correta dos exercícios",
-          "Não compare seu início com o meio de jornada de outros",
-          "Consistência vale mais que intensidade no começo",
-          "Celebre pequenas vitórias ao longo do caminho",
-          "Resultados reais levam semanas, seja paciente"
-        ],
-        color: "text-green-500"
-      });
-    } else if (profile?.nivel_experiencia?.toLowerCase().includes("inter") ||
-               profile?.nivel_experiencia?.toLowerCase().includes("avanc")) {
-      orientations.push({
-        icon: Dumbbell,
-        title: "Superando Platôs",
-        description: "Estratégias para continuar evoluindo.",
-        tips: [
-          "Varie exercícios a cada 4-6 semanas",
-          "Periodize intensidade e volume",
-          "Foque em pontos fracos específicos",
-          "Considere técnicas avançadas como drop sets",
-          "Reavalie sua dieta periodicamente"
-        ],
-        color: "text-purple-500"
-      });
-    }
-
-    // Nutrition mindset
-    orientations.push({
-      icon: Utensils,
-      title: "Mentalidade Alimentar",
-      description: "Desenvolva uma relação saudável com a alimentação.",
-      tips: [
-        "Coma devagar, mastigue bem os alimentos",
-        "Não pule refeições, isso atrapalha o metabolismo",
-        "Permita-se flexibilidade ocasional sem culpa",
-        "Hidrate-se adequadamente ao longo do dia",
-        "Prepare lanches saudáveis com antecedência"
-      ],
-      color: "text-green-500"
-    });
-
-    // Medical restrictions
-    if (profile?.restricoes_medicas) {
-      orientations.push({
-        icon: Heart,
-        title: "Saúde em Primeiro Lugar",
-        description: "Orientações considerando suas restrições médicas.",
-        tips: [
-          "Mantenha acompanhamento médico regular",
-          "Respeite os limites do seu corpo",
-          "Monitore sinais de alerta durante exercícios",
-          "Adapte exercícios conforme necessário",
-          "Priorize bem-estar sobre performance"
-        ],
-        color: "text-red-500"
-      });
-    }
-
-    // Motivation
-    orientations.push({
-      icon: Lightbulb,
-      title: "Mantendo a Motivação",
-      description: "Estratégias para não desistir nos dias difíceis.",
-      tips: [
-        "Defina metas pequenas e alcançáveis",
-        "Tire fotos de progresso mensalmente",
-        "Encontre um parceiro de treino ou grupo de apoio",
-        "Lembre-se do seu 'porquê' quando a motivação faltar",
-        "Trate falhas como aprendizado, não como fracasso"
-      ],
-      color: "text-primary"
-    });
-
-    return orientations;
   };
 
-  const orientations = generateOrientations();
-
-  // Daily quote based on goals
-  const getQuote = () => {
-    const quotes = [
-      { text: "O corpo alcança o que a mente acredita.", author: "Napoleon Hill" },
-      { text: "Disciplina é a ponte entre metas e conquistas.", author: "Jim Rohn" },
-      { text: "Não é sobre ter tempo, é sobre fazer tempo.", author: "Desconhecido" },
-      { text: "A dor que você sente hoje será a força que você sentirá amanhã.", author: "Desconhecido" },
-      { text: "Consistência é mais importante que perfeição.", author: "Desconhecido" }
-    ];
-    return quotes[Math.floor(Math.random() * quotes.length)];
+  const saveCheckedItems = (items: Record<string, boolean>) => {
+    localStorage.setItem(`mindset-progress-${user?.id}`, JSON.stringify(items));
   };
 
-  const dailyQuote = getQuote();
+  const toggleItem = (key: string) => {
+    const newChecked = { ...checkedItems, [key]: !checkedItems[key] };
+    setCheckedItems(newChecked);
+    saveCheckedItems(newChecked);
+  };
+
+  const generateProtocol = async () => {
+    if (!user) return;
+    
+    setGenerating(true);
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      const { data, error } = await supabase.functions.invoke("generate-protocol", {
+        body: {
+          tipo: "mindset",
+          userId: user.id,
+          userContext: profile,
+        },
+      });
+
+      if (error) throw error;
+      
+      toast.success("Protocolo de mindset gerado com sucesso!");
+      fetchProtocol();
+    } catch (error: any) {
+      console.error("Error generating mindset:", error);
+      toast.error(error.message || "Erro ao gerar protocolo");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const countProgress = () => {
+    if (!protocol?.conteudo) return { completed: 0, total: 0 };
+    
+    const content = protocol.conteudo;
+    const morningPractices = content.rotina_manha?.praticas?.length || 0;
+    const nightPractices = content.rotina_noite?.praticas?.length || 0;
+    const total = morningPractices + nightPractices;
+    
+    const completed = Object.values(checkedItems).filter(Boolean).length;
+    return { completed: Math.min(completed, total), total };
+  };
+
+  const { completed, total } = countProgress();
+  const progressPercent = total > 0 ? (completed / total) * 100 : 0;
 
   if (loading) {
     return (
@@ -241,98 +176,221 @@ export default function Mindset() {
     );
   }
 
+  if (!protocol) {
+    return (
+      <ClientLayout>
+        <div className="p-6 md:p-8 max-w-4xl mx-auto">
+          <div className="text-center py-16">
+            <Brain className="h-16 w-16 text-primary mx-auto mb-4" />
+            <h1 className="text-3xl font-display font-bold mb-2">Protocolo de Mindset</h1>
+            <p className="text-muted-foreground mb-8">
+              Seu protocolo de mentalidade ainda não foi gerado
+            </p>
+            <Button onClick={generateProtocol} disabled={generating} variant="fire" size="lg">
+              {generating ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  Gerando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-5 w-5 mr-2" />
+                  Gerar Protocolo de Mindset
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </ClientLayout>
+    );
+  }
+
+  const content = protocol.conteudo;
+
   return (
     <ClientLayout>
       <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="font-display text-4xl text-foreground">
-              Orientações de <span className="text-gradient">Mindset</span>
-            </h1>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <Brain className="h-10 w-10 text-primary" />
+            <h1 className="font-display text-4xl text-foreground">MINDSET</h1>
           </div>
-          <p className="text-muted-foreground">
-            Orientações personalizadas baseadas no seu perfil e objetivos
+          <p className="text-muted-foreground uppercase tracking-wider text-sm">
+            Reprogramação Mental para Transformação
           </p>
         </div>
 
-        {/* Daily quote */}
-        <Card variant="glass" className="p-6 border-primary/20">
-          <div className="text-center">
-            <Coffee className="w-8 h-8 text-primary mx-auto mb-3" />
-            <p className="text-xl italic text-foreground mb-2">"{dailyQuote.text}"</p>
-            <p className="text-sm text-primary">— {dailyQuote.author}</p>
-          </div>
+        {/* Progress Card */}
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-muted-foreground">Progresso semanal:</span>
+              <span className="text-sm font-medium text-primary">
+                {completed}/{total} práticas
+              </span>
+            </div>
+            <Progress value={progressPercent} className="h-2" />
+          </CardContent>
         </Card>
 
-        {/* Profile Goals Summary */}
-        {profile?.goals && (
-          <Card variant="dashboard">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="h-5 w-5 text-primary" />
-                <span className="font-medium">Seus Objetivos</span>
+        {/* Mentalidade Necessária */}
+        {content.mentalidade_necessaria && (
+          <Card>
+            <CardContent className="py-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="h-5 w-5 text-yellow-500" />
+                <span className="font-display text-sm uppercase tracking-wider">
+                  Mentalidade Necessária
+                </span>
               </div>
-              <p className="text-muted-foreground">{profile.goals}</p>
-              {profile.nivel_experiencia && (
-                <Badge variant="secondary" className="mt-2">
-                  {profile.nivel_experiencia}
-                </Badge>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Orientations Grid */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {orientations.map((orientation, index) => (
-            <Card
-              key={index}
-              variant="dashboard"
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center gap-3 text-lg">
-                  <div className={`w-10 h-10 rounded-xl bg-muted flex items-center justify-center`}>
-                    <orientation.icon className={`w-5 h-5 ${orientation.color}`} />
-                  </div>
-                  {orientation.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">{orientation.description}</p>
-                <ul className="space-y-2">
-                  {orientation.tips.map((tip, tipIndex) => (
-                    <li key={tipIndex} className="flex items-start gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                      <span>{tip}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Important Notes */}
-        {(profile?.injuries || profile?.restricoes_medicas) && (
-          <Card className="border-orange-500/30 bg-orange-500/5">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="h-5 w-5 text-orange-500" />
-                <span className="font-medium text-orange-500">Atenção Especial</span>
-              </div>
+              <p className="text-lg mb-2">
+                <span className="text-primary font-medium">
+                  {content.mentalidade_necessaria.titulo}.
+                </span>{" "}
+                {content.mentalidade_necessaria.descricao}
+              </p>
               <p className="text-sm text-muted-foreground">
-                Lembre-se de sempre respeitar suas limitações físicas. Suas orientações foram adaptadas 
-                considerando suas condições específicas. Em caso de dúvidas, consulte seu profissional de saúde.
+                {content.mentalidade_necessaria.reflexao}
               </p>
             </CardContent>
           </Card>
         )}
+
+        {/* Rotina da Manhã */}
+        {content.rotina_manha && (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Sun className="h-5 w-5 text-yellow-500" />
+                  ROTINA DA MANHÃ
+                </CardTitle>
+                <Badge variant="secondary" className="text-primary">
+                  {content.rotina_manha.duracao}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {content.rotina_manha.praticas?.map((pratica, index) => (
+                <div
+                  key={`manha-${index}`}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => toggleItem(`manha-${index}`)}
+                >
+                  <Checkbox
+                    checked={checkedItems[`manha-${index}`] || false}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <div className="flex-1">
+                    <span className={checkedItems[`manha-${index}`] ? "line-through text-muted-foreground" : ""}>
+                      {pratica.nome}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Rotina da Noite */}
+        {content.rotina_noite && (
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Moon className="h-5 w-5 text-indigo-400" />
+                  ROTINA DA NOITE
+                </CardTitle>
+                <Badge variant="secondary" className="text-primary">
+                  {content.rotina_noite.duracao}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {content.rotina_noite.praticas?.map((pratica, index) => (
+                <div
+                  key={`noite-${index}`}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => toggleItem(`noite-${index}`)}
+                >
+                  <Checkbox
+                    checked={checkedItems[`noite-${index}`] || false}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <div className="flex-1">
+                    <span className={checkedItems[`noite-${index}`] ? "line-through text-muted-foreground" : ""}>
+                      {pratica.nome}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Crenças Limitantes */}
+        {content.crencas_limitantes && content.crencas_limitantes.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">
+                Crenças Limitantes para Superar
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="space-y-2">
+                {content.crencas_limitantes.map((item, index) => (
+                  <AccordionItem key={index} value={`crenca-${index}`} className="border-none">
+                    <AccordionTrigger className="py-3 px-4 bg-muted/30 rounded-lg hover:bg-muted/50 hover:no-underline">
+                      <div className="flex items-center gap-3">
+                        <X className="h-4 w-4 text-red-500" />
+                        <span className="text-left">"{item.crenca}"</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-3 px-4 pb-0">
+                      <div className="space-y-3 pl-7">
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase mb-1">Reformulação</p>
+                          <p className="text-sm text-green-500">{item.reformulacao}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase mb-1">Ação</p>
+                          <p className="text-sm">{item.acao}</p>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Afirmações Personalizadas */}
+        {content.afirmacoes_personalizadas && content.afirmacoes_personalizadas.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
+                <Target className="h-4 w-4" />
+                Afirmações Personalizadas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {content.afirmacoes_personalizadas.map((afirmacao, index) => (
+                <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                  <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-sm">{afirmacao}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Download Button */}
+        <Button variant="default" className="w-full" size="lg">
+          <Download className="h-4 w-4 mr-2" />
+          BAIXAR PDF DE MINDSET
+        </Button>
       </div>
     </ClientLayout>
   );
