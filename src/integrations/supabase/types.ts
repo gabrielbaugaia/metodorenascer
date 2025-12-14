@@ -131,66 +131,132 @@ export type Database = {
       profiles: {
         Row: {
           age: number | null
+          anamnese_completa: boolean | null
           availability: string | null
+          bebe_agua_frequente: boolean | null
           client_status: Database["public"]["Enums"]["client_status"] | null
+          condicoes_saude: string | null
+          consome_alcool: string | null
           created_at: string | null
           data_nascimento: string | null
+          dias_disponiveis: string | null
           email: string | null
+          escada_sem_cansar: string | null
+          foto_costas_url: string | null
+          foto_frente_url: string | null
+          foto_lado_url: string | null
           full_name: string
+          fuma: string | null
           goals: string | null
           height: number | null
           id: string
           injuries: string | null
+          ja_treinou_antes: boolean | null
+          local_treino: string | null
           medidas: Json | null
+          nivel_condicionamento: string | null
+          nivel_estresse: string | null
           nivel_experiencia: string | null
+          objetivo_principal: string | null
           objetivos_detalhados: Json | null
+          observacoes_adicionais: string | null
+          pratica_aerobica: boolean | null
+          qualidade_sono: string | null
+          refeicoes_por_dia: string | null
+          restricoes_alimentares: string | null
           restricoes_medicas: string | null
           sexo: string | null
           telefone: string | null
+          toma_medicamentos: boolean | null
           updated_at: string | null
           weight: number | null
+          whatsapp: string | null
         }
         Insert: {
           age?: number | null
+          anamnese_completa?: boolean | null
           availability?: string | null
+          bebe_agua_frequente?: boolean | null
           client_status?: Database["public"]["Enums"]["client_status"] | null
+          condicoes_saude?: string | null
+          consome_alcool?: string | null
           created_at?: string | null
           data_nascimento?: string | null
+          dias_disponiveis?: string | null
           email?: string | null
+          escada_sem_cansar?: string | null
+          foto_costas_url?: string | null
+          foto_frente_url?: string | null
+          foto_lado_url?: string | null
           full_name: string
+          fuma?: string | null
           goals?: string | null
           height?: number | null
           id: string
           injuries?: string | null
+          ja_treinou_antes?: boolean | null
+          local_treino?: string | null
           medidas?: Json | null
+          nivel_condicionamento?: string | null
+          nivel_estresse?: string | null
           nivel_experiencia?: string | null
+          objetivo_principal?: string | null
           objetivos_detalhados?: Json | null
+          observacoes_adicionais?: string | null
+          pratica_aerobica?: boolean | null
+          qualidade_sono?: string | null
+          refeicoes_por_dia?: string | null
+          restricoes_alimentares?: string | null
           restricoes_medicas?: string | null
           sexo?: string | null
           telefone?: string | null
+          toma_medicamentos?: boolean | null
           updated_at?: string | null
           weight?: number | null
+          whatsapp?: string | null
         }
         Update: {
           age?: number | null
+          anamnese_completa?: boolean | null
           availability?: string | null
+          bebe_agua_frequente?: boolean | null
           client_status?: Database["public"]["Enums"]["client_status"] | null
+          condicoes_saude?: string | null
+          consome_alcool?: string | null
           created_at?: string | null
           data_nascimento?: string | null
+          dias_disponiveis?: string | null
           email?: string | null
+          escada_sem_cansar?: string | null
+          foto_costas_url?: string | null
+          foto_frente_url?: string | null
+          foto_lado_url?: string | null
           full_name?: string
+          fuma?: string | null
           goals?: string | null
           height?: number | null
           id?: string
           injuries?: string | null
+          ja_treinou_antes?: boolean | null
+          local_treino?: string | null
           medidas?: Json | null
+          nivel_condicionamento?: string | null
+          nivel_estresse?: string | null
           nivel_experiencia?: string | null
+          objetivo_principal?: string | null
           objetivos_detalhados?: Json | null
+          observacoes_adicionais?: string | null
+          pratica_aerobica?: boolean | null
+          qualidade_sono?: string | null
+          refeicoes_por_dia?: string | null
+          restricoes_alimentares?: string | null
           restricoes_medicas?: string | null
           sexo?: string | null
           telefone?: string | null
+          toma_medicamentos?: boolean | null
           updated_at?: string | null
           weight?: number | null
+          whatsapp?: string | null
         }
         Relationships: []
       }

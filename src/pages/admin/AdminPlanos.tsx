@@ -52,6 +52,28 @@ interface Profile {
   restricoes_medicas?: string;
   objetivos_detalhados?: any;
   medidas?: any;
+  telefone?: string;
+  whatsapp?: string;
+  objetivo_principal?: string;
+  ja_treinou_antes?: boolean;
+  local_treino?: string;
+  dias_disponiveis?: string;
+  nivel_condicionamento?: string;
+  pratica_aerobica?: boolean;
+  escada_sem_cansar?: string;
+  condicoes_saude?: string;
+  toma_medicamentos?: boolean;
+  refeicoes_por_dia?: string;
+  bebe_agua_frequente?: boolean;
+  restricoes_alimentares?: string;
+  qualidade_sono?: string;
+  nivel_estresse?: string;
+  consome_alcool?: string;
+  fuma?: string;
+  foto_frente_url?: string;
+  foto_lado_url?: string;
+  foto_costas_url?: string;
+  observacoes_adicionais?: string;
 }
 
 interface Protocol {
@@ -115,7 +137,7 @@ export default function AdminPlanos() {
         (data || []).map(async (protocol) => {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("full_name, email, weight, height, age, sexo, goals, injuries, availability, nivel_experiencia, restricoes_medicas, objetivos_detalhados, medidas")
+            .select("full_name, email, weight, height, age, sexo, goals, injuries, availability, nivel_experiencia, restricoes_medicas, objetivos_detalhados, medidas, telefone, whatsapp, objetivo_principal, ja_treinou_antes, local_treino, dias_disponiveis, nivel_condicionamento, pratica_aerobica, escada_sem_cansar, condicoes_saude, toma_medicamentos, refeicoes_por_dia, bebe_agua_frequente, restricoes_alimentares, qualidade_sono, nivel_estresse, consome_alcool, fuma, foto_frente_url, foto_lado_url, foto_costas_url, observacoes_adicionais")
             .eq("id", protocol.user_id)
             .single();
 
