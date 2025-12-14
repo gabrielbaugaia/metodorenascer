@@ -3,8 +3,8 @@ import { Camera, Utensils, MessageCircle, Trophy } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 const pillars = [{
   icon: Camera,
-  title: "Analise de Treino e Fotos",
-  description: "Acompanhamento que avalia sua execucao e progresso em tempo real, corrigindo e otimizando cada movimento."
+  title: "Análise de Treino e Fotos",
+  description: "Acompanhamento que avalia sua execução e progresso em tempo real, corrigindo e otimizando cada movimento."
 }, {
   icon: Utensils,
   title: "Receitas 100% Suas",
@@ -12,11 +12,11 @@ const pillars = [{
 }, {
   icon: MessageCircle,
   title: "Fale com Mentor 24h",
-  description: "Suporte continuo pelo app. Tire duvidas, receba motivacao e ajustes no seu plano a qualquer momento."
+  description: "Suporte contínuo pelo app. Tire dúvidas, receba motivação e ajustes no seu plano a qualquer momento."
 }, {
   icon: Trophy,
   title: "Progresso Gamificado",
-  description: "Sistema de conquistas e badges que transforma sua jornada em um jogo. Cada meta batida e celebrada."
+  description: "Sistema de conquistas e badges que transforma sua jornada em um jogo. Cada meta batida é celebrada."
 }];
 export function MethodologySection() {
   const {

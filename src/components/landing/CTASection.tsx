@@ -23,7 +23,7 @@ export function CTASection() {
               SUA NOVA VIDA
             </h2>
             <h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-primary leading-none italic">
-              COMECA QUANDO
+              COMEÇA QUANDO
             </h2>
             <h2 className="font-display text-4xl md:text-6xl lg:text-7xl text-foreground leading-none italic">
               A ANTIGA TERMINA
@@ -32,7 +32,7 @@ export function CTASection() {
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Vagas limitadas para acompanhamento individual. 
-            Nao aceitamos curiosos, apenas comprometidos.
+            Não aceitamos curiosos, apenas comprometidos.
           </p>
 
           <div className="pt-4">
@@ -44,7 +44,7 @@ export function CTASection() {
             >
               <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                 <span className="relative z-10 font-display text-xl tracking-wider">
-                  RESERVAR MINHA TRANSFORMACAO
+                  RESERVAR MINHA TRANSFORMAÇÃO
                 </span>
                 <ArrowRight className="w-6 h-6 relative z-10 ml-3 group-hover:translate-x-2 transition-transform" />
               </a>
@@ -52,7 +52,7 @@ export function CTASection() {
           </div>
 
           <p className="text-muted-foreground/60 text-sm">
-            Ao clicar, voce sera direcionado para nosso WhatsApp
+            Ao clicar, você será direcionado para nosso WhatsApp
           </p>
         </div>
       </div>
