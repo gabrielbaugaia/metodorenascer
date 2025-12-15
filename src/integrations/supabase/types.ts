@@ -221,6 +221,7 @@ export type Database = {
           anamnese_completa: boolean | null
           availability: string | null
           bebe_agua_frequente: boolean | null
+          cashback_balance: number | null
           client_status: Database["public"]["Enums"]["client_status"] | null
           condicoes_saude: string | null
           consome_alcool: string | null
@@ -237,6 +238,9 @@ export type Database = {
           fuma: string | null
           goals: string | null
           height: number | null
+          horario_acorda: string | null
+          horario_dorme: string | null
+          horario_treino: string | null
           id: string
           injuries: string | null
           ja_treinou_antes: boolean | null
@@ -267,6 +271,7 @@ export type Database = {
           anamnese_completa?: boolean | null
           availability?: string | null
           bebe_agua_frequente?: boolean | null
+          cashback_balance?: number | null
           client_status?: Database["public"]["Enums"]["client_status"] | null
           condicoes_saude?: string | null
           consome_alcool?: string | null
@@ -283,6 +288,9 @@ export type Database = {
           fuma?: string | null
           goals?: string | null
           height?: number | null
+          horario_acorda?: string | null
+          horario_dorme?: string | null
+          horario_treino?: string | null
           id: string
           injuries?: string | null
           ja_treinou_antes?: boolean | null
@@ -313,6 +321,7 @@ export type Database = {
           anamnese_completa?: boolean | null
           availability?: string | null
           bebe_agua_frequente?: boolean | null
+          cashback_balance?: number | null
           client_status?: Database["public"]["Enums"]["client_status"] | null
           condicoes_saude?: string | null
           consome_alcool?: string | null
@@ -329,6 +338,9 @@ export type Database = {
           fuma?: string | null
           goals?: string | null
           height?: number | null
+          horario_acorda?: string | null
+          horario_dorme?: string | null
+          horario_treino?: string | null
           id?: string
           injuries?: string | null
           ja_treinou_antes?: boolean | null

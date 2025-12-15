@@ -107,7 +107,7 @@ export default function AreaCliente() {
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold uppercase">
-            Olá, <span className="text-primary">{profile?.full_name?.split(" ")[0] || "Guerreiro"}</span>!
+            Bem-vindo, <span className="text-primary">{profile?.full_name?.split(" ")[0] || "Cliente"}</span>!
           </h1>
           <p className="text-muted-foreground">
             Continue sua jornada de transformação. Você está no caminho certo!

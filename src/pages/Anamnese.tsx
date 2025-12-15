@@ -56,6 +56,11 @@ export default function Anamnese() {
     consome_alcool: "",
     fuma: "",
     
+    // Horários
+    horario_treino: "",
+    horario_acorda: "",
+    horario_dorme: "",
+    
     // Fotos
     foto_frente_url: "",
     foto_lado_url: "",
@@ -824,6 +829,50 @@ export default function Anamnese() {
                   </div>
                 </RadioGroup>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Horários */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Horários</CardTitle>
+              <CardDescription>
+                Informe seus horários para ajustar seu plano de dieta e treino
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="horario_treino">Horário preferido de treino</Label>
+                  <Input
+                    id="horario_treino"
+                    type="time"
+                    value={formData.horario_treino}
+                    onChange={(e) => setFormData({ ...formData, horario_treino: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="horario_acorda">Que horas acorda?</Label>
+                  <Input
+                    id="horario_acorda"
+                    type="time"
+                    value={formData.horario_acorda}
+                    onChange={(e) => setFormData({ ...formData, horario_acorda: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="horario_dorme">Que horas dorme?</Label>
+                  <Input
+                    id="horario_dorme"
+                    type="time"
+                    value={formData.horario_dorme}
+                    onChange={(e) => setFormData({ ...formData, horario_dorme: e.target.value })}
+                  />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                Mudou de horário de treino? Avise seu mentor para ajuste da dieta!
+              </p>
             </CardContent>
           </Card>
 

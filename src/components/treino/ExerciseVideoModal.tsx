@@ -22,6 +22,34 @@ interface ExerciseVideoModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Convert YouTube URLs to embed format
+function convertToEmbedUrl(url: string): string {
+  if (!url) return '';
+  
+  // Handle youtube.com/watch?v= format
+  if (url.includes('youtube.com/watch')) {
+    const videoId = url.split('v=')[1]?.split('&')[0];
+    if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+  }
+  
+  // Handle youtu.be/ short format
+  if (url.includes('youtu.be/')) {
+    const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+    if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+  }
+  
+  // Handle youtube.com/shorts/ format
+  if (url.includes('youtube.com/shorts/')) {
+    const videoId = url.split('shorts/')[1]?.split('?')[0];
+    if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+  }
+  
+  // Already embed format or other
+  if (url.includes('youtube.com/embed/')) return url;
+  
+  return url;
+}
+
 export function ExerciseVideoModal({
   exercise,
   open,
@@ -40,11 +68,11 @@ export function ExerciseVideoModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Video - only show iframe for valid YouTube/Vimeo URLs */}
-          {exercise.videoUrl && (exercise.videoUrl.includes('youtube.com') || exercise.videoUrl.includes('youtu.be') || exercise.videoUrl.includes('vimeo.com')) ? (
+          {/* Video - convert YouTube URLs to embed format */}
+          {exercise.videoUrl ? (
             <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
               <iframe
-                src={exercise.videoUrl}
+                src={convertToEmbedUrl(exercise.videoUrl)}
                 title={exercise.name}
                 className="absolute inset-0 w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

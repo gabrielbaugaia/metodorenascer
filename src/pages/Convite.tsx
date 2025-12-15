@@ -170,9 +170,13 @@ export default function Convite() {
 
         <Card variant="glass">
           <CardHeader>
-            <CardTitle className="text-center">Criar Conta Gratuita</CardTitle>
+            <CardTitle className="text-center">
+              {referralCode ? "Cadastre-se com 10% OFF" : "Criar Conta Gratuita"}
+            </CardTitle>
             <CardDescription className="text-center">
-              Preencha seus dados para ativar seu acesso de 30 dias
+              {referralCode 
+                ? "Cadastre-se e depois clique em 'COMPRAR PLANO' para ganhar 10% de desconto!" 
+                : "Preencha seus dados para ativar seu acesso de 30 dias"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -226,7 +230,7 @@ export default function Convite() {
               </div>
 
               <Button type="submit" variant="fire" className="w-full" disabled={loading}>
-                {loading ? "Criando conta..." : "Ativar Meu Acesso Gratuito"}
+                {loading ? "Criando conta..." : (referralCode ? "CADASTRAR COM 10% OFF" : "Ativar Meu Acesso Gratuito")}
               </Button>
             </form>
 
