@@ -26,7 +26,8 @@ import {
   Flame,
   FileText,
   HelpCircle,
-  Bell
+  Bell,
+  Gift
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ import { cn } from "@/lib/utils";
 const clientMenuItems = [
   { title: "Início", url: "/area-cliente", icon: Home },
   { title: "Meu Perfil", url: "/meu-perfil", icon: User },
+  { title: "Indicações", url: "/indicacoes", icon: Gift },
   { title: "Meus Protocolos", url: "/protocolos", icon: FileText },
   { title: "Treino", url: "/treino", icon: Dumbbell },
   { title: "Nutrição", url: "/nutricao", icon: Apple },

@@ -221,6 +221,7 @@ export type Database = {
           pratica_aerobica: boolean | null
           qualidade_sono: string | null
           refeicoes_por_dia: string | null
+          referred_by_code: string | null
           restricoes_alimentares: string | null
           restricoes_medicas: string | null
           sexo: string | null
@@ -265,6 +266,7 @@ export type Database = {
           pratica_aerobica?: boolean | null
           qualidade_sono?: string | null
           refeicoes_por_dia?: string | null
+          referred_by_code?: string | null
           restricoes_alimentares?: string | null
           restricoes_medicas?: string | null
           sexo?: string | null
@@ -309,6 +311,7 @@ export type Database = {
           pratica_aerobica?: boolean | null
           qualidade_sono?: string | null
           refeicoes_por_dia?: string | null
+          referred_by_code?: string | null
           restricoes_alimentares?: string | null
           restricoes_medicas?: string | null
           sexo?: string | null
@@ -383,6 +386,54 @@ export type Database = {
           titulo?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          discount_applied: boolean | null
+          discount_applied_at: string | null
+          id: string
+          referred_user_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          discount_applied?: boolean | null
+          discount_applied_at?: string | null
+          id?: string
+          referred_user_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          discount_applied?: boolean | null
+          discount_applied_at?: string | null
+          id?: string
+          referred_user_id?: string
+          referrer_id?: string
         }
         Relationships: []
       }

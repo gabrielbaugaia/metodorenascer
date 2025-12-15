@@ -26,6 +26,7 @@ import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminSuporteChats from "./pages/admin/AdminSuporteChats";
 import AdminMensagens from "./pages/admin/AdminMensagens";
 import MeuPerfil from "./pages/MeuPerfil";
+import Indicacoes from "./pages/Indicacoes";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/protocolos" element={<Protocolos />} />
             <Route path="/suporte" element={<Suporte />} />
             <Route path="/meu-perfil" element={<MeuPerfil />} />
+            <Route path="/indicacoes" element={<Indicacoes />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/clientes" element={<AdminClientes />} />
             <Route path="/admin/clientes/:id" element={<AdminClienteDetalhes />} />
