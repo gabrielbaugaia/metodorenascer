@@ -30,6 +30,7 @@ import MeuPerfil from "./pages/MeuPerfil";
 import Indicacoes from "./pages/Indicacoes";
 import RedefinirSenha from "./pages/RedefinirSenha";
 import Assinatura from "./pages/Assinatura";
+import AdminPlanosVenda from "./pages/admin/AdminPlanosVenda";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/admin/suporte" element={<AdminSuporteChats />} />
             <Route path="/admin/mensagens" element={<AdminMensagens />} />
             <Route path="/admin/videos" element={<AdminVideos />} />
+            <Route path="/admin/planos-venda" element={<AdminPlanosVenda />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
