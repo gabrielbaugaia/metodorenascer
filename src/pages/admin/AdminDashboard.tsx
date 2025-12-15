@@ -24,7 +24,7 @@ interface Stats {
   totalClients: number;
   activeSubscriptions: number;
   totalProtocols: number;
-  pendingCheckins: number;
+  monthlyRevenue: number;
 }
 
 interface RecentClient {
@@ -35,6 +35,13 @@ interface RecentClient {
   client_status: string | null;
 }
 
+interface MonthlyData {
+  month: string;
+  receita: number;
+  novos: number;
+  cancelados: number;
+}
+
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
@@ -43,9 +50,10 @@ export default function AdminDashboard() {
     totalClients: 0,
     activeSubscriptions: 0,
     totalProtocols: 0,
-    pendingCheckins: 0,
+    monthlyRevenue: 0,
   });
   const [recentClients, setRecentClients] = useState<RecentClient[]>([]);
+  const [chartData, setChartData] = useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,11 +74,14 @@ export default function AdminDashboard() {
           .from("profiles")
           .select("*", { count: "exact", head: true });
 
-        // Active subscriptions
-        const { count: subCount } = await supabase
+        // Active subscriptions and monthly revenue
+        const { data: activeSubs } = await supabase
           .from("subscriptions")
-          .select("*", { count: "exact", head: true })
+          .select("price_cents, created_at")
           .eq("status", "active");
+
+        const activeSubsCount = activeSubs?.length || 0;
+        const monthlyRevenue = (activeSubs || []).reduce((sum, s) => sum + (s.price_cents || 0), 0) / 100;
 
         // Total protocols
         const { count: protocolCount } = await supabase
@@ -84,11 +95,55 @@ export default function AdminDashboard() {
           .order("created_at", { ascending: false })
           .limit(5);
 
+        // Get data for last 6 months
+        const now = new Date();
+        const months: MonthlyData[] = [];
+        const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthStart = date.toISOString();
+          const nextMonth = new Date(date.getFullYear(), date.getMonth() + 1, 1).toISOString();
+
+          // Count new clients in this month
+          const { count: newCount } = await supabase
+            .from("profiles")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", monthStart)
+            .lt("created_at", nextMonth);
+
+          // Count active subscriptions created in this month (revenue)
+          const { data: monthSubs } = await supabase
+            .from("subscriptions")
+            .select("price_cents")
+            .eq("status", "active")
+            .gte("created_at", monthStart)
+            .lt("created_at", nextMonth);
+
+          const monthRevenue = (monthSubs || []).reduce((sum, s) => sum + (s.price_cents || 0), 0) / 100;
+
+          // Count canceled in this month
+          const { count: canceledCount } = await supabase
+            .from("subscriptions")
+            .select("*", { count: "exact", head: true })
+            .eq("status", "canceled")
+            .gte("updated_at", monthStart)
+            .lt("updated_at", nextMonth);
+
+          months.push({
+            month: monthNames[date.getMonth()],
+            receita: monthRevenue,
+            novos: newCount || 0,
+            cancelados: canceledCount || 0,
+          });
+        }
+
+        setChartData(months);
         setStats({
           totalClients: clientCount || 0,
-          activeSubscriptions: subCount || 0,
+          activeSubscriptions: activeSubsCount,
           totalProtocols: protocolCount || 0,
-          pendingCheckins: 0,
+          monthlyRevenue,
         });
 
         setRecentClients(clients || []);
@@ -101,25 +156,6 @@ export default function AdminDashboard() {
 
     fetchStats();
   }, [isAdmin]);
-
-  // Sample data for charts
-  const revenueData = [
-    { month: "Jan", receita: 4500 },
-    { month: "Fev", receita: 5200 },
-    { month: "Mar", receita: 6100 },
-    { month: "Abr", receita: 5800 },
-    { month: "Mai", receita: 7200 },
-    { month: "Jun", receita: 8500 },
-  ];
-
-  const clientsData = [
-    { month: "Jan", novos: 12, cancelados: 2 },
-    { month: "Fev", novos: 18, cancelados: 3 },
-    { month: "Mar", novos: 25, cancelados: 4 },
-    { month: "Abr", novos: 22, cancelados: 2 },
-    { month: "Mai", novos: 30, cancelados: 5 },
-    { month: "Jun", novos: 35, cancelados: 3 },
-  ];
 
   if (authLoading || adminLoading || loading) {
     return (
@@ -197,7 +233,11 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Receita Mensal</p>
-                  <p className="text-3xl font-bold">R$ 8.5k</p>
+                  <p className="text-3xl font-bold">
+                    {stats.monthlyRevenue > 0 
+                      ? `R$ ${(stats.monthlyRevenue / 1000).toFixed(1)}k`
+                      : "R$ 0"}
+                  </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
                   <DollarSign className="h-6 w-6 text-yellow-500" />
@@ -236,7 +276,7 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={revenueData}>
+                  <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
                     <YAxis stroke="hsl(var(--muted-foreground))" />
@@ -263,7 +303,7 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={clientsData}>
+                  <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
                     <YAxis stroke="hsl(var(--muted-foreground))" />
