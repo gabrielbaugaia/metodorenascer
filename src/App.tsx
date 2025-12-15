@@ -34,6 +34,7 @@ import Assinatura from "./pages/Assinatura";
 import AdminPlanosVenda from "./pages/admin/AdminPlanosVenda";
 import AdminMetricas from "./pages/admin/AdminMetricas";
 import AdminConvites from "./pages/admin/AdminConvites";
+import Lancamento from "./pages/Lancamento";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/convite" element={<Convite />} />
+            <Route path="/lancamento" element={<Lancamento />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/anamnese" element={<Anamnese />} />
             <Route path="/checkout-success" element={<CheckoutSuccess />} />
