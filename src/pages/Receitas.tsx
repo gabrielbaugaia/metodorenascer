@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Header } from "@/components/Header";
+import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ChefHat, Plus, X, Loader2, Sparkles, Bookmark, BookmarkCheck, Heart, Trash2, Clock } from "lucide-react";
+import { ChefHat, Plus, X, Loader2, Sparkles, Bookmark, BookmarkCheck, Heart, Trash2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -214,254 +214,240 @@ export default function Receitas() {
   const favoriteRecipes = savedRecipes.filter(r => r.is_favorite);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="pt-24 pb-12 px-4">
-        <div className="container mx-auto max-w-4xl">
-          {/* Back button */}
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/dashboard")}
-            className="mb-6"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar ao Dashboard
-          </Button>
-
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                <ChefHat className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold uppercase text-foreground">
-                Gerador de <span className="text-primary">Receitas</span>
-              </h1>
-            </div>
-            <p className="text-muted-foreground">
-              Escolha os ingredientes e nossa IA criará uma receita fitness personalizada
+    <ClientLayout>
+      <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+            <ChefHat className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold uppercase text-foreground">
+              Gerador de <span className="text-primary">Receitas</span>
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              Escolha ingredientes e nossa IA criará uma receita fitness personalizada
             </p>
           </div>
+        </div>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="generate" className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                Gerar
-              </TabsTrigger>
-              <TabsTrigger value="saved" className="flex items-center gap-2">
-                <Bookmark className="h-4 w-4" />
-                Salvas ({savedRecipes.length})
-              </TabsTrigger>
-              <TabsTrigger value="favorites" className="flex items-center gap-2">
-                <Heart className="h-4 w-4" />
-                Favoritas ({favoriteRecipes.length})
-              </TabsTrigger>
-            </TabsList>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="generate" className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              Gerar
+            </TabsTrigger>
+            <TabsTrigger value="saved" className="flex items-center gap-2">
+              <Bookmark className="h-4 w-4" />
+              Salvas ({savedRecipes.length})
+            </TabsTrigger>
+            <TabsTrigger value="favorites" className="flex items-center gap-2">
+              <Heart className="h-4 w-4" />
+              Favoritas ({favoriteRecipes.length})
+            </TabsTrigger>
+          </TabsList>
 
-            {/* Tab: Gerar Receita */}
-            <TabsContent value="generate" className="space-y-6">
-              {/* Ingredient input */}
-              <Card variant="dashboard">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg uppercase">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                    Selecione seus ingredientes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Input */}
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Digite um ingrediente..."
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      className="flex-1"
-                    />
-                    <Button
-                      onClick={() => inputValue.trim() && addIngredient(inputValue)}
-                      disabled={!inputValue.trim()}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
+          {/* Tab: Gerar Receita */}
+          <TabsContent value="generate" className="space-y-6">
+            {/* Ingredient input */}
+            <Card variant="dashboard">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg uppercase">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  Selecione seus ingredientes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Input */}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Digite um ingrediente..."
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={() => inputValue.trim() && addIngredient(inputValue)}
+                    disabled={!inputValue.trim()}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {/* Popular ingredients */}
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Ingredientes populares:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {popularIngredients.map((ing) => (
+                      <Badge
+                        key={ing}
+                        variant={ingredients.includes(ing.toLowerCase()) ? "default" : "outline"}
+                        className="cursor-pointer hover:bg-primary/20 transition-colors"
+                        onClick={() => {
+                          if (ingredients.includes(ing.toLowerCase())) {
+                            removeIngredient(ing.toLowerCase());
+                          } else {
+                            addIngredient(ing);
+                          }
+                        }}
+                      >
+                        {ing}
+                      </Badge>
+                    ))}
                   </div>
+                </div>
 
-                  {/* Popular ingredients */}
+                {/* Selected ingredients */}
+                {ingredients.length > 0 && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">Ingredientes populares:</p>
+                    <p className="text-sm text-muted-foreground mb-2">Ingredientes selecionados:</p>
                     <div className="flex flex-wrap gap-2">
-                      {popularIngredients.map((ing) => (
-                        <Badge
-                          key={ing}
-                          variant={ingredients.includes(ing.toLowerCase()) ? "default" : "outline"}
-                          className="cursor-pointer hover:bg-primary/20 transition-colors"
-                          onClick={() => {
-                            if (ingredients.includes(ing.toLowerCase())) {
-                              removeIngredient(ing.toLowerCase());
-                            } else {
-                              addIngredient(ing);
-                            }
-                          }}
-                        >
+                      {ingredients.map((ing) => (
+                        <Badge key={ing} className="capitalize gap-1">
                           {ing}
+                          <X
+                            className="w-3 h-3 cursor-pointer hover:text-destructive"
+                            onClick={() => removeIngredient(ing)}
+                          />
                         </Badge>
                       ))}
                     </div>
                   </div>
+                )}
 
-                  {/* Selected ingredients */}
-                  {ingredients.length > 0 && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-2">Ingredientes selecionados:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {ingredients.map((ing) => (
-                          <Badge key={ing} className="capitalize gap-1">
-                            {ing}
-                            <X
-                              className="w-3 h-3 cursor-pointer hover:text-destructive"
-                              onClick={() => removeIngredient(ing)}
-                            />
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
+                {/* Generate button */}
+                <Button
+                  onClick={generateRecipe}
+                  disabled={loading || ingredients.length === 0}
+                  className="w-full"
+                  size="lg"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Gerando receita...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Gerar Receita com IA
+                    </>
                   )}
+                </Button>
+              </CardContent>
+            </Card>
 
-                  {/* Generate button */}
-                  <Button
-                    onClick={generateRecipe}
-                    disabled={loading || ingredients.length === 0}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Gerando receita...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Gerar Receita com IA
-                      </>
-                    )}
-                  </Button>
+            {/* Generated recipe */}
+            {recipe && (
+              <Card variant="dashboard" className="animate-fade-in">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <ChefHat className="w-5 h-5 text-primary" />
+                      {recipeTitle}
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => saveRecipe(false)}
+                        disabled={saving}
+                      >
+                        <Bookmark className="h-4 w-4 mr-1" />
+                        Salvar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => saveRecipe(true)}
+                        disabled={saving}
+                        className="text-red-500 hover:text-red-600"
+                      >
+                        <Heart className="h-4 w-4 mr-1" />
+                        Favoritar
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose prose-invert max-w-none">
+                    <div className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                      {recipe}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
+            )}
+          </TabsContent>
 
-              {/* Generated recipe */}
-              {recipe && (
-                <Card variant="dashboard" className="animate-fade-in">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2">
-                        <ChefHat className="w-5 h-5 text-primary" />
-                        {recipeTitle}
-                      </CardTitle>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => saveRecipe(false)}
-                          disabled={saving}
-                        >
-                          <Bookmark className="h-4 w-4 mr-1" />
-                          Salvar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => saveRecipe(true)}
-                          disabled={saving}
-                          className="text-red-500 hover:text-red-600"
-                        >
-                          <Heart className="h-4 w-4 mr-1" />
-                          Favoritar
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="prose prose-invert max-w-none">
-                      <div className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
-                        {recipe}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
+          {/* Tab: Receitas Salvas */}
+          <TabsContent value="saved" className="space-y-4">
+            {loadingRecipes ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : savedRecipes.length === 0 ? (
+              <Card variant="dashboard" className="p-8 text-center">
+                <Bookmark className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  Você ainda não salvou nenhuma receita.
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => setActiveTab("generate")}
+                >
+                  Gerar primeira receita
+                </Button>
+              </Card>
+            ) : (
+              savedRecipes.map((savedRecipe) => (
+                <RecipeCard
+                  key={savedRecipe.id}
+                  recipe={savedRecipe}
+                  onToggleFavorite={toggleFavorite}
+                  onDelete={deleteRecipe}
+                />
+              ))
+            )}
+          </TabsContent>
 
-            {/* Tab: Receitas Salvas */}
-            <TabsContent value="saved" className="space-y-4">
-              {loadingRecipes ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : savedRecipes.length === 0 ? (
-                <Card variant="dashboard" className="p-8 text-center">
-                  <Bookmark className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">
-                    Você ainda não salvou nenhuma receita.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => setActiveTab("generate")}
-                  >
-                    Gerar primeira receita
-                  </Button>
-                </Card>
-              ) : (
-                savedRecipes.map((savedRecipe) => (
-                  <RecipeCard
-                    key={savedRecipe.id}
-                    recipe={savedRecipe}
-                    onToggleFavorite={toggleFavorite}
-                    onDelete={deleteRecipe}
-                  />
-                ))
-              )}
-            </TabsContent>
-
-            {/* Tab: Favoritas */}
-            <TabsContent value="favorites" className="space-y-4">
-              {loadingRecipes ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : favoriteRecipes.length === 0 ? (
-                <Card variant="dashboard" className="p-8 text-center">
-                  <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">
-                    Você ainda não tem receitas favoritas.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => setActiveTab("saved")}
-                  >
-                    Ver receitas salvas
-                  </Button>
-                </Card>
-              ) : (
-                favoriteRecipes.map((savedRecipe) => (
-                  <RecipeCard
-                    key={savedRecipe.id}
-                    recipe={savedRecipe}
-                    onToggleFavorite={toggleFavorite}
-                    onDelete={deleteRecipe}
-                  />
-                ))
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
-    </div>
+          {/* Tab: Favoritas */}
+          <TabsContent value="favorites" className="space-y-4">
+            {loadingRecipes ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : favoriteRecipes.length === 0 ? (
+              <Card variant="dashboard" className="p-8 text-center">
+                <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  Você ainda não tem receitas favoritas.
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => setActiveTab("saved")}
+                >
+                  Ver receitas salvas
+                </Button>
+              </Card>
+            ) : (
+              favoriteRecipes.map((savedRecipe) => (
+                <RecipeCard
+                  key={savedRecipe.id}
+                  recipe={savedRecipe}
+                  onToggleFavorite={toggleFavorite}
+                  onDelete={deleteRecipe}
+                />
+              ))
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ClientLayout>
   );
 }
 
