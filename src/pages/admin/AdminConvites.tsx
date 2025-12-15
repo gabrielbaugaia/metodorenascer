@@ -119,6 +119,7 @@ export default function AdminConvites() {
   }
 
   const planOptions = [
+    { value: "free", label: "Gratuito - R$0,00" },
     { value: "elite_founder", label: "Elite Fundador - R$49,90/mês" },
     { value: "mensal", label: "Mensal - R$197,00/mês" },
     { value: "trimestral", label: "Trimestral - R$497,00" },
