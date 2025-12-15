@@ -202,6 +202,7 @@ export type Database = {
           foto_costas_url: string | null
           foto_frente_url: string | null
           foto_lado_url: string | null
+          foto_perfil_url: string | null
           full_name: string
           fuma: string | null
           goals: string | null
@@ -245,6 +246,7 @@ export type Database = {
           foto_costas_url?: string | null
           foto_frente_url?: string | null
           foto_lado_url?: string | null
+          foto_perfil_url?: string | null
           full_name: string
           fuma?: string | null
           goals?: string | null
@@ -288,6 +290,7 @@ export type Database = {
           foto_costas_url?: string | null
           foto_frente_url?: string | null
           foto_lado_url?: string | null
+          foto_perfil_url?: string | null
           full_name?: string
           fuma?: string | null
           goals?: string | null

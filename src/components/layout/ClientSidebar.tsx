@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 
 const clientMenuItems = [
   { title: "Início", url: "/area-cliente", icon: Home },
+  { title: "Meu Perfil", url: "/meu-perfil", icon: User },
   { title: "Meus Protocolos", url: "/protocolos", icon: FileText },
   { title: "Treino", url: "/treino", icon: Dumbbell },
   { title: "Nutrição", url: "/nutricao", icon: Apple },

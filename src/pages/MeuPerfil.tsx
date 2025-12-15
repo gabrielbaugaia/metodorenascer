@@ -1,0 +1,329 @@
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { ClientLayout } from "@/components/layout/ClientLayout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
+import { ArrowLeft, Save, Camera, User, Phone, Mail, Loader2 } from "lucide-react";
+
+interface ProfileData {
+  full_name: string;
+  email: string | null;
+  telefone: string | null;
+  whatsapp: string | null;
+  foto_perfil_url: string | null;
+}
+
+export default function MeuPerfil() {
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, email, telefone, whatsapp, foto_perfil_url")
+        .eq("id", user!.id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error("Erro ao carregar perfil:", error);
+      toast.error("Erro ao carregar perfil");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem válida");
+      return;
+    }
+
+    // Validar tamanho (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}/perfil.${fileExt}`;
+
+      // Upload para o bucket
+      const { error: uploadError } = await supabase.storage
+        .from("body-photos")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Obter URL pública
+      const { data: urlData } = supabase.storage
+        .from("body-photos")
+        .getPublicUrl(fileName);
+
+      const photoUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      // Atualizar perfil
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ foto_perfil_url: photoUrl })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      setProfile(prev => prev ? { ...prev, foto_perfil_url: photoUrl } : null);
+      toast.success("Foto de perfil atualizada!");
+    } catch (error) {
+      console.error("Erro ao fazer upload:", error);
+      toast.error("Erro ao fazer upload da foto");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!profile || !user) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          telefone: profile.telefone,
+          whatsapp: profile.whatsapp,
+          email: profile.email,
+        })
+        .eq("id", user.id);
+
+      if (error) throw error;
+      toast.success("Perfil salvo com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar perfil:", error);
+      toast.error("Erro ao salvar perfil");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateField = (field: keyof ProfileData, value: string) => {
+    setProfile(prev => prev ? { ...prev, [field]: value } : null);
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map(n => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (authLoading || loading) {
+    return (
+      <ClientLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </ClientLayout>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <ClientLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-muted-foreground">Perfil não encontrado</p>
+        </div>
+      </ClientLayout>
+    );
+  }
+
+  return (
+    <ClientLayout>
+      <div className="p-6 max-w-2xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/area-cliente")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Meu Perfil</h1>
+            <p className="text-muted-foreground">Edite suas informações pessoais</p>
+          </div>
+        </div>
+
+        {/* Foto de Perfil */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5" />
+              Foto de Perfil
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <Avatar className="h-32 w-32">
+                <AvatarImage src={profile.foto_perfil_url || undefined} alt={profile.full_name} />
+                <AvatarFallback className="text-2xl bg-primary/20 text-primary">
+                  {getInitials(profile.full_name)}
+                </AvatarFallback>
+              </Avatar>
+              {uploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-full">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              )}
+            </div>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              className="hidden"
+            />
+            
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              {uploading ? "Enviando..." : "Alterar Foto"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Informações Pessoais */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Informações Pessoais
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome Completo</Label>
+              <Input
+                id="name"
+                value={profile.full_name}
+                disabled
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground">
+                Para alterar o nome, entre em contato com o suporte
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contato */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5" />
+              Contato
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={profile.email || ""}
+                  onChange={(e) => updateField("email", e.target.value)}
+                  placeholder="seu@email.com"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="telefone">Telefone</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="telefone"
+                  type="tel"
+                  value={profile.telefone || ""}
+                  onChange={(e) => updateField("telefone", e.target.value)}
+                  placeholder="(00) 00000-0000"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="whatsapp">WhatsApp</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="whatsapp"
+                  type="tel"
+                  value={profile.whatsapp || ""}
+                  onChange={(e) => updateField("whatsapp", e.target.value)}
+                  placeholder="(00) 00000-0000"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Botão Salvar */}
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full"
+          size="lg"
+        >
+          {saving ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Salvando...
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <Save className="h-4 w-4" />
+              Salvar Alterações
+            </span>
+          )}
+        </Button>
+      </div>
+    </ClientLayout>
+  );
+}
