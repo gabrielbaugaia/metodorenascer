@@ -153,6 +153,17 @@ export default function Anamnese() {
     setFormData(prev => ({ ...prev, [fieldName]: "" }));
   };
 
+  // Normalize nivel_condicionamento to match database constraint
+  const normalizeNivelExperiencia = (nivel: string): string => {
+    const map: Record<string, string> = {
+      'Sedentário': 'iniciante',
+      'Iniciante': 'iniciante',
+      'Intermediário': 'intermediario',
+      'Avançado': 'avancado',
+    };
+    return map[nivel] || 'iniciante';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -172,6 +183,7 @@ export default function Anamnese() {
     setLoading(true);
     
   try {
+      const nivelExperienciaNormalizado = normalizeNivelExperiencia(formData.nivel_condicionamento);
       console.log("[ANAMNESE] Start submit for user", user.id);
       // Calculate age from birth date
       const birthDate = new Date(formData.data_nascimento);
@@ -206,7 +218,7 @@ export default function Anamnese() {
           local_treino: formData.local_treino,
           availability: formData.dias_disponiveis,
           dias_disponiveis: formData.dias_disponiveis,
-          nivel_experiencia: formData.nivel_condicionamento,
+          nivel_experiencia: nivelExperienciaNormalizado,
           nivel_condicionamento: formData.nivel_condicionamento,
           pratica_aerobica: formData.pratica_aerobica === "sim",
           escada_sem_cansar: formData.escada_sem_cansar,
@@ -276,7 +288,7 @@ export default function Anamnese() {
         local_treino: formData.local_treino,
         availability: formData.dias_disponiveis,
         dias_disponiveis: formData.dias_disponiveis,
-        nivel_experiencia: formData.nivel_condicionamento,
+        nivel_experiencia: nivelExperienciaNormalizado,
         nivel_condicionamento: formData.nivel_condicionamento,
         pratica_aerobica: formData.pratica_aerobica === "sim",
         escada_sem_cansar: formData.escada_sem_cansar,
