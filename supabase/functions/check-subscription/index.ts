@@ -48,7 +48,7 @@ serve(async (req) => {
             product_id: null,
             error: "unauthenticated",
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 },
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
         );
       }
 
