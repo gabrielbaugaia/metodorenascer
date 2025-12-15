@@ -5,6 +5,7 @@ import { Resend } from "https://esm.sh/resend@2.0.0";
 const allowedOrigins = [
   "https://lxdosmjenbaugmhyfanx.lovableproject.com",
   "https://metodorenascer.lovable.app",
+  "https://renascerapp.com.br",
   "http://localhost:5173",
   "http://localhost:8080",
 ];
