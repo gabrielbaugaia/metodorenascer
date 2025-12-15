@@ -90,42 +90,46 @@ export function ClientSidebar() {
       </div>
 
       <SidebarContent className="px-2 py-4">
-        <SidebarGroup>
-          <SidebarGroupLabel className={cn(collapsed && "sr-only")}>
-            Menu Principal
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {clientMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    tooltip={item.title}
-                  >
-                    <NavLink 
-                      to={item.url}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                        isActive(item.url) 
-                          ? "bg-primary/20 text-primary" 
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {isAdmin && (
-          <SidebarGroup className="mt-4">
+        {/* Menu do Cliente - apenas para não-admins */}
+        {!isAdmin && (
+          <SidebarGroup>
             <SidebarGroupLabel className={cn(collapsed && "sr-only")}>
-              Administração
+              Menu Principal
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {clientMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.url)}
+                      tooltip={item.title}
+                    >
+                      <NavLink 
+                        to={item.url}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                          isActive(item.url) 
+                            ? "bg-primary/20 text-primary" 
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5 shrink-0" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Menu Admin - apenas para admins */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel className={cn(collapsed && "sr-only")}>
+              Painel Administrativo
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
