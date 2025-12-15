@@ -131,6 +131,36 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_videos: {
+        Row: {
+          created_at: string | null
+          difficulty_level: string | null
+          environment: string | null
+          exercise_name: string
+          id: string
+          muscle_group: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty_level?: string | null
+          environment?: string | null
+          exercise_name: string
+          id?: string
+          muscle_group: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string | null
+          difficulty_level?: string | null
+          environment?: string | null
+          exercise_name?: string
+          id?: string
+          muscle_group?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       notification_logs: {
         Row: {
           created_at: string
