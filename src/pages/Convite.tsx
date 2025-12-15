@@ -33,27 +33,26 @@ export default function Convite() {
     }
   }, [user, navigate]);
 
-  // Verificar código de indicação
+  // Verificar código de indicação usando a função do banco
   useEffect(() => {
     const checkReferralCode = async () => {
       if (!referralCode) return;
 
-      const { data } = await supabase
-        .from("referral_codes")
-        .select("user_id")
-        .eq("code", referralCode)
-        .maybeSingle();
+      // Validar código usando a função segura do banco
+      const { data: isValid, error: validationError } = await supabase
+        .rpc("validate_referral_code", { lookup_code: referralCode });
 
-      if (data) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", data.user_id)
-          .maybeSingle();
+      if (validationError || !isValid) {
+        toast.error("Código de indicação inválido");
+        return;
+      }
 
-        if (profile) {
-          setReferrerName(profile.full_name.split(" ")[0]); // Primeiro nome
-        }
+      // Buscar nome do referrer
+      const { data: name } = await supabase
+        .rpc("get_referrer_name_by_code", { lookup_code: referralCode });
+
+      if (name) {
+        setReferrerName(name.split(" ")[0]); // Primeiro nome
       }
     };
 

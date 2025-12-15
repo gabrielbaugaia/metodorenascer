@@ -137,6 +137,62 @@ serve(async (req) => {
       productId 
     });
 
+    // Check if this user was referred and credit cashback to referrer
+    const { data: profileData } = await supabaseClient
+      .from("profiles")
+      .select("referred_by_code")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileData?.referred_by_code) {
+      // Check if referral exists and hasn't been credited yet
+      const { data: referralData } = await supabaseClient
+        .from("referrals")
+        .select("id, discount_applied, referrer_id")
+        .eq("referred_user_id", user.id)
+        .eq("discount_applied", false)
+        .maybeSingle();
+
+      if (referralData) {
+        logStep("Found uncredited referral, crediting cashback", { 
+          referralId: referralData.id,
+          referrerId: referralData.referrer_id 
+        });
+
+        // Increment referrer's cashback balance
+        const { error: incrementError } = await supabaseClient
+          .rpc("increment_cashback_balance", { 
+            target_user_id: referralData.referrer_id 
+          });
+
+        if (incrementError) {
+          // Fallback: manual increment if RPC doesn't exist
+          const { data: referrerProfile } = await supabaseClient
+            .from("profiles")
+            .select("cashback_balance")
+            .eq("id", referralData.referrer_id)
+            .maybeSingle();
+
+          const currentBalance = referrerProfile?.cashback_balance || 0;
+          await supabaseClient
+            .from("profiles")
+            .update({ cashback_balance: currentBalance + 1 })
+            .eq("id", referralData.referrer_id);
+        }
+
+        // Mark referral as credited
+        await supabaseClient
+          .from("referrals")
+          .update({ 
+            discount_applied: true, 
+            discount_applied_at: new Date().toISOString() 
+          })
+          .eq("id", referralData.id);
+
+        logStep("Cashback credited successfully");
+      }
+    }
+
     // Upsert subscription in local database
     const { error: upsertError } = await supabaseClient
       .from("subscriptions")

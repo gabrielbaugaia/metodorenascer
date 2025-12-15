@@ -660,6 +660,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_cashback_balance: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       validate_referral_code: {
         Args: { lookup_code: string }
         Returns: boolean
