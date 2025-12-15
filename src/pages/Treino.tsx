@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useWorkoutTracking } from "@/hooks/useWorkoutTracking";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2 } from "lucide-react";
+import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2, CheckCircle } from "lucide-react";
 import { WorkoutCard } from "@/components/treino/WorkoutCard";
-
+import { SuccessAnimation } from "@/components/feedback/SuccessAnimation";
 interface Exercise {
   name: string;
   sets: number;
@@ -43,7 +44,14 @@ export default function Treino() {
   const { user } = useAuth();
   const [protocol, setProtocol] = useState<Protocol | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const [showSuccess, setShowSuccess] = useState(false);
+  const { 
+    getTotalCount, 
+    getTotalCalories, 
+    getWeeklyCount, 
+    todayCompleted, 
+    completeWorkout 
+  } = useWorkoutTracking();
   useEffect(() => {
     const fetchProtocol = async () => {
       if (!user) return;
@@ -113,15 +121,33 @@ export default function Treino() {
     }));
   }, [protocol]);
 
-  const completedWorkouts = workouts.filter((w) => w.completed).length;
-  const totalCalories = workouts
-    .filter((w) => w.completed)
-    .reduce((acc, w) => acc + (w.calories || 0), 0);
+  const completedWorkoutsToday = todayCompleted ? 1 : 0;
+  const totalCaloriesFromTracking = getTotalCalories();
+  const weeklyCount = getWeeklyCount();
+  const totalCount = getTotalCount();
 
+  const handleCompleteWorkout = async (workout: Workout) => {
+    const success = await completeWorkout(
+      workout.focus,
+      workout.exercises.length,
+      parseInt(workout.duration) || 45,
+      workout.calories
+    );
+    if (success) {
+      setShowSuccess(true);
+    }
+  };
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <SuccessAnimation 
+        show={showSuccess} 
+        onComplete={() => setShowSuccess(false)}
+        type="trophy"
+        message="Treino Concluído!"
+        subMessage="Você está cada vez mais perto do seu objetivo!"
+      />
         <main className="pt-24 pb-12 px-4 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </main>
@@ -176,15 +202,15 @@ export default function Treino() {
           ) : (
             <>
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
                   <div className="flex items-center gap-3">
                     <Calendar className="w-5 h-5 text-primary" />
                     <div>
                       <p className="text-2xl font-bold text-foreground">
-                        {completedWorkouts}/{workouts.length}
+                        {weeklyCount}
                       </p>
-                      <p className="text-xs text-muted-foreground">Treinos</p>
+                      <p className="text-xs text-muted-foreground">Esta semana</p>
                     </div>
                   </div>
                 </Card>
@@ -193,9 +219,9 @@ export default function Treino() {
                     <Flame className="w-5 h-5 text-orange-500" />
                     <div>
                       <p className="text-2xl font-bold text-foreground">
-                        {totalCalories}
+                        {totalCaloriesFromTracking.toLocaleString()}
                       </p>
-                      <p className="text-xs text-muted-foreground">kcal queimadas</p>
+                      <p className="text-xs text-muted-foreground">kcal total</p>
                     </div>
                   </div>
                 </Card>
@@ -204,9 +230,24 @@ export default function Treino() {
                     <Trophy className="w-5 h-5 text-green-500" />
                     <div>
                       <p className="text-2xl font-bold text-foreground">
-                        {protocol?.conteudo?.semana_atual || 1}
+                        {totalCount}
                       </p>
-                      <p className="text-xs text-muted-foreground">Semana atual</p>
+                      <p className="text-xs text-muted-foreground">Treinos feitos</p>
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+                  <div className="flex items-center gap-3">
+                    {todayCompleted ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Target className="w-5 h-5 text-purple-500" />
+                    )}
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">
+                        {todayCompleted ? "Feito!" : "Pendente"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Treino hoje</p>
                     </div>
                   </div>
                 </Card>
@@ -260,6 +301,8 @@ export default function Treino() {
                     calories={workout.calories}
                     completed={workout.completed}
                     index={index}
+                    onComplete={() => handleCompleteWorkout(workout)}
+                    todayCompleted={todayCompleted}
                   />
                 ))}
               </div>
