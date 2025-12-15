@@ -174,7 +174,7 @@ export default function Auth() {
                       return;
                     }
                     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                      redirectTo: `${window.location.origin}/auth`,
+                      redirectTo: `${window.location.origin}/redefinir-senha`,
                     });
                     if (error) {
                       toast.error("Erro ao enviar email de recuperação");

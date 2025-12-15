@@ -28,6 +28,7 @@ import AdminMensagens from "./pages/admin/AdminMensagens";
 import AdminVideos from "./pages/admin/AdminVideos";
 import MeuPerfil from "./pages/MeuPerfil";
 import Indicacoes from "./pages/Indicacoes";
+import RedefinirSenha from "./pages/RedefinirSenha";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/convite" element={<Convite />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/anamnese" element={<Anamnese />} />
