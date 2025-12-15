@@ -125,10 +125,10 @@ export default function Anamnese() {
 
       if (uploadError) throw uploadError;
 
-      // Get signed URL
+      // Get signed URL (7 days expiry for security)
       const { data: urlData } = await supabase.storage
         .from('body-photos')
-        .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
+        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
 
       const fieldName = `foto_${type}_url` as keyof typeof formData;
       setFormData(prev => ({ ...prev, [fieldName]: urlData?.signedUrl || '' }));
