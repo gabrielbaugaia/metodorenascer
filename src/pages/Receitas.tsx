@@ -106,7 +106,17 @@ export default function Receitas() {
         body: { ingredients },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle rate limiting and payment errors
+        const errorMessage = error.message?.toLowerCase() || "";
+        if (errorMessage.includes("429") || errorMessage.includes("rate limit")) {
+          throw new Error("Muitas requisições. Aguarde alguns segundos e tente novamente.");
+        }
+        if (errorMessage.includes("402") || errorMessage.includes("payment")) {
+          throw new Error("Limite de uso atingido. Entre em contato com o suporte.");
+        }
+        throw error;
+      }
 
       if (data?.recipe) {
         setRecipe(data.recipe);
@@ -114,11 +124,12 @@ export default function Receitas() {
       } else {
         throw new Error("Receita não foi gerada");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error generating recipe:", error);
+      const errorMsg = error instanceof Error ? error.message : "Não foi possível gerar a receita. Tente novamente.";
       toast({
         title: "Erro",
-        description: "Não foi possível gerar a receita. Tente novamente.",
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
