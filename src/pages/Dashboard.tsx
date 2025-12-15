@@ -121,13 +121,16 @@ export default function Dashboard() {
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("age, weight, height, goals")
+          .select("age, weight, height, goals, anamnese_completa")
           .eq("id", user.id)
           .single();
         
-        const complete = !!(data?.age && data?.weight && data?.height && data?.goals);
+        // Check if anamnese is complete (either by flag or by essential fields)
+        const hasEssentialData = !!(data?.age && data?.weight && data?.height && data?.goals);
+        const anamneseComplete = data?.anamnese_completa === true || hasEssentialData;
         
-        if (!complete && subscribed) {
+        // Redirect to anamnese if user has subscription/admin access but anamnese is incomplete
+        if (!anamneseComplete && (subscribed || isAdmin)) {
           navigate("/anamnese");
         }
       } catch (error) {
@@ -140,7 +143,7 @@ export default function Dashboard() {
     if (!subLoading) {
       checkAnamnese();
     }
-  }, [user, subscribed, subLoading, navigate]);
+  }, [user, subscribed, isAdmin, subLoading, navigate]);
 
   const handleManageSubscription = async () => {
     try {
