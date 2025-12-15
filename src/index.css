@@ -154,12 +154,13 @@
     background: var(--gradient-dark);
   }
 
+  /* Removed pulse-glow and float animations to prevent visual flickering */
   .animate-pulse-glow {
-    animation: pulseGlow 2s ease-in-out infinite;
+    /* Disabled - was causing flickering */
   }
 
   .animate-float {
-    animation: float 6s ease-in-out infinite;
+    /* Disabled - was causing flickering */
   }
 
   .animate-slide-up {

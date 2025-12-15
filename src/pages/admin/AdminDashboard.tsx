@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Users, 
   TrendingUp, 
+  TrendingDown,
   DollarSign, 
   Activity,
   UserPlus,
@@ -17,15 +18,25 @@ import {
   MessageCircle,
   Loader2,
   ChevronRight,
-  Video
+  Video,
+  AlertTriangle,
+  Target,
+  Percent,
+  Clock
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 
 interface Stats {
   totalClients: number;
   activeSubscriptions: number;
   totalProtocols: number;
   monthlyRevenue: number;
+  pendingSubscriptions: number;
+  canceledSubscriptions: number;
+  trialSubscriptions: number;
+  avgTicket: number;
+  churnRate: number;
+  conversionRate: number;
 }
 
 interface RecentClient {
@@ -43,6 +54,12 @@ interface MonthlyData {
   cancelados: number;
 }
 
+interface PlanDistribution {
+  plan: string;
+  count: number;
+  revenue: number;
+}
+
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
@@ -52,9 +69,16 @@ export default function AdminDashboard() {
     activeSubscriptions: 0,
     totalProtocols: 0,
     monthlyRevenue: 0,
+    pendingSubscriptions: 0,
+    canceledSubscriptions: 0,
+    trialSubscriptions: 0,
+    avgTicket: 0,
+    churnRate: 0,
+    conversionRate: 0,
   });
   const [recentClients, setRecentClients] = useState<RecentClient[]>([]);
   const [chartData, setChartData] = useState<MonthlyData[]>([]);
+  const [planDistribution, setPlanDistribution] = useState<PlanDistribution[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -75,14 +99,44 @@ export default function AdminDashboard() {
           .from("profiles")
           .select("*", { count: "exact", head: true });
 
-        // Active subscriptions and monthly revenue
-        const { data: activeSubs } = await supabase
+        // All subscriptions for detailed analysis
+        const { data: allSubs } = await supabase
           .from("subscriptions")
-          .select("price_cents, created_at")
-          .eq("status", "active");
+          .select("status, price_cents, plan_type, created_at, updated_at");
 
-        const activeSubsCount = activeSubs?.length || 0;
-        const monthlyRevenue = (activeSubs || []).reduce((sum, s) => sum + (s.price_cents || 0), 0) / 100;
+        const activeSubs = allSubs?.filter(s => s.status === "active") || [];
+        const pendingSubs = allSubs?.filter(s => s.status === "pending") || [];
+        const canceledSubs = allSubs?.filter(s => s.status === "canceled") || [];
+        const trialSubs = allSubs?.filter(s => s.status === "trialing") || [];
+
+        const activeSubsCount = activeSubs.length;
+        const monthlyRevenue = activeSubs.reduce((sum, s) => sum + (s.price_cents || 0), 0) / 100;
+        const avgTicket = activeSubsCount > 0 ? monthlyRevenue / activeSubsCount : 0;
+        
+        // Churn rate (canceled / total)
+        const totalSubsEver = allSubs?.length || 0;
+        const churnRate = totalSubsEver > 0 ? (canceledSubs.length / totalSubsEver) * 100 : 0;
+        
+        // Conversion rate (active / total clients)
+        const conversionRate = (clientCount || 0) > 0 ? (activeSubsCount / (clientCount || 1)) * 100 : 0;
+
+        // Plan distribution
+        const planCounts: Record<string, { count: number; revenue: number }> = {};
+        activeSubs.forEach(s => {
+          const plan = s.plan_type || "Desconhecido";
+          if (!planCounts[plan]) {
+            planCounts[plan] = { count: 0, revenue: 0 };
+          }
+          planCounts[plan].count++;
+          planCounts[plan].revenue += (s.price_cents || 0) / 100;
+        });
+        
+        const planDistData: PlanDistribution[] = Object.entries(planCounts).map(([plan, data]) => ({
+          plan: plan.charAt(0).toUpperCase() + plan.slice(1),
+          count: data.count,
+          revenue: data.revenue,
+        }));
+        setPlanDistribution(planDistData);
 
         // Total protocols
         const { count: protocolCount } = await supabase
@@ -145,6 +199,12 @@ export default function AdminDashboard() {
           activeSubscriptions: activeSubsCount,
           totalProtocols: protocolCount || 0,
           monthlyRevenue,
+          pendingSubscriptions: pendingSubs.length,
+          canceledSubscriptions: canceledSubs.length,
+          trialSubscriptions: trialSubs.length,
+          avgTicket,
+          churnRate,
+          conversionRate,
         });
 
         setRecentClients(clients || []);
@@ -249,8 +309,59 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Quick Actions */}
+        {/* Financial Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card variant="glass">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Ticket Médio</p>
+                  <p className="text-xl font-bold">R$ {stats.avgTicket.toFixed(2)}</p>
+                </div>
+                <Target className="h-5 w-5 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card variant="glass">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Taxa Conversão</p>
+                  <p className="text-xl font-bold">{stats.conversionRate.toFixed(1)}%</p>
+                </div>
+                <Percent className="h-5 w-5 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card variant="glass">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Taxa Churn</p>
+                  <p className="text-xl font-bold text-red-400">{stats.churnRate.toFixed(1)}%</p>
+                </div>
+                <TrendingDown className="h-5 w-5 text-red-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card variant="glass">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Pendentes</p>
+                  <p className="text-xl font-bold text-yellow-400">{stats.pendingSubscriptions}</p>
+                </div>
+                <Clock className="h-5 w-5 text-yellow-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {quickActions.map((action) => (
             <Card 
               key={action.title}
@@ -267,6 +378,118 @@ export default function AdminDashboard() {
             </Card>
           ))}
         </div>
+
+        {/* Gargalos e Alertas */}
+        {(stats.churnRate > 10 || stats.conversionRate < 50 || stats.pendingSubscriptions > 0) && (
+          <Card variant="glass" className="border-yellow-500/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-yellow-400">
+                <AlertTriangle className="h-5 w-5" />
+                Gargalos Identificados
+              </CardTitle>
+              <CardDescription>Pontos de atenção para melhorar resultados</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {stats.churnRate > 10 && (
+                  <div className="flex items-start gap-3 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                    <TrendingDown className="h-5 w-5 text-red-400 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-red-400">Alta Taxa de Churn ({stats.churnRate.toFixed(1)}%)</p>
+                      <p className="text-sm text-muted-foreground">Considere melhorar onboarding, aumentar engajamento com check-ins e personalizar comunicação.</p>
+                    </div>
+                  </div>
+                )}
+                {stats.conversionRate < 50 && (
+                  <div className="flex items-start gap-3 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                    <Target className="h-5 w-5 text-yellow-400 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-yellow-400">Baixa Conversão ({stats.conversionRate.toFixed(1)}%)</p>
+                      <p className="text-sm text-muted-foreground">Otimize landing page, ofereça trial gratuito ou melhore proposta de valor.</p>
+                    </div>
+                  </div>
+                )}
+                {stats.pendingSubscriptions > 0 && (
+                  <div className="flex items-start gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                    <Clock className="h-5 w-5 text-blue-400 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-blue-400">{stats.pendingSubscriptions} Assinaturas Pendentes</p>
+                      <p className="text-sm text-muted-foreground">Clientes iniciaram checkout mas não finalizaram. Envie lembretes ou ofereça suporte.</p>
+                    </div>
+                  </div>
+                )}
+                {stats.canceledSubscriptions > 0 && (
+                  <div className="flex items-start gap-3 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                    <Users className="h-5 w-5 text-orange-400 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-orange-400">{stats.canceledSubscriptions} Cancelamentos Total</p>
+                      <p className="text-sm text-muted-foreground">Analise motivos de cancelamento e implemente estratégias de retenção.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Plan Distribution */}
+        {planDistribution.length > 0 && (
+          <Card variant="glass">
+            <CardHeader>
+              <CardTitle>Distribuição por Plano</CardTitle>
+              <CardDescription>Análise de assinaturas ativas por tipo</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  {planDistribution.map((plan, idx) => {
+                    const colors = ["bg-primary", "bg-green-500", "bg-blue-500", "bg-purple-500", "bg-yellow-500"];
+                    return (
+                      <div key={plan.plan} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${colors[idx % colors.length]}`} />
+                          <span className="font-medium">{plan.plan}</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold">{plan.count} assinantes</p>
+                          <p className="text-sm text-muted-foreground">R$ {plan.revenue.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={planDistribution}
+                        dataKey="count"
+                        nameKey="plan"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={70}
+                        label={({ plan, percent }) => `${plan}: ${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {planDistribution.map((_, idx) => {
+                          const colors = ["hsl(var(--primary))", "#22c55e", "#3b82f6", "#a855f7", "#eab308"];
+                          return <Cell key={`cell-${idx}`} fill={colors[idx % colors.length]} />;
+                        })}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: "hsl(var(--card))", 
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px"
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Charts */}
         <div className="grid md:grid-cols-2 gap-6">
