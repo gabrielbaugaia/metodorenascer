@@ -51,10 +51,13 @@ export default function MeuPerfil() {
         .from("profiles")
         .select("full_name, email, telefone, whatsapp, foto_perfil_url")
         .eq("id", user!.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setProfile(data);
+      
+      if (data) {
+        setProfile(data);
+      }
     } catch (error) {
       console.error("Erro ao carregar perfil:", error);
       toast.error("Erro ao carregar perfil");
