@@ -89,6 +89,16 @@ const ENVIRONMENTS = [
   { value: "ambos", label: "Ambos" }
 ];
 
+const isValidYouTubeUrl = (url: string): boolean => {
+  const patterns = [
+    /^(https?:\/\/)?(www\.)?youtube\.com\/watch\?v=[\w-]+/,
+    /^(https?:\/\/)?(www\.)?youtube\.com\/embed\/[\w-]+/,
+    /^(https?:\/\/)?(www\.)?youtu\.be\/[\w-]+/,
+    /^(https?:\/\/)?(www\.)?youtube\.com\/shorts\/[\w-]+/
+  ];
+  return patterns.some(pattern => pattern.test(url.trim()));
+};
+
 export default function AdminVideos() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
@@ -175,8 +185,13 @@ export default function AdminVideos() {
   };
 
   const handleSave = async () => {
-    if (!formData.exercise_name || !formData.video_url || !formData.muscle_group) {
+    if (!formData.exercise_name.trim() || !formData.video_url.trim() || !formData.muscle_group) {
       toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    if (!isValidYouTubeUrl(formData.video_url)) {
+      toast.error("URL inválida. Use um link válido do YouTube (youtube.com/watch, youtu.be, ou youtube.com/shorts)");
       return;
     }
 
