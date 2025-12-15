@@ -167,6 +167,7 @@ export default function Anamnese() {
     setLoading(true);
     
   try {
+      console.log("[ANAMNESE] Start submit for user", user.id);
       // Calculate age from birth date
       const birthDate = new Date(formData.data_nascimento);
       const today = new Date();
@@ -184,7 +185,7 @@ export default function Anamnese() {
         .filter(Boolean)
         .join(" | ");
 
-      // Atualiza perfil com dados da anamnese
+      console.log("[ANAMNESE] Updating profile...");
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
@@ -224,10 +225,13 @@ export default function Anamnese() {
         })
         .eq("id", user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("[ANAMNESE] Profile update error", updateError);
+        throw new Error("PROFILE_UPDATE_ERROR");
+      }
 
-      // Busca plano do usuário para ajustar duração dos protocolos
-      const { data: subscription } = await supabase
+      console.log("[ANAMNESE] Fetching subscription...");
+      const { data: subscription, error: subError } = await supabase
         .from("subscriptions")
         .select("plan_type")
         .eq("user_id", user.id)
@@ -235,20 +239,29 @@ export default function Anamnese() {
         .limit(1)
         .maybeSingle();
 
-      const planType = subscription?.plan_type || "mensal";
+      if (subError) {
+        console.error("[ANAMNESE] Subscription fetch error", subError);
+      }
 
-      // Busca perfil completo atualizado para usar como contexto na geração dos protocolos
+      const planType = subscription?.plan_type || "mensal";
+      console.log("[ANAMNESE] Using plan type", planType);
+
+      console.log("[ANAMNESE] Fetching profile for protocol context...");
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("[ANAMNESE] Profile fetch error", profileError);
+        throw new Error("PROFILE_FETCH_ERROR");
+      }
 
-      // Gera automaticamente treino, nutrição e mindset
+      console.log("[ANAMNESE] Invoking generate-protocol functions...");
       const tipos = ["treino", "nutricao", "mindset"] as const;
       for (const tipo of tipos) {
+        console.log(`[ANAMNESE] Generating protocol`, { tipo });
         const { error: fnError } = await supabase.functions.invoke("generate-protocol", {
           body: {
             tipo,
@@ -258,7 +271,10 @@ export default function Anamnese() {
           },
         });
 
-        if (fnError) throw fnError;
+        if (fnError) {
+          console.error(`[ANAMNESE] generate-protocol error for ${tipo}`, fnError);
+          throw new Error(`PROTOCOL_ERROR_${tipo.toUpperCase()}`);
+        }
       }
 
       toast.success("Anamnese concluída e planos gerados com sucesso!");
