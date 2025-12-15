@@ -46,7 +46,20 @@ export default function MeuPerfil() {
     }
   }, [user]);
 
-  const getSignedAvatarUrl = async (filePath: string) => {
+  // Extrai o path do storage de uma URL completa ou retorna o path original
+  const extractStoragePath = (urlOrPath: string): string => {
+    if (!urlOrPath) return "";
+    // Se for URL completa do Supabase, extrai o path
+    const match = urlOrPath.match(/\/body-photos\/(.+?)(\?|$)/);
+    if (match) return match[1];
+    // Se já for um path limpo
+    return urlOrPath;
+  };
+
+  const getSignedAvatarUrl = async (urlOrPath: string) => {
+    const filePath = extractStoragePath(urlOrPath);
+    if (!filePath) throw new Error("Caminho inválido");
+
     const { data, error } = await supabase.storage
       .from("body-photos")
       .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 dias
