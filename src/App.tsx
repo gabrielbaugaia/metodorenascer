@@ -29,6 +29,7 @@ import AdminVideos from "./pages/admin/AdminVideos";
 import MeuPerfil from "./pages/MeuPerfil";
 import Indicacoes from "./pages/Indicacoes";
 import RedefinirSenha from "./pages/RedefinirSenha";
+import Assinatura from "./pages/Assinatura";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/suporte" element={<Suporte />} />
             <Route path="/meu-perfil" element={<MeuPerfil />} />
             <Route path="/indicacoes" element={<Indicacoes />} />
+            <Route path="/assinatura" element={<Assinatura />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/clientes" element={<AdminClientes />} />
             <Route path="/admin/clientes/:id" element={<AdminClienteDetalhes />} />
