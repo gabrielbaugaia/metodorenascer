@@ -29,6 +29,8 @@ interface Profile {
   weight: number | null;
   goals: string | null;
   age: number | null;
+  anamnese_completa?: boolean | null;
+  updated_at?: string | null;
 }
 
 export default function AreaCliente() {
@@ -45,7 +47,7 @@ export default function AreaCliente() {
       // Fetch profile
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("full_name, weight, goals, age")
+        .select("full_name, weight, goals, age, anamnese_completa, updated_at")
         .eq("id", user.id)
         .single();
 
@@ -100,9 +102,27 @@ export default function AreaCliente() {
           </p>
         </div>
 
-        {/* Subscription Status */}
+        {/* Subscription Status + Anamnese Badge */}
         <Card variant="glass" className="border-primary/20">
-          <CardContent className="p-6">
+          <CardContent className="p-6 space-y-4">
+            {profile?.anamnese_completa && (
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="border-primary/40 text-primary flex items-center gap-1">
+                    <ClipboardList className="h-3 w-3" />
+                    Anamnese em dia
+                  </Badge>
+                  {profile.updated_at && (
+                    <span className="text-muted-foreground">
+                      Última atualização: {format(parseISO(profile.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Envie novas fotos a cada 30 dias para manter seu plano atualizado.
+                </span>
+              </div>
+            )}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
