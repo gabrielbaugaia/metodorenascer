@@ -25,7 +25,8 @@ import {
   Shield,
   Flame,
   FileText,
-  HelpCircle
+  HelpCircle,
+  Bell
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -47,6 +48,7 @@ const adminMenuItems = [
   { title: "Clientes", url: "/admin/clientes", icon: User },
   { title: "Criar Cliente", url: "/admin/criar-cliente", icon: User },
   { title: "Gerenciar Planos", url: "/admin/planos", icon: FileText },
+  { title: "Mensagens Auto", url: "/admin/mensagens", icon: Bell },
 ];
 
 export function ClientSidebar() {

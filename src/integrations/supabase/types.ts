@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      automated_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          message_content: string
+          message_title: string
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          message_content: string
+          message_title: string
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          message_content?: string
+          message_title?: string
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           badge_name: string
@@ -97,6 +127,33 @@ export type Database = {
           mensagens?: Json
           tipo?: string | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_logs: {
+        Row: {
+          created_at: string
+          id: string
+          message_content: string | null
+          notification_type: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_content?: string | null
+          notification_type: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_content?: string | null
+          notification_type?: string
+          sent_at?: string
           user_id?: string
         }
         Relationships: []
@@ -364,6 +421,39 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_activity: {
+        Row: {
+          created_at: string
+          id: string
+          inactivity_reminder_sent_at: string | null
+          last_access: string
+          last_photo_submitted: string | null
+          photo_reminder_sent_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inactivity_reminder_sent_at?: string | null
+          last_access?: string
+          last_photo_submitted?: string | null
+          photo_reminder_sent_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inactivity_reminder_sent_at?: string | null
+          last_access?: string
+          last_photo_submitted?: string | null
+          photo_reminder_sent_at?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

@@ -24,6 +24,7 @@ import AdminClienteDetalhes from "./pages/admin/AdminClienteDetalhes";
 import AdminCriarCliente from "./pages/admin/AdminCriarCliente";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminSuporteChats from "./pages/admin/AdminSuporteChats";
+import AdminMensagens from "./pages/admin/AdminMensagens";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/admin/criar-cliente" element={<AdminCriarCliente />} />
             <Route path="/admin/planos" element={<AdminPlanos />} />
             <Route path="/admin/suporte" element={<AdminSuporteChats />} />
+            <Route path="/admin/mensagens" element={<AdminMensagens />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
