@@ -17,7 +17,8 @@ import {
   Loader2,
   Sparkles,
   CheckCircle,
-  Target
+  Target,
+  MessageCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -119,38 +120,6 @@ export default function Mindset() {
     setCheckedItems(newChecked);
     saveCheckedItems(newChecked);
   };
-
-  const generateProtocol = async () => {
-    if (!user) return;
-    
-    setGenerating(true);
-    try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      const { data, error } = await supabase.functions.invoke("generate-protocol", {
-        body: {
-          tipo: "mindset",
-          userId: user.id,
-          userContext: profile,
-        },
-      });
-
-      if (error) throw error;
-      
-      toast.success("Protocolo de mindset gerado com sucesso!");
-      fetchProtocol();
-    } catch (error: any) {
-      console.error("Error generating mindset:", error);
-      toast.error(error.message || "Erro ao gerar protocolo");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   const countProgress = () => {
     if (!protocol?.conteudo) return { completed: 0, total: 0 };
     
@@ -184,20 +153,11 @@ export default function Mindset() {
             <Brain className="h-16 w-16 text-primary mx-auto mb-4" />
             <h1 className="text-3xl font-display font-bold mb-2">Protocolo de Mindset</h1>
             <p className="text-muted-foreground mb-8">
-              Seu protocolo de mentalidade ainda não foi gerado
+              Seu protocolo de mentalidade ainda não foi gerado. Fale com seu mentor para solicitar ajustes.
             </p>
-            <Button onClick={generateProtocol} disabled={generating} variant="fire" size="lg">
-              {generating ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  Gerando...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Gerar Protocolo de Mindset
-                </>
-              )}
+            <Button onClick={() => navigate("/suporte")} variant="fire" size="lg">
+              <MessageCircle className="h-5 w-5 mr-2" />
+              Falar com Mentor
             </Button>
           </div>
         </div>
@@ -392,15 +352,10 @@ export default function Mindset() {
             variant="outline" 
             className="flex-1" 
             size="lg"
-            onClick={generateProtocol}
-            disabled={generating}
+            onClick={() => navigate("/suporte")}
           >
-            {generating ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Sparkles className="h-4 w-4 mr-2" />
-            )}
-            GERAR NOVO PROTOCOLO
+            <MessageCircle className="h-4 w-4 mr-2" />
+            FALAR COM MENTOR
           </Button>
           <Button 
             variant="default" 

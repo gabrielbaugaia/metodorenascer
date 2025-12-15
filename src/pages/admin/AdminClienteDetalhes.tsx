@@ -219,6 +219,13 @@ export default function AdminClienteDetalhes() {
       const types = ["treino", "nutricao", "mindset"];
       
       for (const tipo of types) {
+        // Mark existing protocols of this type as inactive to avoid duplicates
+        await supabase
+          .from("protocolos")
+          .update({ ativo: false })
+          .eq("user_id", id)
+          .eq("tipo", tipo);
+
         const { error } = await supabase.functions.invoke("generate-protocol", {
           body: {
             tipo,
