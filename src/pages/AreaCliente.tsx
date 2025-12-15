@@ -68,13 +68,21 @@ export default function AreaCliente() {
     fetchData();
   }, [user]);
 
-  // Calculate subscription progress
+  // Calculate subscription progress based on actual subscription period
   const calculateProgress = () => {
     if (!subscriptionEnd) return 0;
     const endDate = parseISO(subscriptionEnd);
     const today = new Date();
-    const totalDays = 30; // Assuming 30-day subscription
     const daysRemaining = differenceInDays(endDate, today);
+    
+    // Calculate total days based on subscription type (30, 90, 180, or 365 days)
+    // We estimate from remaining days - if > 300 days remaining, it's annual
+    // if > 150 days, it's semestral, etc.
+    let totalDays = 30;
+    if (daysRemaining > 300) totalDays = 365;
+    else if (daysRemaining > 150) totalDays = 180;
+    else if (daysRemaining > 60) totalDays = 90;
+    
     const daysUsed = totalDays - daysRemaining;
     return Math.min(100, Math.max(0, (daysUsed / totalDays) * 100));
   };
