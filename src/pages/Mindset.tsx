@@ -26,31 +26,40 @@ import { toast } from "sonner";
 
 interface MindsetPratica {
   nome: string;
-  descricao: string;
+  descricao?: string;
+  duracao?: string;
+  por_que?: string;
 }
 
 interface MindsetProtocol {
   titulo: string;
-  mentalidade_necessaria: {
+  mentalidade_necessaria?: {
     titulo: string;
     descricao: string;
-    reflexao: string;
+    reflexao?: string;
+    foco_do_ciclo?: string;
+    comportamento_chave?: string;
   };
-  rotina_manha: {
-    duracao: string;
-    praticas: MindsetPratica[];
+  rotina_manha?: {
+    duracao?: string;
+    duracao_total?: string;
+    praticas?: MindsetPratica[];
   };
-  rotina_noite: {
-    duracao: string;
-    praticas: MindsetPratica[];
+  rotina_noite?: {
+    duracao?: string;
+    duracao_total?: string;
+    praticas?: MindsetPratica[];
   };
-  crencas_limitantes: {
-    crenca: string;
+  crencas_limitantes?: {
+    crenca?: string;
+    crenca_original?: string;
     reformulacao: string;
-    acao: string;
+    acao?: string;
+    acao_pratica?: string;
+    gatilho_identificado?: string;
   }[];
   habitos_semanais?: string[];
-  afirmacoes_personalizadas?: string[];
+  afirmacoes_personalizadas?: (string | { afirmacao: string; comportamento_alvo?: string; quando_usar?: string })[];
 }
 
 interface Protocol {
@@ -227,7 +236,7 @@ export default function Mindset() {
                   ROTINA DA MANHÃ
                 </CardTitle>
                 <Badge variant="secondary" className="text-primary">
-                  {content.rotina_manha.duracao}
+                  {content.rotina_manha.duracao || content.rotina_manha.duracao_total}
                 </Badge>
               </div>
             </CardHeader>
@@ -263,7 +272,7 @@ export default function Mindset() {
                   ROTINA DA NOITE
                 </CardTitle>
                 <Badge variant="secondary" className="text-primary">
-                  {content.rotina_noite.duracao}
+                  {content.rotina_noite.duracao || content.rotina_noite.duracao_total}
                 </Badge>
               </div>
             </CardHeader>
@@ -299,28 +308,32 @@ export default function Mindset() {
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="space-y-2">
-                {content.crencas_limitantes.map((item, index) => (
-                  <AccordionItem key={index} value={`crenca-${index}`} className="border-none">
-                    <AccordionTrigger className="py-3 px-4 bg-muted/30 rounded-lg hover:bg-muted/50 hover:no-underline">
-                      <div className="flex items-center gap-3">
-                        <X className="h-4 w-4 text-red-500" />
-                        <span className="text-left">"{item.crenca}"</span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-3 px-4 pb-0">
-                      <div className="space-y-3 pl-7">
-                        <div>
-                          <p className="text-xs text-muted-foreground uppercase mb-1">Reformulação</p>
-                          <p className="text-sm text-green-500">{item.reformulacao}</p>
+                {content.crencas_limitantes.map((item, index) => {
+                  const crenca = item.crenca || item.crenca_original || "";
+                  const acao = item.acao || item.acao_pratica || "";
+                  return (
+                    <AccordionItem key={index} value={`crenca-${index}`} className="border-none">
+                      <AccordionTrigger className="py-3 px-4 bg-muted/30 rounded-lg hover:bg-muted/50 hover:no-underline">
+                        <div className="flex items-center gap-3">
+                          <X className="h-4 w-4 text-red-500" />
+                          <span className="text-left">"{crenca}"</span>
                         </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground uppercase mb-1">Ação</p>
-                          <p className="text-sm">{item.acao}</p>
+                      </AccordionTrigger>
+                      <AccordionContent className="pt-3 px-4 pb-0">
+                        <div className="space-y-3 pl-7">
+                          <div>
+                            <p className="text-xs text-muted-foreground uppercase mb-1">Reformulação</p>
+                            <p className="text-sm text-green-500">{item.reformulacao}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground uppercase mb-1">Ação</p>
+                            <p className="text-sm">{acao}</p>
+                          </div>
                         </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
               </Accordion>
             </CardContent>
           </Card>
@@ -336,12 +349,15 @@ export default function Mindset() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {content.afirmacoes_personalizadas.map((afirmacao, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                  <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm">{afirmacao}</span>
-                </div>
-              ))}
+              {content.afirmacoes_personalizadas.map((afirmacao, index) => {
+                const text = typeof afirmacao === 'string' ? afirmacao : afirmacao.afirmacao;
+                return (
+                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-sm">{text}</span>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         )}
