@@ -94,9 +94,9 @@ export function useSubscription() {
   }, [session?.access_token]);
 
   useEffect(() => {
-    if (user) {
+    if (user && session?.access_token) {
       checkSubscription();
-    } else {
+    } else if (!user) {
       setStatus({
         subscribed: false,
         subscriptionEnd: null,
@@ -105,7 +105,7 @@ export function useSubscription() {
         error: null,
       });
     }
-  }, [user, checkSubscription]);
+  }, [user, session?.access_token, checkSubscription]);
 
   // Refresh subscription status every 60 seconds
   useEffect(() => {
