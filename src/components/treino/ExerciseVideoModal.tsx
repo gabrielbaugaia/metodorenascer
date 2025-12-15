@@ -40,8 +40,8 @@ export function ExerciseVideoModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Video */}
-          {exercise.videoUrl ? (
+          {/* Video - only show iframe for valid YouTube/Vimeo URLs */}
+          {exercise.videoUrl && (exercise.videoUrl.includes('youtube.com') || exercise.videoUrl.includes('youtu.be') || exercise.videoUrl.includes('vimeo.com')) ? (
             <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
               <iframe
                 src={exercise.videoUrl}
@@ -53,7 +53,7 @@ export function ExerciseVideoModal({
             </div>
           ) : (
             <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
-              <p className="text-muted-foreground">Vídeo não disponível</p>
+              <p className="text-muted-foreground">Vídeo demonstrativo em breve</p>
             </div>
           )}
 
