@@ -247,15 +247,53 @@ export default function Anamnese() {
       console.log("[ANAMNESE] Using plan type", planType);
 
       console.log("[ANAMNESE] Fetching profile for protocol context...");
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileRow, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("[ANAMNESE] Profile fetch error", profileError);
-        throw new Error("PROFILE_FETCH_ERROR");
+      }
+
+      const profileContext = profileRow || {
+        id: user.id,
+        age,
+        data_nascimento: formData.data_nascimento,
+        weight: parseFloat(formData.weight),
+        height: parseFloat(formData.height),
+        telefone: formData.whatsapp,
+        sexo: formData.sexo,
+        goals: formData.objetivo_principal,
+        objetivo_principal: formData.objetivo_principal,
+        ja_treinou_antes: formData.ja_treinou_antes === "sim",
+        local_treino: formData.local_treino,
+        availability: formData.dias_disponiveis,
+        dias_disponiveis: formData.dias_disponiveis,
+        nivel_experiencia: formData.nivel_condicionamento,
+        nivel_condicionamento: formData.nivel_condicionamento,
+        pratica_aerobica: formData.pratica_aerobica === "sim",
+        escada_sem_cansar: formData.escada_sem_cansar,
+        condicoes_saude: formData.condicoes_saude,
+        injuries: formData.injuries,
+        restricoes_medicas: restricoesMedicasCompletas,
+        toma_medicamentos: formData.toma_medicamentos === "sim",
+        refeicoes_por_dia: formData.refeicoes_por_dia,
+        bebe_agua_frequente: formData.bebe_agua_frequente === "sim",
+        restricoes_alimentares: formData.restricoes_alimentares,
+        qualidade_sono: formData.qualidade_sono,
+        nivel_estresse: formData.nivel_estresse,
+        consome_alcool: formData.consome_alcool,
+        fuma: formData.fuma,
+        foto_frente_url: formData.foto_frente_url,
+        foto_lado_url: formData.foto_lado_url,
+        foto_costas_url: formData.foto_costas_url,
+        observacoes_adicionais: formData.observacoes_adicionais,
+      };
+
+      if (!profileRow) {
+        console.warn("[ANAMNESE] No profile row found, using fallback context from form data");
       }
 
       console.log("[ANAMNESE] Invoking generate-protocol functions...");
@@ -274,7 +312,7 @@ export default function Anamnese() {
           body: {
             tipo,
             userId: user.id,
-            userContext: profileData,
+            userContext: profileContext,
           },
         });
 
