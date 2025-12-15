@@ -227,10 +227,14 @@ export default function MeuPerfil() {
               Foto de Perfil
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col items-center gap-4">
+        <CardContent className="flex flex-col items-center gap-4">
             <div className="relative">
-              <Avatar className="h-32 w-32">
-                <AvatarImage src={profile.foto_perfil_url || undefined} alt={profile.full_name} />
+              <Avatar className="h-32 w-32" key={profile.foto_perfil_url}>
+                <AvatarImage 
+                  src={profile.foto_perfil_url || undefined} 
+                  alt={profile.full_name}
+                  key={profile.foto_perfil_url}
+                />
                 <AvatarFallback className="text-2xl bg-primary/20 text-primary">
                   {getInitials(profile.full_name)}
                 </AvatarFallback>

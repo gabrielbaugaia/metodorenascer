@@ -109,12 +109,32 @@ export function ExerciseVideoModal({
         const name = exercise.name?.trim();
         if (!name) return;
 
-        const { data, error } = await supabase
+        // Try exact match first
+        let { data, error } = await supabase
           .from("exercise_videos")
           .select("video_url")
           .ilike("exercise_name", name)
           .limit(1)
           .maybeSingle();
+
+        // If no exact match, try partial match with first significant words
+        if (!data && !error) {
+          // Get first 2-3 significant words for matching
+          const words = name.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+          const searchPattern = words.slice(0, 2).join("%");
+          
+          if (searchPattern) {
+            const result = await supabase
+              .from("exercise_videos")
+              .select("video_url")
+              .ilike("exercise_name", `%${searchPattern}%`)
+              .limit(1)
+              .maybeSingle();
+            
+            data = result.data;
+            error = result.error;
+          }
+        }
 
         if (error) {
           console.error("Erro ao buscar vídeo do exercício:", error);
