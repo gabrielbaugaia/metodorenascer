@@ -379,11 +379,14 @@ function generateMindsetPdf(doc: jsPDF, conteudo: any, helpers: any) {
     addSectionTitle("Crenças Limitantes para Superar");
     conteudo.crencas_limitantes.forEach((crenca: any, idx: number) => {
       checkNewPage(25);
-      addSubsectionTitle(`Crença ${idx + 1}: "${crenca.crenca}"`);
+      // Suporta ambos os formatos: crenca ou crenca_original
+      const crencaText = crenca.crenca || crenca.crenca_original || "";
+      const acaoText = crenca.acao || crenca.acao_pratica || "";
+      addSubsectionTitle(`Crença ${idx + 1}: "${crencaText}"`);
       addBoldText("Reformulação:", 5);
-      addText(crenca.reformulacao, 10);
+      addText(crenca.reformulacao || "", 10);
       addBoldText("Ação:", 5);
-      addText(crenca.acao, 10);
+      addText(acaoText, 10);
     });
   }
 
@@ -398,8 +401,12 @@ function generateMindsetPdf(doc: jsPDF, conteudo: any, helpers: any) {
   // Afirmações
   if (conteudo?.afirmacoes_personalizadas && conteudo.afirmacoes_personalizadas.length > 0) {
     addSectionTitle("Afirmações Personalizadas");
-    conteudo.afirmacoes_personalizadas.forEach((afirmacao: string) => {
-      addBoldText(`"${afirmacao}"`, 5);
+    conteudo.afirmacoes_personalizadas.forEach((afirmacao: any) => {
+      // Suporta string ou objeto com campo afirmacao
+      const afirmacaoText = typeof afirmacao === "string" ? afirmacao : afirmacao.afirmacao || "";
+      if (afirmacaoText) {
+        addBoldText(`"${afirmacaoText}"`, 5);
+      }
     });
   }
 }
