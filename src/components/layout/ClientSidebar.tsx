@@ -35,15 +35,11 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { cn } from "@/lib/utils";
 
 const clientMenuItems = [
-  { title: "Início", url: "/area-cliente", icon: Home },
   { title: "Meu Perfil", url: "/meu-perfil", icon: User },
-  { title: "Indicações", url: "/indicacoes", icon: Gift },
-  { title: "Meus Protocolos", url: "/protocolos", icon: FileText },
   { title: "Treino", url: "/treino", icon: Dumbbell },
   { title: "Nutrição", url: "/nutricao", icon: Apple },
-  { title: "Mindset", url: "/mindset", icon: Brain },
-  { title: "Receitas IA", url: "/receitas", icon: ChefHat },
   { title: "Suporte", url: "/suporte", icon: MessageCircle },
+  { title: "Assinatura", url: "/area-cliente", icon: Settings },
 ];
 
 const adminMenuItems = [

@@ -5,12 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Utensils, Loader2, Apple } from "lucide-react";
+import { ArrowLeft, Utensils, Loader2, Apple, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
+import { toast } from "sonner";
 
 interface NutritionProtocol {
   id: string;
+  tipo: string;
+  titulo: string;
   conteudo: any;
+  data_geracao: string;
 }
 
 
@@ -19,6 +24,7 @@ export default function Nutricao() {
   const { user } = useAuth();
   const [protocol, setProtocol] = useState<NutritionProtocol | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     const fetchProtocol = async () => {
@@ -27,7 +33,7 @@ export default function Nutricao() {
       try {
         const { data, error } = await supabase
           .from("protocolos")
-          .select("id, conteudo")
+          .select("id, tipo, titulo, conteudo, data_geracao")
           .eq("user_id", user.id)
           .eq("tipo", "nutricao")
           .eq("ativo", true)
@@ -52,6 +58,20 @@ export default function Nutricao() {
 
   const conteudo = protocol?.conteudo || {};
 
+  const handleDownloadPdf = () => {
+    if (!protocol) return;
+    setDownloading(true);
+    try {
+      generateProtocolPdf(protocol);
+      toast.success("PDF baixado com sucesso!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Erro ao gerar PDF");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -69,15 +89,26 @@ export default function Nutricao() {
       
       <main className="pt-24 pb-12 px-4">
         <div className="container mx-auto max-w-4xl">
-          {/* Back button */}
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/dashboard")}
-            className="mb-6"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar ao Dashboard
-          </Button>
+          {/* Back button + Download */}
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/dashboard")}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar ao Dashboard
+            </Button>
+            {protocol && (
+              <Button
+                variant="outline"
+                onClick={handleDownloadPdf}
+                disabled={downloading}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {downloading ? "Baixando..." : "Baixar PDF"}
+              </Button>
+            )}
+          </div>
 
           {/* Header */}
           <div className="mb-8">

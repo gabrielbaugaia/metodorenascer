@@ -6,9 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2, CheckCircle } from "lucide-react";
+import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Download } from "lucide-react";
 import { WorkoutCard } from "@/components/treino/WorkoutCard";
 import { SuccessAnimation } from "@/components/feedback/SuccessAnimation";
+import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
+import { toast } from "sonner";
 interface Exercise {
   name: string;
   sets: number;
@@ -43,8 +45,10 @@ export default function Treino() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [protocol, setProtocol] = useState<Protocol | null>(null);
+  const [fullProtocol, setFullProtocol] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const { 
     getTotalCount, 
     getTotalCalories, 
@@ -161,15 +165,36 @@ export default function Treino() {
 
       <main className="pt-24 pb-12 px-4">
         <div className="container mx-auto max-w-4xl">
-          {/* Back button */}
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/dashboard")}
-            className="mb-6"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar ao Dashboard
-          </Button>
+          {/* Back button + Download */}
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/dashboard")}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar ao Dashboard
+            </Button>
+            {protocol && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (protocol) {
+                    generateProtocolPdf({
+                      id: protocol.id,
+                      tipo: "treino",
+                      titulo: "Protocolo de Treino",
+                      conteudo: protocol.conteudo,
+                      data_geracao: new Date().toISOString()
+                    });
+                    toast.success("PDF baixado!");
+                  }
+                }}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Baixar PDF
+              </Button>
+            )}
+          </div>
 
           {/* Header */}
           <div className="mb-8">

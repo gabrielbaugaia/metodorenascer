@@ -196,7 +196,7 @@ export function OnboardingTour() {
           <Button
             variant="fire"
             onClick={handleNext}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto text-white font-semibold"
           >
             {isLastStep ? (
               <>
