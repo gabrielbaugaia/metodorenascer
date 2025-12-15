@@ -79,7 +79,8 @@ export function ClientSidebar() {
       )}
       collapsible="icon"
     >
-      <div className="flex h-16 items-center justify-between border-b border-border/50 px-4">
+      {/* Header only visible on desktop */}
+      <div className="hidden md:flex h-16 items-center justify-between border-b border-border/50 px-4">
         {!collapsed && (
           <div className="flex items-center gap-2">
             <Flame className="h-6 w-6 text-primary" />
@@ -87,6 +88,13 @@ export function ClientSidebar() {
           </div>
         )}
         <SidebarTrigger className="ml-auto" />
+      </div>
+      {/* Mobile header inside sheet */}
+      <div className="md:hidden flex h-14 items-center border-b border-border/50 px-4">
+        <div className="flex items-center gap-2">
+          <Flame className="h-6 w-6 text-primary" />
+          <span className="font-display text-lg text-gradient">RENASCER</span>
+        </div>
       </div>
 
       <SidebarContent className="px-2 py-4">

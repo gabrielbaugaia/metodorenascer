@@ -161,11 +161,11 @@ export function ExerciseVideoModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Dumbbell className="w-5 h-5 text-primary" />
-            {exercise.name}
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-xl pr-6">
+            <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
+            <span className="uppercase">{exercise.name}</span>
           </DialogTitle>
           <DialogDescription className="sr-only">
             Vídeo demonstrativo do exercício {exercise.name}

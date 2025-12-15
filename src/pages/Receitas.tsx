@@ -215,7 +215,7 @@ export default function Receitas() {
 
   return (
     <ClientLayout>
-      <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">

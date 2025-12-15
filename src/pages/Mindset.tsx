@@ -157,7 +157,7 @@ export default function Mindset() {
   if (!protocol) {
     return (
       <ClientLayout>
-        <div className="p-6 md:p-8 max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="text-center py-16">
             <Brain className="h-16 w-16 text-primary mx-auto mb-4" />
             <h1 className="text-3xl font-display font-bold mb-2">Protocolo de Mindset</h1>
@@ -178,7 +178,7 @@ export default function Mindset() {
 
   return (
     <ClientLayout>
-      <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-2">
