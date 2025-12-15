@@ -539,6 +539,21 @@ ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
 
     console.log(`Generating ${tipo} protocol for user ${userId}, plan: ${planType}, weeks: ${durationWeeks}`);
 
+    // Buscar banco de vídeos de exercícios para enriquecer os protocolos de treino
+    let exerciseVideos: Record<string, string> = {};
+    if (tipo === "treino") {
+      const { data: videos } = await supabaseClient
+        .from("exercise_videos")
+        .select("exercise_name, video_url");
+      
+      if (videos) {
+        videos.forEach((v: { exercise_name: string; video_url: string }) => {
+          exerciseVideos[v.exercise_name.toLowerCase()] = v.video_url;
+        });
+        console.log(`Loaded ${videos.length} exercise videos from database`);
+      }
+    }
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -575,6 +590,38 @@ ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
     } catch (e) {
       console.error("Failed to parse protocol JSON:", content);
       throw new Error("Erro ao processar protocolo gerado");
+    }
+
+    // Enriquecer exercícios com URLs de vídeo do banco de dados
+    if (tipo === "treino" && protocolData.semanas && Object.keys(exerciseVideos).length > 0) {
+      protocolData.semanas.forEach((semana: any) => {
+        if (semana.dias) {
+          semana.dias.forEach((dia: any) => {
+            if (dia.exercicios) {
+              dia.exercicios.forEach((ex: any) => {
+                if (ex.nome && !ex.video_url) {
+                  // Buscar correspondência exata ou parcial
+                  const nomeNormalizado = ex.nome.toLowerCase().trim();
+                  
+                  // Tentar correspondência exata primeiro
+                  if (exerciseVideos[nomeNormalizado]) {
+                    ex.video_url = exerciseVideos[nomeNormalizado];
+                  } else {
+                    // Tentar correspondência parcial
+                    for (const [exerciseName, url] of Object.entries(exerciseVideos)) {
+                      if (nomeNormalizado.includes(exerciseName) || exerciseName.includes(nomeNormalizado)) {
+                        ex.video_url = url;
+                        break;
+                      }
+                    }
+                  }
+                }
+              });
+            }
+          });
+        }
+      });
+      console.log("Exercise videos enriched from database");
     }
 
     // Adicionar metadados de controle de ciclos
