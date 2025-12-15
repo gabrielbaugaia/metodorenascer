@@ -1,8 +1,9 @@
+import { forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
-export function CTASection() {
+export const CTASection = forwardRef<HTMLElement>((_, forwardedRef) => {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 });
 
   return (
@@ -50,4 +51,6 @@ export function CTASection() {
       </div>
     </section>
   );
-}
+});
+
+CTASection.displayName = "CTASection";
