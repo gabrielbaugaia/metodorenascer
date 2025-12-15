@@ -248,6 +248,7 @@ export type Database = {
           objetivo_principal: string | null
           objetivos_detalhados: Json | null
           observacoes_adicionais: string | null
+          onboarding_completed: boolean | null
           pratica_aerobica: boolean | null
           qualidade_sono: string | null
           refeicoes_por_dia: string | null
@@ -293,6 +294,7 @@ export type Database = {
           objetivo_principal?: string | null
           objetivos_detalhados?: Json | null
           observacoes_adicionais?: string | null
+          onboarding_completed?: boolean | null
           pratica_aerobica?: boolean | null
           qualidade_sono?: string | null
           refeicoes_por_dia?: string | null
@@ -338,6 +340,7 @@ export type Database = {
           objetivo_principal?: string | null
           objetivos_detalhados?: Json | null
           observacoes_adicionais?: string | null
+          onboarding_completed?: boolean | null
           pratica_aerobica?: boolean | null
           qualidade_sono?: string | null
           refeicoes_por_dia?: string | null
@@ -590,6 +593,42 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      workout_completions: {
+        Row: {
+          calories_burned: number | null
+          created_at: string
+          duration_minutes: number | null
+          exercises_completed: number | null
+          id: string
+          notes: string | null
+          user_id: string
+          workout_date: string
+          workout_name: string | null
+        }
+        Insert: {
+          calories_burned?: number | null
+          created_at?: string
+          duration_minutes?: number | null
+          exercises_completed?: number | null
+          id?: string
+          notes?: string | null
+          user_id: string
+          workout_date?: string
+          workout_name?: string | null
+        }
+        Update: {
+          calories_burned?: number | null
+          created_at?: string
+          duration_minutes?: number | null
+          exercises_completed?: number | null
+          id?: string
+          notes?: string | null
+          user_id?: string
+          workout_date?: string
+          workout_name?: string | null
         }
         Relationships: []
       }

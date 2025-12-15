@@ -30,6 +30,8 @@ interface WorkoutCardProps {
   completed: boolean;
   calories?: number;
   index: number;
+  onComplete?: () => void;
+  todayCompleted?: boolean;
 }
 
 export function WorkoutCard({
@@ -40,6 +42,8 @@ export function WorkoutCard({
   completed,
   calories = 350,
   index,
+  onComplete,
+  todayCompleted = false,
 }: WorkoutCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
@@ -153,11 +157,27 @@ export function WorkoutCard({
                 onExerciseClick={handleExerciseClick}
               />
 
-              {!completed && (
-                <Button className="mt-4 w-full" size="lg">
-                  <Dumbbell className="w-4 h-4 mr-2" />
-                  Iniciar Treino
+              {!completed && !todayCompleted && onComplete && (
+                <Button 
+                  variant="fire" 
+                  className="mt-4 w-full" 
+                  size="lg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onComplete();
+                  }}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Marcar como Concluído
                 </Button>
+              )}
+              {todayCompleted && !completed && (
+                <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
+                  <p className="text-sm text-green-500 font-medium flex items-center justify-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    Treino de hoje já foi registrado!
+                  </p>
+                </div>
               )}
             </CardContent>
           </CollapsibleContent>

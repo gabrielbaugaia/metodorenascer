@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useWorkoutTracking } from "@/hooks/useWorkoutTracking";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,13 +18,14 @@ import {
   Trophy,
   Clock,
   ChevronRight,
-  ClipboardList
+  ClipboardList,
+  Flame
 } from "lucide-react";
 import { AnamneseSection } from "@/components/client/AnamneseSection";
+import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { useNavigate } from "react-router-dom";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
 interface Profile {
   full_name: string;
   weight: number | null;
@@ -36,6 +38,7 @@ interface Profile {
 export default function AreaCliente() {
   const { user } = useAuth();
   const { subscribed, subscriptionEnd } = useSubscription();
+  const { getTotalCount, getMonthlyCount, getTotalCalories } = useWorkoutTracking();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [protocolCount, setProtocolCount] = useState(0);
@@ -99,6 +102,7 @@ export default function AreaCliente() {
 
   return (
     <ClientLayout>
+      <OnboardingTour />
       <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="space-y-2">
@@ -186,16 +190,23 @@ export default function AreaCliente() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card variant="glass">
             <CardContent className="p-4 text-center">
-              <Target className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p className="text-2xl font-bold">{profile?.weight || "--"}</p>
-              <p className="text-xs text-muted-foreground">Peso Atual (kg)</p>
+              <Dumbbell className="h-8 w-8 mx-auto mb-2 text-primary" />
+              <p className="text-2xl font-bold">{getTotalCount()}</p>
+              <p className="text-xs text-muted-foreground">Treinos Feitos</p>
+            </CardContent>
+          </Card>
+          <Card variant="glass">
+            <CardContent className="p-4 text-center">
+              <Flame className="h-8 w-8 mx-auto mb-2 text-orange-500" />
+              <p className="text-2xl font-bold">{getTotalCalories().toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">kcal Queimadas</p>
             </CardContent>
           </Card>
           <Card variant="glass">
             <CardContent className="p-4 text-center">
               <Calendar className="h-8 w-8 mx-auto mb-2 text-green-500" />
-              <p className="text-2xl font-bold">{daysRemaining}</p>
-              <p className="text-xs text-muted-foreground">Dias Restantes</p>
+              <p className="text-2xl font-bold">{getMonthlyCount()}</p>
+              <p className="text-xs text-muted-foreground">Treinos este mês</p>
             </CardContent>
           </Card>
           <Card variant="glass">
@@ -203,13 +214,6 @@ export default function AreaCliente() {
               <Trophy className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
               <p className="text-2xl font-bold">{protocolCount}</p>
               <p className="text-xs text-muted-foreground">Protocolos Ativos</p>
-            </CardContent>
-          </Card>
-          <Card variant="glass">
-            <CardContent className="p-4 text-center">
-              <TrendingUp className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-              <p className="text-2xl font-bold">--</p>
-              <p className="text-xs text-muted-foreground">Treinos Feitos</p>
             </CardContent>
           </Card>
         </div>

@@ -8,8 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Target, Utensils, Brain, BookOpen, MessageCircle, TrendingUp, Loader2, Crown, Settings, ShieldCheck } from "lucide-react";
+import { Target, Utensils, Brain, BookOpen, MessageCircle, Loader2, Crown, Settings, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
+import { FullPageLoader } from "@/components/ui/loading-spinner";
 
 const dashboardCards = [
   {
@@ -123,14 +125,7 @@ export default function Dashboard() {
   const isLoading = authLoading || subLoading || checkingAnamnese;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <FullPageLoader />;
   }
 
   // Subscription plans for non-subscribers
@@ -263,6 +258,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <OnboardingTour />
       
       <main className="pt-24 pb-12 px-4">
         <div className="container mx-auto max-w-6xl">
