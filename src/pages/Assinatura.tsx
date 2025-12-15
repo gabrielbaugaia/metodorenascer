@@ -214,7 +214,7 @@ export default function Assinatura() {
 
   return (
     <ClientLayout>
-      <div className="p-6 max-w-6xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         <div>
           <h1 className="text-2xl font-bold">Minha Assinatura</h1>
           <p className="text-muted-foreground">Gerencie seu plano e renove sua transformação</p>

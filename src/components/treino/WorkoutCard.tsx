@@ -71,51 +71,52 @@ export function WorkoutCard({
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleTrigger asChild>
             <CardHeader className="cursor-pointer select-none">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                   {/* Day badge */}
                   <div
                     className={cn(
-                      "w-14 h-14 rounded-2xl flex flex-col items-center justify-center",
+                      "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center shrink-0",
                       completed
                         ? "bg-primary text-primary-foreground"
                         : "bg-gradient-to-br from-orange-500 to-red-500 text-white"
                     )}
                   >
                     {completed ? (
-                      <CheckCircle className="w-6 h-6" />
+                      <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                     ) : (
                       <>
-                        <span className="text-[10px] uppercase font-medium opacity-80">
+                        <span className="text-[8px] sm:text-[10px] uppercase font-medium opacity-80">
                           {day.slice(0, 3)}
                         </span>
-                        <Dumbbell className="w-5 h-5" />
+                        <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5" />
                       </>
                     )}
                   </div>
 
                   {/* Info */}
-                  <div>
-                    <CardTitle className="text-lg mb-1 uppercase">
+                  <div className="min-w-0">
+                    <CardTitle className="text-sm sm:text-lg mb-0.5 sm:mb-1 uppercase truncate">
                       {focus}
                     </CardTitle>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
+                        <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         {duration}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Flame className="w-3.5 h-3.5 text-orange-500" />
+                        <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-500" />
                         ~{calories} kcal
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                   <Badge
                     variant={completed ? "default" : "outline"}
                     className={cn(
+                      "text-[10px] sm:text-xs px-1.5 sm:px-2.5",
                       completed && "bg-primary/20 text-primary border-primary/30"
                     )}
                   >
@@ -123,7 +124,7 @@ export function WorkoutCard({
                   </Badge>
                   <ChevronDown
                     className={cn(
-                      "w-5 h-5 text-muted-foreground transition-transform",
+                      "w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground transition-transform",
                       isOpen && "rotate-180"
                     )}
                   />

@@ -188,7 +188,7 @@ export default function Suporte() {
 
   return (
     <ClientLayout>
-      <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-bold uppercase">Suporte</h1>
           <p className="text-muted-foreground">Tire suas dúvidas com nosso mentor IA ou consulte o FAQ</p>

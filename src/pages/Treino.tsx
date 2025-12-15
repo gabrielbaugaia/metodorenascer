@@ -151,7 +151,7 @@ export default function Treino() {
           message="Treino Concluído!"
           subMessage="Você está cada vez mais perto do seu objetivo!"
         />
-        <div className="p-6 md:p-8 flex items-center justify-center min-h-[60vh]">
+        <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       </ClientLayout>
@@ -167,18 +167,18 @@ export default function Treino() {
         message="Treino Concluído!"
         subMessage="Você está cada vez mais perto do seu objetivo!"
       />
-      <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
-              <Target className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shrink-0">
+              <Target className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold uppercase text-foreground">
+              <h1 className="text-xl sm:text-3xl font-bold uppercase text-foreground">
                 Seu <span className="text-primary">Treino</span>
               </h1>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 {workouts.length > 0 
                   ? "Clique em um exercício para ver o vídeo"
                   : "Seu protocolo será gerado em breve"}
@@ -188,6 +188,8 @@ export default function Treino() {
           {protocol && (
             <Button
               variant="outline"
+              size="sm"
+              className="w-full sm:w-auto"
               onClick={() => {
                 generateProtocolPdf({
                   id: protocol.id,
