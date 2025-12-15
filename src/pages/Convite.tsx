@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Flame, Mail, Lock, User, Gift } from "lucide-react";
+import { Flame, Mail, Lock, User, Gift, Percent } from "lucide-react";
 import { z } from "zod";
 
 const signupSchema = z.object({
@@ -17,10 +17,13 @@ const signupSchema = z.object({
 });
 
 export default function Convite() {
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get("ref");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [referrerName, setReferrerName] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -29,6 +32,33 @@ export default function Convite() {
       navigate("/dashboard");
     }
   }, [user, navigate]);
+
+  // Verificar código de indicação
+  useEffect(() => {
+    const checkReferralCode = async () => {
+      if (!referralCode) return;
+
+      const { data } = await supabase
+        .from("referral_codes")
+        .select("user_id")
+        .eq("code", referralCode)
+        .maybeSingle();
+
+      if (data) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", data.user_id)
+          .maybeSingle();
+
+        if (profile) {
+          setReferrerName(profile.full_name.split(" ")[0]); // Primeiro nome
+        }
+      }
+    };
+
+    checkReferralCode();
+  }, [referralCode]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +85,31 @@ export default function Convite() {
       if (authError) throw authError;
 
       if (authData.user) {
+        // Atualizar perfil com código de indicação
+        if (referralCode) {
+          await supabase
+            .from("profiles")
+            .update({ referred_by_code: referralCode })
+            .eq("id", authData.user.id);
+
+          // Buscar quem indicou
+          const { data: referrerData } = await supabase
+            .from("referral_codes")
+            .select("user_id")
+            .eq("code", referralCode)
+            .maybeSingle();
+
+          // Registrar a indicação
+          if (referrerData) {
+            await supabase
+              .from("referrals")
+              .insert({
+                referrer_id: referrerData.user_id,
+                referred_user_id: authData.user.id,
+              });
+          }
+        }
+
         // Create free subscription for the user
         const now = new Date();
         const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
@@ -70,7 +125,6 @@ export default function Convite() {
 
         if (subError) {
           console.error("Error creating subscription:", subError);
-          // Don't throw - user is created, subscription can be added later by admin
         }
 
         toast.success("Conta criada com sucesso! Bem-vindo ao Método Renascer!");
@@ -93,12 +147,24 @@ export default function Convite() {
             <Flame className="w-8 h-8 text-primary" />
             <span className="font-display text-3xl text-gradient">MÉTODO RENASCER</span>
           </div>
-          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-4 py-2 mb-4">
-            <Gift className="w-5 h-5 text-primary" />
-            <span className="text-primary font-semibold">Convite Exclusivo</span>
-          </div>
+          {referrerName ? (
+            <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2 mb-4">
+              <Percent className="w-5 h-5 text-green-500" />
+              <span className="text-green-500 font-semibold">
+                Indicado por {referrerName}
+              </span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-4 py-2 mb-4">
+              <Gift className="w-5 h-5 text-primary" />
+              <span className="text-primary font-semibold">Convite Exclusivo</span>
+            </div>
+          )}
           <p className="text-muted-foreground">
-            Você foi convidado para fazer parte do Método Renascer com acesso cortesia!
+            {referrerName 
+              ? `${referrerName} te convidou para fazer parte do Método Renascer!`
+              : "Você foi convidado para fazer parte do Método Renascer com acesso cortesia!"
+            }
           </p>
         </div>
 
