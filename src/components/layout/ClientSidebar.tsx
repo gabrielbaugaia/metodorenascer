@@ -29,7 +29,9 @@ import {
   Bell,
   Gift,
   Video,
-  Mail
+  Mail,
+  BarChart3,
+  Target
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -51,9 +53,11 @@ const adminMenuItems = [
   { title: "Clientes", url: "/admin/clientes", icon: User },
   { title: "Criar Cliente", url: "/admin/criar-cliente", icon: User },
   { title: "Enviar Convite", url: "/admin/convites", icon: Mail },
+  { title: "Leads", url: "/admin/leads", icon: Target },
   { title: "Protocolos", url: "/admin/planos", icon: FileText },
   { title: "Planos de Venda", url: "/admin/planos-venda", icon: CreditCard },
   { title: "Banco de Vídeos", url: "/admin/videos", icon: Video },
+  { title: "Métricas", url: "/admin/metricas", icon: BarChart3 },
   { title: "Mensagens Auto", url: "/admin/mensagens", icon: Bell },
   { title: "Suporte Chats", url: "/admin/suporte", icon: MessageCircle },
 ];

@@ -34,6 +34,7 @@ import Assinatura from "./pages/Assinatura";
 import AdminPlanosVenda from "./pages/admin/AdminPlanosVenda";
 import AdminMetricas from "./pages/admin/AdminMetricas";
 import AdminConvites from "./pages/admin/AdminConvites";
+import AdminLeads from "./pages/admin/AdminLeads";
 import Lancamento from "./pages/Lancamento";
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/admin/planos-venda" element={<AdminPlanosVenda />} />
             <Route path="/admin/metricas" element={<AdminMetricas />} />
             <Route path="/admin/convites" element={<AdminConvites />} />
+            <Route path="/admin/leads" element={<AdminLeads />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </AnalyticsProvider>
