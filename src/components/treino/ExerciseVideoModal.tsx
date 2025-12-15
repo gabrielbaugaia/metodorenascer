@@ -1,11 +1,14 @@
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Dumbbell, Clock, RotateCcw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Clock, Dumbbell, Loader2, RotateCcw } from "lucide-react";
 
 interface Exercise {
   name: string;
@@ -22,32 +25,55 @@ interface ExerciseVideoModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Convert YouTube URLs to embed format
-function convertToEmbedUrl(url: string): string {
-  if (!url) return '';
-  
-  // Handle youtube.com/watch?v= format
-  if (url.includes('youtube.com/watch')) {
-    const videoId = url.split('v=')[1]?.split('&')[0];
-    if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+function normalizeUrl(raw: string): string {
+  const trimmed = (raw || "").trim();
+  if (!trimmed) return "";
+
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (trimmed.startsWith("www.")) return `https://${trimmed}`;
+  if (trimmed.startsWith("youtube.com") || trimmed.startsWith("youtu.be")) {
+    return `https://${trimmed}`;
   }
-  
-  // Handle youtu.be/ short format
-  if (url.includes('youtu.be/')) {
-    const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-    if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+
+  return trimmed;
+}
+
+function toYoutubeEmbedUrl(rawUrl: string): string | null {
+  const normalized = normalizeUrl(rawUrl);
+  if (!normalized) return null;
+
+  try {
+    const url = new URL(normalized);
+    const host = url.hostname.replace(/^www\./, "");
+
+    // youtube.com
+    if (host === "youtube.com" || host.endsWith(".youtube.com")) {
+      // /watch?v=
+      const v = url.searchParams.get("v");
+      if (v) return `https://www.youtube.com/embed/${v}`;
+
+      // /shorts/{id}
+      const shortsMatch = url.pathname.match(/^\/shorts\/([^/?#]+)/);
+      if (shortsMatch?.[1]) return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+
+      // /embed/{id}
+      const embedMatch = url.pathname.match(/^\/embed\/([^/?#]+)/);
+      if (embedMatch?.[1]) return `https://www.youtube.com/embed/${embedMatch[1]}`;
+
+      return null;
+    }
+
+    // youtu.be/{id}
+    if (host === "youtu.be") {
+      const id = url.pathname.replace("/", "").split("/")[0];
+      if (id) return `https://www.youtube.com/embed/${id}`;
+      return null;
+    }
+
+    return null;
+  } catch {
+    return null;
   }
-  
-  // Handle youtube.com/shorts/ format
-  if (url.includes('youtube.com/shorts/')) {
-    const videoId = url.split('shorts/')[1]?.split('?')[0];
-    if (videoId) return `https://www.youtube.com/embed/${videoId}`;
-  }
-  
-  // Already embed format or other
-  if (url.includes('youtube.com/embed/')) return url;
-  
-  return url;
 }
 
 export function ExerciseVideoModal({
@@ -55,6 +81,55 @@ export function ExerciseVideoModal({
   open,
   onOpenChange,
 }: ExerciseVideoModalProps) {
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
+
+  const embedUrl = useMemo(() => {
+    if (!exercise) return null;
+    return toYoutubeEmbedUrl(resolvedUrl ?? exercise.videoUrl ?? "");
+  }, [exercise, resolvedUrl]);
+
+  useEffect(() => {
+    if (!open || !exercise) return;
+
+    // Reset when opening/changing exercise
+    setResolvedUrl(null);
+    setResolving(false);
+  }, [open, exercise?.name]);
+
+  useEffect(() => {
+    const resolveFromDatabase = async () => {
+      if (!open || !exercise) return;
+
+      const alreadyValid = Boolean(toYoutubeEmbedUrl(exercise.videoUrl ?? ""));
+      if (alreadyValid) return;
+
+      setResolving(true);
+      try {
+        const name = exercise.name?.trim();
+        if (!name) return;
+
+        const { data, error } = await supabase
+          .from("exercise_videos")
+          .select("video_url")
+          .ilike("exercise_name", name)
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Erro ao buscar vídeo do exercício:", error);
+          return;
+        }
+
+        if (data?.video_url) setResolvedUrl(data.video_url);
+      } finally {
+        setResolving(false);
+      }
+    };
+
+    resolveFromDatabase();
+  }, [open, exercise]);
+
   if (!exercise) return null;
 
   return (
@@ -65,14 +140,17 @@ export function ExerciseVideoModal({
             <Dumbbell className="w-5 h-5 text-primary" />
             {exercise.name}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Vídeo demonstrativo do exercício {exercise.name}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Video - convert YouTube URLs to embed format */}
-          {exercise.videoUrl ? (
+          {/* Video */}
+          {embedUrl ? (
             <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
               <iframe
-                src={convertToEmbedUrl(exercise.videoUrl)}
+                src={embedUrl}
                 title={exercise.name}
                 className="absolute inset-0 w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -81,7 +159,14 @@ export function ExerciseVideoModal({
             </div>
           ) : (
             <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
-              <p className="text-muted-foreground">Vídeo demonstrativo em breve</p>
+              {resolving ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Buscando vídeo...
+                </div>
+              ) : (
+                <p className="text-muted-foreground">Vídeo demonstrativo em breve</p>
+              )}
             </div>
           )}
 
