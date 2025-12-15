@@ -207,18 +207,6 @@ export default function Dashboard() {
               </h1>
               <p className="text-muted-foreground">Sua jornada de transformacao continua hoje</p>
             </div>
-            <div className="flex gap-2">
-              {isAdmin && (
-                <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
-                  <ShieldCheck className="w-4 h-4 mr-2" />
-                  Admin
-                </Button>
-              )}
-              <Button variant="outline" size="sm" onClick={handleManageSubscription}>
-                <Settings className="w-4 h-4 mr-2" />
-                Gerenciar Assinatura
-              </Button>
-            </div>
           </div>
 
           {/* Subscription Status */}
