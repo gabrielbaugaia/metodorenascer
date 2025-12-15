@@ -16,7 +16,8 @@ import {
   FileText,
   MessageCircle,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Video
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
@@ -173,6 +174,7 @@ export default function AdminDashboard() {
     { title: "Novo Cliente", icon: UserPlus, url: "/admin/criar-cliente", color: "from-green-500 to-emerald-600" },
     { title: "Ver Clientes", icon: Users, url: "/admin/clientes", color: "from-blue-500 to-indigo-600" },
     { title: "Gerenciar Planos", icon: FileText, url: "/admin/planos", color: "from-purple-500 to-pink-600" },
+    { title: "Banco de Vídeos", icon: Video, url: "/admin/videos", color: "from-cyan-500 to-blue-600" },
     { title: "Monitorar Suporte", icon: MessageCircle, url: "/admin/suporte", color: "from-orange-500 to-red-600" },
   ];
 
