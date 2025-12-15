@@ -132,6 +132,7 @@ serve(async (req) => {
 
     // Create subscription based on plan
     const planConfig: Record<string, { days: number; price: number; name: string }> = {
+      free: { days: 365, price: 0, name: "Gratuito" },
       elite_founder: { days: 30, price: 4990, name: "Elite Fundador" },
       mensal: { days: 30, price: 19700, name: "Mensal" },
       trimestral: { days: 90, price: 49700, name: "Trimestral" },
