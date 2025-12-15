@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Convite from "./pages/Convite";
 import Dashboard from "./pages/Dashboard";
 import Anamnese from "./pages/Anamnese";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
@@ -36,6 +37,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/convite" element={<Convite />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/anamnese" element={<Anamnese />} />
             <Route path="/checkout-success" element={<CheckoutSuccess />} />

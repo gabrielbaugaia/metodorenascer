@@ -1,0 +1,187 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { toast } from "sonner";
+import { Flame, Mail, Lock, User, Gift } from "lucide-react";
+import { z } from "zod";
+
+const signupSchema = z.object({
+  email: z.string().trim().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+  fullName: z.string().trim().min(2, "Nome deve ter no mínimo 2 caracteres"),
+});
+
+export default function Convite() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const validation = signupSchema.safeParse({ email, password, fullName });
+      if (!validation.success) {
+        toast.error(validation.error.errors[0].message);
+        setLoading(false);
+        return;
+      }
+
+      // Create user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: { full_name: fullName },
+        },
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Create free subscription for the user
+        const now = new Date();
+        const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+        const { error: subError } = await supabase.from("subscriptions").insert({
+          user_id: authData.user.id,
+          status: "active",
+          plan_type: "free",
+          current_period_start: now.toISOString(),
+          current_period_end: endDate.toISOString(),
+          price_cents: 0,
+        });
+
+        if (subError) {
+          console.error("Error creating subscription:", subError);
+          // Don't throw - user is created, subscription can be added later by admin
+        }
+
+        toast.success("Conta criada com sucesso! Bem-vindo ao Método Renascer!");
+      }
+    } catch (error: any) {
+      const message = error.message === "User already registered" 
+        ? "Este email já está cadastrado. Faça login." 
+        : error.message;
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-4">
+            <Flame className="w-8 h-8 text-primary" />
+            <span className="font-display text-3xl text-gradient">MÉTODO RENASCER</span>
+          </div>
+          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-4 py-2 mb-4">
+            <Gift className="w-5 h-5 text-primary" />
+            <span className="text-primary font-semibold">Convite Exclusivo</span>
+          </div>
+          <p className="text-muted-foreground">
+            Você foi convidado para fazer parte do Método Renascer com acesso cortesia!
+          </p>
+        </div>
+
+        <Card variant="glass">
+          <CardHeader>
+            <CardTitle className="text-center">Criar Conta Gratuita</CardTitle>
+            <CardDescription className="text-center">
+              Preencha seus dados para ativar seu acesso de 30 dias
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Nome Completo</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Seu nome completo"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" variant="fire" className="w-full" disabled={loading}>
+                {loading ? "Criando conta..." : "Ativar Meu Acesso Gratuito"}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={() => navigate("/auth")}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Já tem conta? Entre aqui
+              </button>
+            </div>
+
+            <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border/50">
+              <p className="text-xs text-muted-foreground text-center">
+                Ao criar sua conta, você terá acesso gratuito por 30 dias a todos os recursos do Método Renascer, incluindo treinos, nutrição e mentalidade personalizados.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
