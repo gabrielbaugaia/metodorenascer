@@ -103,7 +103,7 @@ const SUBSCRIPTION_PLANS = [
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const { subscribed, loading: subLoading, createCheckout, openCustomerPortal, subscriptionEnd } = useSubscription();
-  const { isAdmin } = useAdminCheck();
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
   useActivityTracker();
   const navigate = useNavigate();
   const [checkingAnamnese, setCheckingAnamnese] = useState(true);
@@ -113,6 +113,13 @@ export default function Dashboard() {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
+
+  // Redirecionar admins diretamente para o painel admin
+  useEffect(() => {
+    if (!authLoading && !adminLoading && isAdmin) {
+      navigate("/admin");
+    }
+  }, [isAdmin, authLoading, adminLoading, navigate]);
 
   useEffect(() => {
     const checkAnamnese = async () => {
