@@ -23,6 +23,7 @@ export default function MeuPerfil() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -45,6 +46,19 @@ export default function MeuPerfil() {
     }
   }, [user]);
 
+  const getSignedAvatarUrl = async (filePath: string) => {
+    const { data, error } = await supabase.storage
+      .from("body-photos")
+      .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 dias
+
+    if (error || !data?.signedUrl) {
+      throw error || new Error("Não foi possível gerar a URL da imagem");
+    }
+
+    const separator = data.signedUrl.includes("?") ? "&" : "?";
+    return `${data.signedUrl}${separator}t=${Date.now()}`;
+  };
+
   const fetchProfile = async () => {
     try {
       const { data, error } = await supabase
@@ -54,9 +68,21 @@ export default function MeuPerfil() {
         .maybeSingle();
 
       if (error) throw error;
-      
+
       if (data) {
         setProfile(data);
+
+        if (data.foto_perfil_url) {
+          try {
+            const signedUrl = await getSignedAvatarUrl(data.foto_perfil_url);
+            setAvatarSrc(signedUrl);
+          } catch (e) {
+            console.warn("Não foi possível carregar a foto de perfil:", e);
+            setAvatarSrc(null);
+          }
+        } else {
+          setAvatarSrc(null);
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar perfil:", error);
@@ -82,41 +108,54 @@ export default function MeuPerfil() {
       return;
     }
 
+    const previousAvatarSrc = avatarSrc;
+    const previousProfilePhotoPath = profile?.foto_perfil_url ?? null;
+
+    // Preview imediato
+    const objectUrl = URL.createObjectURL(file);
+    setAvatarSrc(objectUrl);
+
     setUploading(true);
 
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/perfil.${fileExt}`;
+      const fileExt = file.name.split(".").pop() || "jpg";
+      const filePath = `${user.id}/perfil.${fileExt}`;
 
-      // Upload para o bucket
+      // Upload para o bucket (privado)
       const { error: uploadError } = await supabase.storage
         .from("body-photos")
-        .upload(fileName, file, { upsert: true });
+        .upload(filePath, file, {
+          upsert: true,
+          contentType: file.type,
+          cacheControl: "3600",
+        });
 
       if (uploadError) throw uploadError;
 
-      // Obter URL pública
-      const { data: urlData } = supabase.storage
-        .from("body-photos")
-        .getPublicUrl(fileName);
-
-      const photoUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-
-      // Atualizar perfil
+      // Persistir apenas o caminho (não URL)
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ foto_perfil_url: photoUrl })
+        .update({ foto_perfil_url: filePath })
         .eq("id", user.id);
 
       if (updateError) throw updateError;
 
-      setProfile(prev => prev ? { ...prev, foto_perfil_url: photoUrl } : null);
+      const signedUrl = await getSignedAvatarUrl(filePath);
+
+      setProfile((prev) => (prev ? { ...prev, foto_perfil_url: filePath } : null));
+      setAvatarSrc(signedUrl);
       toast.success("Foto de perfil atualizada!");
     } catch (error) {
       console.error("Erro ao fazer upload:", error);
+      setAvatarSrc(previousAvatarSrc);
+      setProfile((prev) =>
+        prev ? { ...prev, foto_perfil_url: previousProfilePhotoPath } : prev
+      );
       toast.error("Erro ao fazer upload da foto");
     } finally {
       setUploading(false);
+      URL.revokeObjectURL(objectUrl);
+      event.target.value = "";
     }
   };
 
@@ -145,7 +184,7 @@ export default function MeuPerfil() {
   };
 
   const updateField = (field: keyof ProfileData, value: string) => {
-    setProfile(prev => prev ? { ...prev, [field]: value } : null);
+    setProfile((prev) => (prev ? { ...prev, [field]: value } : null));
   };
 
   const handleChangePassword = async () => {
@@ -180,7 +219,7 @@ export default function MeuPerfil() {
   const getInitials = (name: string) => {
     return name
       .split(" ")
-      .map(n => n[0])
+      .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 2);
@@ -227,13 +266,12 @@ export default function MeuPerfil() {
               Foto de Perfil
             </CardTitle>
           </CardHeader>
-        <CardContent className="flex flex-col items-center gap-4">
+          <CardContent className="flex flex-col items-center gap-4">
             <div className="relative">
-              <Avatar className="h-32 w-32" key={profile.foto_perfil_url}>
-                <AvatarImage 
-                  src={profile.foto_perfil_url || undefined} 
-                  alt={profile.full_name}
-                  key={profile.foto_perfil_url}
+              <Avatar className="h-32 w-32" key={avatarSrc || profile.foto_perfil_url || "no-photo"}>
+                <AvatarImage
+                  src={avatarSrc || undefined}
+                  alt={`Foto de perfil de ${profile.full_name}`}
                 />
                 <AvatarFallback className="text-2xl bg-primary/20 text-primary">
                   {getInitials(profile.full_name)}
@@ -245,7 +283,7 @@ export default function MeuPerfil() {
                 </div>
               )}
             </div>
-            
+
             <input
               ref={fileInputRef}
               type="file"
@@ -253,7 +291,7 @@ export default function MeuPerfil() {
               onChange={handlePhotoUpload}
               className="hidden"
             />
-            
+
             <Button
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
