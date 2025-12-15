@@ -41,6 +41,36 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // First, check local subscription in database (including free/manual plans)
+    const { data: localSub, error: localError } = await supabaseClient
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("current_period_end", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (localError) {
+      logStep("Local subscription query error", { message: localError.message });
+    }
+
+    if (localSub && (!localSub.current_period_end || new Date(localSub.current_period_end) > new Date())) {
+      logStep("Active local subscription found", {
+        plan_type: localSub.plan_type,
+        ends_at: localSub.current_period_end,
+      });
+
+      return new Response(
+        JSON.stringify({
+          subscribed: true,
+          subscription_end: localSub.current_period_end,
+          product_id: null,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+      );
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
     // Find customer by email
@@ -50,7 +80,7 @@ serve(async (req) => {
       logStep("No Stripe customer found");
       return new Response(
         JSON.stringify({ subscribed: false, subscription_end: null, product_id: null }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
       );
     }
 
@@ -75,7 +105,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ subscribed: false, subscription_end: null, product_id: null }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
       );
     }
 

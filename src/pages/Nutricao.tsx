@@ -5,30 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Utensils, Flame, Droplets, Beef, Cookie, Loader2 } from "lucide-react";
-
-interface Meal {
-  time: string;
-  meal: string;
-  foods: string[];
-  calories: number;
-}
-
-interface Macros {
-  calories: { current: number; target: number };
-  protein: { current: number; target: number };
-  carbs: { current: number; target: number };
-  water: { current: number; target: number };
-}
+import { ArrowLeft, Utensils, Loader2, Apple } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface NutritionProtocol {
   id: string;
-  conteudo: {
-    refeicoes?: Meal[];
-    macros?: Macros;
-    dicas?: string[];
-  };
+  conteudo: any;
 }
+
 
 export default function Nutricao() {
   const navigate = useNavigate();
@@ -66,15 +50,7 @@ export default function Nutricao() {
     fetchProtocol();
   }, [user]);
 
-  const meals = protocol?.conteudo?.refeicoes || [];
-  const macros = protocol?.conteudo?.macros;
-
-  const macroIcons = {
-    calories: { icon: Flame, color: "text-orange-500", unit: "kcal", label: "Calorias" },
-    protein: { icon: Beef, color: "text-red-500", unit: "g", label: "Proteína" },
-    carbs: { icon: Cookie, color: "text-yellow-500", unit: "g", label: "Carboidratos" },
-    water: { icon: Droplets, color: "text-blue-500", unit: "L", label: "Água" },
-  };
+  const conteudo = protocol?.conteudo || {};
 
   if (loading) {
     return (
@@ -114,13 +90,13 @@ export default function Nutricao() {
               </h1>
             </div>
             <p className="text-muted-foreground">
-              {meals.length > 0 
+              {conteudo.refeicoes && conteudo.refeicoes.length > 0 
                 ? "Seu cardápio estratégico para máxima performance"
                 : "Seu protocolo nutricional será gerado em breve"}
             </p>
           </div>
 
-          {meals.length === 0 ? (
+          {(!conteudo.refeicoes || conteudo.refeicoes.length === 0) ? (
             <Card className="p-8 text-center">
               <Utensils className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">Nenhum plano nutricional disponível</h3>
@@ -134,73 +110,76 @@ export default function Nutricao() {
           ) : (
             <>
               {/* Macros overview */}
-              {macros && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  {Object.entries(macros).map(([key, value]) => {
-                    const macroInfo = macroIcons[key as keyof typeof macroIcons];
-                    if (!macroInfo || !value) return null;
-                    const Icon = macroInfo.icon;
-                    return (
-                      <Card key={key} variant="glass" className="p-4 text-center">
-                        <Icon className={`w-6 h-6 mx-auto mb-2 ${macroInfo.color}`} />
-                        <p className="text-2xl font-bold text-foreground">
-                          {value.current}
-                          <span className="text-sm text-muted-foreground">{macroInfo.unit}</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          de {value.target}{macroInfo.unit}
-                        </p>
-                        <div className="progress-bar mt-2 h-1">
-                          <div
-                            className="progress-bar-fill"
-                            style={{ width: `${Math.min(100, (value.current / value.target) * 100)}%` }}
-                          />
-                        </div>
-                      </Card>
-                    );
-                  })}
+              {conteudo.macros && (
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                  <Card className="p-4 text-center bg-primary/10">
+                    <p className="text-2xl font-bold text-primary">
+                      {conteudo.calorias_diarias || conteudo.macros.calorias_diarias || "--"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Calorias/dia</p>
+                  </Card>
+                  <Card className="p-4 text-center bg-blue-500/10">
+                    <p className="text-2xl font-bold text-blue-500">
+                      {conteudo.macros.proteinas_g || "--"}g
+                    </p>
+                    <p className="text-xs text-muted-foreground">Proteínas</p>
+                  </Card>
+                  <Card className="p-4 text-center bg-green-500/10">
+                    <p className="text-2xl font-bold text-green-500">
+                      {conteudo.macros.carboidratos_g || "--"}g
+                    </p>
+                    <p className="text-xs text-muted-foreground">Carboidratos</p>
+                  </Card>
                 </div>
               )}
 
               {/* Meals */}
               <div className="space-y-4">
-                {meals.map((meal, index) => (
+                {conteudo.refeicoes?.map((refeicao: any, index: number) => (
                   <Card
-                    key={`${meal.meal}-${index}`}
-                    variant="dashboard"
-                    className="animate-fade-in"
-                    style={{ animationDelay: `${index * 0.1}s` }}
+                    key={index}
+                    className="border border-border/60"
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-3">
-                          <span className="text-sm text-primary font-mono">{meal.time}</span>
-                          <span className="font-display">{meal.meal}</span>
+                          <Apple className="w-5 h-5 text-primary" />
+                          <span className="font-display">{refeicao.nome}</span>
                         </CardTitle>
-                        <span className="text-sm text-muted-foreground">
-                          {meal.calories} kcal
-                        </span>
+                        <Badge variant="outline">{refeicao.horario}</Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-1">
-                        {meal.foods.map((food, foodIndex) => (
-                          <li key={foodIndex} className="text-sm text-muted-foreground flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                            {food}
+                        {refeicao.alimentos?.map((alimento: any, aIndex: number) => (
+                          <li
+                            key={aIndex}
+                            className="text-sm text-muted-foreground flex justify-between"
+                          >
+                            <span>
+                              {typeof alimento === "string" ? alimento : alimento.item}
+                            </span>
+                            {alimento.calorias && (
+                              <span>{alimento.calorias} kcal</span>
+                            )}
                           </li>
                         ))}
                       </ul>
+                      {refeicao.calorias_total && (
+                        <p className="text-sm font-medium mt-2 text-right">
+                          Total: {refeicao.calorias_total} kcal
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
               </div>
 
               {/* Tips */}
-              {protocol?.conteudo?.dicas && protocol.conteudo.dicas.length > 0 && (
-                <Card variant="glass" className="mt-6 p-4">
+              {conteudo.dicas && conteudo.dicas.length > 0 && (
+                <Card className="mt-6 p-4">
                   <p className="text-sm text-muted-foreground">
-                    <strong className="text-foreground">Dica do dia:</strong> {protocol.conteudo.dicas[0]}
+                    <strong className="text-foreground">Dica do dia:</strong> {conteudo.dicas[0]}
                   </p>
                 </Card>
               )}

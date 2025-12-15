@@ -262,12 +262,19 @@ export default function Anamnese() {
       const tipos = ["treino", "nutricao", "mindset"] as const;
       for (const tipo of tipos) {
         console.log(`[ANAMNESE] Generating protocol`, { tipo });
+
+        // Deactivate previous active protocols of this type for the user
+        await supabase
+          .from("protocolos")
+          .update({ ativo: false })
+          .eq("user_id", user.id)
+          .eq("tipo", tipo);
+
         const { error: fnError } = await supabase.functions.invoke("generate-protocol", {
           body: {
             tipo,
             userId: user.id,
             userContext: profileData,
-            planType,
           },
         });
 

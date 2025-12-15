@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +74,45 @@ export default function Treino() {
     fetchProtocol();
   }, [user]);
 
-  const workouts = protocol?.conteudo?.treinos || [];
+  const workouts = useMemo<Workout[]>(() => {
+    if (!protocol?.conteudo) return [];
+
+    // If protocol already has treinos array, use it directly
+    if (Array.isArray((protocol.conteudo as any).treinos)) {
+      return (protocol.conteudo as any).treinos as Workout[];
+    }
+
+    const conteudo: any = protocol.conteudo;
+    const semanas = conteudo.semanas;
+
+    if (!Array.isArray(semanas) || semanas.length === 0) return [];
+
+    const currentWeekNumber = conteudo.semana_atual || semanas[0].semana;
+    const currentWeek =
+      semanas.find((s: any) => s.semana === currentWeekNumber) || semanas[0];
+
+    if (!Array.isArray(currentWeek.dias)) return [];
+
+    return currentWeek.dias.map((dia: any): Workout => ({
+      day: dia.dia,
+      focus: dia.foco,
+      duration: dia.duracao || "--",
+      calories: dia.calorias || 0,
+      completed: false,
+      exercises: (dia.exercicios || []).map(
+        (ex: any): Exercise => ({
+          name: ex.nome,
+          sets: ex.series,
+          reps: ex.repeticoes,
+          rest: ex.descanso,
+          videoUrl: ex.video_url,
+          tips: ex.dicas,
+          completed: false,
+        }),
+      ),
+    }));
+  }, [protocol]);
+
   const completedWorkouts = workouts.filter((w) => w.completed).length;
   const totalCalories = workouts
     .filter((w) => w.completed)
