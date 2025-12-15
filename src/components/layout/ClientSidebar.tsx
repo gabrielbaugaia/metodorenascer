@@ -27,7 +27,8 @@ import {
   FileText,
   HelpCircle,
   Bell,
-  Gift
+  Gift,
+  Video
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,6 +39,8 @@ const clientMenuItems = [
   { title: "Meu Perfil", url: "/meu-perfil", icon: User },
   { title: "Treino", url: "/treino", icon: Dumbbell },
   { title: "Nutrição", url: "/nutricao", icon: Apple },
+  { title: "Mindset", url: "/mindset", icon: Brain },
+  { title: "Receitas", url: "/receitas", icon: ChefHat },
   { title: "Suporte", url: "/suporte", icon: MessageCircle },
   { title: "Assinatura", url: "/area-cliente", icon: Settings },
 ];
@@ -47,6 +50,7 @@ const adminMenuItems = [
   { title: "Clientes", url: "/admin/clientes", icon: User },
   { title: "Criar Cliente", url: "/admin/criar-cliente", icon: User },
   { title: "Gerenciar Planos", url: "/admin/planos", icon: FileText },
+  { title: "Banco de Vídeos", url: "/admin/videos", icon: Video },
   { title: "Mensagens Auto", url: "/admin/mensagens", icon: Bell },
 ];
 

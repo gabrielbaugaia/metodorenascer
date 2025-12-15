@@ -32,7 +32,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-background">
         <ClientSidebar />
         <main className="flex-1 overflow-auto">
