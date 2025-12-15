@@ -131,6 +131,56 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_activity: {
+        Row: {
+          active_calories: number | null
+          active_minutes: number | null
+          created_at: string | null
+          date: string
+          distance_m: number | null
+          id: string
+          last_synced_at: string | null
+          source: Database["public"]["Enums"]["health_source"]
+          steps: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active_calories?: number | null
+          active_minutes?: number | null
+          created_at?: string | null
+          date: string
+          distance_m?: number | null
+          id?: string
+          last_synced_at?: string | null
+          source: Database["public"]["Enums"]["health_source"]
+          steps?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active_calories?: number | null
+          active_minutes?: number | null
+          created_at?: string | null
+          date?: string
+          distance_m?: number | null
+          id?: string
+          last_synced_at?: string | null
+          source?: Database["public"]["Enums"]["health_source"]
+          steps?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_activity_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       engagement_summary: {
         Row: {
           id: string
@@ -220,6 +270,97 @@ export type Database = {
           video_url?: string
         }
         Relationships: []
+      }
+      health_connections: {
+        Row: {
+          access_token: string | null
+          connected_at: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          refresh_token: string | null
+          scopes: string[] | null
+          source: Database["public"]["Enums"]["health_source"]
+          token_expires_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          connected_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          scopes?: string[] | null
+          source: Database["public"]["Enums"]["health_source"]
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          connected_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          refresh_token?: string | null
+          scopes?: string[] | null
+          source?: Database["public"]["Enums"]["health_source"]
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      health_goals: {
+        Row: {
+          created_at: string | null
+          daily_active_minutes_goal: number | null
+          daily_calories_goal: number | null
+          daily_steps_goal: number | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_active_minutes_goal?: number | null
+          daily_calories_goal?: number | null
+          daily_steps_goal?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_active_minutes_goal?: number | null
+          daily_calories_goal?: number | null
+          daily_steps_goal?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       leads: {
         Row: {
@@ -761,8 +902,82 @@ export type Database = {
         }
         Relationships: []
       }
+      workout_sessions: {
+        Row: {
+          calories: number | null
+          created_at: string | null
+          distance_m: number | null
+          duration_min: number | null
+          end_time: string | null
+          external_id: string | null
+          id: string
+          last_synced_at: string | null
+          source: Database["public"]["Enums"]["health_source"]
+          start_time: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          created_at?: string | null
+          distance_m?: number | null
+          duration_min?: number | null
+          end_time?: string | null
+          external_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          source: Database["public"]["Enums"]["health_source"]
+          start_time: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          created_at?: string | null
+          distance_m?: number | null
+          duration_min?: number | null
+          end_time?: string | null
+          external_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          source?: Database["public"]["Enums"]["health_source"]
+          start_time?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
+      daily_activity_aggregated: {
+        Row: {
+          date: string | null
+          last_synced_at: string | null
+          sources: Database["public"]["Enums"]["health_source"][] | null
+          total_active_calories: number | null
+          total_active_minutes: number | null
+          total_distance_m: number | null
+          total_steps: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_activity_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_conversion_funnel: {
         Row: {
           checkout_completed: number | null
@@ -847,6 +1062,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       client_status: "active" | "paused" | "blocked" | "canceled"
+      health_source: "google_fit" | "apple_health"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -976,6 +1192,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       client_status: ["active", "paused", "blocked", "canceled"],
+      health_source: ["google_fit", "apple_health"],
     },
   },
 } as const
