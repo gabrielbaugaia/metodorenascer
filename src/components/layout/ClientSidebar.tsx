@@ -20,7 +20,7 @@ import {
   ChefHat, 
   MessageCircle, 
   User, 
-  Settings,
+  CreditCard,
   LogOut,
   Shield,
   Flame,
@@ -42,7 +42,7 @@ const clientMenuItems = [
   { title: "Mindset", url: "/mindset", icon: Brain },
   { title: "Receitas", url: "/receitas", icon: ChefHat },
   { title: "Suporte", url: "/suporte", icon: MessageCircle },
-  { title: "Assinatura", url: "/area-cliente", icon: Settings },
+  { title: "Assinatura", url: "/assinatura", icon: CreditCard },
 ];
 
 const adminMenuItems = [
