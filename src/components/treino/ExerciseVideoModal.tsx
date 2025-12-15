@@ -149,13 +149,6 @@ export function ExerciseVideoModal({
         }
 
         if (videoUrl) setResolvedUrl(videoUrl);
-
-        if (error) {
-          console.error("Erro ao buscar vídeo do exercício:", error);
-          return;
-        }
-
-        if (data?.video_url) setResolvedUrl(data.video_url);
       } finally {
         setResolving(false);
       }
