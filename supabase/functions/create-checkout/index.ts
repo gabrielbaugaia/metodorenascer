@@ -21,6 +21,9 @@ const VALID_PRICE_IDS = [
   "price_1ScZvCCuFZvf5xFdjrs51JQB", // Anual
 ];
 
+// 10% discount coupon ID for referral cashback
+const REFERRAL_DISCOUNT_PERCENT = 10;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -32,15 +35,23 @@ serve(async (req) => {
     // Get price_id from request body
     const body = await req.json().catch(() => ({}));
     const priceId = body.price_id || "price_1ScZqTCuFZvf5xFdZuOBMzpt"; // Default to Embaixador
+    const applyReferralDiscount = body.apply_referral_discount === true;
     
     if (!VALID_PRICE_IDS.includes(priceId)) {
       throw new Error("Invalid price ID");
     }
-    logStep("Price ID received", { priceId });
+    logStep("Price ID received", { priceId, applyReferralDiscount });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     logStep("Stripe key verified");
+
+    // Use service role key to read/update cashback balance
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -58,6 +69,21 @@ serve(async (req) => {
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
+
+    // Check user's cashback balance
+    const { data: profileData, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("cashback_balance")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      logStep("Error fetching profile", { error: profileError.message });
+    }
+
+    const cashbackBalance = profileData?.cashback_balance || 0;
+    const hasCashback = cashbackBalance > 0;
+    logStep("Cashback balance checked", { cashbackBalance, hasCashback });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
@@ -85,9 +111,44 @@ serve(async (req) => {
       }
     }
 
+    // Create or retrieve a 10% discount coupon for referral cashback
+    let discountCouponId: string | undefined;
+    
+    if (hasCashback && applyReferralDiscount) {
+      try {
+        // Try to retrieve existing coupon
+        const existingCoupon = await stripe.coupons.retrieve("REFERRAL_CASHBACK_10");
+        discountCouponId = existingCoupon.id;
+        logStep("Using existing referral coupon", { couponId: discountCouponId });
+      } catch {
+        // Coupon doesn't exist, create it
+        const newCoupon = await stripe.coupons.create({
+          id: "REFERRAL_CASHBACK_10",
+          percent_off: REFERRAL_DISCOUNT_PERCENT,
+          duration: "once",
+          name: "Desconto Indicação 10%",
+        });
+        discountCouponId = newCoupon.id;
+        logStep("Created new referral coupon", { couponId: discountCouponId });
+      }
+
+      // Decrement cashback balance after applying
+      const newBalance = Math.max(0, cashbackBalance - 1);
+      const { error: updateError } = await supabaseAdmin
+        .from("profiles")
+        .update({ cashback_balance: newBalance })
+        .eq("id", user.id);
+
+      if (updateError) {
+        logStep("Error updating cashback balance", { error: updateError.message });
+      } else {
+        logStep("Cashback balance updated", { oldBalance: cashbackBalance, newBalance });
+      }
+    }
+
     const origin = req.headers.get("origin") || "https://lxdosmjenbaugmhyfanx.lovableproject.com";
     
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
@@ -101,12 +162,25 @@ serve(async (req) => {
       cancel_url: `${origin}/dashboard`,
       metadata: {
         user_id: user.id,
+        cashback_applied: hasCashback && applyReferralDiscount ? "true" : "false",
       },
-    });
+    };
 
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+    // Apply discount if user has cashback and requested it
+    if (discountCouponId) {
+      sessionParams.discounts = [{ coupon: discountCouponId }];
+      logStep("Applying referral discount to checkout", { couponId: discountCouponId });
+    }
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    logStep("Checkout session created", { sessionId: session.id, url: session.url, discountApplied: !!discountCouponId });
+
+    return new Response(JSON.stringify({ 
+      url: session.url,
+      cashback_available: hasCashback,
+      discount_applied: !!discountCouponId
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

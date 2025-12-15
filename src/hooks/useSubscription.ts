@@ -54,7 +54,7 @@ export function useSubscription() {
     }
   }, [session?.access_token]);
 
-  const createCheckout = useCallback(async (priceId?: string) => {
+  const createCheckout = useCallback(async (priceId?: string, applyReferralDiscount?: boolean) => {
     if (!session?.access_token) {
       throw new Error("User not authenticated");
     }
@@ -63,7 +63,10 @@ export function useSubscription() {
       headers: {
         Authorization: `Bearer ${session.access_token}`,
       },
-      body: { price_id: priceId },
+      body: { 
+        price_id: priceId,
+        apply_referral_discount: applyReferralDiscount ?? false
+      },
     });
 
     if (error) throw error;

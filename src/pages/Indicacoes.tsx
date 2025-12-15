@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Share2, Users, Gift, Percent, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { ArrowLeft, Copy, Share2, Users, Gift, Percent, CheckCircle, Clock, Loader2, Coins } from "lucide-react";
 
 interface Referral {
   id: string;
@@ -24,6 +24,7 @@ export default function Indicacoes() {
   const { user, loading: authLoading } = useAuth();
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [cashbackBalance, setCashbackBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -41,7 +42,17 @@ export default function Indicacoes() {
 
   const fetchReferralData = async () => {
     try {
-      // Buscar código de indicação
+      // Buscar código de indicação e saldo de cashback
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("cashback_balance")
+        .eq("id", user!.id)
+        .maybeSingle();
+
+      if (!profileError && profileData) {
+        setCashbackBalance(profileData.cashback_balance || 0);
+      }
+
       const { data: codeData, error: codeError } = await supabase
         .from("referral_codes")
         .select("code")
@@ -157,6 +168,31 @@ export default function Indicacoes() {
           </div>
         </div>
 
+        {/* Saldo de Cashback */}
+        {cashbackBalance > 0 && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary/20 rounded-lg">
+                    <Coins className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-primary">{cashbackBalance}x 10%</p>
+                    <p className="text-sm text-muted-foreground">Descontos disponíveis para usar</p>
+                  </div>
+                </div>
+                <Badge variant="default" className="text-sm">
+                  Próxima renovação: -10%
+                </Badge>
+              </div>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Seu desconto de 10% será aplicado automaticamente na sua próxima renovação de assinatura.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Como funciona */}
         <Card>
           <CardHeader>
@@ -181,8 +217,8 @@ export default function Indicacoes() {
                   2
                 </div>
                 <div>
-                  <p className="font-medium">Amigo se cadastra</p>
-                  <p className="text-sm text-muted-foreground">Quando ele assinar um plano</p>
+                  <p className="font-medium">Amigo assina</p>
+                  <p className="text-sm text-muted-foreground">Quando ele comprar um plano com seu link</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
@@ -191,7 +227,7 @@ export default function Indicacoes() {
                 </div>
                 <div>
                   <p className="font-medium">Você ganha 10%</p>
-                  <p className="text-sm text-muted-foreground">Desconto na próxima mensalidade</p>
+                  <p className="text-sm text-muted-foreground">Desconto automático na renovação</p>
                 </div>
               </div>
             </div>
@@ -262,7 +298,7 @@ export default function Indicacoes() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{pendingDiscounts}</p>
-                  <p className="text-sm text-muted-foreground">Descontos pendentes</p>
+                  <p className="text-sm text-muted-foreground">Aguardando assinatura</p>
                 </div>
               </div>
             </CardContent>
@@ -275,7 +311,7 @@ export default function Indicacoes() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{appliedDiscounts}</p>
-                  <p className="text-sm text-muted-foreground">Descontos aplicados</p>
+                  <p className="text-sm text-muted-foreground">Descontos usados</p>
                 </div>
               </div>
             </CardContent>
@@ -318,12 +354,12 @@ export default function Indicacoes() {
                       {referral.discount_applied ? (
                         <span className="flex items-center gap-1">
                           <CheckCircle className="h-3 w-3" />
-                          Desconto aplicado
+                          Desconto creditado
                         </span>
                       ) : (
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          Pendente
+                          Aguardando assinatura
                         </span>
                       )}
                     </Badge>
