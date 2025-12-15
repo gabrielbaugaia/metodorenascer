@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/SEU_LINK_AQUI"; // TODO: Substituir pelo link real
+const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/FzfmZXRpd5AD8z0dL8UFnh";
 
 export default function Lancamento() {
   const [nome, setNome] = useState("");
