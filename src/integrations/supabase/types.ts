@@ -131,6 +131,66 @@ export type Database = {
         }
         Relationships: []
       }
+      engagement_summary: {
+        Row: {
+          id: string
+          logins_last_30d: number | null
+          mindset_tasks_completed_last_30d: number | null
+          protocols_generated_last_30d: number | null
+          status_engagement: string | null
+          updated_at: string | null
+          user_id: string
+          workouts_completed_last_30d: number | null
+        }
+        Insert: {
+          id?: string
+          logins_last_30d?: number | null
+          mindset_tasks_completed_last_30d?: number | null
+          protocols_generated_last_30d?: number | null
+          status_engagement?: string | null
+          updated_at?: string | null
+          user_id: string
+          workouts_completed_last_30d?: number | null
+        }
+        Update: {
+          id?: string
+          logins_last_30d?: number | null
+          mindset_tasks_completed_last_30d?: number | null
+          protocols_generated_last_30d?: number | null
+          status_engagement?: string | null
+          updated_at?: string | null
+          user_id?: string
+          workouts_completed_last_30d?: number | null
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          created_at: string
+          event_name: string
+          id: string
+          metadata: Json | null
+          page_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          id?: string
+          metadata?: Json | null
+          page_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          id?: string
+          metadata?: Json | null
+          page_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       exercise_videos: {
         Row: {
           created_at: string | null
@@ -217,6 +277,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          acquisition_channel: string | null
           age: number | null
           anamnese_completa: boolean | null
           availability: string | null
@@ -249,6 +310,7 @@ export type Database = {
           nivel_condicionamento: string | null
           nivel_estresse: string | null
           nivel_experiencia: string | null
+          objective_primary: string | null
           objetivo_principal: string | null
           objetivos_detalhados: Json | null
           observacoes_adicionais: string | null
@@ -262,11 +324,14 @@ export type Database = {
           sexo: string | null
           telefone: string | null
           toma_medicamentos: boolean | null
+          training_level: string | null
+          training_location: string | null
           updated_at: string | null
           weight: number | null
           whatsapp: string | null
         }
         Insert: {
+          acquisition_channel?: string | null
           age?: number | null
           anamnese_completa?: boolean | null
           availability?: string | null
@@ -299,6 +364,7 @@ export type Database = {
           nivel_condicionamento?: string | null
           nivel_estresse?: string | null
           nivel_experiencia?: string | null
+          objective_primary?: string | null
           objetivo_principal?: string | null
           objetivos_detalhados?: Json | null
           observacoes_adicionais?: string | null
@@ -312,11 +378,14 @@ export type Database = {
           sexo?: string | null
           telefone?: string | null
           toma_medicamentos?: boolean | null
+          training_level?: string | null
+          training_location?: string | null
           updated_at?: string | null
           weight?: number | null
           whatsapp?: string | null
         }
         Update: {
+          acquisition_channel?: string | null
           age?: number | null
           anamnese_completa?: boolean | null
           availability?: string | null
@@ -349,6 +418,7 @@ export type Database = {
           nivel_condicionamento?: string | null
           nivel_estresse?: string | null
           nivel_experiencia?: string | null
+          objective_primary?: string | null
           objetivo_principal?: string | null
           objetivos_detalhados?: Json | null
           observacoes_adicionais?: string | null
@@ -362,6 +432,8 @@ export type Database = {
           sexo?: string | null
           telefone?: string | null
           toma_medicamentos?: boolean | null
+          training_level?: string | null
+          training_location?: string | null
           updated_at?: string | null
           weight?: number | null
           whatsapp?: string | null
@@ -517,12 +589,17 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          canceled_at: string | null
           created_at: string | null
           current_period_end: string | null
           current_period_start: string | null
           id: string
+          mrr_value: number | null
+          payments_count: number | null
+          plan_name: string | null
           plan_type: string | null
           price_cents: number | null
+          started_at: string | null
           status: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -530,12 +607,17 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          canceled_at?: string | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          mrr_value?: number | null
+          payments_count?: number | null
+          plan_name?: string | null
           plan_type?: string | null
           price_cents?: number | null
+          started_at?: string | null
           status?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -543,12 +625,17 @@ export type Database = {
           user_id: string
         }
         Update: {
+          canceled_at?: string | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          mrr_value?: number | null
+          payments_count?: number | null
+          plan_name?: string | null
           plan_type?: string | null
           price_cents?: number | null
+          started_at?: string | null
           status?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -646,7 +733,61 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_conversion_funnel: {
+        Row: {
+          checkout_completed: number | null
+          checkout_started: number | null
+          landing_views: number | null
+          plan_views: number | null
+        }
+        Relationships: []
+      }
+      v_engagement_by_status: {
+        Row: {
+          avg_logins: number | null
+          avg_workouts: number | null
+          status_engagement: string | null
+          user_count: number | null
+        }
+        Relationships: []
+      }
+      v_metrics_by_channel: {
+        Row: {
+          acquisition_channel: string | null
+          active_subscribers: number | null
+          churned_users: number | null
+          total_mrr: number | null
+          total_users: number | null
+        }
+        Relationships: []
+      }
+      v_mrr_summary: {
+        Row: {
+          active_subscriptions: number | null
+          avg_mrr: number | null
+          plan_name: string | null
+          total_mrr: number | null
+        }
+        Relationships: []
+      }
+      v_retention_cohorts: {
+        Row: {
+          cohort_month: string | null
+          retained_1m: number | null
+          retained_3m: number | null
+          retained_6m: number | null
+          total_started: number | null
+        }
+        Relationships: []
+      }
+      v_top_pages: {
+        Row: {
+          page_name: string | null
+          unique_visitors: number | null
+          view_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_referrer_name_by_code: {
@@ -661,6 +802,10 @@ export type Database = {
         Returns: boolean
       }
       increment_cashback_balance: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
+      recalculate_engagement: {
         Args: { target_user_id: string }
         Returns: undefined
       }
