@@ -52,6 +52,7 @@ const adminMenuItems = [
   { title: "Gerenciar Planos", url: "/admin/planos", icon: FileText },
   { title: "Banco de Vídeos", url: "/admin/videos", icon: Video },
   { title: "Mensagens Auto", url: "/admin/mensagens", icon: Bell },
+  { title: "Suporte Chats", url: "/admin/suporte", icon: MessageCircle },
 ];
 
 export function ClientSidebar() {
