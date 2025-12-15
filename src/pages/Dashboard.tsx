@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +53,7 @@ export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const { subscribed, loading: subLoading, createCheckout, openCustomerPortal, subscriptionEnd } = useSubscription();
   const { isAdmin } = useAdminCheck();
+  useActivityTracker(); // Rastreia atividade do usuário
   const navigate = useNavigate();
   const [checkingAnamnese, setCheckingAnamnese] = useState(true);
   const [hasAnamnese, setHasAnamnese] = useState(false);
