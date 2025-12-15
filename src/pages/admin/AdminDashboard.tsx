@@ -233,7 +233,7 @@ export default function AdminDashboard() {
   const quickActions = [
     { title: "Novo Cliente", icon: UserPlus, url: "/admin/criar-cliente", color: "from-green-500 to-emerald-600" },
     { title: "Ver Clientes", icon: Users, url: "/admin/clientes", color: "from-blue-500 to-indigo-600" },
-    { title: "Gerenciar Planos", icon: FileText, url: "/admin/planos", color: "from-purple-500 to-pink-600" },
+    { title: "Protocolos", icon: FileText, url: "/admin/planos", color: "from-purple-500 to-pink-600" },
     { title: "Banco de Vídeos", icon: Video, url: "/admin/videos", color: "from-cyan-500 to-blue-600" },
     { title: "Monitorar Suporte", icon: MessageCircle, url: "/admin/suporte", color: "from-orange-500 to-red-600" },
   ];
@@ -365,11 +365,11 @@ export default function AdminDashboard() {
           {quickActions.map((action) => (
             <Card 
               key={action.title}
-              className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg overflow-hidden"
+              className="group cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg overflow-hidden relative"
               onClick={() => navigate(action.url)}
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-10 group-hover:opacity-20 transition-opacity`} />
-              <CardContent className="p-4 flex items-center gap-3 relative">
+              <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none`} />
+              <CardContent className="p-4 flex items-center gap-3 relative z-10">
                 <div className={`p-2 rounded-lg bg-gradient-to-br ${action.color}`}>
                   <action.icon className="h-5 w-5 text-white" />
                 </div>
