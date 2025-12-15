@@ -39,7 +39,9 @@ interface Profile {
   foto_costas_url: string;
   medidas: any;
   observacoes_adicionais: string;
+  updated_at?: string;
 }
+
 
 export function AnamneseSection() {
   const { user } = useAuth();
@@ -103,6 +105,11 @@ export function AnamneseSection() {
 
   return (
     <div className="space-y-4">
+      {profile.updated_at && (
+        <p className="text-xs text-muted-foreground text-right">
+          Última atualização da anamnese: {new Date(profile.updated_at).toLocaleString("pt-BR")}
+        </p>
+      )}
       {/* Dados Pessoais */}
       <Card>
         <CardHeader className="pb-2">

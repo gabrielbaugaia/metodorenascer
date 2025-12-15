@@ -43,6 +43,7 @@ export default function Anamnese() {
     condicoes_saude: "",
     injuries: "",
     toma_medicamentos: "",
+    medicamentos_detalhes: "",
     
     // Hábitos Alimentares
     refeicoes_por_dia: "",
@@ -165,7 +166,7 @@ export default function Anamnese() {
 
     setLoading(true);
     
-    try {
+  try {
       // Calculate age from birth date
       const birthDate = new Date(formData.data_nascimento);
       const today = new Date();
@@ -175,7 +176,16 @@ export default function Anamnese() {
         age--;
       }
 
-      const { error } = await supabase
+      // Combina lesões e detalhes de medicamentos em um campo de restrições médicas
+      const restricoesMedicasCompletas = [
+        formData.injuries,
+        formData.toma_medicamentos === "sim" ? `Medicamentos: ${formData.medicamentos_detalhes}` : "",
+      ]
+        .filter(Boolean)
+        .join(" | ");
+
+      // Atualiza perfil com dados da anamnese
+      const { error: updateError } = await supabase
         .from("profiles")
         .update({
           age,
@@ -196,7 +206,7 @@ export default function Anamnese() {
           escada_sem_cansar: formData.escada_sem_cansar,
           condicoes_saude: formData.condicoes_saude,
           injuries: formData.injuries,
-          restricoes_medicas: formData.injuries,
+          restricoes_medicas: restricoesMedicasCompletas,
           toma_medicamentos: formData.toma_medicamentos === "sim",
           refeicoes_por_dia: formData.refeicoes_por_dia,
           bebe_agua_frequente: formData.bebe_agua_frequente === "sim",
@@ -214,9 +224,44 @@ export default function Anamnese() {
         })
         .eq("id", user.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      toast.success("Anamnese concluída com sucesso!");
+      // Busca plano do usuário para ajustar duração dos protocolos
+      const { data: subscription } = await supabase
+        .from("subscriptions")
+        .select("plan_type")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const planType = subscription?.plan_type || "mensal";
+
+      // Busca perfil completo atualizado para usar como contexto na geração dos protocolos
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Gera automaticamente treino, nutrição e mindset
+      const tipos = ["treino", "nutricao", "mindset"] as const;
+      for (const tipo of tipos) {
+        const { error: fnError } = await supabase.functions.invoke("generate-protocol", {
+          body: {
+            tipo,
+            userId: user.id,
+            userContext: profileData,
+            planType,
+          },
+        });
+
+        if (fnError) throw fnError;
+      }
+
+      toast.success("Anamnese concluída e planos gerados com sucesso!");
       navigate("/dashboard");
     } catch (error) {
       console.error("Error saving anamnese:", error);
@@ -544,22 +589,35 @@ export default function Anamnese() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Toma medicamentos regularmente?</Label>
-                <RadioGroup
-                  value={formData.toma_medicamentos}
-                  onValueChange={(value) => setFormData({ ...formData, toma_medicamentos: value })}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="sim" id="medicamentos-sim" />
-                    <Label htmlFor="medicamentos-sim" className="font-normal">Sim</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="nao" id="medicamentos-nao" />
-                    <Label htmlFor="medicamentos-nao" className="font-normal">Não</Label>
-                  </div>
-                </RadioGroup>
+          <div className="space-y-2">
+            <Label>Toma medicamentos regularmente?</Label>
+            <RadioGroup
+              value={formData.toma_medicamentos}
+              onValueChange={(value) => setFormData({ ...formData, toma_medicamentos: value })}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="sim" id="medicamentos-sim" />
+                <Label htmlFor="medicamentos-sim" className="font-normal">Sim</Label>
               </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="nao" id="medicamentos-nao" />
+                <Label htmlFor="medicamentos-nao" className="font-normal">Não</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {formData.toma_medicamentos === "sim" && (
+            <div className="space-y-2">
+              <Label htmlFor="medicamentos_detalhes">Quais medicamentos e para que são utilizados?</Label>
+              <Textarea
+                id="medicamentos_detalhes"
+                placeholder="Ex: Losartana 50mg (hipertensão) 1x ao dia, Metformina 850mg (diabetes) 2x ao dia"
+                value={formData.medicamentos_detalhes}
+                onChange={(e) => setFormData({ ...formData, medicamentos_detalhes: e.target.value })}
+                rows={3}
+              />
+            </div>
+          )}
             </CardContent>
           </Card>
 
