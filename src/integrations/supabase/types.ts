@@ -221,6 +221,36 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          converted: boolean | null
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          origem: string | null
+          telefone: string
+        }
+        Insert: {
+          converted?: boolean | null
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          origem?: string | null
+          telefone: string
+        }
+        Update: {
+          converted?: boolean | null
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          origem?: string | null
+          telefone?: string
+        }
+        Relationships: []
+      }
       notification_logs: {
         Row: {
           created_at: string

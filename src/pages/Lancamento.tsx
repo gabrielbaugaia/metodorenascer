@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/FzfmZXRpd5AD8z0dL8UFnh";
 
@@ -46,8 +47,21 @@ export default function Lancamento() {
 
     setIsSubmitting(true);
     
-    // Simulate saving lead data (you can add Supabase integration here)
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      // Salvar lead no banco de dados
+      const { error } = await supabase.from("leads").insert({
+        nome: nome.trim(),
+        telefone: phoneNumbers,
+        email: email.trim().toLowerCase(),
+        origem: "lancamento"
+      });
+
+      if (error) {
+        console.error("Erro ao salvar lead:", error);
+      }
+    } catch (err) {
+      console.error("Erro ao salvar lead:", err);
+    }
     
     toast.success("Redirecionando para o grupo VIP...");
     
