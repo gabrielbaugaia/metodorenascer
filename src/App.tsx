@@ -33,6 +33,7 @@ import RedefinirSenha from "./pages/RedefinirSenha";
 import Assinatura from "./pages/Assinatura";
 import AdminPlanosVenda from "./pages/admin/AdminPlanosVenda";
 import AdminMetricas from "./pages/admin/AdminMetricas";
+import AdminConvites from "./pages/admin/AdminConvites";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="/admin/videos" element={<AdminVideos />} />
             <Route path="/admin/planos-venda" element={<AdminPlanosVenda />} />
             <Route path="/admin/metricas" element={<AdminMetricas />} />
+            <Route path="/admin/convites" element={<AdminConvites />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </AnalyticsProvider>

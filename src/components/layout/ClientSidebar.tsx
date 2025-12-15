@@ -28,7 +28,8 @@ import {
   HelpCircle,
   Bell,
   Gift,
-  Video
+  Video,
+  Mail
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ const adminMenuItems = [
   { title: "Dashboard Admin", url: "/admin", icon: Shield },
   { title: "Clientes", url: "/admin/clientes", icon: User },
   { title: "Criar Cliente", url: "/admin/criar-cliente", icon: User },
+  { title: "Enviar Convite", url: "/admin/convites", icon: Mail },
   { title: "Protocolos", url: "/admin/planos", icon: FileText },
   { title: "Planos de Venda", url: "/admin/planos-venda", icon: CreditCard },
   { title: "Banco de Vídeos", url: "/admin/videos", icon: Video },
