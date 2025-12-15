@@ -129,8 +129,9 @@ export default function Dashboard() {
         const hasEssentialData = !!(data?.age && data?.weight && data?.height && data?.goals);
         const anamneseComplete = data?.anamnese_completa === true || hasEssentialData;
         
-        // Redirect to anamnese if user has subscription/admin access but anamnese is incomplete
-        if (!anamneseComplete && (subscribed || isAdmin)) {
+        // Redirect to anamnese only for subscribed non-admin users with incomplete anamnese
+        // Admins bypass anamnese requirement entirely
+        if (!anamneseComplete && subscribed && !isAdmin) {
           navigate("/anamnese");
         }
       } catch (error) {
