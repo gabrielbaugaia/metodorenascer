@@ -109,32 +109,46 @@ export function ExerciseVideoModal({
         const name = exercise.name?.trim();
         if (!name) return;
 
-        // Try exact match first
-        let { data, error } = await supabase
+        // Try exact match first (avoid maybeSingle which can fail when multiple rows match)
+        const exactResult = await supabase
           .from("exercise_videos")
           .select("video_url")
           .ilike("exercise_name", name)
-          .limit(1)
-          .maybeSingle();
+          .limit(1);
+
+        if (exactResult.error) {
+          console.error("Erro ao buscar vídeo do exercício:", exactResult.error);
+          return;
+        }
+
+        let videoUrl: string | null = exactResult.data?.[0]?.video_url ?? null;
 
         // If no exact match, try partial match with first significant words
-        if (!data && !error) {
+        if (!videoUrl) {
           // Get first 2-3 significant words for matching
-          const words = name.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+          const words = name
+            .toLowerCase()
+            .split(/\s+/)
+            .filter((w) => w.length > 2);
           const searchPattern = words.slice(0, 2).join("%");
-          
+
           if (searchPattern) {
-            const result = await supabase
+            const partialResult = await supabase
               .from("exercise_videos")
               .select("video_url")
               .ilike("exercise_name", `%${searchPattern}%`)
-              .limit(1)
-              .maybeSingle();
-            
-            data = result.data;
-            error = result.error;
+              .limit(1);
+
+            if (partialResult.error) {
+              console.error("Erro ao buscar vídeo do exercício:", partialResult.error);
+              return;
+            }
+
+            videoUrl = partialResult.data?.[0]?.video_url ?? null;
           }
         }
+
+        if (videoUrl) setResolvedUrl(videoUrl);
 
         if (error) {
           console.error("Erro ao buscar vídeo do exercício:", error);
