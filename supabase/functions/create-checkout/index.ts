@@ -2,10 +2,46 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Allowed origins for CORS
+const allowedOrigins = [
+  "https://lxdosmjenbaugmhyfanx.lovableproject.com",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
+
+// Map errors to safe user messages
+function mapErrorToUserMessage(error: unknown): string {
+  if (!(error instanceof Error)) return "Erro ao processar solicitação. Tente novamente.";
+  
+  const message = error.message.toLowerCase();
+  
+  if (message.includes("already has active")) {
+    return "Você já possui uma assinatura ativa.";
+  }
+  if (message.includes("not authenticated")) {
+    return "Sessão expirada. Faça login novamente.";
+  }
+  if (message.includes("stripe") || message.includes("payment")) {
+    return "Erro ao processar pagamento. Tente novamente.";
+  }
+  if (message.includes("invalid price")) {
+    return "Plano inválido selecionado.";
+  }
+  if (message.includes("authorization")) {
+    return "Não autorizado. Faça login novamente.";
+  }
+  
+  return "Erro ao processar solicitação. Tente novamente.";
+}
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -25,6 +61,8 @@ const VALID_PRICE_IDS = [
 const REFERRAL_DISCOUNT_PERCENT = 10;
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -105,7 +143,7 @@ serve(async (req) => {
       if (subscriptions.data.length > 0) {
         logStep("User already has active subscription");
         return new Response(
-          JSON.stringify({ error: "User already has an active subscription" }),
+          JSON.stringify({ error: "Você já possui uma assinatura ativa." }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
         );
       }
@@ -185,10 +223,10 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error("[CREATE-CHECKOUT] Error:", error);
+    const userMessage = mapErrorToUserMessage(error);
+    return new Response(JSON.stringify({ error: userMessage }), {
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       status: 500,
     });
   }

@@ -1,11 +1,40 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Allowed origins for CORS
+const allowedOrigins = [
+  "https://lxdosmjenbaugmhyfanx.lovableproject.com",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
+
+// Map errors to safe user messages
+function mapErrorToUserMessage(error: unknown): string {
+  if (!(error instanceof Error)) return "Erro ao processar mensagem. Tente novamente.";
+  
+  const message = error.message.toLowerCase();
+  
+  if (message.includes("rate limit") || message.includes("limite")) {
+    return "Limite de requisições excedido. Aguarde alguns segundos.";
+  }
+  if (message.includes("créditos") || message.includes("credits")) {
+    return "Créditos insuficientes. Entre em contato com o suporte.";
+  }
+  
+  return "Erro ao processar mensagem. Tente novamente.";
+}
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -135,9 +164,10 @@ Retorne JSON no formato:
     });
   } catch (error) {
     console.error("AI mentor error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }), {
+    const userMessage = mapErrorToUserMessage(error);
+    return new Response(JSON.stringify({ error: userMessage }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

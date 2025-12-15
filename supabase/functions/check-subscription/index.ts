@@ -2,10 +2,40 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Allowed origins for CORS
+const allowedOrigins = [
+  "https://lxdosmjenbaugmhyfanx.lovableproject.com",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
+
+// Map errors to safe user messages
+function mapErrorToUserMessage(error: unknown): string {
+  if (!(error instanceof Error)) return "Erro ao processar solicitação. Tente novamente.";
+  
+  const message = error.message.toLowerCase();
+  
+  if (message.includes("auth session missing") || message.includes("not authenticated")) {
+    return "Sessão expirada. Faça login novamente.";
+  }
+  if (message.includes("stripe")) {
+    return "Erro ao verificar assinatura. Tente novamente.";
+  }
+  if (message.includes("authorization")) {
+    return "Não autorizado. Faça login novamente.";
+  }
+  
+  return "Erro ao processar solicitação. Tente novamente.";
+}
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -13,6 +43,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 };
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -37,7 +69,6 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError) {
-      // Quando o token já expirou ou a sessão não existe mais
       logStep("Authentication error from auth.getUser", { message: userError.message });
 
       if (userError.message.includes("Auth session missing")) {
@@ -221,10 +252,10 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error("[CHECK-SUBSCRIPTION] Error:", error);
+    const userMessage = mapErrorToUserMessage(error);
+    return new Response(JSON.stringify({ error: userMessage }), {
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       status: 500,
     });
   }
