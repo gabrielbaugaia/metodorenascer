@@ -313,30 +313,40 @@ export default function Anamnese() {
         console.warn("[ANAMNESE] No profile row found, using fallback context from form data");
       }
 
-      console.log("[ANAMNESE] Invoking generate-protocol functions...");
+      console.log("[ANAMNESE] Invoking generate-protocol functions in parallel...");
       const tipos = ["treino", "nutricao", "mindset"] as const;
-      for (const tipo of tipos) {
-        console.log(`[ANAMNESE] Generating protocol`, { tipo });
+      
+      // Deactivate all previous active protocols first
+      await Promise.all(
+        tipos.map(tipo => 
+          supabase
+            .from("protocolos")
+            .update({ ativo: false })
+            .eq("user_id", user.id)
+            .eq("tipo", tipo)
+        )
+      );
 
-        // Deactivate previous active protocols of this type for the user
-        await supabase
-          .from("protocolos")
-          .update({ ativo: false })
-          .eq("user_id", user.id)
-          .eq("tipo", tipo);
+      // Generate all protocols in parallel for faster completion
+      const protocolResults = await Promise.all(
+        tipos.map(async (tipo) => {
+          console.log(`[ANAMNESE] Generating protocol`, { tipo });
+          const { error: fnError } = await supabase.functions.invoke("generate-protocol", {
+            body: {
+              tipo,
+              userId: user.id,
+              userContext: profileContext,
+            },
+          });
+          return { tipo, error: fnError };
+        })
+      );
 
-        const { error: fnError } = await supabase.functions.invoke("generate-protocol", {
-          body: {
-            tipo,
-            userId: user.id,
-            userContext: profileContext,
-          },
-        });
-
-        if (fnError) {
-          console.error(`[ANAMNESE] generate-protocol error for ${tipo}`, fnError);
-          throw new Error(`PROTOCOL_ERROR_${tipo.toUpperCase()}`);
-        }
+      // Check for any errors
+      const failedProtocol = protocolResults.find(r => r.error);
+      if (failedProtocol) {
+        console.error(`[ANAMNESE] generate-protocol error for ${failedProtocol.tipo}`, failedProtocol.error);
+        throw new Error(`PROTOCOL_ERROR_${failedProtocol.tipo.toUpperCase()}`);
       }
 
       toast.success("Anamnese concluída e planos gerados com sucesso!");
