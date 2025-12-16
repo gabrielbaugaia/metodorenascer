@@ -97,7 +97,6 @@ export function ExerciseVideoModal({
 }: ExerciseVideoModalProps) {
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
-  const [iframeError, setIframeError] = useState(false);
 
   const currentUrl = resolvedUrl ?? exercise?.videoUrl ?? "";
   const embedUrl = useMemo(() => toYoutubeEmbedUrl(currentUrl), [currentUrl]);
@@ -109,7 +108,6 @@ export function ExerciseVideoModal({
     // Reset when opening/changing exercise
     setResolvedUrl(null);
     setResolving(false);
-    setIframeError(false);
   }, [open, exercise?.name]);
 
   useEffect(() => {
@@ -193,39 +191,62 @@ export function ExerciseVideoModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Video */}
-          {embedUrl && !iframeError ? (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
-              <iframe
-                src={embedUrl}
-                title={exercise.name}
-                className="absolute inset-0 w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                onError={() => setIframeError(true)}
-              />
-            </div>
-          ) : watchUrl ? (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex flex-col items-center justify-center gap-4 p-4">
-              {resolving ? (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Buscando vídeo...
+          {/* Video - on mobile, always show button first for better UX */}
+          {watchUrl ? (
+            <>
+              {/* Mobile: Show prominent button to open in YouTube app */}
+              <div className="sm:hidden">
+                <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex flex-col items-center justify-center gap-4 p-4">
+                  {resolving ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Buscando vídeo...
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="white" className="w-8 h-8 ml-1">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                      <p className="text-muted-foreground text-center text-sm">
+                        Toque para assistir ao vídeo
+                      </p>
+                      <Button onClick={handleOpenInYoutube} size="lg" className="gap-2 bg-red-600 hover:bg-red-700">
+                        <ExternalLink className="w-4 h-4" />
+                        Abrir no YouTube
+                      </Button>
+                    </>
+                  )}
                 </div>
-              ) : (
-                <>
-                  <p className="text-muted-foreground text-center text-sm">
-                    {iframeError 
-                      ? "O vídeo não pode ser reproduzido aqui." 
-                      : "Toque no botão para assistir ao vídeo"}
-                  </p>
-                  <Button onClick={handleOpenInYoutube} className="gap-2">
-                    <ExternalLink className="w-4 h-4" />
-                    Abrir no YouTube
-                  </Button>
-                </>
-              )}
-            </div>
+              </div>
+
+              {/* Desktop: Show embedded iframe */}
+              <div className="hidden sm:block">
+                {embedUrl ? (
+                  <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
+                    <iframe
+                      src={embedUrl}
+                      title={exercise.name}
+                      className="absolute inset-0 w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : (
+                  <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+                    {resolving ? (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Buscando vídeo...
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">Vídeo demonstrativo em breve</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
             <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
               {resolving ? (
@@ -237,18 +258,6 @@ export function ExerciseVideoModal({
                 <p className="text-muted-foreground">Vídeo demonstrativo em breve</p>
               )}
             </div>
-          )}
-
-          {/* Open in YouTube button - always show on mobile if video exists */}
-          {watchUrl && !resolving && (
-            <Button 
-              variant="outline" 
-              onClick={handleOpenInYoutube} 
-              className="w-full gap-2 sm:hidden"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Abrir no YouTube
-            </Button>
           )}
 
           {/* Exercise info */}
