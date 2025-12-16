@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Header } from "@/components/Header";
+import { PreLaunchHeader } from "@/components/landing/PreLaunchHeader";
 import { UrgencyBanner } from "@/components/landing/UrgencyBanner";
 import { PreLaunchHeroSection } from "@/components/landing/PreLaunchHeroSection";
 import { ProblemSection } from "@/components/landing/ProblemSection";
@@ -24,7 +24,7 @@ const PreLaunchIndex = () => {
   return (
     <div className="min-h-screen bg-background">
       <UrgencyBanner />
-      <Header />
+      <PreLaunchHeader />
       <main>
         <PreLaunchHeroSection />
         <ProblemSection />
