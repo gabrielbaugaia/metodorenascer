@@ -48,7 +48,7 @@ import {
   Trash2, 
   Search,
   Video,
-  ExternalLink
+  Play
 } from "lucide-react";
 
 interface ExerciseVideo {
@@ -99,6 +99,17 @@ const isValidYouTubeUrl = (url: string): boolean => {
   return patterns.some(pattern => pattern.test(url.trim()));
 };
 
+const extractYoutubeId = (url: string): string | null => {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^&\s?]+)/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) return match[1];
+  }
+  return null;
+};
+
 export default function AdminVideos() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
@@ -119,6 +130,9 @@ export default function AdminVideos() {
     difficulty_level: "todos",
     environment: "ambos"
   });
+  
+  // Preview state
+  const [previewVideo, setPreviewVideo] = useState<ExerciseVideo | null>(null);
   const [saving, setSaving] = useState(false);
   
   // Delete confirmation
@@ -499,16 +513,16 @@ export default function AdminVideos() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              asChild
+                              onClick={() => setPreviewVideo(video)}
+                              title="Preview"
                             >
-                              <a href={video.video_url} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
+                              <Play className="h-4 w-4 text-primary" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleOpenDialog(video)}
+                              title="Editar"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -516,6 +530,7 @@ export default function AdminVideos() {
                               variant="ghost"
                               size="icon"
                               onClick={() => setDeleteId(video.id)}
+                              title="Excluir"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
@@ -530,6 +545,46 @@ export default function AdminVideos() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Video Preview Dialog */}
+      <Dialog open={!!previewVideo} onOpenChange={() => setPreviewVideo(null)}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Video className="h-5 w-5 text-primary" />
+              {previewVideo?.exercise_name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {previewVideo && extractYoutubeId(previewVideo.video_url) ? (
+              <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+                <iframe
+                  src={`https://www.youtube.com/embed/${extractYoutubeId(previewVideo.video_url)}?autoplay=1&rel=0`}
+                  title={previewVideo.exercise_name}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
+            ) : (
+              <div className="aspect-video w-full rounded-lg bg-muted flex items-center justify-center">
+                <p className="text-muted-foreground">URL de vídeo inválida</p>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
+                {previewVideo?.muscle_group}
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground capitalize">
+                {previewVideo?.difficulty_level === "todos" ? "Todos os níveis" : previewVideo?.difficulty_level}
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground capitalize">
+                {previewVideo?.environment === "ambos" ? "Casa/Academia" : previewVideo?.environment}
+              </span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
