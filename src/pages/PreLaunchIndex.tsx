@@ -7,7 +7,7 @@ import { MethodologySection } from "@/components/landing/MethodologySection";
 import { MentorSection } from "@/components/landing/MentorSection";
 import TransformationsGallery from "@/components/landing/TransformationsGallery";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
-
+import { FAQSection } from "@/components/landing/FAQSection";
 import { PreLaunchCTASection } from "@/components/landing/PreLaunchCTASection";
 import { Footer } from "@/components/Footer";
 
@@ -32,7 +32,7 @@ const PreLaunchIndex = () => {
         <MentorSection />
         <TransformationsGallery />
         <TestimonialsSection />
-        
+        <FAQSection />
         <PreLaunchCTASection />
       </main>
       <Footer />
