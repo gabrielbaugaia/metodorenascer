@@ -103,20 +103,6 @@ export const FAQSection = () => {
             ))}
           </Accordion>
         </div>
-
-        {/* CTA */}
-        <div className="text-center mt-12">
-          <p className="text-muted-foreground text-sm mb-4">Ainda tem dúvidas?</p>
-          <Button variant="fire" size="lg" asChild>
-            <a
-              href="https://wa.me/5511999999999"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              FALE CONOSCO NO WHATSAPP
-            </a>
-          </Button>
-        </div>
       </div>
     </section>
   );
