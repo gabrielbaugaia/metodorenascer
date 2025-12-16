@@ -86,16 +86,16 @@ export default function Nutricao() {
     <ClientLayout>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-              <Utensils className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shrink-0">
+              <Utensils className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div>
-              <h1 className="font-display text-3xl text-foreground">
+            <div className="min-w-0">
+              <h1 className="font-display text-xl sm:text-3xl text-foreground truncate">
                 Plano <span className="text-gradient">Nutricional</span>
               </h1>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 {conteudo.refeicoes && conteudo.refeicoes.length > 0 
                   ? "Seu cardápio estratégico para máxima performance"
                   : "Seu protocolo será gerado em breve"}
@@ -105,8 +105,10 @@ export default function Nutricao() {
           {protocol && (
             <Button
               variant="outline"
+              size="sm"
               onClick={handleDownloadPdf}
               disabled={downloading}
+              className="w-full sm:w-auto"
             >
               <Download className="w-4 h-4 mr-2" />
               {downloading ? "Baixando..." : "Baixar PDF"}
