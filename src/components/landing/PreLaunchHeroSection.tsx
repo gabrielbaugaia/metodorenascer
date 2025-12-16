@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Dumbbell, Utensils, MessageCircle } from "lucide-react";
 
-const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/FzfmZXRpd5AD8z0dL8UFnh";
+const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/FzfmZXRpd5AD8z0dL8UFnh?mode=hqrt1";
 
 export function PreLaunchHeroSection() {
   return (
