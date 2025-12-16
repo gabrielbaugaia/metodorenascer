@@ -39,27 +39,27 @@ interface Profile {
 const faqs = [
   {
     question: "Como funciona o plano de treino?",
-    answer: "Seu plano de treino é gerado pela nossa IA com base nas informações da sua anamnese. Ele é personalizado para seus objetivos, nível de experiência e disponibilidade."
+    answer: "Seu plano de treino é criado de forma personalizada com base nas informações da sua anamnese. Ele é adaptado aos seus objetivos, nível de experiência e disponibilidade de horários."
   },
   {
     question: "Posso alterar meu protocolo?",
-    answer: "Sim! A qualquer momento você pode solicitar ao mentor IA para ajustar seu protocolo de acordo com suas necessidades ou preferências."
+    answer: "Sim! A qualquer momento você pode conversar com seu mentor para solicitar ajustes no seu protocolo de acordo com suas necessidades ou preferências."
   },
   {
     question: "Como faço para gerar receitas?",
-    answer: "Na aba 'Receitas IA', você pode selecionar ingredientes e pedir para a IA gerar receitas fitness deliciosas e saudáveis."
+    answer: "Na seção 'Receitas', você pode selecionar ingredientes disponíveis e nosso sistema irá sugerir receitas fitness personalizadas para você."
   },
   {
     question: "O suporte funciona 24 horas?",
-    answer: "Sim! Nosso mentor IA está disponível 24/7 para tirar suas dúvidas sobre treino, nutrição e mindset."
+    answer: "Sim! Nosso suporte está disponível 24/7 para tirar suas dúvidas sobre treino, nutrição e mindset."
   },
   {
     question: "Como funciona o acompanhamento semanal?",
-    answer: "Semanalmente você receberá um check-in para registrar seu peso, medidas e como está se sentindo. A IA usa essas informações para ajustar seu protocolo."
+    answer: "A cada 30 dias você envia suas fotos de evolução e atualiza seu peso. Essas informações são usadas pelo seu mentor para ajustar seu protocolo conforme seu progresso."
   },
   {
     question: "Posso cancelar minha assinatura?",
-    answer: "Sim, você pode gerenciar sua assinatura a qualquer momento através do portal de pagamentos no seu dashboard."
+    answer: "Sim, você pode gerenciar sua assinatura a qualquer momento através da seção 'Assinatura' no menu lateral."
   }
 ];
 
