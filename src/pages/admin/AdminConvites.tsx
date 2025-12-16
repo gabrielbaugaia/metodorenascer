@@ -81,12 +81,23 @@ export default function AdminConvites() {
         },
       });
 
-      if (error) {
-        throw new Error(error.message);
+      // Check if data contains an error (Edge Function returned error with body)
+      if (data?.error) {
+        toast.error(data.error);
+        return;
       }
 
-      if (data.error) {
-        throw new Error(data.error);
+      // Check for invoke error
+      if (error) {
+        // Try to parse error context if available
+        const errorMessage = error.message || "Erro ao enviar convite";
+        toast.error(errorMessage);
+        return;
+      }
+
+      if (!data?.user) {
+        toast.error("Erro ao processar convite. Tente novamente.");
+        return;
       }
 
       setInviteResult({
@@ -107,7 +118,7 @@ export default function AdminConvites() {
       
     } catch (error: any) {
       console.error("Error sending invitation:", error);
-      toast.error(error.message || "Erro ao enviar convite");
+      toast.error("Erro ao enviar convite. Tente novamente.");
     } finally {
       setLoading(false);
     }
