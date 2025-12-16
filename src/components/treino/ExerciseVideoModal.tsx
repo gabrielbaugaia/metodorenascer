@@ -7,8 +7,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Dumbbell, Loader2, RotateCcw } from "lucide-react";
+import { Clock, Dumbbell, ExternalLink, Loader2, RotateCcw } from "lucide-react";
 
 interface Exercise {
   name: string;
@@ -38,7 +39,7 @@ function normalizeUrl(raw: string): string {
   return trimmed;
 }
 
-function toYoutubeEmbedUrl(rawUrl: string): string | null {
+function extractYoutubeId(rawUrl: string): string | null {
   const normalized = normalizeUrl(rawUrl);
   if (!normalized) return null;
 
@@ -50,15 +51,15 @@ function toYoutubeEmbedUrl(rawUrl: string): string | null {
     if (host === "youtube.com" || host.endsWith(".youtube.com")) {
       // /watch?v=
       const v = url.searchParams.get("v");
-      if (v) return `https://www.youtube.com/embed/${v}`;
+      if (v) return v;
 
       // /shorts/{id}
       const shortsMatch = url.pathname.match(/^\/shorts\/([^/?#]+)/);
-      if (shortsMatch?.[1]) return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+      if (shortsMatch?.[1]) return shortsMatch[1];
 
       // /embed/{id}
       const embedMatch = url.pathname.match(/^\/embed\/([^/?#]+)/);
-      if (embedMatch?.[1]) return `https://www.youtube.com/embed/${embedMatch[1]}`;
+      if (embedMatch?.[1]) return embedMatch[1];
 
       return null;
     }
@@ -66,7 +67,7 @@ function toYoutubeEmbedUrl(rawUrl: string): string | null {
     // youtu.be/{id}
     if (host === "youtu.be") {
       const id = url.pathname.replace("/", "").split("/")[0];
-      if (id) return `https://www.youtube.com/embed/${id}`;
+      if (id) return id;
       return null;
     }
 
@@ -76,6 +77,19 @@ function toYoutubeEmbedUrl(rawUrl: string): string | null {
   }
 }
 
+function toYoutubeEmbedUrl(rawUrl: string): string | null {
+  const videoId = extractYoutubeId(rawUrl);
+  if (!videoId) return null;
+  // Add playsinline=1 for better mobile compatibility
+  return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0`;
+}
+
+function toYoutubeWatchUrl(rawUrl: string): string | null {
+  const videoId = extractYoutubeId(rawUrl);
+  if (!videoId) return null;
+  return `https://www.youtube.com/watch?v=${videoId}`;
+}
+
 export function ExerciseVideoModal({
   exercise,
   open,
@@ -83,11 +97,11 @@ export function ExerciseVideoModal({
 }: ExerciseVideoModalProps) {
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
 
-  const embedUrl = useMemo(() => {
-    if (!exercise) return null;
-    return toYoutubeEmbedUrl(resolvedUrl ?? exercise.videoUrl ?? "");
-  }, [exercise, resolvedUrl]);
+  const currentUrl = resolvedUrl ?? exercise?.videoUrl ?? "";
+  const embedUrl = useMemo(() => toYoutubeEmbedUrl(currentUrl), [currentUrl]);
+  const watchUrl = useMemo(() => toYoutubeWatchUrl(currentUrl), [currentUrl]);
 
   useEffect(() => {
     if (!open || !exercise) return;
@@ -95,13 +109,14 @@ export function ExerciseVideoModal({
     // Reset when opening/changing exercise
     setResolvedUrl(null);
     setResolving(false);
+    setIframeError(false);
   }, [open, exercise?.name]);
 
   useEffect(() => {
     const resolveFromDatabase = async () => {
       if (!open || !exercise) return;
 
-      const alreadyValid = Boolean(toYoutubeEmbedUrl(exercise.videoUrl ?? ""));
+      const alreadyValid = Boolean(extractYoutubeId(exercise.videoUrl ?? ""));
       if (alreadyValid) return;
 
       setResolving(true);
@@ -109,7 +124,7 @@ export function ExerciseVideoModal({
         const name = exercise.name?.trim();
         if (!name) return;
 
-        // Try exact match first (avoid maybeSingle which can fail when multiple rows match)
+        // Try exact match first
         const exactResult = await supabase
           .from("exercise_videos")
           .select("video_url")
@@ -125,7 +140,6 @@ export function ExerciseVideoModal({
 
         // If no exact match, try partial match with first significant words
         if (!videoUrl) {
-          // Get first 2-3 significant words for matching
           const words = name
             .toLowerCase()
             .split(/\s+/)
@@ -157,6 +171,12 @@ export function ExerciseVideoModal({
     resolveFromDatabase();
   }, [open, exercise]);
 
+  const handleOpenInYoutube = () => {
+    if (watchUrl) {
+      window.open(watchUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
   if (!exercise) return null;
 
   return (
@@ -174,15 +194,37 @@ export function ExerciseVideoModal({
 
         <div className="space-y-4">
           {/* Video */}
-          {embedUrl ? (
+          {embedUrl && !iframeError ? (
             <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
               <iframe
                 src={embedUrl}
                 title={exercise.name}
                 className="absolute inset-0 w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
+                onError={() => setIframeError(true)}
               />
+            </div>
+          ) : watchUrl ? (
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex flex-col items-center justify-center gap-4 p-4">
+              {resolving ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Buscando vídeo...
+                </div>
+              ) : (
+                <>
+                  <p className="text-muted-foreground text-center text-sm">
+                    {iframeError 
+                      ? "O vídeo não pode ser reproduzido aqui." 
+                      : "Toque no botão para assistir ao vídeo"}
+                  </p>
+                  <Button onClick={handleOpenInYoutube} className="gap-2">
+                    <ExternalLink className="w-4 h-4" />
+                    Abrir no YouTube
+                  </Button>
+                </>
+              )}
             </div>
           ) : (
             <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
@@ -195,6 +237,18 @@ export function ExerciseVideoModal({
                 <p className="text-muted-foreground">Vídeo demonstrativo em breve</p>
               )}
             </div>
+          )}
+
+          {/* Open in YouTube button - always show on mobile if video exists */}
+          {watchUrl && !resolving && (
+            <Button 
+              variant="outline" 
+              onClick={handleOpenInYoutube} 
+              className="w-full gap-2 sm:hidden"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Abrir no YouTube
+            </Button>
           )}
 
           {/* Exercise info */}
