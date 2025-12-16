@@ -7,9 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Dumbbell, ExternalLink, Loader2, RotateCcw } from "lucide-react";
+import { Clock, Dumbbell, Loader2, RotateCcw } from "lucide-react";
 
 interface Exercise {
   name: string;
@@ -104,7 +103,6 @@ export function ExerciseVideoModal({
 
   const currentUrl = resolvedUrl ?? exercise?.videoUrl ?? "";
   const embedUrl = useMemo(() => toYoutubeEmbedUrl(currentUrl), [currentUrl]);
-  const watchUrl = useMemo(() => toYoutubeWatchUrl(currentUrl), [currentUrl]);
 
   // Reset state when modal opens/closes or exercise changes
   useEffect(() => {
@@ -182,12 +180,6 @@ export function ExerciseVideoModal({
     resolveFromDatabase();
   }, [open, exercise]);
 
-  const handleOpenInYoutube = () => {
-    if (watchUrl) {
-      window.open(watchUrl, "_blank", "noopener,noreferrer");
-    }
-  };
-
   if (!exercise) return null;
 
   return (
@@ -214,43 +206,21 @@ export function ExerciseVideoModal({
             </div>
           )}
 
-          {/* YouTube Video - Desktop */}
+          {/* YouTube Video - Inline (Desktop + Mobile) */}
           {!resolving && embedUrl && (
-            <div className="hidden sm:block">
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
-                <iframe
-                  src={embedUrl}
-                  title={exercise.name}
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
-            </div>
-          )}
-
-          {/* YouTube Video - Mobile */}
-          {!resolving && watchUrl && (
-            <div className="sm:hidden">
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex flex-col items-center justify-center gap-4 p-4">
-                <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" fill="white" className="w-8 h-8 ml-1">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </div>
-                <p className="text-muted-foreground text-center text-sm">
-                  Toque para assistir ao vídeo
-                </p>
-                <Button onClick={handleOpenInYoutube} size="lg" className="gap-2 bg-red-600 hover:bg-red-700">
-                  <ExternalLink className="w-4 h-4" />
-                  Abrir no YouTube
-                </Button>
-              </div>
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
+              <iframe
+                src={embedUrl}
+                title={exercise.name}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
             </div>
           )}
 
           {/* No media available */}
-          {!resolving && !watchUrl && !embedUrl && (
+          {!resolving && !embedUrl && (
             <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
               <p className="text-muted-foreground">Demonstração em breve</p>
             </div>
