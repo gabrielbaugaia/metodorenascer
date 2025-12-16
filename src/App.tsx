@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import Index from "./pages/Index";
+import PreLaunchIndex from "./pages/PreLaunchIndex";
 import Auth from "./pages/Auth";
 import Convite from "./pages/Convite";
 import Dashboard from "./pages/Dashboard";
@@ -48,7 +49,9 @@ const App = () => (
         <BrowserRouter>
           <AnalyticsProvider>
           <Routes>
-            <Route path="/" element={<Index />} />
+            {/* PRÉ-LANÇAMENTO ATIVO: Trocar PreLaunchIndex por Index quando lançar oficialmente */}
+            <Route path="/" element={<PreLaunchIndex />} />
+            <Route path="/landing-original" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/convite" element={<Convite />} />
