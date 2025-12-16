@@ -212,10 +212,10 @@ export default function Treino() {
             <Target className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Nenhum treino disponível</h3>
             <p className="text-muted-foreground mb-4">
-              Complete sua anamnese para receber seu protocolo de treino personalizado.
+              Seu protocolo de treino será gerado em breve. Fale com seu mentor para mais informações.
             </p>
-            <Button variant="fire" onClick={() => navigate("/anamnese")}>
-              Completar Anamnese
+            <Button variant="fire" onClick={() => navigate("/suporte")}>
+              Falar com Mentor
             </Button>
           </Card>
         ) : (

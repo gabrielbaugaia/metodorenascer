@@ -119,10 +119,10 @@ export default function Nutricao() {
             <Utensils className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Nenhum plano nutricional disponível</h3>
             <p className="text-muted-foreground mb-4">
-              Complete sua anamnese para receber seu protocolo nutricional personalizado.
+              Seu protocolo nutricional será gerado em breve. Fale com seu mentor para mais informações.
             </p>
-            <Button variant="fire" onClick={() => navigate("/anamnese")}>
-              Completar Anamnese
+            <Button variant="fire" onClick={() => navigate("/suporte")}>
+              Falar com Mentor
             </Button>
           </Card>
         ) : (
