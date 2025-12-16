@@ -316,47 +316,46 @@ export default function AdminClienteDetalhes() {
 
   return (
     <ClientLayout>
-      <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
+      <div className="space-y-6 max-w-full overflow-hidden">
         {/* Header */}
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/admin/clientes")}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/admin/clientes")} className="shrink-0">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold">{profile.full_name}</h1>
-                <p className="text-muted-foreground text-sm">{profile.email}</p>
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold truncate">{profile.full_name}</h1>
+                <p className="text-muted-foreground text-sm truncate">{profile.email}</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => navigate(`/admin/planos?userId=${id}`)}>
-                <FileText className="h-4 w-4 mr-2" />
-              Ver Protocolos
-            </Button>
-            <Button variant="fire" onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-              Salvar
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(`/admin/planos?userId=${id}`)}>
+                <FileText className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Ver Protocolos</span>
+              </Button>
+              <Button variant="fire" size="sm" onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Save className="h-4 w-4 sm:mr-2" />}
+                <span className="hidden sm:inline">Salvar</span>
+              </Button>
+            </div>
           </div>
-        </div>
 
-        {/* Actions Card */}
-        <Card className="border-primary/30 bg-primary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Ações Rápidas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Assign Plan */}
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="flex-1">
-                <Label className="mb-2 block">Atribuir Plano</Label>
-                <div className="flex gap-2">
+          {/* Actions Card */}
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Ações Rápidas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Assign Plan */}
+              <div className="space-y-3">
+                <Label className="block">Atribuir Plano</Label>
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-                    <SelectTrigger className="flex-1">
+                    <SelectTrigger className="w-full sm:flex-1">
                       <SelectValue placeholder="Selecione um plano" />
                     </SelectTrigger>
                     <SelectContent>
@@ -367,7 +366,7 @@ export default function AdminClienteDetalhes() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button onClick={handleAssignPlan} disabled={assigningPlan || !selectedPlan}>
+                  <Button onClick={handleAssignPlan} disabled={assigningPlan || !selectedPlan} className="w-full sm:w-auto">
                     {assigningPlan ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
@@ -377,7 +376,7 @@ export default function AdminClienteDetalhes() {
                   </Button>
                 </div>
                 {subscription && (
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
                       {subscription.status === "active" ? "Ativo" : subscription.status}
                     </Badge>
@@ -390,30 +389,30 @@ export default function AdminClienteDetalhes() {
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Generate Protocols */}
-            <div>
-              <Label className="mb-2 block">Gerar Protocolos</Label>
-              <Button 
-                variant="fire" 
-                onClick={handleGenerateAllProtocols} 
-                disabled={generatingProtocols}
-                className="w-full md:w-auto"
-              >
-                {generatingProtocols ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Sparkles className="h-4 w-4 mr-2" />
-                )}
-                Gerar Todos os Protocolos (Treino + Nutrição + Mindset)
-              </Button>
-              <p className="text-xs text-muted-foreground mt-1">
-                Gera automaticamente os 3 protocolos baseados na anamnese do cliente
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Generate Protocols */}
+              <div>
+                <Label className="mb-2 block">Gerar Protocolos</Label>
+                <Button 
+                  variant="fire" 
+                  onClick={handleGenerateAllProtocols} 
+                  disabled={generatingProtocols}
+                  className="w-full"
+                  size="sm"
+                >
+                  {generatingProtocols ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  <span className="text-xs sm:text-sm">Gerar Protocolos (Treino + Nutrição + Mindset)</span>
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Gera automaticamente os 3 protocolos baseados na anamnese do cliente
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Status & Info */}

@@ -33,9 +33,9 @@ export function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
         <ClientSidebar />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto min-w-0">
           {/* Mobile Header with menu trigger */}
           <header className="md:hidden sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border/50 bg-background/95 backdrop-blur-sm px-4">
             <SidebarTrigger className="h-9 w-9">
@@ -46,7 +46,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
               <span className="font-display text-lg text-gradient">RENASCER</span>
             </div>
           </header>
-          <div className="p-4 md:p-6">
+          <div className="p-4 md:p-6 max-w-full">
             {children}
           </div>
         </main>

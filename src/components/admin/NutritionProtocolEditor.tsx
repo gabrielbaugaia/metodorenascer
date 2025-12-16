@@ -152,29 +152,31 @@ export function NutritionProtocolEditor({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-hidden">
       {/* Header with actions */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold">{content.titulo}</h3>
+      <div className="flex flex-col gap-4">
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold truncate">{content.titulo}</h3>
           <Badge variant="secondary">{content.objetivo}</Badge>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button 
             onClick={() => setShowRegenerateInput(!showRegenerateInput)}
             variant="outline"
             disabled={regenerating}
+            size="sm"
+            className="w-full sm:w-auto"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Gerar Novo Protocolo
+            <span className="text-xs sm:text-sm">Gerar Novo Protocolo</span>
           </Button>
-          <Button onClick={handleSave} disabled={saving} variant="fire">
+          <Button onClick={handleSave} disabled={saving} variant="fire" size="sm" className="w-full sm:w-auto">
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            Salvar Alterações
+            <span className="text-xs sm:text-sm">Salvar Alterações</span>
           </Button>
         </div>
       </div>
@@ -215,7 +217,7 @@ export function NutritionProtocolEditor({
           <CardTitle className="text-base">Macros Diários</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Calorias</Label>
               <Input
