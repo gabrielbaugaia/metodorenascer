@@ -119,6 +119,7 @@ export default function AdminVideos() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMuscle, setFilterMuscle] = useState<string>("all");
+  const [filterEnvironment, setFilterEnvironment] = useState<string>("all");
   
   // Form state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -276,7 +277,8 @@ export default function AdminVideos() {
     const matchesSearch = video.exercise_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          video.muscle_group.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesMuscle = filterMuscle === "all" || video.muscle_group === filterMuscle;
-    return matchesSearch && matchesMuscle;
+    const matchesEnvironment = filterEnvironment === "all" || video.environment === filterEnvironment;
+    return matchesSearch && matchesMuscle && matchesEnvironment;
   });
 
   if (authLoading || adminLoading || loading) {
@@ -454,6 +456,19 @@ export default function AdminVideos() {
                   {MUSCLE_GROUPS.map((group) => (
                     <SelectItem key={group} value={group}>
                       {group}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterEnvironment} onValueChange={setFilterEnvironment}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Ambiente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {ENVIRONMENTS.map((env) => (
+                    <SelectItem key={env.value} value={env.value}>
+                      {env.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
