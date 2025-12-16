@@ -292,10 +292,6 @@ export default function Assinatura() {
                   <Progress value={calculateProgress()} className="h-2" />
                 </div>
 
-                <Button variant="outline" onClick={handleManageSubscription} className="w-full md:w-auto">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Gerenciar Pagamento
-                </Button>
               </>
             ) : (
               <div className="text-center py-4">

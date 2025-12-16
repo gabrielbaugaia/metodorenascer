@@ -31,7 +31,8 @@ import {
   Video,
   Mail,
   BarChart3,
-  Target
+  Target,
+  Camera
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ import { cn } from "@/lib/utils";
 
 const clientMenuItems = [
   { title: "Meu Perfil", url: "/meu-perfil", icon: User },
+  { title: "Evolução", url: "/evolucao", icon: Camera },
   { title: "Treino", url: "/treino", icon: Dumbbell },
   { title: "Nutrição", url: "/nutricao", icon: Apple },
   { title: "Mindset", url: "/mindset", icon: Brain },

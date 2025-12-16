@@ -15,6 +15,7 @@ import Treino from "./pages/Treino";
 import Nutricao from "./pages/Nutricao";
 import Mindset from "./pages/Mindset";
 import Receitas from "./pages/Receitas";
+import Evolucao from "./pages/Evolucao";
 import NotFound from "./pages/NotFound";
 import AreaCliente from "./pages/AreaCliente";
 import Protocolos from "./pages/Protocolos";
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/treino" element={<Treino />} />
             <Route path="/nutricao" element={<Nutricao />} />
             <Route path="/mindset" element={<Mindset />} />
+            <Route path="/evolucao" element={<Evolucao />} />
             <Route path="/receitas" element={<Receitas />} />
             <Route path="/area-cliente" element={<AreaCliente />} />
             <Route path="/protocolos" element={<Protocolos />} />
