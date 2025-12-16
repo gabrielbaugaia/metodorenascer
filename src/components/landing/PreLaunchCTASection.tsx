@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
-const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/FzfmZXRpd5AD8z0dL8UFnh";
+const WHATSAPP_GROUP_LINK = "https://chat.whatsapp.com/FzfmZXRpd5AD8z0dL8UFnh?mode=hqrt1";
 
 export const PreLaunchCTASection = forwardRef<HTMLElement>((_, forwardedRef) => {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 });
