@@ -9,8 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { searchExercise, getExerciseGifUrl, ExerciseDbExercise } from "@/services/exerciseDb";
-import { Clock, Dumbbell, ExternalLink, Loader2, RotateCcw, Info } from "lucide-react";
+import { Clock, Dumbbell, ExternalLink, Loader2, RotateCcw } from "lucide-react";
 
 interface Exercise {
   name: string;
@@ -85,6 +84,16 @@ function toYoutubeWatchUrl(rawUrl: string): string | null {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
+// Normalize for comparison
+function normalizeForSearch(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim();
+}
+
 export function ExerciseVideoModal({
   exercise,
   open,
@@ -92,8 +101,6 @@ export function ExerciseVideoModal({
 }: ExerciseVideoModalProps) {
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
   const [resolving, setResolving] = useState(false);
-  const [exerciseDbData, setExerciseDbData] = useState<ExerciseDbExercise | null>(null);
-  const [useExerciseDb, setUseExerciseDb] = useState(true);
 
   const currentUrl = resolvedUrl ?? exercise?.videoUrl ?? "";
   const embedUrl = useMemo(() => toYoutubeEmbedUrl(currentUrl), [currentUrl]);
@@ -102,39 +109,14 @@ export function ExerciseVideoModal({
   // Reset state when modal opens/closes or exercise changes
   useEffect(() => {
     if (!open || !exercise) return;
-
     setResolvedUrl(null);
     setResolving(false);
-    setExerciseDbData(null);
-    setUseExerciseDb(true);
   }, [open, exercise?.name]);
 
-  // Try to fetch from ExerciseDB first (for GIFs)
-  useEffect(() => {
-    const fetchExerciseDb = async () => {
-      if (!open || !exercise || !useExerciseDb) return;
-
-      setResolving(true);
-      try {
-        const dbExercise = await searchExercise(exercise.name);
-        if (dbExercise) {
-          setExerciseDbData(dbExercise);
-        }
-      } catch (error) {
-        console.error("Error fetching from ExerciseDB:", error);
-      } finally {
-        setResolving(false);
-      }
-    };
-
-    fetchExerciseDb();
-  }, [open, exercise, useExerciseDb]);
-
-  // Fallback to local database for YouTube videos
+  // Search local database for video
   useEffect(() => {
     const resolveFromDatabase = async () => {
       if (!open || !exercise) return;
-      if (exerciseDbData) return; // Already have ExerciseDB data
 
       const alreadyValid = Boolean(extractYoutubeId(exercise.videoUrl ?? ""));
       if (alreadyValid) return;
@@ -144,6 +126,7 @@ export function ExerciseVideoModal({
         const name = exercise.name?.trim();
         if (!name) return;
 
+        // Try exact match first
         const exactResult = await supabase
           .from("exercise_videos")
           .select("video_url")
@@ -151,32 +134,42 @@ export function ExerciseVideoModal({
           .limit(1);
 
         if (exactResult.error) {
-          console.error("Erro ao buscar vídeo do exercício:", exactResult.error);
+          console.error("Erro ao buscar vídeo:", exactResult.error);
           return;
         }
 
         let videoUrl: string | null = exactResult.data?.[0]?.video_url ?? null;
 
+        // Try partial match if no exact match
         if (!videoUrl) {
-          const words = name
-            .toLowerCase()
-            .split(/\s+/)
-            .filter((w) => w.length > 2);
-          const searchPattern = words.slice(0, 2).join("%");
-
-          if (searchPattern) {
+          const normalizedName = normalizeForSearch(name);
+          const words = normalizedName.split(/\s+/).filter((w) => w.length > 2);
+          
+          // Try with first two keywords
+          if (words.length >= 2) {
+            const searchPattern = words.slice(0, 2).join("%");
             const partialResult = await supabase
               .from("exercise_videos")
               .select("video_url")
               .ilike("exercise_name", `%${searchPattern}%`)
               .limit(1);
 
-            if (partialResult.error) {
-              console.error("Erro ao buscar vídeo do exercício:", partialResult.error);
-              return;
+            if (!partialResult.error) {
+              videoUrl = partialResult.data?.[0]?.video_url ?? null;
             }
+          }
+          
+          // Try with first keyword only
+          if (!videoUrl && words.length >= 1) {
+            const partialResult = await supabase
+              .from("exercise_videos")
+              .select("video_url")
+              .ilike("exercise_name", `%${words[0]}%`)
+              .limit(1);
 
-            videoUrl = partialResult.data?.[0]?.video_url ?? null;
+            if (!partialResult.error) {
+              videoUrl = partialResult.data?.[0]?.video_url ?? null;
+            }
           }
         }
 
@@ -186,11 +179,8 @@ export function ExerciseVideoModal({
       }
     };
 
-    // Only run if no ExerciseDB data and not still loading
-    if (!exerciseDbData && !resolving) {
-      resolveFromDatabase();
-    }
-  }, [open, exercise, exerciseDbData, resolving]);
+    resolveFromDatabase();
+  }, [open, exercise]);
 
   const handleOpenInYoutube = () => {
     if (watchUrl) {
@@ -199,8 +189,6 @@ export function ExerciseVideoModal({
   };
 
   if (!exercise) return null;
-
-  const gifUrl = exerciseDbData ? getExerciseGifUrl(exerciseDbData) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -226,31 +214,8 @@ export function ExerciseVideoModal({
             </div>
           )}
 
-          {/* ExerciseDB GIF - Primary display */}
-          {!resolving && gifUrl && (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-black flex items-center justify-center">
-              <img
-                src={gifUrl}
-                alt={`Demonstração: ${exercise.name}`}
-                className="max-w-full max-h-full object-contain"
-                loading="eager"
-                onError={() => {
-                  // If GIF fails, fall back to YouTube
-                  setExerciseDbData(null);
-                  setUseExerciseDb(false);
-                }}
-              />
-              {/* ExerciseDB badge */}
-              <div className="absolute bottom-2 right-2">
-                <Badge variant="secondary" className="text-[10px] bg-black/60 text-white border-0">
-                  ExerciseDB
-                </Badge>
-              </div>
-            </div>
-          )}
-
-          {/* YouTube fallback - Desktop */}
-          {!resolving && !gifUrl && embedUrl && (
+          {/* YouTube Video - Desktop */}
+          {!resolving && embedUrl && (
             <div className="hidden sm:block">
               <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
                 <iframe
@@ -264,8 +229,8 @@ export function ExerciseVideoModal({
             </div>
           )}
 
-          {/* YouTube fallback - Mobile */}
-          {!resolving && !gifUrl && watchUrl && (
+          {/* YouTube Video - Mobile */}
+          {!resolving && watchUrl && (
             <div className="sm:hidden">
               <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex flex-col items-center justify-center gap-4 p-4">
                 <div className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center">
@@ -285,7 +250,7 @@ export function ExerciseVideoModal({
           )}
 
           {/* No media available */}
-          {!resolving && !gifUrl && !watchUrl && !embedUrl && (
+          {!resolving && !watchUrl && !embedUrl && (
             <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
               <p className="text-muted-foreground">Demonstração em breve</p>
             </div>
@@ -306,35 +271,6 @@ export function ExerciseVideoModal({
               {exercise.rest} descanso
             </Badge>
           </div>
-
-          {/* Target muscles from ExerciseDB */}
-          {exerciseDbData && exerciseDbData.target && (
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" className="text-xs">
-                {exerciseDbData.target}
-              </Badge>
-              {exerciseDbData.secondaryMuscles?.map((muscle) => (
-                <Badge key={muscle} variant="outline" className="text-xs">
-                  {muscle}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          {/* Instructions from ExerciseDB */}
-          {exerciseDbData && exerciseDbData.instructions?.length > 0 && (
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <p className="text-sm font-medium flex items-center gap-2">
-                <Info className="w-4 h-4 text-primary" />
-                Instruções
-              </p>
-              <ol className="text-sm text-muted-foreground space-y-1.5 list-decimal list-inside">
-                {exerciseDbData.instructions.slice(0, 4).map((instruction, idx) => (
-                  <li key={idx} className="leading-relaxed">{instruction}</li>
-                ))}
-              </ol>
-            </div>
-          )}
 
           {/* Coach tips (from protocol) */}
           {exercise.tips && (
