@@ -161,6 +161,7 @@ function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     addSectionTitle("Informações do Protocolo");
     if (conteudo.nivel) addText(`Nível: ${conteudo.nivel}`);
     if (conteudo.objetivo) addText(`Objetivo: ${conteudo.objetivo}`);
+    if (conteudo.frequencia_semanal) addText(`Frequência: ${conteudo.frequencia_semanal}x por semana`);
     if (conteudo.aquecimento) addText(`Aquecimento: ${conteudo.aquecimento}`);
     if (conteudo.alongamento) addText(`Alongamento: ${conteudo.alongamento}`);
   }
@@ -170,8 +171,68 @@ function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     addText(conteudo.observacoes_gerais);
   }
 
-  // Semanas em formato de tabela
-  if (conteudo?.semanas) {
+  // Handle treinos array format (direct workout list)
+  if (conteudo?.treinos && Array.isArray(conteudo.treinos)) {
+    addSectionTitle("PLANO DE TREINO SEMANAL");
+    
+    conteudo.treinos.forEach((treino: any, idx: number) => {
+      checkNewPage(30);
+      addSubsectionTitle(`${treino.day} - ${treino.focus}${treino.duration ? ` (${treino.duration} min)` : ''}`);
+
+      // Tabela de exercícios
+      let tableY = helpers.yPos ? helpers.yPos() : 0;
+      const colWidths = [60, 25, 30, 25, 40];
+      const headers = ["EXERCÍCIO", "SÉRIES", "REPS", "DESC.", "DICAS"];
+      
+      // Header da tabela
+      doc.setFillColor(50, 50, 50);
+      doc.rect(margin, tableY, contentWidth, 7, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
+      
+      let xPos = margin;
+      headers.forEach((header, i) => {
+        doc.text(header, xPos + 2, tableY + 5);
+        xPos += colWidths[i];
+      });
+      tableY += 7;
+
+      // Linhas de exercícios
+      const exercises = treino.exercises || [];
+      exercises.forEach((ex: any, exIdx: number) => {
+        checkNewPage(10);
+        const bgColor = exIdx % 2 === 0 ? 250 : 240;
+        doc.setFillColor(bgColor, bgColor, bgColor);
+        doc.rect(margin, tableY, contentWidth, 8, "F");
+        
+        doc.setTextColor(50, 50, 50);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        
+        xPos = margin;
+        const rowData = [
+          (ex.name || ex.nome)?.substring(0, 25) || "-",
+          String(ex.sets || ex.series || "-"),
+          String(ex.reps || ex.repeticoes || "-"),
+          ex.rest || ex.descanso || "-",
+          (ex.tips || ex.dicas)?.substring(0, 20) || "-"
+        ];
+        
+        rowData.forEach((cell, i) => {
+          doc.text(cell, xPos + 2, tableY + 5);
+          xPos += colWidths[i];
+        });
+        
+        tableY += 8;
+      });
+
+      if (helpers.setYPos) helpers.setYPos(tableY + 5);
+    });
+  }
+
+  // Handle semanas format (week-based)
+  if (conteudo?.semanas && Array.isArray(conteudo.semanas)) {
     conteudo.semanas.forEach((semana: any) => {
       const isBlocked = semana.bloqueada;
       addSectionTitle(`SEMANA ${semana.semana}${semana.ciclo ? ` - Ciclo ${semana.ciclo}` : ''}${isBlocked ? ' 🔒' : ''}`);
