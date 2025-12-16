@@ -380,7 +380,15 @@ ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
 - REFEIÇÃO PÓS-TREINO: OBRIGATORIAMENTE dentro de 1h APÓS o término do treino (considere ~1h de duração)
 - Se o cliente treina às 15:30, o pré-treino deve ser ~14:00 e o pós-treino ~17:00
 - Ajuste TODAS as outras refeições em função do horário de treino e rotina (horario_acorda, horario_dorme)
-- Se não houver horário de treino especificado, use 18:00 como padrão`;
+- Se não houver horário de treino especificado, use 18:00 como padrão
+
+### CRÍTICO - PERSONALIZAÇÃO BASEADA NA ANAMNESE ###
+- ANALISE o campo "restricoes_alimentares" para EVITAR completamente alimentos que o cliente não pode/não gosta de comer
+- ANALISE o campo "condicoes_saude" para adaptar a dieta (ex: diabético = baixo índice glicêmico, hipertenso = baixo sódio)
+- ANALISE o campo "toma_medicamentos" e "medicamentos" - se o cliente toma medicamentos, considere interações alimentares conhecidas
+- NUNCA sugira alimentos que o cliente indicou como restrição ou intolerância
+- PRIORIZE alimentos que o cliente indicou gostar ou ter facilidade de acesso
+- Se houver condições de saúde específicas, ADAPTE macros e escolhas alimentares adequadamente`;
 
     // ============================================================================
     // PROMPT DE MINDSET
