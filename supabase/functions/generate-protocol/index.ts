@@ -372,7 +372,15 @@ ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
 5. Considere restrições alimentares e preferências
 6. Use linguagem simples e prática
 7. Inclua opções de substituição em todas as refeições
-8. Foque em alimentos acessíveis e práticos para o dia a dia brasileiro`;
+8. Foque em alimentos acessíveis e práticos para o dia a dia brasileiro
+
+### CRÍTICO - HORÁRIOS DAS REFEIÇÕES ###
+- ANALISE o campo "horario_treino" do cliente para posicionar as refeições
+- REFEIÇÃO PRÉ-TREINO: OBRIGATORIAMENTE 1h30-2h ANTES do horário de treino
+- REFEIÇÃO PÓS-TREINO: OBRIGATORIAMENTE dentro de 1h APÓS o término do treino (considere ~1h de duração)
+- Se o cliente treina às 15:30, o pré-treino deve ser ~14:00 e o pós-treino ~17:00
+- Ajuste TODAS as outras refeições em função do horário de treino e rotina (horario_acorda, horario_dorme)
+- Se não houver horário de treino especificado, use 18:00 como padrão`;
 
     // ============================================================================
     // PROMPT DE MINDSET
