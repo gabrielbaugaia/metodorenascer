@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Mail, ArrowLeft, Copy, Check, Link as LinkIcon } from "lucide-react";
+import { Loader2, Mail, ArrowLeft, Copy, Check, Link as LinkIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminConvites() {
@@ -23,6 +23,8 @@ export default function AdminConvites() {
   const { isAdmin } = useAdminCheck();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [emailToDelete, setEmailToDelete] = useState("");
   const [inviteResult, setInviteResult] = useState<{
     inviteLink: string;
     email: string;
@@ -37,6 +39,43 @@ export default function AdminConvites() {
     whatsapp: "",
     plan_type: "mensal",
   });
+
+  const handleDeleteUser = async () => {
+    if (!emailToDelete) {
+      toast.error("Digite o email do usuário");
+      return;
+    }
+
+    if (emailToDelete === "baugabriel@icloud.com") {
+      toast.error("Não é possível deletar o admin");
+      return;
+    }
+
+    setDeleteLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+        body: { email: emailToDelete },
+      });
+
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      if (error) {
+        toast.error("Erro ao deletar usuário");
+        return;
+      }
+
+      toast.success(data.message || "Usuário deletado!");
+      setEmailToDelete("");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Erro ao deletar usuário");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -291,6 +330,40 @@ export default function AdminConvites() {
                 </Button>
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Delete User Section */}
+        <Card className="border-destructive/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Deletar Usuário
+            </CardTitle>
+            <CardDescription>
+              Remove um usuário do sistema (útil para limpar cadastros de teste)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input
+                value={emailToDelete}
+                onChange={(e) => setEmailToDelete(e.target.value)}
+                placeholder="email@exemplo.com"
+                className="flex-1"
+              />
+              <Button 
+                variant="destructive" 
+                onClick={handleDeleteUser}
+                disabled={deleteLoading || !emailToDelete}
+              >
+                {deleteLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
