@@ -223,20 +223,20 @@ export default function Assinatura() {
         {/* Status da Assinatura Atual */}
         <Card className="border-primary/20">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/20">
-                  <Crown className="h-6 w-6 text-primary" />
+                <div className="p-2 rounded-lg bg-primary/20 shrink-0">
+                  <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
-                <div>
-                  <CardTitle>Status da Assinatura</CardTitle>
-                  <CardDescription>
+                <div className="min-w-0">
+                  <CardTitle className="text-base sm:text-lg">Status da Assinatura</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
                     {subscription ? "Sua assinatura está ativa" : "Você não possui assinatura ativa"}
                   </CardDescription>
                 </div>
               </div>
               {subscription && (
-                <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30">
+                <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30 w-fit">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
                   Ativo
                 </Badge>
@@ -404,17 +404,17 @@ export default function Assinatura() {
         {/* Link para Indicações */}
         <Card className="bg-muted/30">
           <CardContent className="py-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <Gift className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="font-semibold">Indique e Ganhe</p>
-                  <p className="text-sm text-muted-foreground">
+                <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm sm:text-base">Indique e Ganhe</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Ganhe 10% de cashback para cada amigo que assinar
                   </p>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => navigate("/indicacoes")}>
+              <Button variant="outline" size="sm" onClick={() => navigate("/indicacoes")} className="w-full sm:w-auto">
                 Ver Indicações
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>

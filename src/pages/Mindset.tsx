@@ -363,20 +363,20 @@ export default function Mindset() {
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Button 
             variant="outline" 
             className="flex-1" 
-            size="lg"
+            size="default"
             onClick={() => navigate("/suporte")}
           >
             <MessageCircle className="h-4 w-4 mr-2" />
-            FALAR COM MENTOR
+            <span className="text-xs sm:text-sm">FALAR COM MENTOR</span>
           </Button>
           <Button 
             variant="default" 
             className="flex-1" 
-            size="lg"
+            size="default"
             onClick={() => {
               if (protocol) {
                 import("@/lib/generateProtocolPdf").then(({ generateProtocolPdf }) => {
@@ -392,7 +392,7 @@ export default function Mindset() {
             }}
           >
             <Download className="h-4 w-4 mr-2" />
-            BAIXAR PDF
+            <span className="text-xs sm:text-sm">BAIXAR PDF</span>
           </Button>
         </div>
       </div>

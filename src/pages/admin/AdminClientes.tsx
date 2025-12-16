@@ -191,32 +191,32 @@ export default function AdminClientes() {
 
   return (
     <ClientLayout>
-      <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="space-y-6 max-w-full overflow-hidden">
+        <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl font-bold uppercase">Clientes</h1>
-            <p className="text-muted-foreground">Gerencie todos os clientes do Método Renascer</p>
+            <h1 className="text-2xl sm:text-3xl font-bold uppercase">Clientes</h1>
+            <p className="text-muted-foreground text-sm">Gerencie todos os clientes do Método Renascer</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={exportCSV}>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" size="sm" onClick={exportCSV} className="w-full sm:w-auto">
               <Download className="h-4 w-4 mr-2" />
-              Exportar CSV
+              <span className="text-xs sm:text-sm">Exportar CSV</span>
             </Button>
-            <Button variant="fire" onClick={() => navigate("/admin/criar-cliente")}>
+            <Button variant="fire" size="sm" onClick={() => navigate("/admin/criar-cliente")} className="w-full sm:w-auto">
               <UserPlus className="h-4 w-4 mr-2" />
-              Novo Cliente
+              <span className="text-xs sm:text-sm">Novo Cliente</span>
             </Button>
           </div>
         </div>
 
         <Card variant="glass">
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col gap-4">
               <div>
-                <CardTitle>Lista de Clientes</CardTitle>
+                <CardTitle className="text-lg">Lista de Clientes</CardTitle>
                 <CardDescription>{filteredClients.length} clientes encontrados</CardDescription>
               </div>
-              <div className="relative w-full md:w-64">
+              <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por nome ou email..."
@@ -228,37 +228,38 @@ export default function AdminClientes() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Plano</TableHead>
-                    <TableHead>Cadastro</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredClients.map((client) => (
-                    <TableRow key={client.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{client.full_name}</p>
-                          <p className="text-sm text-muted-foreground">{client.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(client.client_status)}</TableCell>
-                      <TableCell>
-                        {client.subscription ? (
-                          <Badge variant="outline">{client.subscription.plan_type}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Sem plano</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                      </TableCell>
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="min-w-[600px] sm:min-w-0 px-4 sm:px-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="hidden sm:table-cell">Plano</TableHead>
+                      <TableHead className="hidden md:table-cell">Cadastro</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredClients.map((client) => (
+                      <TableRow key={client.id}>
+                        <TableCell>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{client.full_name}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">{client.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(client.client_status)}</TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          {client.subscription ? (
+                            <Badge variant="outline" className="text-xs">{client.subscription.plan_type}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Sem plano</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-xs">
+                          {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                        </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -324,17 +325,18 @@ export default function AdminClientes() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
-                    </TableRow>
-                  ))}
-                  {filteredClients.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        Nenhum cliente encontrado
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                      </TableRow>
+                    ))}
+                    {filteredClients.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          Nenhum cliente encontrado
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </CardContent>
         </Card>
