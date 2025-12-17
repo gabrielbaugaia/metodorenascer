@@ -5,9 +5,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
-import { Button } from "@/components/ui/button";
-import { Target, Utensils, Brain, BookOpen, MessageCircle, Settings, ShieldCheck } from "lucide-react";
+import { ClientLayout } from "@/components/layout/ClientLayout";
+import { Target, Utensils, Brain, BookOpen, MessageCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
@@ -185,39 +184,35 @@ export default function Dashboard() {
 
   if (!subscribed && !isAdmin) {
     return (
-      <>
-        <Header />
+      <ClientLayout>
         <PlanSelectionGrid plans={SUBSCRIPTION_PLANS} onSelectPlan={handleSelectPlan} />
-      </>
+      </ClientLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <ClientLayout>
       <OnboardingTour />
       
-      <main className="pt-24 pb-12 px-4">
-        <div className="container mx-auto max-w-6xl">
-          {/* Welcome Header */}
-          <div className="mb-8 flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold uppercase text-foreground mb-2">
-                BEM-VINDO, <span className="text-primary">GUERREIRO</span>
-              </h1>
-              <p className="text-muted-foreground">Sua jornada de transformacao continua hoje</p>
-            </div>
+      <div className="container mx-auto max-w-6xl">
+        {/* Welcome Header */}
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold uppercase text-foreground mb-2">
+              BEM-VINDO, <span className="text-primary">GUERREIRO</span>
+            </h1>
+            <p className="text-muted-foreground">Sua jornada de transformacao continua hoje</p>
           </div>
-
-          {/* Subscription Status */}
-          {subscriptionEnd && (
-            <SubscriptionStatusCard subscriptionEnd={subscriptionEnd} />
-          )}
-
-          {/* Main Dashboard Cards */}
-          <DashboardCardsGrid cards={DASHBOARD_CARDS} />
         </div>
-      </main>
-    </div>
+
+        {/* Subscription Status */}
+        {subscriptionEnd && (
+          <SubscriptionStatusCard subscriptionEnd={subscriptionEnd} />
+        )}
+
+        {/* Main Dashboard Cards */}
+        <DashboardCardsGrid cards={DASHBOARD_CARDS} />
+      </div>
+    </ClientLayout>
   );
 }
