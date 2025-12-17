@@ -70,6 +70,7 @@ export type Database = {
       }
       checkins: {
         Row: {
+          ai_analysis: string | null
           created_at: string | null
           data_checkin: string | null
           foto_url: string | null
@@ -81,6 +82,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_analysis?: string | null
           created_at?: string | null
           data_checkin?: string | null
           foto_url?: string | null
@@ -92,6 +94,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_analysis?: string | null
           created_at?: string | null
           data_checkin?: string | null
           foto_url?: string | null

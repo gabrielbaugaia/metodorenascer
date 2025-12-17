@@ -32,6 +32,7 @@ interface CheckIn {
   notas: string | null;
   foto_url: string | null;
   semana_numero: number | null;
+  ai_analysis: string | null;
 }
 
 interface Profile {
@@ -204,8 +205,8 @@ export default function Evolucao() {
       // Store photos as JSON in foto_url field
       const photosJson = JSON.stringify(uploadedUrls);
 
-      // Insert check-in
-      const { error: insertError } = await supabase
+      // Insert check-in and get the ID back
+      const { data: checkinData, error: insertError } = await supabase
         .from("checkins")
         .insert({
           user_id: user.id,
@@ -214,9 +215,13 @@ export default function Evolucao() {
           foto_url: photosJson,
           semana_numero: weeksSinceStart,
           data_checkin: new Date().toISOString()
-        });
+        })
+        .select('id')
+        .single();
 
       if (insertError) throw insertError;
+
+      const checkinId = checkinData?.id;
 
       // Update profile weight
       await supabase
@@ -262,6 +267,14 @@ export default function Evolucao() {
         } else if (response.data?.analysis) {
           setAiAnalysis(response.data.analysis);
           setShowAnalysis(true);
+          
+          // Save the AI analysis to the checkin record
+          if (checkinId) {
+            await supabase
+              .from("checkins")
+              .update({ ai_analysis: response.data.analysis })
+              .eq("id", checkinId);
+          }
         }
       } catch (aiError) {
         console.error("AI analysis error:", aiError);
@@ -608,9 +621,32 @@ export default function Evolucao() {
                       )}
 
                       {checkin.notas && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground mb-3">
                           {checkin.notas}
                         </p>
+                      )}
+
+                      {/* AI Analysis */}
+                      {checkin.ai_analysis && (
+                        <details className="mt-3 border-t border-border/30 pt-3">
+                          <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:text-primary/80">
+                            <Sparkles className="h-4 w-4" />
+                            Ver Análise do Mentor
+                          </summary>
+                          <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                            <div 
+                              className="text-xs leading-relaxed whitespace-pre-wrap"
+                              dangerouslySetInnerHTML={{ 
+                                __html: checkin.ai_analysis
+                                  .replace(/## /g, '<h4 class="text-sm font-bold text-primary mt-3 mb-1">')
+                                  .replace(/### /g, '<h5 class="text-xs font-semibold mt-2 mb-1">')
+                                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                  .replace(/- /g, '• ')
+                                  .replace(/\n/g, '<br/>')
+                              }}
+                            />
+                          </div>
+                        </details>
                       )}
                     </div>
                   );
