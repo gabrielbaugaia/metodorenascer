@@ -53,6 +53,7 @@ const App = () => (
             <Route path="/" element={<PreLaunchIndex />} />
             <Route path="/landing-original" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/entrar" element={<Auth />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/convite" element={<Convite />} />
             <Route path="/lancamento" element={<Lancamento />} />
