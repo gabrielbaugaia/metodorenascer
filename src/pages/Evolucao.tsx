@@ -20,7 +20,9 @@ import {
   CheckCircle2,
   Clock,
   ImageIcon,
-  Lock
+  Lock,
+  Sparkles,
+  X
 } from "lucide-react";
 
 interface CheckIn {
@@ -41,6 +43,18 @@ interface Profile {
   weight: number | null;
 }
 
+interface PhotoState {
+  frente: File | null;
+  lado: File | null;
+  costas: File | null;
+}
+
+interface PhotoPreviewState {
+  frente: string | null;
+  lado: string | null;
+  costas: string | null;
+}
+
 export default function Evolucao() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -48,15 +62,23 @@ export default function Evolucao() {
   const [checkins, setCheckins] = useState<CheckIn[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   
   // Form state
   const [newWeight, setNewWeight] = useState("");
   const [notes, setNotes] = useState("");
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<PhotoState>({ frente: null, lado: null, costas: null });
+  const [photoPreviews, setPhotoPreviews] = useState<PhotoPreviewState>({ frente: null, lado: null, costas: null });
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // AI Analysis state
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  
+  const fileInputRefs = {
+    frente: useRef<HTMLInputElement>(null),
+    lado: useRef<HTMLInputElement>(null),
+    costas: useRef<HTMLInputElement>(null),
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -102,7 +124,7 @@ export default function Evolucao() {
     }
   };
 
-  const handlePhotoSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = (type: keyof PhotoState) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -116,8 +138,36 @@ export default function Evolucao() {
       return;
     }
 
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
+    setPhotos(prev => ({ ...prev, [type]: file }));
+    setPhotoPreviews(prev => ({ ...prev, [type]: URL.createObjectURL(file) }));
+  };
+
+  const removePhoto = (type: keyof PhotoState) => {
+    setPhotos(prev => ({ ...prev, [type]: null }));
+    setPhotoPreviews(prev => ({ ...prev, [type]: null }));
+    if (fileInputRefs[type].current) {
+      fileInputRefs[type].current.value = "";
+    }
+  };
+
+  const uploadPhoto = async (file: File, type: string): Promise<string | null> => {
+    const fileExt = file.name.split(".").pop() || "jpg";
+    const filePath = `${user!.id}/evolucao-${type}-${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("body-photos")
+      .upload(filePath, file, {
+        contentType: file.type,
+        cacheControl: "3600",
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: urlData } = supabase.storage
+      .from("body-photos")
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
   };
 
   const handleSubmitCheckin = async () => {
@@ -126,38 +176,33 @@ export default function Evolucao() {
       return;
     }
 
+    if (!photos.frente && !photos.lado && !photos.costas) {
+      toast.error("Por favor, adicione pelo menos uma foto de evolução");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      let photoUrl = null;
-
-      // Upload photo if selected
-      if (photoFile) {
-        setUploading(true);
-        const fileExt = photoFile.name.split(".").pop() || "jpg";
-        const filePath = `${user.id}/checkin-${Date.now()}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("body-photos")
-          .upload(filePath, photoFile, {
-            contentType: photoFile.type,
-            cacheControl: "3600",
-          });
-
-        if (uploadError) throw uploadError;
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from("body-photos")
-          .getPublicUrl(filePath);
-
-        photoUrl = urlData.publicUrl;
-        setUploading(false);
+      // Upload all photos
+      const uploadedUrls: { frente?: string; lado?: string; costas?: string } = {};
+      
+      if (photos.frente) {
+        uploadedUrls.frente = await uploadPhoto(photos.frente, "frente") || undefined;
+      }
+      if (photos.lado) {
+        uploadedUrls.lado = await uploadPhoto(photos.lado, "lado") || undefined;
+      }
+      if (photos.costas) {
+        uploadedUrls.costas = await uploadPhoto(photos.costas, "costas") || undefined;
       }
 
       // Calculate week number since registration
       const registrationDate = profile?.created_at ? new Date(profile.created_at) : new Date();
       const weeksSinceStart = Math.ceil(differenceInDays(new Date(), registrationDate) / 7);
+
+      // Store photos as JSON in foto_url field
+      const photosJson = JSON.stringify(uploadedUrls);
 
       // Insert check-in
       const { error: insertError } = await supabase
@@ -166,7 +211,7 @@ export default function Evolucao() {
           user_id: user.id,
           peso_atual: parseFloat(newWeight),
           notas: notes || null,
-          foto_url: photoUrl,
+          foto_url: photosJson,
           semana_numero: weeksSinceStart,
           data_checkin: new Date().toISOString()
         });
@@ -188,12 +233,46 @@ export default function Evolucao() {
           last_access: new Date().toISOString()
         }, { onConflict: "user_id" });
 
-      toast.success("Check-in enviado com sucesso!");
+      toast.success("Evolução enviada com sucesso!");
+
+      // Now run AI analysis
+      setAnalyzing(true);
+      
+      try {
+        const response = await supabase.functions.invoke("analyze-evolution", {
+          body: {
+            anamnesePhotos: {
+              frente: profile?.foto_frente_url,
+              lado: profile?.foto_lado_url,
+              costas: profile?.foto_costas_url,
+            },
+            evolutionPhotos: uploadedUrls,
+            clientData: {
+              name: profile?.full_name,
+              initialWeight: profile?.weight,
+              currentWeight: parseFloat(newWeight),
+              notes: notes,
+            }
+          }
+        });
+
+        if (response.error) {
+          console.error("AI analysis error:", response.error);
+          toast.error("Não foi possível gerar a análise comparativa");
+        } else if (response.data?.analysis) {
+          setAiAnalysis(response.data.analysis);
+          setShowAnalysis(true);
+        }
+      } catch (aiError) {
+        console.error("AI analysis error:", aiError);
+      } finally {
+        setAnalyzing(false);
+      }
       
       // Reset form
       setNotes("");
-      setPhotoFile(null);
-      setPhotoPreview(null);
+      setPhotos({ frente: null, lado: null, costas: null });
+      setPhotoPreviews({ frente: null, lado: null, costas: null });
       
       // Refresh data
       fetchData();
@@ -202,26 +281,18 @@ export default function Evolucao() {
       toast.error("Erro ao enviar check-in");
     } finally {
       setSubmitting(false);
-      setUploading(false);
-    }
-  };
-
-  const getSignedUrl = async (path: string) => {
-    if (!path) return null;
-    try {
-      const { data, error } = await supabase.storage
-        .from("body-photos")
-        .createSignedUrl(path, 60 * 60);
-      if (error || !data) return null;
-      return data.signedUrl;
-    } catch {
-      return null;
     }
   };
 
   const lastCheckinDate = checkins[0]?.created_at ? new Date(checkins[0].created_at) : null;
   const daysSinceLastCheckin = lastCheckinDate ? differenceInDays(new Date(), lastCheckinDate) : null;
   const canSubmitNew = daysSinceLastCheckin === null || daysSinceLastCheckin >= 25;
+
+  const photoTypes = [
+    { key: "frente" as const, label: "Frente" },
+    { key: "lado" as const, label: "Lado" },
+    { key: "costas" as const, label: "Costas" },
+  ];
 
   if (authLoading || loading) {
     return (
@@ -235,11 +306,44 @@ export default function Evolucao() {
 
   return (
     <ClientLayout>
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-8">
         <div>
           <h1 className="text-2xl font-bold uppercase">Minha Evolução</h1>
           <p className="text-muted-foreground">Acompanhe seu progresso e envie suas fotos de evolução</p>
         </div>
+
+        {/* AI Analysis Modal/Card */}
+        {showAnalysis && aiAnalysis && (
+          <Card className="border-primary/50 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Análise Comparativa
+                </CardTitle>
+                <Button variant="ghost" size="icon" onClick={() => setShowAnalysis(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <CardDescription>Análise gerada pelo seu mentor com base nas suas fotos</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-invert prose-sm max-w-none">
+                <div 
+                  className="whitespace-pre-wrap text-sm leading-relaxed"
+                  dangerouslySetInnerHTML={{ 
+                    __html: aiAnalysis
+                      .replace(/## /g, '<h2 class="text-lg font-bold text-primary mt-4 mb-2">')
+                      .replace(/### /g, '<h3 class="text-base font-semibold mt-3 mb-1">')
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/- /g, '• ')
+                      .replace(/\n/g, '<br/>')
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Fotos Iniciais da Anamnese */}
         <Card>
@@ -254,24 +358,24 @@ export default function Evolucao() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
-              {["frente", "lado", "costas"].map((tipo) => {
-                const fotoUrl = profile?.[`foto_${tipo}_url` as keyof Profile] as string | null;
+              {photoTypes.map(({ key, label }) => {
+                const fotoUrl = profile?.[`foto_${key}_url` as keyof Profile] as string | null;
                 return (
-                  <div key={tipo} className="relative aspect-[3/4] rounded-lg bg-muted overflow-hidden">
+                  <div key={key} className="relative aspect-[3/4] rounded-lg bg-muted overflow-hidden">
                     {fotoUrl ? (
                       <img
                         src={fotoUrl}
-                        alt={`Foto ${tipo}`}
+                        alt={`Foto ${label}`}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                         <Camera className="h-8 w-8 mb-2" />
-                        <span className="text-xs capitalize">{tipo}</span>
+                        <span className="text-xs">{label}</span>
                       </div>
                     )}
                     <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-1 text-center">
-                      <span className="text-xs font-medium capitalize">{tipo}</span>
+                      <span className="text-xs font-medium">{label}</span>
                     </div>
                     <div className="absolute top-2 right-2">
                       <Lock className="h-4 w-4 text-muted-foreground" />
@@ -298,7 +402,7 @@ export default function Evolucao() {
                   Enviar Evolução
                 </CardTitle>
                 <CardDescription>
-                  Envie suas fotos e peso atual para acompanhamento
+                  Envie suas 3 fotos (frente, lado, costas) e peso atual
                 </CardDescription>
               </div>
               {lastCheckinDate && (
@@ -324,88 +428,107 @@ export default function Evolucao() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Photo Upload */}
-              <div className="space-y-4">
-                <Label>Foto de Evolução</Label>
-                <div 
-                  className={`relative aspect-[3/4] rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors ${!canSubmitNew ? "pointer-events-none" : ""}`}
-                  onClick={() => canSubmitNew && fileInputRef.current?.click()}
-                >
-                  {photoPreview ? (
-                    <img
-                      src={photoPreview}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                      <Camera className="h-12 w-12 mb-3" />
-                      <p className="text-sm font-medium">Clique para adicionar</p>
-                      <p className="text-xs">JPG, PNG até 10MB</p>
+            {/* 3 Photo Uploads */}
+            <div>
+              <Label className="mb-3 block">Fotos de Evolução (mesmo padrão da anamnese)</Label>
+              <div className="grid grid-cols-3 gap-4">
+                {photoTypes.map(({ key, label }) => (
+                  <div key={key} className="space-y-2">
+                    <div 
+                      className={`relative aspect-[3/4] rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors ${!canSubmitNew ? "pointer-events-none opacity-50" : ""}`}
+                      onClick={() => canSubmitNew && fileInputRefs[key].current?.click()}
+                    >
+                      {photoPreviews[key] ? (
+                        <>
+                          <img
+                            src={photoPreviews[key]!}
+                            alt={`Preview ${label}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removePhoto(key);
+                            }}
+                            className="absolute top-2 right-2 p-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                          <Camera className="h-8 w-8 mb-2" />
+                          <p className="text-xs font-medium">{label}</p>
+                          <p className="text-[10px]">Clique para adicionar</p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoSelect}
-                  className="hidden"
+                    <input
+                      ref={fileInputRefs[key]}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoSelect(key)}
+                      className="hidden"
+                      disabled={!canSubmitNew}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                JPG, PNG até 10MB cada. Mantenha o mesmo padrão das fotos iniciais.
+              </p>
+            </div>
+
+            {/* Form Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="weight" className="flex items-center gap-2">
+                  <Scale className="h-4 w-4" />
+                  Peso Atual (kg)
+                </Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  step="0.1"
+                  value={newWeight}
+                  onChange={(e) => setNewWeight(e.target.value)}
+                  placeholder="Ex: 75.5"
                   disabled={!canSubmitNew}
                 />
               </div>
 
-              {/* Form Fields */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="weight" className="flex items-center gap-2">
-                    <Scale className="h-4 w-4" />
-                    Peso Atual (kg)
-                  </Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    step="0.1"
-                    value={newWeight}
-                    onChange={(e) => setNewWeight(e.target.value)}
-                    placeholder="Ex: 75.5"
-                    disabled={!canSubmitNew}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Observações (opcional)</Label>
-                  <Textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Como está se sentindo? Alguma dificuldade ou conquista?"
-                    rows={4}
-                    disabled={!canSubmitNew}
-                  />
-                </div>
-
-                <Button
-                  onClick={handleSubmitCheckin}
-                  disabled={!canSubmitNew || submitting || !newWeight}
-                  className="w-full"
-                  variant="fire"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {uploading ? "Enviando foto..." : "Salvando..."}
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Enviar Evolução
-                    </>
-                  )}
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Observações (opcional)</Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Como está se sentindo? Alguma dificuldade ou conquista?"
+                  rows={3}
+                  disabled={!canSubmitNew}
+                />
               </div>
             </div>
+
+            <Button
+              onClick={handleSubmitCheckin}
+              disabled={!canSubmitNew || submitting || analyzing || !newWeight}
+              className="w-full"
+              variant="fire"
+            >
+              {submitting || analyzing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {analyzing ? "Gerando análise..." : "Enviando fotos..."}
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Enviar Evolução
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
 
@@ -420,53 +543,78 @@ export default function Evolucao() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {checkins.map((checkin) => (
-                  <div
-                    key={checkin.id}
-                    className="flex items-start gap-4 p-4 rounded-lg bg-muted/30 border border-border/50"
-                  >
-                    {checkin.foto_url && (
-                      <div className="w-16 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
-                        <img
-                          src={checkin.foto_url}
-                          alt="Check-in"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
+                {checkins.map((checkin) => {
+                  // Parse photos if stored as JSON
+                  let checkinPhotos: { frente?: string; lado?: string; costas?: string } = {};
+                  try {
+                    if (checkin.foto_url?.startsWith("{")) {
+                      checkinPhotos = JSON.parse(checkin.foto_url);
+                    }
+                  } catch {}
+
+                  return (
+                    <div
+                      key={checkin.id}
+                      className="p-4 rounded-lg bg-muted/30 border border-border/50"
+                    >
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-green-500" />
                           <span className="font-medium">
                             {format(new Date(checkin.created_at), "dd/MM/yyyy", { locale: ptBR })}
                           </span>
                         </div>
-                        {checkin.semana_numero && (
-                          <span className="text-xs text-muted-foreground">
-                            Semana {checkin.semana_numero}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-4">
+                          {checkin.peso_atual && (
+                            <span className="flex items-center gap-1 text-sm">
+                              <Scale className="h-3 w-3" />
+                              {checkin.peso_atual} kg
+                            </span>
+                          )}
+                          {checkin.semana_numero && (
+                            <span className="text-xs text-muted-foreground">
+                              Semana {checkin.semana_numero}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="mt-2 flex items-center gap-4 text-sm">
-                        {checkin.peso_atual && (
-                          <span className="flex items-center gap-1">
-                            <Scale className="h-3 w-3" />
-                            {checkin.peso_atual} kg
-                          </span>
-                        )}
-                      </div>
+
+                      {/* Display checkin photos */}
+                      {(checkinPhotos.frente || checkinPhotos.lado || checkinPhotos.costas || 
+                        (checkin.foto_url && !checkin.foto_url.startsWith("{"))) && (
+                        <div className="grid grid-cols-3 gap-2 mb-3">
+                          {checkinPhotos.frente && (
+                            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                              <img src={checkinPhotos.frente} alt="Frente" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                          {checkinPhotos.lado && (
+                            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                              <img src={checkinPhotos.lado} alt="Lado" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                          {checkinPhotos.costas && (
+                            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                              <img src={checkinPhotos.costas} alt="Costas" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                          {/* Fallback for old single photo format */}
+                          {checkin.foto_url && !checkin.foto_url.startsWith("{") && (
+                            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted col-span-3 max-w-[200px]">
+                              <img src={checkin.foto_url} alt="Evolução" className="w-full h-full object-cover" />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {checkin.notas && (
-                        <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                        <p className="text-sm text-muted-foreground">
                           {checkin.notas}
                         </p>
                       )}
                     </div>
-                    <div className="shrink-0">
-                      <Lock className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
