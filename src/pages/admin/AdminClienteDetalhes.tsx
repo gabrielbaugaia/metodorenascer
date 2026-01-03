@@ -20,8 +20,18 @@ import {
   FileText,
   Camera,
   Sparkles,
-  CreditCard
+  CreditCard,
+  KeyRound
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -97,6 +107,9 @@ export default function AdminClienteDetalhes() {
   const [generatingProtocols, setGeneratingProtocols] = useState(false);
   const [assigningPlan, setAssigningPlan] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState("");
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -243,6 +256,31 @@ export default function AdminClienteDetalhes() {
       toast.error(error.message || "Erro ao gerar protocolos");
     } finally {
       setGeneratingProtocols(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!id || newPassword.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
+    setResettingPassword(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-reset-password", {
+        body: { userId: id, newPassword },
+      });
+
+      if (error) throw error;
+
+      toast.success("Senha redefinida com sucesso!");
+      setResetPasswordOpen(false);
+      setNewPassword("");
+    } catch (error: any) {
+      console.error("Error resetting password:", error);
+      toast.error(error.message || "Erro ao redefinir senha");
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -409,6 +447,60 @@ export default function AdminClienteDetalhes() {
                 </Button>
                 <p className="text-xs text-muted-foreground mt-1">
                   Gera automaticamente os 3 protocolos baseados na anamnese do cliente
+                </p>
+              </div>
+
+              {/* Reset Password */}
+              <div>
+                <Label className="mb-2 block">Redefinir Senha</Label>
+                <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full" size="sm">
+                      <KeyRound className="h-4 w-4 mr-2" />
+                      <span className="text-xs sm:text-sm">Definir Senha Provisória</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Redefinir Senha do Cliente</DialogTitle>
+                      <DialogDescription>
+                        Defina uma nova senha provisória para {profile.full_name}. 
+                        O cliente poderá alterá-la depois no perfil.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">Nova Senha</Label>
+                        <Input
+                          id="newPassword"
+                          type="text"
+                          placeholder="Mínimo 6 caracteres"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setResetPasswordOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button 
+                        variant="fire" 
+                        onClick={handleResetPassword}
+                        disabled={resettingPassword || newPassword.length < 6}
+                      >
+                        {resettingPassword ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <KeyRound className="h-4 w-4 mr-2" />
+                        )}
+                        Redefinir Senha
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cria uma senha provisória para o cliente acessar
                 </p>
               </div>
             </CardContent>
