@@ -12,18 +12,19 @@ import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatAiContent } from "@/lib/sanitize";
-import { 
-  Camera, 
-  Loader2, 
-  Upload, 
-  Calendar, 
-  Scale, 
+import { createBodyPhotosSignedUrl } from "@/lib/bodyPhotos";
+import {
+  Camera,
+  Loader2,
+  Upload,
+  Calendar,
+  Scale,
   CheckCircle2,
   Clock,
   ImageIcon,
   Lock,
   Sparkles,
-  X
+  X,
 } from "lucide-react";
 
 interface CheckIn {
@@ -51,11 +52,16 @@ interface PhotoState {
   costas: File | null;
 }
 
+type PhotoKey = keyof PhotoState;
+
 interface PhotoPreviewState {
   frente: string | null;
   lado: string | null;
   costas: string | null;
 }
+
+type SignedPhotos = Record<PhotoKey, string | null>;
+type SignedCheckinPhotos = Partial<SignedPhotos> & { single?: string | null };
 
 export default function Evolucao() {
   const navigate = useNavigate();
@@ -65,17 +71,29 @@ export default function Evolucao() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  
+
   // Form state
   const [newWeight, setNewWeight] = useState("");
   const [notes, setNotes] = useState("");
   const [photos, setPhotos] = useState<PhotoState>({ frente: null, lado: null, costas: null });
-  const [photoPreviews, setPhotoPreviews] = useState<PhotoPreviewState>({ frente: null, lado: null, costas: null });
-  
+  const [photoPreviews, setPhotoPreviews] = useState<PhotoPreviewState>({
+    frente: null,
+    lado: null,
+    costas: null,
+  });
+
+  // Signed URLs (private bucket)
+  const [anamnesePhotoSrc, setAnamnesePhotoSrc] = useState<SignedPhotos>({
+    frente: null,
+    lado: null,
+    costas: null,
+  });
+  const [checkinPhotoSrc, setCheckinPhotoSrc] = useState<Record<string, SignedCheckinPhotos>>({});
+
   // AI Analysis state
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
-  
+
   const fileInputRefs = {
     frente: useRef<HTMLInputElement>(null),
     lado: useRef<HTMLInputElement>(null),
@@ -92,7 +110,64 @@ export default function Evolucao() {
     if (user) {
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const signOrFallback = async (value: string | null): Promise<string | null> => {
+    if (!value) return null;
+    try {
+      return await createBodyPhotosSignedUrl(value);
+    } catch (e) {
+      // If it's already a URL (e.g. public bucket in old data), keep it as a fallback
+      if (value.startsWith("http")) return value;
+      console.warn("Não foi possível gerar URL assinada:", e);
+      return null;
+    }
+  };
+
+  const hydrateAnamnesePhotos = async (p: Profile | null) => {
+    if (!p) {
+      setAnamnesePhotoSrc({ frente: null, lado: null, costas: null });
+      return;
+    }
+
+    const [frente, lado, costas] = await Promise.all([
+      signOrFallback(p.foto_frente_url),
+      signOrFallback(p.foto_lado_url),
+      signOrFallback(p.foto_costas_url),
+    ]);
+
+    setAnamnesePhotoSrc({ frente, lado, costas });
+  };
+
+  const hydrateCheckinPhotos = async (items: CheckIn[]) => {
+    const entries = await Promise.all(
+      items.map(async (checkin): Promise<[string, SignedCheckinPhotos]> => {
+        const raw = checkin.foto_url;
+
+        let parsed: { frente?: string; lado?: string; costas?: string } | null = null;
+        if (raw && raw.trim().startsWith("{")) {
+          try {
+            parsed = JSON.parse(raw);
+          } catch {
+            parsed = null;
+          }
+        }
+
+        const [frente, lado, costas] = await Promise.all([
+          signOrFallback(parsed?.frente ?? null),
+          signOrFallback(parsed?.lado ?? null),
+          signOrFallback(parsed?.costas ?? null),
+        ]);
+
+        const single = raw && !raw.trim().startsWith("{") ? await signOrFallback(raw) : null;
+
+        return [checkin.id, { frente, lado, costas, single }];
+      })
+    );
+
+    setCheckinPhotoSrc(Object.fromEntries(entries));
+  };
 
   const fetchData = async () => {
     try {
@@ -106,7 +181,7 @@ export default function Evolucao() {
           .from("checkins")
           .select("*")
           .eq("user_id", user!.id)
-          .order("created_at", { ascending: false })
+          .order("created_at", { ascending: false }),
       ]);
 
       if (profileResult.data) {
@@ -114,10 +189,12 @@ export default function Evolucao() {
         if (profileResult.data.weight) {
           setNewWeight(String(profileResult.data.weight));
         }
+        await hydrateAnamnesePhotos(profileResult.data);
       }
 
       if (checkinsResult.data) {
         setCheckins(checkinsResult.data);
+        await hydrateCheckinPhotos(checkinsResult.data);
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -126,33 +203,34 @@ export default function Evolucao() {
     }
   };
 
-  const handlePhotoSelect = (type: keyof PhotoState) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handlePhotoSelect =
+    (type: keyof PhotoState) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Por favor, selecione uma imagem válida");
-      return;
-    }
+      if (!file.type.startsWith("image/")) {
+        toast.error("Por favor, selecione uma imagem válida");
+        return;
+      }
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 10MB");
-      return;
-    }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("A imagem deve ter no máximo 10MB");
+        return;
+      }
 
-    setPhotos(prev => ({ ...prev, [type]: file }));
-    setPhotoPreviews(prev => ({ ...prev, [type]: URL.createObjectURL(file) }));
-  };
+      setPhotos((prev) => ({ ...prev, [type]: file }));
+      setPhotoPreviews((prev) => ({ ...prev, [type]: URL.createObjectURL(file) }));
+    };
 
   const removePhoto = (type: keyof PhotoState) => {
-    setPhotos(prev => ({ ...prev, [type]: null }));
-    setPhotoPreviews(prev => ({ ...prev, [type]: null }));
+    setPhotos((prev) => ({ ...prev, [type]: null }));
+    setPhotoPreviews((prev) => ({ ...prev, [type]: null }));
     if (fileInputRefs[type].current) {
       fileInputRefs[type].current.value = "";
     }
   };
 
-  const uploadPhoto = async (file: File, type: string): Promise<string | null> => {
+  const uploadPhoto = async (file: File, type: string): Promise<string> => {
     const fileExt = file.name.split(".").pop() || "jpg";
     const filePath = `${user!.id}/evolucao-${type}-${Date.now()}.${fileExt}`;
 
@@ -165,11 +243,8 @@ export default function Evolucao() {
 
     if (uploadError) throw uploadError;
 
-    const { data: urlData } = supabase.storage
-      .from("body-photos")
-      .getPublicUrl(filePath);
-
-    return urlData.publicUrl;
+    // Return only the storage path (bucket is private)
+    return filePath;
   };
 
   const handleSubmitCheckin = async () => {
@@ -186,25 +261,25 @@ export default function Evolucao() {
     setSubmitting(true);
 
     try {
-      // Upload all photos
-      const uploadedUrls: { frente?: string; lado?: string; costas?: string } = {};
-      
+      // Upload all photos (store paths)
+      const uploadedPaths: { frente?: string; lado?: string; costas?: string } = {};
+
       if (photos.frente) {
-        uploadedUrls.frente = await uploadPhoto(photos.frente, "frente") || undefined;
+        uploadedPaths.frente = (await uploadPhoto(photos.frente, "frente")) || undefined;
       }
       if (photos.lado) {
-        uploadedUrls.lado = await uploadPhoto(photos.lado, "lado") || undefined;
+        uploadedPaths.lado = (await uploadPhoto(photos.lado, "lado")) || undefined;
       }
       if (photos.costas) {
-        uploadedUrls.costas = await uploadPhoto(photos.costas, "costas") || undefined;
+        uploadedPaths.costas = (await uploadPhoto(photos.costas, "costas")) || undefined;
       }
 
       // Calculate week number since registration
       const registrationDate = profile?.created_at ? new Date(profile.created_at) : new Date();
       const weeksSinceStart = Math.ceil(differenceInDays(new Date(), registrationDate) / 7);
 
-      // Store photos as JSON in foto_url field
-      const photosJson = JSON.stringify(uploadedUrls);
+      // Store photos as JSON in foto_url field (paths)
+      const photosJson = JSON.stringify(uploadedPaths);
 
       // Insert check-in and get the ID back
       const { data: checkinData, error: insertError } = await supabase
@@ -215,9 +290,9 @@ export default function Evolucao() {
           notas: notes || null,
           foto_url: photosJson,
           semana_numero: weeksSinceStart,
-          data_checkin: new Date().toISOString()
+          data_checkin: new Date().toISOString(),
         })
-        .select('id')
+        .select("id")
         .single();
 
       if (insertError) throw insertError;
@@ -225,41 +300,57 @@ export default function Evolucao() {
       const checkinId = checkinData?.id;
 
       // Update profile weight
-      await supabase
-        .from("profiles")
-        .update({ weight: parseFloat(newWeight) })
-        .eq("id", user.id);
+      await supabase.from("profiles").update({ weight: parseFloat(newWeight) }).eq("id", user.id);
 
       // Update user_activity
       await supabase
         .from("user_activity")
-        .upsert({
-          user_id: user.id,
-          last_photo_submitted: new Date().toISOString(),
-          last_access: new Date().toISOString()
-        }, { onConflict: "user_id" });
+        .upsert(
+          {
+            user_id: user.id,
+            last_photo_submitted: new Date().toISOString(),
+            last_access: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
 
       toast.success("Evolução enviada com sucesso!");
 
-      // Now run AI analysis
+      // Now run AI analysis (needs accessible URLs)
       setAnalyzing(true);
-      
+
       try {
+        const [anamneseFrente, anamneseLado, anamneseCostas] = await Promise.all([
+          signOrFallback(profile?.foto_frente_url ?? null),
+          signOrFallback(profile?.foto_lado_url ?? null),
+          signOrFallback(profile?.foto_costas_url ?? null),
+        ]);
+
+        const [evoFrente, evoLado, evoCostas] = await Promise.all([
+          signOrFallback(uploadedPaths.frente ?? null),
+          signOrFallback(uploadedPaths.lado ?? null),
+          signOrFallback(uploadedPaths.costas ?? null),
+        ]);
+
         const response = await supabase.functions.invoke("analyze-evolution", {
           body: {
             anamnesePhotos: {
-              frente: profile?.foto_frente_url,
-              lado: profile?.foto_lado_url,
-              costas: profile?.foto_costas_url,
+              frente: anamneseFrente,
+              lado: anamneseLado,
+              costas: anamneseCostas,
             },
-            evolutionPhotos: uploadedUrls,
+            evolutionPhotos: {
+              frente: evoFrente,
+              lado: evoLado,
+              costas: evoCostas,
+            },
             clientData: {
               name: profile?.full_name,
               initialWeight: profile?.weight,
               currentWeight: parseFloat(newWeight),
               notes: notes,
-            }
-          }
+            },
+          },
         });
 
         if (response.error) {
@@ -268,13 +359,10 @@ export default function Evolucao() {
         } else if (response.data?.analysis) {
           setAiAnalysis(response.data.analysis);
           setShowAnalysis(true);
-          
+
           // Save the AI analysis to the checkin record
           if (checkinId) {
-            await supabase
-              .from("checkins")
-              .update({ ai_analysis: response.data.analysis })
-              .eq("id", checkinId);
+            await supabase.from("checkins").update({ ai_analysis: response.data.analysis }).eq("id", checkinId);
           }
         }
       } catch (aiError) {
@@ -282,12 +370,12 @@ export default function Evolucao() {
       } finally {
         setAnalyzing(false);
       }
-      
+
       // Reset form
       setNotes("");
       setPhotos({ frente: null, lado: null, costas: null });
       setPhotoPreviews({ frente: null, lado: null, costas: null });
-      
+
       // Refresh data
       fetchData();
     } catch (error) {
@@ -343,10 +431,10 @@ export default function Evolucao() {
             </CardHeader>
             <CardContent>
               <div className="prose prose-invert prose-sm max-w-none">
-                <div 
+                <div
                   className="whitespace-pre-wrap text-sm leading-relaxed"
-                  dangerouslySetInnerHTML={{ 
-                    __html: formatAiContent(aiAnalysis)
+                  dangerouslySetInnerHTML={{
+                    __html: formatAiContent(aiAnalysis),
                   }}
                 />
               </div>
@@ -361,21 +449,20 @@ export default function Evolucao() {
               <ImageIcon className="h-5 w-5 text-primary" />
               Fotos Iniciais (Anamnese)
             </CardTitle>
-            <CardDescription>
-              Suas fotos de referência do início do programa
-            </CardDescription>
+            <CardDescription>Suas fotos de referência do início do programa</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
               {photoTypes.map(({ key, label }) => {
-                const fotoUrl = profile?.[`foto_${key}_url` as keyof Profile] as string | null;
+                const fotoSrc = anamnesePhotoSrc[key];
                 return (
                   <div key={key} className="relative aspect-[3/4] rounded-lg bg-muted overflow-hidden">
-                    {fotoUrl ? (
+                    {fotoSrc ? (
                       <img
-                        src={fotoUrl}
-                        alt={`Foto ${label}`}
+                        src={fotoSrc}
+                        alt={`Foto de anamnese - ${label}`}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -410,16 +497,12 @@ export default function Evolucao() {
                   <Upload className="h-5 w-5 text-primary" />
                   Enviar Evolução
                 </CardTitle>
-                <CardDescription>
-                  Envie suas 3 fotos (frente, lado, costas) e peso atual
-                </CardDescription>
+                <CardDescription>Envie suas 3 fotos (frente, lado, costas) e peso atual</CardDescription>
               </div>
               {lastCheckinDate && (
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">Último envio</p>
-                  <p className="text-sm font-medium">
-                    {format(lastCheckinDate, "dd/MM/yyyy", { locale: ptBR })}
-                  </p>
+                  <p className="text-sm font-medium">{format(lastCheckinDate, "dd/MM/yyyy", { locale: ptBR })}</p>
                 </div>
               )}
             </div>
@@ -431,8 +514,8 @@ export default function Evolucao() {
                 <div>
                   <p className="font-medium text-foreground">Próximo check-in em breve</p>
                   <p className="text-sm text-muted-foreground">
-                    O check-in de evolução é liberado a cada 30 dias para acompanhar suas mudanças com precisão. 
-                    Faltam <span className="text-primary font-medium">{30 - (daysSinceLastCheckin || 0)} dias</span> para seu próximo envio.
+                    O check-in de evolução é liberado a cada 30 dias para acompanhar suas mudanças com precisão. Faltam{" "}
+                    <span className="text-primary font-medium">{30 - (daysSinceLastCheckin || 0)} dias</span> para seu próximo envio.
                   </p>
                 </div>
               </div>
@@ -444,7 +527,7 @@ export default function Evolucao() {
               <div className="grid grid-cols-3 gap-4">
                 {photoTypes.map(({ key, label }) => (
                   <div key={key} className="space-y-2">
-                    <div 
+                    <div
                       className={`relative aspect-[3/4] rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors ${!canSubmitNew ? "pointer-events-none opacity-50" : ""}`}
                       onClick={() => canSubmitNew && fileInputRefs[key].current?.click()}
                     >
@@ -454,6 +537,7 @@ export default function Evolucao() {
                             src={photoPreviews[key]!}
                             alt={`Preview ${label}`}
                             className="w-full h-full object-cover"
+                            loading="lazy"
                           />
                           <button
                             type="button"
@@ -485,9 +569,7 @@ export default function Evolucao() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                JPG, PNG até 10MB cada. Mantenha o mesmo padrão das fotos iniciais.
-              </p>
+              <p className="text-xs text-muted-foreground mt-2">JPG, PNG até 10MB cada. Mantenha o mesmo padrão das fotos iniciais.</p>
             </div>
 
             {/* Form Fields */}
@@ -554,25 +636,14 @@ export default function Evolucao() {
             <CardContent>
               <div className="space-y-4">
                 {checkins.map((checkin) => {
-                  // Parse photos if stored as JSON
-                  let checkinPhotos: { frente?: string; lado?: string; costas?: string } = {};
-                  try {
-                    if (checkin.foto_url?.startsWith("{")) {
-                      checkinPhotos = JSON.parse(checkin.foto_url);
-                    }
-                  } catch {}
+                  const signed = checkinPhotoSrc[checkin.id];
 
                   return (
-                    <div
-                      key={checkin.id}
-                      className="p-4 rounded-lg bg-muted/30 border border-border/50"
-                    >
+                    <div key={checkin.id} className="p-4 rounded-lg bg-muted/30 border border-border/50">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          <span className="font-medium">
-                            {format(new Date(checkin.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                          </span>
+                          <span className="font-medium">{format(new Date(checkin.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
                         </div>
                         <div className="flex items-center gap-4">
                           {checkin.peso_atual && (
@@ -582,46 +653,38 @@ export default function Evolucao() {
                             </span>
                           )}
                           {checkin.semana_numero && (
-                            <span className="text-xs text-muted-foreground">
-                              Semana {checkin.semana_numero}
-                            </span>
+                            <span className="text-xs text-muted-foreground">Semana {checkin.semana_numero}</span>
                           )}
                         </div>
                       </div>
 
                       {/* Display checkin photos */}
-                      {(checkinPhotos.frente || checkinPhotos.lado || checkinPhotos.costas || 
-                        (checkin.foto_url && !checkin.foto_url.startsWith("{"))) && (
+                      {(signed?.frente || signed?.lado || signed?.costas || signed?.single) && (
                         <div className="grid grid-cols-3 gap-2 mb-3">
-                          {checkinPhotos.frente && (
+                          {signed?.frente && (
                             <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
-                              <img src={checkinPhotos.frente} alt="Frente" className="w-full h-full object-cover" />
+                              <img src={signed.frente} alt="Evolução - Frente" className="w-full h-full object-cover" loading="lazy" />
                             </div>
                           )}
-                          {checkinPhotos.lado && (
+                          {signed?.lado && (
                             <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
-                              <img src={checkinPhotos.lado} alt="Lado" className="w-full h-full object-cover" />
+                              <img src={signed.lado} alt="Evolução - Lado" className="w-full h-full object-cover" loading="lazy" />
                             </div>
                           )}
-                          {checkinPhotos.costas && (
+                          {signed?.costas && (
                             <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
-                              <img src={checkinPhotos.costas} alt="Costas" className="w-full h-full object-cover" />
+                              <img src={signed.costas} alt="Evolução - Costas" className="w-full h-full object-cover" loading="lazy" />
                             </div>
                           )}
-                          {/* Fallback for old single photo format */}
-                          {checkin.foto_url && !checkin.foto_url.startsWith("{") && (
+                          {signed?.single && (
                             <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted col-span-3 max-w-[200px]">
-                              <img src={checkin.foto_url} alt="Evolução" className="w-full h-full object-cover" />
+                              <img src={signed.single} alt="Evolução" className="w-full h-full object-cover" loading="lazy" />
                             </div>
                           )}
                         </div>
                       )}
 
-                      {checkin.notas && (
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {checkin.notas}
-                        </p>
-                      )}
+                      {checkin.notas && <p className="text-sm text-muted-foreground mb-3">{checkin.notas}</p>}
 
                       {/* AI Analysis */}
                       {checkin.ai_analysis && (
@@ -631,10 +694,10 @@ export default function Evolucao() {
                             Ver Análise do Mentor
                           </summary>
                           <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                            <div 
+                            <div
                               className="text-xs leading-relaxed whitespace-pre-wrap"
-                              dangerouslySetInnerHTML={{ 
-                                __html: formatAiContent(checkin.ai_analysis, "compact")
+                              dangerouslySetInnerHTML={{
+                                __html: formatAiContent(checkin.ai_analysis, "compact"),
                               }}
                             />
                           </div>

@@ -12,16 +12,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { 
-  ArrowLeft, 
-  Loader2, 
-  Save, 
-  User, 
+import {
+  ArrowLeft,
+  Loader2,
+  Save,
+  User,
   FileText,
   Camera,
   Sparkles,
   CreditCard,
-  KeyRound
+  KeyRound,
 } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +35,7 @@ import {
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { createBodyPhotosSignedUrl } from "@/lib/bodyPhotos";
 
 interface Profile {
   id: string;
@@ -110,6 +111,13 @@ export default function AdminClienteDetalhes() {
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [signedBodyPhotos, setSignedBodyPhotos] = useState<{ frente: string | null; lado: string | null; costas: string | null }>(
+    {
+      frente: null,
+      lado: null,
+      costas: null,
+    }
+  );
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -125,6 +133,38 @@ export default function AdminClienteDetalhes() {
       fetchSubscription();
     }
   }, [isAdmin, id]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const signOrNull = async (value: string | null) => {
+      if (!value) return null;
+      try {
+        return await createBodyPhotosSignedUrl(value);
+      } catch (e) {
+        console.warn("Não foi possível gerar URL assinada (admin):", e);
+        return null;
+      }
+    };
+
+    const run = async () => {
+      if (!profile) return;
+      const [frente, lado, costas] = await Promise.all([
+        signOrNull(profile.foto_frente_url),
+        signOrNull(profile.foto_lado_url),
+        signOrNull(profile.foto_costas_url),
+      ]);
+
+      if (!cancelled) {
+        setSignedBodyPhotos({ frente, lado, costas });
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.foto_frente_url, profile?.foto_lado_url, profile?.foto_costas_url]);
 
   const fetchProfile = async () => {
     try {
