@@ -120,11 +120,7 @@ const TransformationsGallery = () => {
         <div className="text-center mt-12">
           <p className="text-muted-foreground text-sm mb-4">Você pode ser o próximo</p>
           <Button variant="fire" size="lg" asChild>
-            <a
-              href="https://wa.me/5511999999999"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href="#preco">
               QUERO MINHA TRANSFORMAÇÃO
             </a>
           </Button>
