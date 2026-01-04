@@ -51,6 +51,18 @@ interface ProtocoloStatus {
   temMindset: boolean;
 }
 
+interface CheckinInfo {
+  ultimoCheckin: string | null;
+  pesoAtual: number | null;
+  pesoInicial: number | null;
+  totalCheckins: number;
+  diasParaProximoCheckin: number | null;
+}
+
+interface ProgressInfo {
+  treinos_completos: number;
+}
+
 const faqs = [
   {
     question: "Como funciona o plano de treino?",
@@ -94,6 +106,8 @@ export default function Suporte() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [protocolos, setProtocolos] = useState<ProtocoloStatus>({ temTreino: false, temNutricao: false, temMindset: false });
+  const [checkinInfo, setCheckinInfo] = useState<CheckinInfo | null>(null);
+  const [progressInfo, setProgressInfo] = useState<ProgressInfo | null>(null);
   const [conversaId, setConversaId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -124,6 +138,47 @@ export default function Suporte() {
           temMindset: protocolosData.some(p => p.tipo === "mindset")
         });
       }
+
+      // Fetch check-in data
+      const { data: checkinsData } = await supabase
+        .from("checkins")
+        .select("data_checkin, peso_atual, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (checkinsData && checkinsData.length > 0) {
+        const ultimoCheckin = checkinsData[0];
+        const primeiroCheckin = checkinsData[checkinsData.length - 1];
+        
+        // Calculate days until next check-in (30 days cycle)
+        let diasParaProximoCheckin: number | null = null;
+        if (ultimoCheckin.data_checkin) {
+          const lastCheckinDate = new Date(ultimoCheckin.data_checkin);
+          const nextCheckinDate = new Date(lastCheckinDate);
+          nextCheckinDate.setDate(nextCheckinDate.getDate() + 30);
+          const today = new Date();
+          const diffDays = Math.ceil((nextCheckinDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          diasParaProximoCheckin = diffDays > 0 ? diffDays : 0;
+        }
+
+        setCheckinInfo({
+          ultimoCheckin: ultimoCheckin.data_checkin,
+          pesoAtual: ultimoCheckin.peso_atual,
+          pesoInicial: primeiroCheckin.peso_atual,
+          totalCheckins: checkinsData.length,
+          diasParaProximoCheckin
+        });
+      }
+
+      // Fetch workout completions count
+      const { count: workoutCount } = await supabase
+        .from("workout_completions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      setProgressInfo({
+        treinos_completos: workoutCount || 0
+      });
       
       // Fetch chat history
       const { data: conversaData } = await supabase
@@ -210,7 +265,9 @@ export default function Suporte() {
             type: "mentor",
             userContext: {
               ...profile,
-              protocolos: protocolos
+              protocolos: protocolos,
+              checkin: checkinInfo,
+              progresso: progressInfo
             },
           }),
         }
