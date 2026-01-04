@@ -430,12 +430,13 @@ export default function Evolucao() {
           </CardHeader>
           <CardContent className="space-y-6">
             {!canSubmitNew && (
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-border/50">
-                <Clock className="h-5 w-5 text-muted-foreground" />
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                <Clock className="h-5 w-5 text-primary" />
                 <div>
-                  <p className="font-medium">Aguarde para próximo envio</p>
+                  <p className="font-medium text-foreground">Próximo check-in em breve</p>
                   <p className="text-sm text-muted-foreground">
-                    Próximo check-in disponível em {30 - (daysSinceLastCheckin || 0)} dias
+                    O check-in de evolução é liberado a cada 30 dias para acompanhar suas mudanças com precisão. 
+                    Faltam <span className="text-primary font-medium">{30 - (daysSinceLastCheckin || 0)} dias</span> para seu próximo envio.
                   </p>
                 </div>
               </div>

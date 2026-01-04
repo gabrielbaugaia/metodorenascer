@@ -51,15 +51,23 @@ const faqs = [
   },
   {
     question: "O suporte funciona 24 horas?",
-    answer: "Sim! Nosso suporte está disponível 24/7 para tirar suas dúvidas sobre treino, nutrição e mindset."
+    answer: "Sim! Nosso mentor IA está disponível 24/7 para tirar suas dúvidas sobre treino, nutrição e mindset."
   },
   {
-    question: "Como funciona o acompanhamento semanal?",
-    answer: "A cada 30 dias você envia suas fotos de evolução e atualiza seu peso. Essas informações são usadas pelo seu mentor para ajustar seu protocolo conforme seu progresso."
+    question: "Como funciona o acompanhamento de evolução?",
+    answer: "A cada 30 dias você pode enviar suas fotos de evolução e atualizar seu peso. Essas informações são analisadas pelo sistema para acompanhar seu progresso e sugerir ajustes no protocolo."
   },
   {
     question: "Posso cancelar minha assinatura?",
     answer: "Sim, você pode gerenciar sua assinatura a qualquer momento através da seção 'Assinatura' no menu lateral."
+  },
+  {
+    question: "Como os vídeos de exercícios funcionam?",
+    answer: "Ao clicar em qualquer exercício no seu treino, um vídeo demonstrativo será exibido. Os vídeos são atualizados regularmente para cobrir todos os exercícios do seu protocolo."
+  },
+  {
+    question: "O que fazer se não tiver vídeo para um exercício?",
+    answer: "Caso algum exercício ainda não tenha vídeo demonstrativo, você pode perguntar ao mentor como executar corretamente ou pesquisar pelo nome do exercício."
   }
 ];
 
@@ -68,22 +76,80 @@ export default function Suporte() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [conversaId, setConversaId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       if (!user) return;
-      const { data } = await supabase
+      
+      // Fetch profile
+      const { data: profileData } = await supabase
         .from("profiles")
         .select("full_name, weight, goals")
         .eq("id", user.id)
         .single();
-      if (data) setProfile(data);
+      if (profileData) setProfile(profileData);
+      
+      // Fetch chat history
+      const { data: conversaData } = await supabase
+        .from("conversas")
+        .select("id, mensagens")
+        .eq("user_id", user.id)
+        .eq("tipo", "suporte")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (conversaData?.mensagens) {
+        setConversaId(conversaData.id);
+        const historico = conversaData.mensagens as unknown as Message[];
+        if (Array.isArray(historico)) {
+          setMessages(historico);
+        }
+      }
+      setLoadingHistory(false);
     };
-    fetchProfile();
+    fetchData();
   }, [user]);
+
+  // Save messages to database when they change
+  useEffect(() => {
+    const saveMessages = async () => {
+      if (!user || messages.length === 0 || loadingHistory) return;
+      
+      try {
+        if (conversaId) {
+          await supabase
+            .from("conversas")
+            .update({ 
+              mensagens: messages as any,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", conversaId);
+        } else {
+          const { data } = await supabase
+            .from("conversas")
+            .insert({
+              user_id: user.id,
+              tipo: "suporte",
+              mensagens: messages as any
+            })
+            .select("id")
+            .single();
+          
+          if (data) setConversaId(data.id);
+        }
+      } catch (error) {
+        console.error("Error saving chat history:", error);
+      }
+    };
+    
+    saveMessages();
+  }, [messages, user, conversaId, loadingHistory]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

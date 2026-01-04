@@ -66,7 +66,7 @@ export default function Auth() {
       }
     } catch (error: any) {
       const message = error.message === "User already registered" 
-        ? "Este email ja esta cadastrado" 
+        ? "Este email já está cadastrado" 
         : error.message;
       toast.error(message);
     } finally {
@@ -83,7 +83,7 @@ export default function Auth() {
             <span className="font-display text-3xl text-gradient">METODO RENASCER</span>
           </div>
           <p className="text-muted-foreground">
-            {isSignUp ? "Crie sua conta e comece sua transformacao" : "Entre na sua conta"}
+            {isSignUp ? "Crie sua conta e comece sua transformação" : "Entre na sua conta"}
           </p>
         </div>
 
@@ -150,6 +150,39 @@ export default function Auth() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {/* Password strength indicator */}
+                {isSignUp && password && (
+                  <div className="space-y-1">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4].map((level) => {
+                        const strength = 
+                          (password.length >= 6 ? 1 : 0) +
+                          (password.length >= 8 ? 1 : 0) +
+                          (/[A-Z]/.test(password) && /[a-z]/.test(password) ? 1 : 0) +
+                          (/[0-9]/.test(password) || /[^a-zA-Z0-9]/.test(password) ? 1 : 0);
+                        return (
+                          <div
+                            key={level}
+                            className={`h-1 flex-1 rounded-full transition-colors ${
+                              level <= strength
+                                ? strength <= 1 ? 'bg-destructive' 
+                                : strength === 2 ? 'bg-yellow-500'
+                                : strength === 3 ? 'bg-primary/70'
+                                : 'bg-green-500'
+                                : 'bg-muted'
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {password.length < 6 ? 'Muito fraca' 
+                        : password.length < 8 ? 'Fraca'
+                        : (/[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password)) ? 'Forte'
+                        : 'Média'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <Button type="submit" variant="fire" className="w-full" disabled={loading}>
