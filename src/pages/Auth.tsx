@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,12 +27,18 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
 
+  // Redirecionar usuário logado: admin -> /admin, cliente -> /dashboard
   useEffect(() => {
-    if (user) {
-      navigate("/dashboard");
+    if (user && !adminLoading) {
+      if (isAdmin) {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, navigate]);
+  }, [user, isAdmin, adminLoading, navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
