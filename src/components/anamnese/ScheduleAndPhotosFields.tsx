@@ -58,13 +58,9 @@ export function ScheduleAndPhotosFields({ formData, userId, onChange }: Schedule
 
       if (uploadError) throw uploadError;
 
-      // Get signed URL (7 days expiry for security)
-      const { data: urlData } = await supabase.storage
-        .from('body-photos')
-        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // 7 days
+      // Persist only the storage path (bucket is private; UI should generate signed URLs when needed)
+      onChange(`foto_${type}_url`, fileName);
 
-      onChange(`foto_${type}_url`, urlData?.signedUrl || '');
-      
       toast.success(`Foto de ${type} enviada com sucesso!`);
     } catch (error) {
       console.error("Error uploading photo:", error);
