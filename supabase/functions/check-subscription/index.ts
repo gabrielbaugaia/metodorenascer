@@ -189,6 +189,22 @@ serve(async (req) => {
       }
     }
 
+    // Price ID to plan type mapping
+    const PRICE_TO_PLAN: Record<string, { type: string; name: string }> = {
+      "price_1ScZqTCuFZvf5xFdZuOBMzpt": { type: "embaixador", name: "ELITE Fundador" },
+      "price_1ScZrECuFZvf5xFdfS9W8kvY": { type: "mensal", name: "Mensal" },
+      "price_1ScZsTCuFZvf5xFdbW8kJeQF": { type: "trimestral", name: "Trimestral" },
+      "price_1ScZtrCuFZvf5xFd8iXDfbEp": { type: "semestral", name: "Semestral" },
+      "price_1ScZvCCuFZvf5xFdjrs51JQB": { type: "anual", name: "Anual" },
+    };
+
+    const priceId = subscription.items.data[0]?.price?.id;
+    const planInfo = priceId ? PRICE_TO_PLAN[priceId] : null;
+    const planType = planInfo?.type || "unknown";
+    const planName = planInfo?.name || "Plano Desconhecido";
+
+    logStep("Plan info resolved", { priceId, planType, planName });
+
     // Upsert subscription in local database
     const { error: upsertError } = await supabaseClient
       .from("subscriptions")
@@ -197,7 +213,8 @@ serve(async (req) => {
         stripe_customer_id: customerId,
         stripe_subscription_id: subscription.id,
         status: "active",
-        plan_type: "monthly",
+        plan_type: planType,
+        plan_name: planName,
         current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
         current_period_end: subscriptionEnd,
         updated_at: new Date().toISOString(),
