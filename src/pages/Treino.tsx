@@ -45,7 +45,7 @@ export default function Treino() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [protocol, setProtocol] = useState<Protocol | null>(null);
-  const [fullProtocol, setFullProtocol] = useState<any>(null);
+  
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [downloading, setDownloading] = useState(false);

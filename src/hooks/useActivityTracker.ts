@@ -11,20 +11,16 @@ export const useActivityTracker = () => {
     const updateActivity = async () => {
       const now = new Date().toISOString();
       
-      // Tenta atualizar, se não existir, insere
-      const { error: updateError } = await supabase
+      // Usa upsert para garantir criação ou atualização correta
+      const { error } = await supabase
         .from("user_activity")
-        .update({ last_access: now })
-        .eq("user_id", user.id);
+        .upsert(
+          { user_id: user.id, last_access: now, updated_at: now },
+          { onConflict: "user_id" }
+        );
 
-      if (updateError) {
-        // Provavelmente não existe, então insere
-        await supabase
-          .from("user_activity")
-          .insert({ 
-            user_id: user.id, 
-            last_access: now 
-          });
+      if (error) {
+        console.error("Error updating user activity:", error);
       }
     };
 
