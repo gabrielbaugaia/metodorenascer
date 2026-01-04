@@ -441,7 +441,7 @@ export default function AdminPlanos() {
               </TabsList>
 
               <TabsContent value="treino">
-                {userId && treinoProtocols.length === 0 && (
+                {userId && (
                   <div className="mb-4">
                     <Button 
                       variant="fire" 
@@ -453,7 +453,7 @@ export default function AdminPlanos() {
                       ) : (
                         <Sparkles className="h-4 w-4 mr-2" />
                       )}
-                      Gerar Protocolo de Treino
+                      {treinoProtocols.length > 0 ? "Gerar Novo Protocolo de Treino" : "Gerar Protocolo de Treino"}
                     </Button>
                   </div>
                 )}
@@ -461,7 +461,7 @@ export default function AdminPlanos() {
               </TabsContent>
 
               <TabsContent value="nutricao">
-                {userId && nutricaoProtocols.length === 0 && (
+                {userId && (
                   <div className="mb-4">
                     <Button 
                       variant="fire" 
@@ -473,7 +473,7 @@ export default function AdminPlanos() {
                       ) : (
                         <Sparkles className="h-4 w-4 mr-2" />
                       )}
-                      Gerar Protocolo de Nutrição
+                      {nutricaoProtocols.length > 0 ? "Gerar Novo Protocolo de Nutrição" : "Gerar Protocolo de Nutrição"}
                     </Button>
                   </div>
                 )}
@@ -481,7 +481,7 @@ export default function AdminPlanos() {
               </TabsContent>
 
               <TabsContent value="mindset">
-                {userId && mindsetProtocols.length === 0 && (
+                {userId && (
                   <div className="mb-4">
                     <Button 
                       variant="fire" 
@@ -493,7 +493,7 @@ export default function AdminPlanos() {
                       ) : (
                         <Sparkles className="h-4 w-4 mr-2" />
                       )}
-                      Gerar Protocolo de Mindset
+                      {mindsetProtocols.length > 0 ? "Gerar Novo Protocolo de Mindset" : "Gerar Protocolo de Mindset"}
                     </Button>
                   </div>
                 )}
