@@ -41,9 +41,16 @@ serve(async (req) => {
     if (type === "mentor") {
       // Extract protocol status for better responses
       const protocolStatus = userContext?.protocolos || {};
+      
+      // Log full context for debugging
+      console.log("[AI-MENTOR] UserContext completo:", JSON.stringify(userContext, null, 2));
+      console.log("[AI-MENTOR] Protocolos recebidos:", JSON.stringify(protocolStatus));
+      
       const temTreino = protocolStatus.temTreino === true;
       const temNutricao = protocolStatus.temNutricao === true;
       const temMindset = protocolStatus.temMindset === true;
+      
+      console.log("[AI-MENTOR] Status após parse - Treino:", temTreino, "Nutricao:", temNutricao, "Mindset:", temMindset);
 
       let protocolInfo = "STATUS DOS PROTOCOLOS:\n";
       protocolInfo += `- Protocolo de Treino: ${temTreino ? "JÁ FOI GERADO e está disponível na seção 'Treino' do menu" : "AINDA NÃO FOI GERADO - orientar o cliente a aguardar que o admin irá gerar"}\n`;

@@ -134,18 +134,22 @@ export default function Suporte() {
       if (profileData) setProfile(profileData);
 
       // Fetch user protocols status
-      const { data: protocolosData } = await supabase
+      const { data: protocolosData, error: protocolosError } = await supabase
         .from("protocolos")
         .select("tipo, ativo")
         .eq("user_id", user.id)
         .eq("ativo", true);
       
+      console.log("[Suporte] Protocolos encontrados:", protocolosData, "Erro:", protocolosError);
+      
       if (protocolosData) {
-        setProtocolos({
+        const novoStatus = {
           temTreino: protocolosData.some(p => p.tipo === "treino"),
           temNutricao: protocolosData.some(p => p.tipo === "nutricao"),
           temMindset: protocolosData.some(p => p.tipo === "mindset")
-        });
+        };
+        console.log("[Suporte] Status calculado:", novoStatus);
+        setProtocolos(novoStatus);
       }
 
       // Fetch check-in data
@@ -278,7 +282,7 @@ export default function Suporte() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !user) return;
 
     const userMessage: Message = { role: "user", content: input };
     setMessages(prev => [...prev, userMessage]);
@@ -288,6 +292,21 @@ export default function Suporte() {
     let assistantContent = "";
 
     try {
+      // Buscar protocolos frescos no momento do envio para garantir dados atualizados
+      const { data: protocolosFrescos } = await supabase
+        .from("protocolos")
+        .select("tipo, ativo")
+        .eq("user_id", user.id)
+        .eq("ativo", true);
+      
+      const protocolosAtuais = {
+        temTreino: protocolosFrescos?.some(p => p.tipo === "treino") || false,
+        temNutricao: protocolosFrescos?.some(p => p.tipo === "nutricao") || false,
+        temMindset: protocolosFrescos?.some(p => p.tipo === "mindset") || false
+      };
+      
+      console.log("[Suporte] Protocolos no envio:", protocolosAtuais);
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-mentor`,
         {
@@ -301,7 +320,7 @@ export default function Suporte() {
             type: "mentor",
             userContext: {
               ...profile,
-              protocolos: protocolos,
+              protocolos: protocolosAtuais,
               checkin: checkinInfo,
               progresso: progressInfo,
               assinatura: subscriptionInfo
