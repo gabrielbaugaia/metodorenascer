@@ -422,6 +422,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          checkin_reminder_enabled: boolean
+          created_at: string
+          id: string
+          inactivity_reminder_enabled: boolean
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+          workout_completed_enabled: boolean
+          workout_reminder_enabled: boolean
+          workout_reminder_time: string
+        }
+        Insert: {
+          checkin_reminder_enabled?: boolean
+          created_at?: string
+          id?: string
+          inactivity_reminder_enabled?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+          workout_completed_enabled?: boolean
+          workout_reminder_enabled?: boolean
+          workout_reminder_time?: string
+        }
+        Update: {
+          checkin_reminder_enabled?: boolean
+          created_at?: string
+          id?: string
+          inactivity_reminder_enabled?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+          workout_completed_enabled?: boolean
+          workout_reminder_enabled?: boolean
+          workout_reminder_time?: string
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           created_at: string | null
@@ -676,6 +715,36 @@ export type Database = {
           tipo?: string
           titulo?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
