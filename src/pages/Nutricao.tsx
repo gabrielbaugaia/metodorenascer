@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { useProtocol } from "@/hooks/useProtocol";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,60 +7,51 @@ import { Utensils, Loader2, Apple, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
 import { toast } from "sonner";
+import { useState } from "react";
 
-interface NutritionProtocol {
-  id: string;
-  tipo: string;
-  titulo: string;
-  conteudo: any;
-  data_geracao: string;
+interface Macros {
+  proteinas_g?: number;
+  carboidratos_g?: number;
+  gorduras_g?: number;
+  lipidios_g?: number;
+  calorias_diarias?: number;
 }
 
+interface Refeicao {
+  nome: string;
+  horario?: string;
+  alimentos?: (string | { item: string; calorias?: number })[];
+  calorias_total?: number;
+}
+
+interface NutritionContent {
+  refeicoes?: Refeicao[];
+  macros?: Macros;
+  calorias_diarias?: number;
+  dicas?: string[];
+}
 
 export default function Nutricao() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [protocol, setProtocol] = useState<NutritionProtocol | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { protocol, loading } = useProtocol("nutricao");
   const [downloading, setDownloading] = useState(false);
 
-  useEffect(() => {
-    const fetchProtocol = async () => {
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from("protocolos")
-          .select("id, tipo, titulo, conteudo, data_geracao")
-          .eq("user_id", user.id)
-          .eq("tipo", "nutricao")
-          .eq("ativo", true)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error) {
-          console.error("Error fetching nutrition protocol:", error);
-        } else if (data) {
-          setProtocol(data as NutritionProtocol);
-        }
-      } catch (err) {
-        console.error("Error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProtocol();
-  }, [user]);
-
-  const conteudo = protocol?.conteudo || {};
+  const conteudo = (protocol?.conteudo as NutritionContent) || {};
+  const refeicoes = conteudo.refeicoes || [];
+  const macros = conteudo.macros;
+  const dicas = conteudo.dicas || [];
 
   const handleDownloadPdf = () => {
     if (!protocol) return;
     setDownloading(true);
     try {
-      generateProtocolPdf(protocol);
+      generateProtocolPdf({
+        id: protocol.id,
+        tipo: "nutricao",
+        titulo: protocol.titulo,
+        conteudo: protocol.conteudo,
+        data_geracao: protocol.data_geracao || new Date().toISOString(),
+      });
       toast.success("PDF baixado com sucesso!");
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -96,7 +85,7 @@ export default function Nutricao() {
                 Plano <span className="text-gradient">Nutricional</span>
               </h1>
               <p className="text-muted-foreground text-xs sm:text-sm">
-                {conteudo.refeicoes && conteudo.refeicoes.length > 0 
+                {refeicoes.length > 0 
                   ? "Seu cardápio estratégico para máxima performance"
                   : "Seu protocolo será gerado em breve"}
               </p>
@@ -116,7 +105,7 @@ export default function Nutricao() {
           )}
         </div>
 
-        {(!conteudo.refeicoes || conteudo.refeicoes.length === 0) ? (
+        {refeicoes.length === 0 ? (
           <Card className="p-8 text-center">
             <Utensils className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Nenhum plano nutricional disponível</h3>
@@ -130,29 +119,29 @@ export default function Nutricao() {
         ) : (
           <>
             {/* Macros overview */}
-            {conteudo.macros && (
+            {macros && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Card className="p-4 text-center bg-primary/10">
                   <p className="text-xl md:text-2xl font-bold text-primary">
-                    {conteudo.calorias_diarias || conteudo.macros.calorias_diarias || "--"}
+                    {conteudo.calorias_diarias || macros.calorias_diarias || "--"}
                   </p>
                   <p className="text-xs text-muted-foreground">kcal/dia</p>
                 </Card>
                 <Card className="p-4 text-center bg-blue-500/10">
                   <p className="text-xl md:text-2xl font-bold text-blue-500">
-                    {conteudo.macros.proteinas_g || "--"}g
+                    {macros.proteinas_g || "--"}g
                   </p>
                   <p className="text-xs text-muted-foreground">Proteínas</p>
                 </Card>
                 <Card className="p-4 text-center bg-green-500/10">
                   <p className="text-xl md:text-2xl font-bold text-green-500">
-                    {conteudo.macros.carboidratos_g || "--"}g
+                    {macros.carboidratos_g || "--"}g
                   </p>
                   <p className="text-xs text-muted-foreground">Carboidratos</p>
                 </Card>
                 <Card className="p-4 text-center bg-yellow-500/10">
                   <p className="text-xl md:text-2xl font-bold text-yellow-500">
-                    {conteudo.macros.gorduras_g || conteudo.macros.lipidios_g || "--"}g
+                    {macros.gorduras_g || macros.lipidios_g || "--"}g
                   </p>
                   <p className="text-xs text-muted-foreground">Gorduras</p>
                 </Card>
@@ -161,7 +150,7 @@ export default function Nutricao() {
 
             {/* Meals */}
             <div className="space-y-4">
-              {conteudo.refeicoes?.map((refeicao: any, index: number) => (
+              {refeicoes.map((refeicao, index) => (
                 <Card key={index} className="border border-border/60">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
@@ -169,15 +158,17 @@ export default function Nutricao() {
                         <Apple className="w-5 h-5 text-primary" />
                         <span className="font-display">{refeicao.nome}</span>
                       </CardTitle>
-                      <Badge variant="outline">{refeicao.horario}</Badge>
+                      {refeicao.horario && <Badge variant="outline">{refeicao.horario}</Badge>}
                     </div>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-1">
-                      {refeicao.alimentos?.map((alimento: any, aIndex: number) => (
+                      {refeicao.alimentos?.map((alimento, aIndex) => (
                         <li key={aIndex} className="text-sm text-muted-foreground flex justify-between">
                           <span>{typeof alimento === "string" ? alimento : alimento.item}</span>
-                          {alimento.calorias && <span>{alimento.calorias} kcal</span>}
+                          {typeof alimento !== "string" && alimento.calorias && (
+                            <span>{alimento.calorias} kcal</span>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -192,10 +183,10 @@ export default function Nutricao() {
             </div>
 
             {/* Tips */}
-            {conteudo.dicas && conteudo.dicas.length > 0 && (
+            {dicas.length > 0 && (
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">
-                  <strong className="text-foreground">Dica do dia:</strong> {conteudo.dicas[0]}
+                  <strong className="text-foreground">Dica do dia:</strong> {dicas[0]}
                 </p>
               </Card>
             )}
