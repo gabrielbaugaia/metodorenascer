@@ -18,6 +18,10 @@ export const MentorSection = () => {
                 src={gabrielBauPhoto} 
                 alt="Gabriel Baú - CEO e criador do Método Renascer" 
                 className="w-full h-full object-cover object-top"
+                loading="lazy"
+                decoding="async"
+                width="288"
+                height="288"
               />
             </div>
           </div>
