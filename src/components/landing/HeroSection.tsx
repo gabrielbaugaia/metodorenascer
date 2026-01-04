@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Dumbbell, Utensils, MessageCircle } from "lucide-react";
 
-export function HeroSection() {
+export const HeroSection = memo(function HeroSection() {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Clean dark background with subtle gradient */}
@@ -87,4 +88,4 @@ export function HeroSection() {
       </div>
     </section>
   );
-}
+});
