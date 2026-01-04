@@ -144,6 +144,30 @@ serve(async (req) => {
       } else {
         logStep("Notifications inserted", { count: notifications.length });
       }
+
+      // Enviar push notifications
+      for (const notif of notifications) {
+        try {
+          const pushType = notif.notification_type === "inactivity_3_days" 
+            ? "inactivity" 
+            : "checkin_reminder";
+          
+          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-push`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({
+              user_id: notif.user_id,
+              notification_type: pushType,
+            }),
+          });
+          logStep("Push sent", { user_id: notif.user_id, type: pushType });
+        } catch (pushError) {
+          logStep("Push error", { user_id: notif.user_id, error: String(pushError) });
+        }
+      }
     }
 
     // Também adicionar notificações às conversas dos usuários para aparecer no chat

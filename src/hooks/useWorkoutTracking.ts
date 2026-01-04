@@ -89,6 +89,14 @@ export function useWorkoutTracking() {
         description: "Parabéns! Continue assim, guerreiro!",
       });
 
+      // Enviar push notification de parabéns (fire and forget)
+      supabase.functions.invoke("send-push", {
+        body: {
+          user_id: user.id,
+          notification_type: "workout_completed",
+        },
+      }).catch(console.error);
+
       await fetchCompletions();
       return true;
     } catch (error) {

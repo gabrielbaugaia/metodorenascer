@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Camera, User, Phone, Mail, Loader2, Lock, Eye, EyeOff } from "lucide-react";
+import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 
 interface ProfileData {
   full_name: string;
@@ -469,6 +470,9 @@ export default function MeuPerfil() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Notificações */}
+        <NotificationSettings />
 
         {/* Botão Salvar */}
         <Button
