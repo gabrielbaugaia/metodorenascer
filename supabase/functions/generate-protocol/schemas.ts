@@ -31,12 +31,20 @@ export interface SemanaSchema {
   progressao?: string;
 }
 
-// Protocolo de Treino completo
+// Treino individual (formato legado 'treinos')
+export interface TreinoLegadoSchema {
+  nome: string;
+  duracao_minutos: number;
+  calorias_estimadas?: number;
+  exercicios: ExercicioSchema[];
+}
+
+// Protocolo de Treino completo (aceita 'semanas' OU 'treinos' para compatibilidade)
 export interface TreinoProtocolSchema {
   titulo: string;
   duracao_semanas: number;
-  ciclo_atual: number;
-  total_ciclos: number;
+  ciclo_atual?: number;
+  total_ciclos?: number;
   nivel: "iniciante" | "intermediario" | "avancado";
   objetivo: "emagrecimento" | "hipertrofia";
   local_treino: "casa" | "musculacao";
@@ -45,7 +53,10 @@ export interface TreinoProtocolSchema {
   observacao_ajustes?: string;
   aquecimento?: string;
   alongamento?: string;
-  semanas: SemanaSchema[];
+  // Novo formato com semanas
+  semanas?: SemanaSchema[];
+  // Formato legado com treinos (mantido para compatibilidade)
+  treinos?: TreinoLegadoSchema[];
   observacoes_gerais?: string;
   proxima_avaliacao?: string;
 }
@@ -160,6 +171,7 @@ export interface MindsetProtocolSchema {
 }
 
 // Validação simples sem dependência externa
+// Aceita formato 'semanas' (novo) OU 'treinos' (legado)
 export function validateTreinoProtocol(data: unknown): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   const protocol = data as Record<string, unknown>;
@@ -176,9 +188,17 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
   if (!protocol.objetivo || !["emagrecimento", "hipertrofia"].includes(protocol.objetivo as string)) {
     errors.push("objetivo deve ser emagrecimento ou hipertrofia");
   }
-  if (!protocol.semanas || !Array.isArray(protocol.semanas) || protocol.semanas.length === 0) {
-    errors.push("semanas é obrigatório e deve ter ao menos uma semana");
-  } else {
+
+  // Aceita 'semanas' OU 'treinos' para compatibilidade retroativa
+  const hasSemanas = protocol.semanas && Array.isArray(protocol.semanas) && protocol.semanas.length > 0;
+  const hasTreinos = protocol.treinos && Array.isArray(protocol.treinos) && protocol.treinos.length > 0;
+
+  if (!hasSemanas && !hasTreinos) {
+    errors.push("semanas ou treinos é obrigatório e deve ter ao menos um item");
+  }
+
+  // Validar formato 'semanas' (novo)
+  if (hasSemanas) {
     (protocol.semanas as Array<Record<string, unknown>>).forEach((semana, sIndex) => {
       if (!semana.dias || !Array.isArray(semana.dias)) {
         errors.push(`semana ${sIndex + 1}: dias é obrigatório`);
@@ -187,14 +207,10 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
           if (!dia.exercicios || !Array.isArray(dia.exercicios)) {
             errors.push(`semana ${sIndex + 1}, dia ${dIndex + 1}: exercicios é obrigatório`);
           } else {
-            (dia.exercicios as Array<Record<string, unknown>>).forEach((ex, eIndex) => {
-              if (!ex.nome) errors.push(`semana ${sIndex + 1}, dia ${dIndex + 1}, exercício ${eIndex + 1}: nome é obrigatório`);
-              if (typeof ex.series !== "number") errors.push(`semana ${sIndex + 1}, dia ${dIndex + 1}, exercício ${eIndex + 1}: series deve ser número`);
-            });
+            validateExercicios(dia.exercicios as Array<Record<string, unknown>>, errors, `semana ${sIndex + 1}, dia ${dIndex + 1}`);
           }
           // Validar duracao_minutos como número
           if (dia.duracao_minutos !== undefined && typeof dia.duracao_minutos !== "number") {
-            // Tentar converter de string
             const parsed = parseInt(String(dia.duracao_minutos));
             if (isNaN(parsed)) {
               errors.push(`semana ${sIndex + 1}, dia ${dIndex + 1}: duracao_minutos deve ser número`);
@@ -205,7 +221,36 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
     });
   }
 
+  // Validar formato 'treinos' (legado)
+  if (hasTreinos && !hasSemanas) {
+    (protocol.treinos as Array<Record<string, unknown>>).forEach((treino, tIndex) => {
+      if (!treino.nome) {
+        errors.push(`treino ${tIndex + 1}: nome é obrigatório`);
+      }
+      if (!treino.exercicios || !Array.isArray(treino.exercicios)) {
+        errors.push(`treino ${tIndex + 1}: exercicios é obrigatório`);
+      } else {
+        validateExercicios(treino.exercicios as Array<Record<string, unknown>>, errors, `treino ${tIndex + 1}`);
+      }
+      // Validar duracao_minutos como número
+      if (treino.duracao_minutos !== undefined && typeof treino.duracao_minutos !== "number") {
+        const parsed = parseInt(String(treino.duracao_minutos));
+        if (isNaN(parsed)) {
+          errors.push(`treino ${tIndex + 1}: duracao_minutos deve ser número`);
+        }
+      }
+    });
+  }
+
   return { valid: errors.length === 0, errors };
+}
+
+// Helper para validar array de exercícios
+function validateExercicios(exercicios: Array<Record<string, unknown>>, errors: string[], context: string): void {
+  exercicios.forEach((ex, eIndex) => {
+    if (!ex.nome) errors.push(`${context}, exercício ${eIndex + 1}: nome é obrigatório`);
+    if (typeof ex.series !== "number") errors.push(`${context}, exercício ${eIndex + 1}: series deve ser número`);
+  });
 }
 
 export function validateNutricaoProtocol(data: unknown): { valid: boolean; errors: string[] } {
@@ -275,21 +320,34 @@ export function validateMindsetProtocol(data: unknown): { valid: boolean; errors
   return { valid: errors.length === 0, errors };
 }
 
-// Normalizar duracao_minutos para número
+// Normalizar duracao_minutos para número (ambos formatos)
 export function normalizeTreinoProtocol(data: Record<string, unknown>): void {
+  // Normalizar formato 'semanas' (novo)
   if (data.semanas && Array.isArray(data.semanas)) {
     (data.semanas as Array<Record<string, unknown>>).forEach((semana) => {
       if (semana.dias && Array.isArray(semana.dias)) {
         (semana.dias as Array<Record<string, unknown>>).forEach((dia) => {
-          if (dia.duracao_minutos !== undefined && typeof dia.duracao_minutos !== "number") {
-            const parsed = parseInt(String(dia.duracao_minutos).replace(/\D/g, ""));
-            dia.duracao_minutos = isNaN(parsed) ? 45 : parsed;
-          }
-          if (dia.duracao_minutos === undefined) {
-            dia.duracao_minutos = 45;
-          }
+          normalizeDuracaoMinutos(dia);
         });
       }
     });
+  }
+
+  // Normalizar formato 'treinos' (legado)
+  if (data.treinos && Array.isArray(data.treinos)) {
+    (data.treinos as Array<Record<string, unknown>>).forEach((treino) => {
+      normalizeDuracaoMinutos(treino);
+    });
+  }
+}
+
+// Helper para normalizar duracao_minutos
+function normalizeDuracaoMinutos(item: Record<string, unknown>): void {
+  if (item.duracao_minutos !== undefined && typeof item.duracao_minutos !== "number") {
+    const parsed = parseInt(String(item.duracao_minutos).replace(/\D/g, ""));
+    item.duracao_minutos = isNaN(parsed) ? 45 : parsed;
+  }
+  if (item.duracao_minutos === undefined) {
+    item.duracao_minutos = 45;
   }
 }
