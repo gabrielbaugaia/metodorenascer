@@ -635,6 +635,99 @@ export default function AdminClienteDetalhes() {
           </Card>
         </div>
 
+        {/* Fotos Corporais - Em destaque no topo */}
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Camera className="h-5 w-5 text-primary" />
+              Fotos Corporais da Anamnese
+            </CardTitle>
+            <CardDescription>
+              Fotos enviadas pelo cliente durante o preenchimento da anamnese
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(profile.foto_frente_url || profile.foto_lado_url || profile.foto_costas_url) ? (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-center">Frente</p>
+                  {profile.foto_frente_url ? (
+                    signedBodyPhotos.frente ? (
+                      <a href={signedBodyPhotos.frente} target="_blank" rel="noopener noreferrer">
+                        <img 
+                          src={signedBodyPhotos.frente} 
+                          alt="Foto corporal - Frente" 
+                          className="aspect-[3/4] w-full object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    )
+                  ) : (
+                    <div className="aspect-[3/4] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 flex items-center justify-center">
+                      <span className="text-xs text-muted-foreground">Não enviada</span>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-center">Lado</p>
+                  {profile.foto_lado_url ? (
+                    signedBodyPhotos.lado ? (
+                      <a href={signedBodyPhotos.lado} target="_blank" rel="noopener noreferrer">
+                        <img 
+                          src={signedBodyPhotos.lado} 
+                          alt="Foto corporal - Lado" 
+                          className="aspect-[3/4] w-full object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    )
+                  ) : (
+                    <div className="aspect-[3/4] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 flex items-center justify-center">
+                      <span className="text-xs text-muted-foreground">Não enviada</span>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-center">Costas</p>
+                  {profile.foto_costas_url ? (
+                    signedBodyPhotos.costas ? (
+                      <a href={signedBodyPhotos.costas} target="_blank" rel="noopener noreferrer">
+                        <img 
+                          src={signedBodyPhotos.costas} 
+                          alt="Foto corporal - Costas" 
+                          className="aspect-[3/4] w-full object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    )
+                  ) : (
+                    <div className="aspect-[3/4] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 flex items-center justify-center">
+                      <span className="text-xs text-muted-foreground">Não enviada</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Camera className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                <p>Cliente ainda não enviou fotos corporais</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Status & Info */}
         <Card>
           <CardHeader>
@@ -949,78 +1042,6 @@ export default function AdminClienteDetalhes() {
           </CardContent>
         </Card>
 
-        {/* Fotos */}
-        {(profile.foto_frente_url || profile.foto_lado_url || profile.foto_costas_url) && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Camera className="h-5 w-5 text-primary" />
-                Fotos Corporais
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4">
-                {profile.foto_frente_url && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground text-center">Frente</p>
-                    {signedBodyPhotos.frente ? (
-                      <a href={signedBodyPhotos.frente} target="_blank" rel="noopener noreferrer">
-                        <img 
-                          src={signedBodyPhotos.frente} 
-                          alt="Foto corporal do cliente - Frente" 
-                          className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                          loading="lazy"
-                        />
-                      </a>
-                    ) : (
-                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    )}
-                  </div>
-                )}
-                {profile.foto_lado_url && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground text-center">Lado</p>
-                    {signedBodyPhotos.lado ? (
-                      <a href={signedBodyPhotos.lado} target="_blank" rel="noopener noreferrer">
-                        <img 
-                          src={signedBodyPhotos.lado} 
-                          alt="Foto corporal do cliente - Lado" 
-                          className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                          loading="lazy"
-                        />
-                      </a>
-                    ) : (
-                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    )}
-                  </div>
-                )}
-                {profile.foto_costas_url && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground text-center">Costas</p>
-                    {signedBodyPhotos.costas ? (
-                      <a href={signedBodyPhotos.costas} target="_blank" rel="noopener noreferrer">
-                        <img 
-                          src={signedBodyPhotos.costas} 
-                          alt="Foto corporal do cliente - Costas" 
-                          className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                          loading="lazy"
-                        />
-                      </a>
-                    ) : (
-                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </ClientLayout>
   );
