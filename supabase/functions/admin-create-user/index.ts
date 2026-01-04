@@ -1,53 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-// Allowed origins for CORS
-const allowedOrigins = [
-  "https://lxdosmjenbaugmhyfanx.lovableproject.com",
-  "http://localhost:5173",
-  "http://localhost:8080",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-}
-
-// Map errors to safe user messages
-function mapErrorToUserMessage(error: unknown): string {
-  if (!(error instanceof Error)) return "Erro ao criar cliente. Tente novamente.";
-  
-  const message = error.message.toLowerCase();
-  
-  if (message.includes("already registered") || message.includes("already exists")) {
-    return "Este email já está cadastrado.";
-  }
-  if (message.includes("invalid email")) {
-    return "Email inválido.";
-  }
-  if (message.includes("unauthorized") || message.includes("admin")) {
-    return "Acesso não autorizado.";
-  }
-  
-  return "Erro ao criar cliente. Tente novamente.";
-}
+import { 
+  getCorsHeaders, 
+  handleCorsPreflightRequest, 
+  createErrorResponse, 
+  createSuccessResponse,
+  mapErrorToUserMessage 
+} from "../_shared/cors.ts";
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-  
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
-    // Create admin client with service role
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: {
         autoRefreshToken: false,
@@ -58,20 +26,14 @@ serve(async (req) => {
     // Verify the request is from an admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Acesso não autorizado." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Acesso não autorizado.", 401);
     }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user: requestingUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
     if (authError || !requestingUser) {
-      return new Response(
-        JSON.stringify({ error: "Sessão inválida. Faça login novamente." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Sessão inválida. Faça login novamente.", 401);
     }
 
     // Check if requesting user is admin
@@ -83,20 +45,14 @@ serve(async (req) => {
       .single();
 
     if (roleError || !roleData) {
-      return new Response(
-        JSON.stringify({ error: "Acesso não autorizado. Apenas administradores podem criar clientes." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Acesso não autorizado. Apenas administradores podem criar clientes.", 403);
     }
 
     // Get request body
     const { email, password, full_name, telefone, age, weight, height, goals, nivel_experiencia, plan_type } = await req.json();
 
     if (!email || !full_name) {
-      return new Response(
-        JSON.stringify({ error: "Email e nome são obrigatórios" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Email e nome são obrigatórios", 400);
     }
 
     // Generate a temporary password if not provided
@@ -106,7 +62,7 @@ serve(async (req) => {
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: userPassword,
-      email_confirm: true, // Auto-confirm email
+      email_confirm: true,
       user_metadata: {
         full_name,
       },
@@ -114,10 +70,12 @@ serve(async (req) => {
 
     if (createError) {
       console.error("Error creating user:", createError);
-      return new Response(
-        JSON.stringify({ error: mapErrorToUserMessage(createError) }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const errorMessage = createError.message.toLowerCase().includes("already registered") 
+        ? "Este email já está cadastrado."
+        : createError.message.toLowerCase().includes("invalid email")
+        ? "Email inválido."
+        : "Erro ao criar cliente. Tente novamente.";
+      return createErrorResponse(req, errorMessage, 400);
     }
 
     // Update profile with additional data
@@ -172,25 +130,19 @@ serve(async (req) => {
       });
     }
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        user: { 
-          id: newUser.user.id, 
-          email: newUser.user.email,
-          temporary_password: userPassword,
-        },
-        message: "Cliente criado com sucesso"
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createSuccessResponse(req, { 
+      success: true, 
+      user: { 
+        id: newUser.user.id, 
+        email: newUser.user.email,
+        temporary_password: userPassword,
+      },
+      message: "Cliente criado com sucesso"
+    });
 
   } catch (error: unknown) {
     console.error("Error:", error);
     const userMessage = mapErrorToUserMessage(error);
-    return new Response(
-      JSON.stringify({ error: userMessage }),
-      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-    );
+    return createErrorResponse(req, userMessage);
   }
 });

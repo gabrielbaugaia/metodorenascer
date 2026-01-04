@@ -1,31 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-// CORS (web app calls)
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-// Map errors to safe user messages
-function mapErrorToUserMessage(error: unknown): string {
-  if (!(error instanceof Error)) return "Erro ao gerar receita. Tente novamente.";
-
-  const message = error.message.toLowerCase();
-
-  if (message.includes("ingredientes")) {
-    return error.message; // Keep user-facing validation messages
-  }
-  if (message.includes("rate limit") || message.includes("limite")) {
-    return "Limite de requisições excedido. Aguarde alguns segundos.";
-  }
-  if (message.includes("créditos") || message.includes("credits")) {
-    return "Créditos insuficientes. Entre em contato com o suporte.";
-  }
-
-  return "Erro ao gerar receita. Tente novamente.";
-}
+import { 
+  getCorsHeaders, 
+  handleCorsPreflightRequest, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from "../_shared/cors.ts";
 
 // Validate and sanitize ingredients
 function validateIngredients(ingredients: unknown): string[] {
@@ -57,9 +36,8 @@ function validateIngredients(ingredients: unknown): string[] {
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
 
   try {
     const body = await req.json();
@@ -71,10 +49,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log(
-      "[GENERATE-RECIPE] Generating recipe for ingredients:",
-      ingredients,
-    );
+    console.log("[GENERATE-RECIPE] Generating recipe for ingredients:", ingredients);
 
     const systemPrompt = `Você é um nutricionista especializado em receitas fitness saudáveis. 
 Quando o usuário fornecer ingredientes, você deve criar UMA receita fitness deliciosa e saudável.
@@ -135,34 +110,13 @@ Formato da resposta (use exatamente este formato):
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(
-        "[GENERATE-RECIPE] AI gateway error:",
-        response.status,
-        errorText,
-      );
+      console.error("[GENERATE-RECIPE] AI gateway error:", response.status, errorText);
 
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({
-            error:
-              "Limite de requisições excedido. Tente novamente em alguns segundos.",
-          }),
-          {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
+        return createErrorResponse(req, "Limite de requisições excedido. Tente novamente em alguns segundos.", 429);
       }
       if (response.status === 402) {
-        return new Response(
-          JSON.stringify({
-            error: "Créditos insuficientes. Entre em contato com o suporte.",
-          }),
-          {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
+        return createErrorResponse(req, "Créditos insuficientes. Entre em contato com o suporte.", 402);
       }
 
       throw new Error("Erro ao gerar receita");
@@ -173,15 +127,12 @@ Formato da resposta (use exatamente este formato):
 
     console.log("[GENERATE-RECIPE] Recipe generated successfully");
 
-    return new Response(JSON.stringify({ recipe }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return createSuccessResponse(req, { recipe });
   } catch (error) {
     console.error("[GENERATE-RECIPE] Error:", error);
-    const userMessage = mapErrorToUserMessage(error);
-    return new Response(JSON.stringify({ error: userMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const errorMessage = error instanceof Error && error.message.includes("ingrediente") 
+      ? error.message 
+      : "Erro ao gerar receita. Tente novamente.";
+    return createErrorResponse(req, errorMessage);
   }
 });

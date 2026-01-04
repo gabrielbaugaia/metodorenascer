@@ -1,21 +1,11 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
-
-const allowedOrigins = [
-  "https://metodorenascer.lovable.app",
-  "https://renascerapp.com.br",
-  "http://localhost:5173",
-  "http://localhost:3000",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-}
+import { 
+  getCorsHeaders, 
+  handleCorsPreflightRequest, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from "../_shared/cors.ts";
 
 interface PushPayload {
   title: string;
@@ -35,11 +25,8 @@ interface SendPushRequest {
 }
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
 
   try {
     const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
@@ -74,10 +61,7 @@ serve(async (req) => {
     }
 
     if (!subscriptions || subscriptions.length === 0) {
-      return new Response(
-        JSON.stringify({ success: true, message: "Nenhuma subscription encontrada", sent: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createSuccessResponse(req, { success: true, message: "Nenhuma subscription encontrada", sent: 0 });
     }
 
     // Filtrar por preferências
@@ -102,10 +86,7 @@ serve(async (req) => {
     });
 
     if (filteredSubscriptions.length === 0) {
-      return new Response(
-        JSON.stringify({ success: true, message: "Preferências desativadas para todos usuários", sent: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createSuccessResponse(req, { success: true, message: "Preferências desativadas para todos usuários", sent: 0 });
     }
 
     // Definir mensagem padrão
@@ -198,22 +179,16 @@ serve(async (req) => {
       });
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        sent: sentCount,
-        total: filteredSubscriptions.length,
-        errors: errors.length > 0 ? errors : undefined,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createSuccessResponse(req, {
+      success: true,
+      sent: sentCount,
+      total: filteredSubscriptions.length,
+      errors: errors.length > 0 ? errors : undefined,
+    });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Erro ao enviar notificação";
     console.error("Erro no send-push:", error);
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createErrorResponse(req, errorMessage);
   }
 });
 

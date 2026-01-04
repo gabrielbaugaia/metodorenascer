@@ -1,15 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { 
+  getCorsHeaders, 
+  handleCorsPreflightRequest, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from "../_shared/cors.ts";
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
 
   try {
     const { 
@@ -27,7 +26,7 @@ serve(async (req) => {
     console.log("[ANALYZE-EVOLUTION] Starting analysis");
 
     // Build the content array with text and images
-    const content: any[] = [
+    const content: unknown[] = [
       {
         type: "text",
         text: `Você é Gabriel Baú, mentor fitness do Método Renascer. Faça uma análise comparativa VISUAL detalhada entre as fotos iniciais (anamnese) e as fotos de evolução atuais do cliente.
@@ -163,22 +162,13 @@ FORMATO DA RESPOSTA (use exatamente esta estrutura):
       console.error("[ANALYZE-EVOLUTION] AI gateway error:", response.status, errorText);
 
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns instantes." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return createErrorResponse(req, "Limite de requisições excedido. Tente novamente em alguns instantes.", 429);
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Entre em contato com o suporte." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return createErrorResponse(req, "Créditos insuficientes. Entre em contato com o suporte.", 402);
       }
       
-      return new Response(JSON.stringify({ error: "Erro no serviço de IA" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return createErrorResponse(req, "Erro no serviço de IA");
     }
 
     const data = await response.json();
@@ -186,14 +176,9 @@ FORMATO DA RESPOSTA (use exatamente esta estrutura):
 
     console.log("[ANALYZE-EVOLUTION] Analysis generated successfully");
 
-    return new Response(JSON.stringify({ analysis }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return createSuccessResponse(req, { analysis });
   } catch (error) {
     console.error("[ANALYZE-EVOLUTION] Error:", error);
-    return new Response(JSON.stringify({ error: "Erro ao processar análise. Tente novamente." }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return createErrorResponse(req, "Erro ao processar análise. Tente novamente.");
   }
 });

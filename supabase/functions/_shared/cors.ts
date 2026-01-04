@@ -3,10 +3,12 @@
 
 export const allowedOrigins = [
   "https://lxdosmjenbaugmhyfanx.lovableproject.com",
+  "https://a75d46a2-4cbd-4416-81c4-9988ca4fb176.lovableproject.com",
   "https://metodorenascer.lovable.app",
   "https://renascerapp.com.br",
   "http://localhost:5173",
   "http://localhost:8080",
+  "http://localhost:3000",
 ];
 
 export function getCorsHeaders(req: Request): Record<string, string> {
