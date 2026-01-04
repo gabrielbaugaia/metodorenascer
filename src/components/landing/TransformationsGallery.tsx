@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,52 @@ const transformations = [
   { id: "cliente-07", image: transform7 },
   { id: "cliente-08", image: transform8 },
 ];
+
+// Lazy Image component with Intersection Observer
+const LazyImage = ({ src, alt, className }: { src: string; alt: string; className?: string }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const imgRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "100px", threshold: 0.1 }
+    );
+
+    if (imgRef.current) {
+      observer.observe(imgRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={imgRef} className="relative w-full aspect-square bg-card rounded-lg overflow-hidden">
+      {/* Skeleton placeholder */}
+      {!isLoaded && (
+        <div className="absolute inset-0 bg-muted animate-pulse" />
+      )}
+      
+      {/* Actual image */}
+      {isInView && (
+        <img
+          src={src}
+          alt={alt}
+          className={`w-full h-full object-cover object-top transition-opacity duration-500 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          } ${className || ""}`}
+          onLoad={() => setIsLoaded(true)}
+        />
+      )}
+    </div>
+  );
+};
 
 const TransformationsGallery = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -56,13 +102,11 @@ const TransformationsGallery = () => {
           {transformations.map((transformation) => (
             <div
               key={transformation.id}
-              className="relative rounded-lg overflow-hidden hover:scale-[1.02] transition-transform duration-300"
+              className="hover:scale-[1.02] transition-transform duration-300"
             >
-              <img
+              <LazyImage
                 src={transformation.image}
                 alt="Transformação real"
-                className="w-full aspect-square object-cover object-top"
-                loading="lazy"
               />
             </div>
           ))}
