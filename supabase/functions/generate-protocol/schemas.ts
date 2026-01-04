@@ -47,7 +47,7 @@ export interface TreinoProtocolSchema {
   total_ciclos?: number;
   nivel: "iniciante" | "intermediario" | "avancado";
   objetivo: "emagrecimento" | "hipertrofia";
-  local_treino: "casa" | "musculacao";
+  local_treino: "casa" | "musculacao" | "academia";
   frequencia_semanal: number;
   volume_semanal_por_grupo?: string;
   observacao_ajustes?: string;
@@ -188,6 +188,7 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
   if (!protocol.objetivo || !["emagrecimento", "hipertrofia"].includes(protocol.objetivo as string)) {
     errors.push("objetivo deve ser emagrecimento ou hipertrofia");
   }
+  // local_treino é informativo, não bloqueia validação se vier diferente
 
   // Aceita 'semanas' OU 'treinos' para compatibilidade retroativa
   const hasSemanas = protocol.semanas && Array.isArray(protocol.semanas) && protocol.semanas.length > 0;
