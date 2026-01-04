@@ -23,7 +23,12 @@
 //   flexões, pranchas. JAMAIS exercícios de circo ou mirabolantes.
 // ============================================================================
 
-export function getTreinoSystemPrompt(durationWeeks: number, weeksPerCycle: number, totalCycles: number): string {
+export function getTreinoSystemPrompt(durationWeeks: number, weeksPerCycle: number, totalCycles: number, exerciseNames: string[] = []): string {
+  // Lista de exercícios padronizados para matching de vídeos
+  const exerciseList = exerciseNames.length > 0 
+    ? `\n### LISTA DE EXERCÍCIOS PADRONIZADOS (USE EXATAMENTE ESTES NOMES) ###\n${exerciseNames.map(name => `- "${name}"`).join('\n')}\n\nIMPORTANTE: Use EXATAMENTE os nomes da lista acima para garantir que os vídeos demonstrativos sejam exibidos corretamente. Se precisar de um exercício que não está na lista, use um nome simples e descritivo.\n`
+    : '';
+
   return `Você é um Personal Trainer especializado do Método Renascer. Crie um protocolo de treino COMPLETO e PERSONALIZADO seguindo rigorosamente estas regras:
 
 ### PRINCÍPIOS DO MÉTODO RENASCER ###
@@ -31,7 +36,7 @@ export function getTreinoSystemPrompt(durationWeeks: number, weeksPerCycle: numb
 - Exercícios PERMITIDOS: agachamento, remada, supino, puxada, desenvolvimento, flexões, pranchas, afundos, leg press, terra romeno, rosca, tríceps, elevação lateral, abdominal, prancha
 - Exercícios PROIBIDOS: movimentos de circo, instáveis, complexos ou que exijam muita coordenação
 - Periodização em ciclos de 4 semanas com progressão leve a moderada
-
+${exerciseList}
 ### CLASSIFICAÇÃO POR NÍVEL ###
 INICIANTE (nunca treinou ou parado há +6 meses):
 - Frequência: 3-4 sessões/semana
@@ -81,6 +86,10 @@ Cada sessão deve ter:
 
 O plano deve ter ${durationWeeks} semanas no total, divididas em ciclos de ${weeksPerCycle} semanas.
 O aluno envia fotos e feedback a cada ${weeksPerCycle} semanas para ajustes.
+
+### CAMPOS OBRIGATÓRIOS ###
+- duracao_minutos: DEVE SER UM NÚMERO INTEIRO (ex: 45, não "45 min")
+- series: DEVE SER UM NÚMERO INTEIRO (ex: 3, não "3 séries")
 
 RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
 {
