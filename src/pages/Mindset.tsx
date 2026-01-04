@@ -15,14 +15,13 @@ import {
   X,
   Download,
   Loader2,
-  Sparkles,
   CheckCircle,
   Target,
   MessageCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
+import { useProtocol } from "@/hooks/useProtocol";
 
 interface MindsetPratica {
   nome: string;
@@ -62,59 +61,19 @@ interface MindsetProtocol {
   afirmacoes_personalizadas?: (string | { afirmacao: string; comportamento_alvo?: string; quando_usar?: string })[];
 }
 
-interface Protocol {
-  id: string;
-  tipo: string;
-  titulo: string;
-  conteudo: MindsetProtocol;
-  data_geracao: string;
-  ativo: boolean;
-}
-
 export default function Mindset() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [protocol, setProtocol] = useState<Protocol | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
+  const { protocol: protocolData, loading } = useProtocol("mindset");
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (user) {
-      fetchProtocol();
       loadCheckedItems();
     }
   }, [user]);
 
-  const fetchProtocol = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("protocolos")
-        .select("*")
-        .eq("user_id", user?.id)
-        .eq("tipo", "mindset")
-        .eq("ativo", true)
-        .order("data_geracao", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (data) {
-        setProtocol({
-          ...data,
-          conteudo: data.conteudo as unknown as MindsetProtocol,
-          ativo: data.ativo ?? false
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching mindset protocol:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const loadCheckedItems = async () => {
-    // Try to load from database first
     if (!user) return;
     
     try {
@@ -128,18 +87,15 @@ export default function Mindset() {
       if (data?.mensagens) {
         setCheckedItems(data.mensagens as Record<string, boolean>);
       } else {
-        // Fallback to localStorage for migration
         const stored = localStorage.getItem(`mindset-progress-${user.id}`);
         if (stored) {
           const parsed = JSON.parse(stored);
           setCheckedItems(parsed);
-          // Migrate to database
           saveCheckedItems(parsed);
         }
       }
     } catch (error) {
       console.error("Error loading mindset progress:", error);
-      // Fallback to localStorage
       const stored = localStorage.getItem(`mindset-progress-${user.id}`);
       if (stored) {
         setCheckedItems(JSON.parse(stored));
@@ -148,10 +104,8 @@ export default function Mindset() {
   };
 
   const saveCheckedItems = async (items: Record<string, boolean>) => {
-    // Save to localStorage as backup
     localStorage.setItem(`mindset-progress-${user?.id}`, JSON.stringify(items));
     
-    // Save to database
     if (!user) return;
     
     try {
@@ -173,16 +127,18 @@ export default function Mindset() {
     setCheckedItems(newChecked);
     saveCheckedItems(newChecked);
   };
+
+  const content = protocolData?.conteudo as unknown as MindsetProtocol | null;
+
   const countProgress = () => {
-    if (!protocol?.conteudo) return { completed: 0, total: 0 };
+    if (!content) return { completed: 0, total: 0 };
     
-    const content = protocol.conteudo;
     const morningPractices = content.rotina_manha?.praticas?.length || 0;
     const nightPractices = content.rotina_noite?.praticas?.length || 0;
-    const total = morningPractices + nightPractices;
+    const totalPractices = morningPractices + nightPractices;
     
-    const completed = Object.values(checkedItems).filter(Boolean).length;
-    return { completed: Math.min(completed, total), total };
+    const completedCount = Object.values(checkedItems).filter(Boolean).length;
+    return { completed: Math.min(completedCount, totalPractices), total: totalPractices };
   };
 
   const { completed, total } = countProgress();
@@ -198,7 +154,7 @@ export default function Mindset() {
     );
   }
 
-  if (!protocol) {
+  if (!protocolData || !content) {
     return (
       <ClientLayout>
         <div className="max-w-4xl mx-auto">
@@ -217,8 +173,6 @@ export default function Mindset() {
       </ClientLayout>
     );
   }
-
-  const content = protocol.conteudo;
 
   return (
     <ClientLayout>
@@ -422,14 +376,14 @@ export default function Mindset() {
             className="flex-1" 
             size="default"
             onClick={() => {
-              if (protocol) {
+              if (protocolData && content) {
                 import("@/lib/generateProtocolPdf").then(({ generateProtocolPdf }) => {
                   generateProtocolPdf({
-                    id: protocol.id,
+                    id: protocolData.id,
                     tipo: "mindset",
-                    titulo: protocol.conteudo.titulo || "Protocolo de Mindset",
-                    conteudo: protocol.conteudo,
-                    data_geracao: protocol.data_geracao,
+                    titulo: content.titulo || "Protocolo de Mindset",
+                    conteudo: protocolData.conteudo,
+                    data_geracao: protocolData.data_geracao || new Date().toISOString(),
                   });
                 });
               }

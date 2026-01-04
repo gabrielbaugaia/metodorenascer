@@ -1,26 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { getCorsHeaders, handleCorsPreflightRequest, createErrorResponse, createSuccessResponse } from "../_shared/cors.ts";
 import { getTreinoSystemPrompt, getTreinoUserPrompt } from "./prompts/treino.ts";
 import { getNutricaoSystemPrompt, getNutricaoUserPrompt } from "./prompts/nutricao.ts";
 import { getMindsetSystemPrompt, getMindsetUserPrompt } from "./prompts/mindset.ts";
-
-// Allowed origins for CORS
-const allowedOrigins = [
-  "https://lxdosmjenbaugmhyfanx.lovableproject.com",
-  "https://metodorenascer.lovable.app",
-  "https://renascerapp.com.br",
-  "http://localhost:5173",
-  "http://localhost:8080",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-}
 
 // Mapear tipo de plano para duração em semanas
 const planDurationWeeks: Record<string, number> = {
@@ -32,11 +15,11 @@ const planDurationWeeks: Record<string, number> = {
 };
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
+  // Handle CORS preflight
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
   
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsHeaders = getCorsHeaders(req);
 
   try {
     const { tipo, userContext, userId, adjustments, planType } = await req.json();

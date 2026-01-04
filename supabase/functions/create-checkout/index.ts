@@ -1,49 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-
-// Allowed origins for CORS
-const allowedOrigins = [
-  "https://lxdosmjenbaugmhyfanx.lovableproject.com",
-  "https://metodorenascer.lovable.app",
-  "https://renascerapp.com.br",
-  "http://localhost:5173",
-  "http://localhost:8080",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-}
-
-// Map errors to safe user messages
-function mapErrorToUserMessage(error: unknown): string {
-  if (!(error instanceof Error)) return "Erro ao processar solicitação. Tente novamente.";
-  
-  const message = error.message.toLowerCase();
-  
-  if (message.includes("already has active")) {
-    return "Você já possui uma assinatura ativa.";
-  }
-  if (message.includes("not authenticated")) {
-    return "Sessão expirada. Faça login novamente.";
-  }
-  if (message.includes("stripe") || message.includes("payment")) {
-    return "Erro ao processar pagamento. Tente novamente.";
-  }
-  if (message.includes("invalid price")) {
-    return "Plano inválido selecionado.";
-  }
-  if (message.includes("authorization")) {
-    return "Não autorizado. Faça login novamente.";
-  }
-  
-  return "Erro ao processar solicitação. Tente novamente.";
-}
+import { getCorsHeaders, handleCorsPreflightRequest, mapErrorToUserMessage } from "../_shared/cors.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -63,11 +21,10 @@ const VALID_PRICE_IDS = [
 const REFERRAL_DISCOUNT_PERCENT = 10;
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
   
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsHeaders = getCorsHeaders(req);
 
   try {
     logStep("Function started");
