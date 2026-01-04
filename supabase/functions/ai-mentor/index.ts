@@ -1,32 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-// CORS headers (allow all origins for production/preview)
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-// Map errors to safe user messages
-function mapErrorToUserMessage(error: unknown): string {
-  if (!(error instanceof Error)) return "Erro ao processar mensagem. Tente novamente.";
-  
-  const message = error.message.toLowerCase();
-  
-  if (message.includes("rate limit") || message.includes("limite")) {
-    return "Limite de requisições excedido. Aguarde alguns segundos.";
-  }
-  if (message.includes("créditos") || message.includes("credits")) {
-    return "Créditos insuficientes. Entre em contato com o suporte.";
-  }
-  
-  return "Erro ao processar mensagem. Tente novamente.";
-}
+import { 
+  getCorsHeaders, 
+  handleCorsPreflightRequest, 
+  createErrorResponse, 
+  createSuccessResponse,
+  mapErrorToUserMessage 
+} from "../_shared/cors.ts";
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
 
   try {
     const { messages, type, userContext } = await req.json();
@@ -134,35 +117,23 @@ Retorne JSON no formato:
       console.error("[AI-MENTOR] AI gateway error:", response.status, errorText);
 
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns instantes." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return createErrorResponse(req, "Limite de requisições excedido. Tente novamente em alguns instantes.", 429);
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Entre em contato com o suporte." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return createErrorResponse(req, "Créditos insuficientes. Entre em contato com o suporte.", 402);
       }
       
-      return new Response(JSON.stringify({ error: "Erro no serviço de IA" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return createErrorResponse(req, "Erro no serviço de IA");
     }
 
     console.log("[AI-MENTOR] Streaming response started");
 
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "text/event-stream" },
     });
   } catch (error) {
     console.error("[AI-MENTOR] Error:", error);
     const userMessage = mapErrorToUserMessage(error);
-    return new Response(JSON.stringify({ error: userMessage }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return createErrorResponse(req, userMessage);
   }
 });

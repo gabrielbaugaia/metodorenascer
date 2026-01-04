@@ -1,21 +1,11 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-
-// Allowed origins for CORS
-const allowedOrigins = [
-  "https://lxdosmjenbaugmhyfanx.lovableproject.com",
-  "http://localhost:5173",
-  "http://localhost:8080",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-}
+import { 
+  getCorsHeaders, 
+  handleCorsPreflightRequest, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from "../_shared/cors.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -23,11 +13,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 };
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-  
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
 
   try {
     logStep("Function started");
@@ -211,20 +198,14 @@ serve(async (req) => {
 
     logStep("Function completed", { notificationsSent: notifications.length });
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        notificationsSent: notifications.length,
-        inactiveUsersProcessed: inactiveUsers?.length || 0,
-        photoRemindersProcessed: photoUsers?.length || 0,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-    );
+    return createSuccessResponse(req, { 
+      success: true, 
+      notificationsSent: notifications.length,
+      inactiveUsersProcessed: inactiveUsers?.length || 0,
+      photoRemindersProcessed: photoUsers?.length || 0,
+    });
   } catch (error) {
     console.error("[CHECK-USER-ACTIVITY] Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Erro ao processar atividade. Tente novamente." }),
-      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" }, status: 500 }
-    );
+    return createErrorResponse(req, "Erro ao processar atividade. Tente novamente.");
   }
 });

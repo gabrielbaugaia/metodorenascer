@@ -1,30 +1,16 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
-
-const allowedOrigins = [
-  "https://lxdosmjenbaugmhyfanx.lovableproject.com",
-  "https://metodorenascer.lovable.app",
-  "https://renascerapp.com.br",
-  "http://localhost:5173",
-  "http://localhost:8080",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "";
-  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
-  return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-}
+import { 
+  getCorsHeaders, 
+  handleCorsPreflightRequest, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from "../_shared/cors.ts";
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-  
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -33,10 +19,7 @@ serve(async (req) => {
     
     if (!resendApiKey) {
       console.error("RESEND_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "Serviço de email não configurado." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Serviço de email não configurado.");
     }
 
     const resend = new Resend(resendApiKey);
@@ -51,20 +34,14 @@ serve(async (req) => {
     // Verify admin authorization
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Acesso não autorizado." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Acesso não autorizado.", 401);
     }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user: requestingUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
     if (authError || !requestingUser) {
-      return new Response(
-        JSON.stringify({ error: "Sessão inválida." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Sessão inválida.", 401);
     }
 
     // Check admin role
@@ -76,27 +53,18 @@ serve(async (req) => {
       .maybeSingle();
 
     if (roleError || !roleData) {
-      return new Response(
-        JSON.stringify({ error: "Apenas administradores podem enviar convites." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Apenas administradores podem enviar convites.", 403);
     }
 
     // Get request body
     const { full_name, email, whatsapp, plan_type } = await req.json();
 
     if (!full_name || !email || !plan_type) {
-      return new Response(
-        JSON.stringify({ error: "Nome, email e plano são obrigatórios." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Nome, email e plano são obrigatórios.", 400);
     }
 
     // Generate unique invitation code
     const inviteCode = `INV${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-    
-    // Store invitation in database (create invitations table or use referral_codes)
-    // For now, we'll create the user directly with pending status
     
     // Generate temporary password
     const tempPassword = Math.random().toString(36).slice(-10) + "A1!";
@@ -112,15 +80,9 @@ serve(async (req) => {
     if (createError) {
       console.error("Error creating user:", createError);
       if (createError.message.includes("already registered")) {
-        return new Response(
-          JSON.stringify({ error: "Este email já está cadastrado." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return createErrorResponse(req, "Este email já está cadastrado.", 400);
       }
-      return new Response(
-        JSON.stringify({ error: "Erro ao criar convite." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Erro ao criar convite.", 400);
     }
 
     // Update profile with whatsapp
@@ -218,26 +180,20 @@ serve(async (req) => {
 
     console.log("Email sent:", emailResult);
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        inviteLink,
-        inviteCode,
-        user: {
-          id: newUser.user.id,
-          email: newUser.user.email,
-          temporary_password: tempPassword,
-        },
-        message: "Convite enviado com sucesso!"
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createSuccessResponse(req, { 
+      success: true, 
+      inviteLink,
+      inviteCode,
+      user: {
+        id: newUser.user.id,
+        email: newUser.user.email,
+        temporary_password: tempPassword,
+      },
+      message: "Convite enviado com sucesso!"
+    });
 
   } catch (error: unknown) {
     console.error("Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Erro ao enviar convite. Tente novamente." }),
-      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-    );
+    return createErrorResponse(req, "Erro ao enviar convite. Tente novamente.");
   }
 });

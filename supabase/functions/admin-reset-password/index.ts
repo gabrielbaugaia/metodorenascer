@@ -1,29 +1,14 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const allowedOrigins = [
-  "https://renascerapp.com.br",
-  "https://metodorenascer.lovable.app",
-  "http://localhost:5173",
-  "http://localhost:3000",
-];
-
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("Origin") || "";
-  const isAllowed = allowedOrigins.some((allowed) => origin.startsWith(allowed));
-  return {
-    "Access-Control-Allow-Origin": isAllowed ? origin : allowedOrigins[0],
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-  };
-}
+import { 
+  handleCorsPreflightRequest, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from "../_shared/cors.ts";
 
 serve(async (req) => {
-  const corsHeaders = getCorsHeaders(req);
-
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const preflightResponse = handleCorsPreflightRequest(req);
+  if (preflightResponse) return preflightResponse;
 
   try {
     const supabaseAdmin = createClient(
@@ -40,14 +25,14 @@ serve(async (req) => {
     // Verify the requesting user is an admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error("Não autorizado");
+      return createErrorResponse(req, "Não autorizado", 401);
     }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user: requestingUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
     if (authError || !requestingUser) {
-      throw new Error("Token inválido");
+      return createErrorResponse(req, "Token inválido", 401);
     }
 
     // Check if user is admin
@@ -59,17 +44,17 @@ serve(async (req) => {
       .single();
 
     if (roleError || !roleData) {
-      throw new Error("Acesso negado - apenas administradores");
+      return createErrorResponse(req, "Acesso negado - apenas administradores", 403);
     }
 
     const { userId, newPassword } = await req.json();
 
     if (!userId || !newPassword) {
-      throw new Error("userId e newPassword são obrigatórios");
+      return createErrorResponse(req, "userId e newPassword são obrigatórios", 400);
     }
 
     if (newPassword.length < 6) {
-      throw new Error("A senha deve ter pelo menos 6 caracteres");
+      return createErrorResponse(req, "A senha deve ter pelo menos 6 caracteres", 400);
     }
 
     // Update the user's password using admin API
@@ -80,24 +65,12 @@ serve(async (req) => {
 
     if (updateError) {
       console.error("Error updating password:", updateError);
-      throw new Error("Erro ao atualizar senha");
+      return createErrorResponse(req, "Erro ao atualizar senha", 400);
     }
 
-    return new Response(
-      JSON.stringify({ success: true, message: "Senha atualizada com sucesso" }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
-  } catch (error: any) {
+    return createSuccessResponse(req, { success: true, message: "Senha atualizada com sucesso" });
+  } catch (error: unknown) {
     console.error("Error in admin-reset-password:", error);
-    return new Response(
-      JSON.stringify({ error: error.message || "Erro interno" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return createErrorResponse(req, "Erro interno", 400);
   }
 });
