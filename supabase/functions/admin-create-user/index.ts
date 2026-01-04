@@ -130,14 +130,17 @@ serve(async (req) => {
       });
     }
 
+    // Note: Password is intentionally NOT returned in response for security
+    // Admin should communicate the password through a secure channel (e.g., in-person, encrypted message)
+    // Or use password reset flow for the user
     return createSuccessResponse(req, { 
       success: true, 
       user: { 
         id: newUser.user.id, 
         email: newUser.user.email,
-        temporary_password: userPassword,
       },
-      message: "Cliente criado com sucesso"
+      message: "Cliente criado com sucesso. Comunique a senha temporária de forma segura.",
+      password_hint: "A senha temporária foi gerada. Anote-a agora pois não será exibida novamente."
     });
 
   } catch (error: unknown) {

@@ -64,6 +64,19 @@ export default function AdminCriarCliente() {
     }
   };
 
+  // Generate a secure temporary password
+  const generatePassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const special = "!@#$%";
+    let password = "";
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    password += special.charAt(Math.floor(Math.random() * special.length));
+    password += Math.floor(Math.random() * 10);
+    return password;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -82,9 +95,13 @@ export default function AdminCriarCliente() {
         return;
       }
 
+      // Generate password locally - it will be sent to API but NOT returned
+      const tempPassword = generatePassword();
+
       const { data, error } = await supabase.functions.invoke("admin-create-user", {
         body: {
           email: formData.email,
+          password: tempPassword,
           full_name: formData.full_name,
           telefone: formData.telefone || null,
           age: formData.age ? parseInt(formData.age) : null,
@@ -104,9 +121,10 @@ export default function AdminCriarCliente() {
         throw new Error(data.error);
       }
 
+      // Store password locally since API doesn't return it anymore
       setCreatedUser({
         email: data.user.email,
-        password: data.user.temporary_password,
+        password: tempPassword,
       });
       
       toast.success("Cliente criado com sucesso!");
