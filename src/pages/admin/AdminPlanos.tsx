@@ -114,7 +114,7 @@ export default function AdminPlanos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
-  const [generatingMindset, setGeneratingMindset] = useState(false);
+  const [generatingProtocol, setGeneratingProtocol] = useState<string | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; protocolId: string | null }>({
     open: false,
     protocolId: null,
@@ -266,10 +266,10 @@ export default function AdminPlanos() {
     }
   };
 
-  const handleGenerateMindset = async (targetUserId: string) => {
+  const handleGenerateProtocol = async (targetUserId: string, tipo: "treino" | "nutricao" | "mindset") => {
     if (!targetUserId) return;
     
-    setGeneratingMindset(true);
+    setGeneratingProtocol(tipo);
     try {
       const { data: profile } = await supabase
         .from("profiles")
@@ -277,23 +277,32 @@ export default function AdminPlanos() {
         .eq("id", targetUserId)
         .single();
 
+      const { data: subscription } = await supabase
+        .from("subscriptions")
+        .select("plan_type")
+        .eq("user_id", targetUserId)
+        .eq("status", "active")
+        .maybeSingle();
+
       const { data, error } = await supabase.functions.invoke("generate-protocol", {
         body: {
-          tipo: "mindset",
+          tipo,
           userId: targetUserId,
           userContext: profile,
+          planType: subscription?.plan_type || "mensal",
         },
       });
 
       if (error) throw error;
       
-      toast.success("Protocolo de mindset gerado com sucesso!");
+      const tipoLabel = tipo === "treino" ? "treino" : tipo === "nutricao" ? "nutrição" : "mindset";
+      toast.success(`Protocolo de ${tipoLabel} gerado com sucesso!`);
       fetchProtocols();
     } catch (error: any) {
-      console.error("Error generating mindset:", error);
-      toast.error(error.message || "Erro ao gerar protocolo de mindset");
+      console.error(`Error generating ${tipo}:`, error);
+      toast.error(error.message || `Erro ao gerar protocolo de ${tipo}`);
     } finally {
-      setGeneratingMindset(false);
+      setGeneratingProtocol(null);
     }
   };
 
@@ -432,10 +441,42 @@ export default function AdminPlanos() {
               </TabsList>
 
               <TabsContent value="treino">
+                {userId && treinoProtocols.length === 0 && (
+                  <div className="mb-4">
+                    <Button 
+                      variant="fire" 
+                      onClick={() => handleGenerateProtocol(userId, "treino")}
+                      disabled={generatingProtocol !== null}
+                    >
+                      {generatingProtocol === "treino" ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      Gerar Protocolo de Treino
+                    </Button>
+                  </div>
+                )}
                 <ProtocolTable protocols={treinoProtocols} tipo="treino" />
               </TabsContent>
 
               <TabsContent value="nutricao">
+                {userId && nutricaoProtocols.length === 0 && (
+                  <div className="mb-4">
+                    <Button 
+                      variant="fire" 
+                      onClick={() => handleGenerateProtocol(userId, "nutricao")}
+                      disabled={generatingProtocol !== null}
+                    >
+                      {generatingProtocol === "nutricao" ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      Gerar Protocolo de Nutrição
+                    </Button>
+                  </div>
+                )}
                 <ProtocolTable protocols={nutricaoProtocols} tipo="nutricao" />
               </TabsContent>
 
@@ -444,10 +485,10 @@ export default function AdminPlanos() {
                   <div className="mb-4">
                     <Button 
                       variant="fire" 
-                      onClick={() => handleGenerateMindset(userId)}
-                      disabled={generatingMindset}
+                      onClick={() => handleGenerateProtocol(userId, "mindset")}
+                      disabled={generatingProtocol !== null}
                     >
-                      {generatingMindset ? (
+                      {generatingProtocol === "mindset" ? (
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       ) : (
                         <Sparkles className="h-4 w-4 mr-2" />
