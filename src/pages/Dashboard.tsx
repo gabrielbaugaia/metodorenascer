@@ -106,6 +106,7 @@ export default function Dashboard() {
   useActivityTracker();
   const navigate = useNavigate();
   const [checkingAnamnese, setCheckingAnamnese] = useState(true);
+  const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -121,15 +122,21 @@ export default function Dashboard() {
   }, [isAdmin, authLoading, adminLoading, navigate]);
 
   useEffect(() => {
-    const checkAnamnese = async () => {
+    const checkAnamneseAndGetName = async () => {
       if (!user) return;
       
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("age, weight, height, goals, anamnese_completa")
+          .select("age, weight, height, goals, anamnese_completa, full_name")
           .eq("id", user.id)
           .single();
+        
+        // Set user's first name for greeting
+        if (data?.full_name) {
+          const firstName = data.full_name.split(" ")[0];
+          setUserName(firstName.toUpperCase());
+        }
         
         // Check if anamnese is complete (either by flag or by essential fields)
         const hasEssentialData = !!(data?.age && data?.weight && data?.height && data?.goals);
@@ -148,7 +155,7 @@ export default function Dashboard() {
     };
     
     if (!subLoading) {
-      checkAnamnese();
+      checkAnamneseAndGetName();
     }
   }, [user, subscribed, isAdmin, subLoading, navigate]);
 
@@ -199,7 +206,7 @@ export default function Dashboard() {
         <div className="mb-8 flex items-start justify-between">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold uppercase text-foreground mb-2">
-              BEM-VINDO, <span className="text-primary">GUERREIRO</span>
+              BEM-VINDO, <span className="text-primary">{userName || "ALUNO"}</span>
             </h1>
             <p className="text-muted-foreground">Sua jornada de transformacao continua hoje</p>
           </div>
