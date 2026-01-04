@@ -104,7 +104,7 @@ export default function AdminClienteDetalhes() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [generatingProtocols, setGeneratingProtocols] = useState(false);
+  const [generatingProtocol, setGeneratingProtocol] = useState<string | null>(null);
   const [assigningPlan, setAssigningPlan] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
@@ -216,10 +216,10 @@ export default function AdminClienteDetalhes() {
     }
   };
 
-  const handleGenerateAllProtocols = async () => {
+  const handleGenerateProtocol = async (tipo: "treino" | "nutricao" | "mindset") => {
     if (!id) return;
 
-    setGeneratingProtocols(true);
+    setGeneratingProtocol(tipo);
     try {
       // Fetch profile for context
       const { data: profileData } = await supabase
@@ -228,26 +228,43 @@ export default function AdminClienteDetalhes() {
         .eq("id", id)
         .single();
 
-      // Generate all 3 protocols
-      const types = ["treino", "nutricao", "mindset"];
+      // Mark existing protocols of this type as inactive
+      await supabase
+        .from("protocolos")
+        .update({ ativo: false })
+        .eq("user_id", id)
+        .eq("tipo", tipo);
+
+      const { error } = await supabase.functions.invoke("generate-protocol", {
+        body: {
+          tipo,
+          userId: id,
+          userContext: profileData,
+          planType: subscription?.plan_type || "mensal",
+        },
+      });
+
+      if (error) throw error;
+
+      const tipoLabel = tipo === "treino" ? "treino" : tipo === "nutricao" ? "nutrição" : "mindset";
+      toast.success(`Protocolo de ${tipoLabel} gerado com sucesso!`);
+    } catch (error: any) {
+      console.error(`Error generating ${tipo} protocol:`, error);
+      toast.error(error.message || `Erro ao gerar protocolo de ${tipo}`);
+    } finally {
+      setGeneratingProtocol(null);
+    }
+  };
+
+  const handleGenerateAllProtocols = async () => {
+    if (!id) return;
+
+    setGeneratingProtocol("all");
+    try {
+      const types: Array<"treino" | "nutricao" | "mindset"> = ["treino", "nutricao", "mindset"];
       
       for (const tipo of types) {
-        // Mark existing protocols of this type as inactive to avoid duplicates
-        await supabase
-          .from("protocolos")
-          .update({ ativo: false })
-          .eq("user_id", id)
-          .eq("tipo", tipo);
-
-        const { error } = await supabase.functions.invoke("generate-protocol", {
-          body: {
-            tipo,
-            userId: id,
-            userContext: profileData,
-          },
-        });
-
-        if (error) throw error;
+        await handleGenerateProtocolSilent(tipo);
       }
 
       toast.success("Todos os protocolos gerados com sucesso!");
@@ -255,8 +272,35 @@ export default function AdminClienteDetalhes() {
       console.error("Error generating protocols:", error);
       toast.error(error.message || "Erro ao gerar protocolos");
     } finally {
-      setGeneratingProtocols(false);
+      setGeneratingProtocol(null);
     }
+  };
+
+  const handleGenerateProtocolSilent = async (tipo: "treino" | "nutricao" | "mindset") => {
+    // Fetch profile for context
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    // Mark existing protocols of this type as inactive
+    await supabase
+      .from("protocolos")
+      .update({ ativo: false })
+      .eq("user_id", id)
+      .eq("tipo", tipo);
+
+    const { error } = await supabase.functions.invoke("generate-protocol", {
+      body: {
+        tipo,
+        userId: id,
+        userContext: profileData,
+        planType: subscription?.plan_type || "mensal",
+      },
+    });
+
+    if (error) throw error;
   };
 
   const handleResetPassword = async () => {
@@ -429,24 +473,68 @@ export default function AdminClienteDetalhes() {
               </div>
 
               {/* Generate Protocols */}
-              <div>
-                <Label className="mb-2 block">Gerar Protocolos</Label>
+              <div className="space-y-3">
+                <Label className="block">Gerar Protocolos</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleGenerateProtocol("treino")} 
+                    disabled={generatingProtocol !== null}
+                    size="sm"
+                    className="w-full"
+                  >
+                    {generatingProtocol === "treino" ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    Treino
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleGenerateProtocol("nutricao")} 
+                    disabled={generatingProtocol !== null}
+                    size="sm"
+                    className="w-full"
+                  >
+                    {generatingProtocol === "nutricao" ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    Nutrição
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleGenerateProtocol("mindset")} 
+                    disabled={generatingProtocol !== null}
+                    size="sm"
+                    className="w-full"
+                  >
+                    {generatingProtocol === "mindset" ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    Mindset
+                  </Button>
+                </div>
                 <Button 
                   variant="fire" 
                   onClick={handleGenerateAllProtocols} 
-                  disabled={generatingProtocols}
+                  disabled={generatingProtocol !== null}
                   className="w-full"
                   size="sm"
                 >
-                  {generatingProtocols ? (
+                  {generatingProtocol === "all" ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
                     <Sparkles className="h-4 w-4 mr-2" />
                   )}
-                  <span className="text-xs sm:text-sm">Gerar Protocolos (Treino + Nutrição + Mindset)</span>
+                  <span className="text-xs sm:text-sm">Gerar Todos (Treino + Nutrição + Mindset)</span>
                 </Button>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Gera automaticamente os 3 protocolos baseados na anamnese do cliente
+                <p className="text-xs text-muted-foreground">
+                  Gera protocolos baseados na anamnese do cliente
                 </p>
               </div>
 
