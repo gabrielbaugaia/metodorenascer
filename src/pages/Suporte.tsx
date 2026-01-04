@@ -20,7 +20,8 @@ import {
   HelpCircle, 
   ChefHat,
   Bot,
-  User as UserIcon
+  User as UserIcon,
+  Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -399,12 +400,34 @@ export default function Suporte() {
     }
   };
 
+  const clearHistory = async () => {
+    if (!user) return;
+    
+    try {
+      // Delete conversation from database if exists
+      if (conversaId) {
+        await supabase
+          .from("conversas")
+          .delete()
+          .eq("id", conversaId);
+      }
+      
+      // Clear local state
+      setMessages([]);
+      setConversaId(null);
+      toast.success("Histórico limpo com sucesso");
+    } catch (error) {
+      console.error("Error clearing history:", error);
+      toast.error("Erro ao limpar histórico");
+    }
+  };
+
   return (
     <ClientLayout>
       <div className="max-w-5xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-bold uppercase">Suporte</h1>
-          <p className="text-muted-foreground">Tire suas dúvidas com nosso mentor IA ou consulte o FAQ</p>
+          <p className="text-muted-foreground">Tire suas dúvidas com nosso mentor ou consulte o FAQ</p>
         </div>
 
         <Tabs defaultValue="chat" className="space-y-6">
@@ -421,11 +444,22 @@ export default function Suporte() {
 
           <TabsContent value="chat">
             <Card variant="glass" className="h-[600px] flex flex-col">
-              <CardHeader className="border-b border-border/50">
+              <CardHeader className="border-b border-border/50 flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-lg uppercase">
                   <Bot className="h-5 w-5 text-primary" />
                   Como posso te ajudar?
                 </CardTitle>
+                {messages.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearHistory}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Limpar
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="flex-1 flex flex-col p-0">
                 <ScrollArea className="flex-1 p-4" ref={scrollRef}>
