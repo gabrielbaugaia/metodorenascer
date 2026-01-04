@@ -33,7 +33,22 @@ interface Message {
 interface Profile {
   full_name: string;
   weight: number | null;
+  height: number | null;
   goals: string | null;
+  objective_primary: string | null;
+  objetivo_principal: string | null;
+  local_treino: string | null;
+  dias_disponiveis: string | null;
+  horario_treino: string | null;
+  nivel_experiencia: string | null;
+  restricoes_medicas: string | null;
+  restricoes_alimentares: string | null;
+}
+
+interface ProtocoloStatus {
+  temTreino: boolean;
+  temNutricao: boolean;
+  temMindset: boolean;
 }
 
 const faqs = [
@@ -78,6 +93,7 @@ export default function Suporte() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [protocolos, setProtocolos] = useState<ProtocoloStatus>({ temTreino: false, temNutricao: false, temMindset: false });
   const [conversaId, setConversaId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -86,13 +102,28 @@ export default function Suporte() {
     const fetchData = async () => {
       if (!user) return;
       
-      // Fetch profile
+      // Fetch profile with complete data
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("full_name, weight, goals")
+        .select("full_name, weight, height, goals, objective_primary, objetivo_principal, local_treino, dias_disponiveis, horario_treino, nivel_experiencia, restricoes_medicas, restricoes_alimentares")
         .eq("id", user.id)
         .single();
       if (profileData) setProfile(profileData);
+
+      // Fetch user protocols status
+      const { data: protocolosData } = await supabase
+        .from("protocolos")
+        .select("tipo, ativo")
+        .eq("user_id", user.id)
+        .eq("ativo", true);
+      
+      if (protocolosData) {
+        setProtocolos({
+          temTreino: protocolosData.some(p => p.tipo === "treino"),
+          temNutricao: protocolosData.some(p => p.tipo === "nutricao"),
+          temMindset: protocolosData.some(p => p.tipo === "mindset")
+        });
+      }
       
       // Fetch chat history
       const { data: conversaData } = await supabase
@@ -177,7 +208,10 @@ export default function Suporte() {
           body: JSON.stringify({
             messages: [...messages, userMessage],
             type: "mentor",
-            userContext: profile,
+            userContext: {
+              ...profile,
+              protocolos: protocolos
+            },
           }),
         }
       );
