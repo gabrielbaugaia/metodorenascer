@@ -84,6 +84,34 @@ serve(async (req) => {
         checkinInfo += `- Treinos marcados como concluídos: ${progressData.treinos_completos}\n`;
       }
 
+      // Extract subscription info
+      const subscriptionData = userContext?.assinatura || {};
+      let subscriptionInfo = "\nASSSINATURA:\n";
+      if (subscriptionData.plano) {
+        subscriptionInfo += `- Plano: ${subscriptionData.plano}\n`;
+        subscriptionInfo += `- Status: ${subscriptionData.status === 'active' ? 'Ativo' : subscriptionData.status === 'past_due' ? 'Pagamento pendente' : subscriptionData.status === 'canceled' ? 'Cancelado' : subscriptionData.status || 'Não informado'}\n`;
+        
+        if (subscriptionData.dataInicio) {
+          const dataInicio = new Date(subscriptionData.dataInicio).toLocaleDateString('pt-BR');
+          subscriptionInfo += `- Início da assinatura: ${dataInicio}\n`;
+        }
+        if (subscriptionData.dataTermino) {
+          const dataTermino = new Date(subscriptionData.dataTermino).toLocaleDateString('pt-BR');
+          subscriptionInfo += `- Término/Renovação: ${dataTermino}\n`;
+        }
+        if (subscriptionData.diasRestantes !== null) {
+          if (subscriptionData.diasRestantes === 0) {
+            subscriptionInfo += `- Status do período: EXPIRA HOJE - orientar a renovar na seção 'Assinatura'\n`;
+          } else if (subscriptionData.diasRestantes <= 7) {
+            subscriptionInfo += `- Dias até renovação: ${subscriptionData.diasRestantes} (PRÓXIMO DA RENOVAÇÃO)\n`;
+          } else {
+            subscriptionInfo += `- Dias até renovação: ${subscriptionData.diasRestantes}\n`;
+          }
+        }
+      } else {
+        subscriptionInfo += `- Sem assinatura ativa encontrada\n`;
+      }
+
       systemPrompt = `Você é Gabriel Baú, mentor fitness do Método Renascer. Você é um especialista em transformação corporal com mais de 10 anos de experiência. Seu papel é:
 
 1. Motivar e apoiar o cliente em sua jornada de transformação
@@ -106,6 +134,7 @@ DADOS DO CLIENTE:
 
 ${protocolInfo}
 ${checkinInfo}
+${subscriptionInfo}
 
 REGRAS IMPORTANTES:
 - Sempre responda em português brasileiro

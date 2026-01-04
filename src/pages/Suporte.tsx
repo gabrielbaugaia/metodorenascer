@@ -63,6 +63,14 @@ interface ProgressInfo {
   treinos_completos: number;
 }
 
+interface SubscriptionInfo {
+  plano: string | null;
+  status: string | null;
+  dataInicio: string | null;
+  dataTermino: string | null;
+  diasRestantes: number | null;
+}
+
 const faqs = [
   {
     question: "Como funciona o plano de treino?",
@@ -108,6 +116,7 @@ export default function Suporte() {
   const [protocolos, setProtocolos] = useState<ProtocoloStatus>({ temTreino: false, temNutricao: false, temMindset: false });
   const [checkinInfo, setCheckinInfo] = useState<CheckinInfo | null>(null);
   const [progressInfo, setProgressInfo] = useState<ProgressInfo | null>(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
   const [conversaId, setConversaId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -179,6 +188,33 @@ export default function Suporte() {
       setProgressInfo({
         treinos_completos: workoutCount || 0
       });
+
+      // Fetch subscription data
+      const { data: subscriptionData } = await supabase
+        .from("subscriptions")
+        .select("plan_name, status, started_at, current_period_end")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (subscriptionData) {
+        let diasRestantes: number | null = null;
+        if (subscriptionData.current_period_end) {
+          const endDate = new Date(subscriptionData.current_period_end);
+          const today = new Date();
+          const diffDays = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          diasRestantes = diffDays > 0 ? diffDays : 0;
+        }
+
+        setSubscriptionInfo({
+          plano: subscriptionData.plan_name,
+          status: subscriptionData.status,
+          dataInicio: subscriptionData.started_at,
+          dataTermino: subscriptionData.current_period_end,
+          diasRestantes
+        });
+      }
       
       // Fetch chat history
       const { data: conversaData } = await supabase
@@ -267,7 +303,8 @@ export default function Suporte() {
               ...profile,
               protocolos: protocolos,
               checkin: checkinInfo,
-              progresso: progressInfo
+              progresso: progressInfo,
+              assinatura: subscriptionInfo
             },
           }),
         }
