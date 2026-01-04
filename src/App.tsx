@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import Index from "./pages/Index";
-import PreLaunchIndex from "./pages/PreLaunchIndex";
 import Auth from "./pages/Auth";
 import Convite from "./pages/Convite";
 import Dashboard from "./pages/Dashboard";
@@ -37,7 +36,7 @@ import AdminPlanosVenda from "./pages/admin/AdminPlanosVenda";
 import AdminMetricas from "./pages/admin/AdminMetricas";
 import AdminConvites from "./pages/admin/AdminConvites";
 import AdminLeads from "./pages/admin/AdminLeads";
-import Lancamento from "./pages/Lancamento";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -55,7 +54,6 @@ const App = () => (
             <Route path="/entrar" element={<Auth />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/convite" element={<Convite />} />
-            <Route path="/lancamento" element={<Lancamento />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/anamnese" element={<Anamnese />} />
             <Route path="/checkout-success" element={<CheckoutSuccess />} />
