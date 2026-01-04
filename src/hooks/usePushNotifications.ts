@@ -12,7 +12,7 @@ interface NotificationPreferences {
   workout_completed_enabled: boolean;
 }
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+const VAPID_PUBLIC_KEY = "BNZ08K43QnOQZK8jPPUczn45yepS8kQ_4p4-Iv7-0qNyLfGlyPpvNughcc_MI6RFqPZIDvXPdG4Ha_HFoYRsIBE";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
