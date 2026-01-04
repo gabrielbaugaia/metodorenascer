@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check } from "lucide-react";
@@ -6,9 +7,13 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-const plans = [
+const MAX_EMBAIXADOR_MEMBERS = 25;
+
+const allPlans = [
   {
+    id: "embaixador",
     name: "Embaixador",
     price: "49,90",
     period: "/mês",
@@ -19,6 +24,7 @@ const plans = [
     promotional: true
   },
   {
+    id: "mensal",
     name: "Mensal",
     price: "197",
     period: "/mês",
@@ -27,6 +33,7 @@ const plans = [
     popular: false
   },
   {
+    id: "trimestral",
     name: "Trimestral",
     price: "497",
     period: "/3 meses",
@@ -36,6 +43,7 @@ const plans = [
     popular: false
   },
   {
+    id: "semestral",
     name: "Semestral",
     price: "697",
     period: "/6 meses",
@@ -45,6 +53,7 @@ const plans = [
     popular: false
   },
   {
+    id: "anual",
     name: "Anual",
     price: "997",
     period: "/ano",
@@ -60,6 +69,27 @@ export function PricingSection() {
   const { createCheckout } = useSubscription();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [embaixadorCount, setEmbaixadorCount] = useState(0);
+
+  useEffect(() => {
+    const fetchEmbaixadorCount = async () => {
+      const { count } = await supabase
+        .from("subscriptions")
+        .select("*", { count: "exact", head: true })
+        .eq("plan_type", "embaixador")
+        .eq("status", "active");
+      setEmbaixadorCount(count || 0);
+    };
+    fetchEmbaixadorCount();
+  }, []);
+
+  // Filter out Embaixador plan if limit reached
+  const plans = allPlans.filter(plan => {
+    if (plan.id === "embaixador" && embaixadorCount >= MAX_EMBAIXADOR_MEMBERS) {
+      return false;
+    }
+    return true;
+  });
 
   const handleSelectPlan = async (priceId: string) => {
     if (!user) {
