@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Camera, User, Phone, Mail, Loader2, Lock, Eye, EyeOff } from "lucide-react";
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
+import { createBodyPhotosSignedUrl } from "@/lib/bodyPhotos";
 
 interface ProfileData {
   full_name: string;
@@ -47,32 +48,6 @@ export default function MeuPerfil() {
     }
   }, [user]);
 
-  // Extrai o path do storage de uma URL completa ou retorna o path original
-  const extractStoragePath = (urlOrPath: string): string => {
-    if (!urlOrPath) return "";
-    // Se for URL completa do Supabase, extrai o path
-    const match = urlOrPath.match(/\/body-photos\/(.+?)(\?|$)/);
-    if (match) return match[1];
-    // Se já for um path limpo
-    return urlOrPath;
-  };
-
-  const getSignedAvatarUrl = async (urlOrPath: string) => {
-    const filePath = extractStoragePath(urlOrPath);
-    if (!filePath) throw new Error("Caminho inválido");
-
-    const { data, error } = await supabase.storage
-      .from("body-photos")
-      .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 dias
-
-    if (error || !data?.signedUrl) {
-      throw error || new Error("Não foi possível gerar a URL da imagem");
-    }
-
-    const separator = data.signedUrl.includes("?") ? "&" : "?";
-    return `${data.signedUrl}${separator}t=${Date.now()}`;
-  };
-
   const fetchProfile = async () => {
     try {
       const { data, error } = await supabase
@@ -88,7 +63,7 @@ export default function MeuPerfil() {
 
         if (data.foto_perfil_url) {
           try {
-            const signedUrl = await getSignedAvatarUrl(data.foto_perfil_url);
+            const signedUrl = await createBodyPhotosSignedUrl(data.foto_perfil_url);
             setAvatarSrc(signedUrl);
           } catch (e) {
             console.warn("Não foi possível carregar a foto de perfil:", e);
@@ -154,7 +129,7 @@ export default function MeuPerfil() {
 
       if (updateError) throw updateError;
 
-      const signedUrl = await getSignedAvatarUrl(filePath);
+      const signedUrl = await createBodyPhotosSignedUrl(filePath);
 
       setProfile((prev) => (prev ? { ...prev, foto_perfil_url: filePath } : null));
       setAvatarSrc(signedUrl);

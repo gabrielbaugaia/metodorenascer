@@ -963,37 +963,58 @@ export default function AdminClienteDetalhes() {
                 {profile.foto_frente_url && (
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground text-center">Frente</p>
-                    <a href={profile.foto_frente_url} target="_blank" rel="noopener noreferrer">
-                      <img 
-                        src={profile.foto_frente_url} 
-                        alt="Foto de frente" 
-                        className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                      />
-                    </a>
+                    {signedBodyPhotos.frente ? (
+                      <a href={signedBodyPhotos.frente} target="_blank" rel="noopener noreferrer">
+                        <img 
+                          src={signedBodyPhotos.frente} 
+                          alt="Foto corporal do cliente - Frente" 
+                          className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
                   </div>
                 )}
                 {profile.foto_lado_url && (
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground text-center">Lado</p>
-                    <a href={profile.foto_lado_url} target="_blank" rel="noopener noreferrer">
-                      <img 
-                        src={profile.foto_lado_url} 
-                        alt="Foto de lado" 
-                        className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                      />
-                    </a>
+                    {signedBodyPhotos.lado ? (
+                      <a href={signedBodyPhotos.lado} target="_blank" rel="noopener noreferrer">
+                        <img 
+                          src={signedBodyPhotos.lado} 
+                          alt="Foto corporal do cliente - Lado" 
+                          className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
                   </div>
                 )}
                 {profile.foto_costas_url && (
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground text-center">Costas</p>
-                    <a href={profile.foto_costas_url} target="_blank" rel="noopener noreferrer">
-                      <img 
-                        src={profile.foto_costas_url} 
-                        alt="Foto de costas" 
-                        className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                      />
-                    </a>
+                    {signedBodyPhotos.costas ? (
+                      <a href={signedBodyPhotos.costas} target="_blank" rel="noopener noreferrer">
+                        <img 
+                          src={signedBodyPhotos.costas} 
+                          alt="Foto corporal do cliente - Costas" 
+                          className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
+                          loading="lazy"
+                        />
+                      </a>
+                    ) : (
+                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
