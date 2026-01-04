@@ -2,19 +2,24 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const BODY_PHOTOS_BUCKET = "body-photos" as const;
 
+/**
+ * Extract the file path from a URL or path string for the body-photos bucket.
+ * Handles:
+ * - Direct paths: "userId/frente-123.jpeg"
+ * - Public URLs: ".../storage/v1/object/public/body-photos/userId/frente-123.jpeg"
+ * - Signed URLs: ".../storage/v1/object/sign/body-photos/userId/frente-123.jpeg?token=..."
+ */
 export function extractBodyPhotosPath(urlOrPath: string): string {
   if (!urlOrPath) return "";
 
-  // If it's already a path, normalize and return
+  // If it's already a simple path (no http), normalize and return
   if (!urlOrPath.startsWith("http")) {
     return urlOrPath.replace(/^\/+/, "");
   }
 
-  // URLs can be:
-  // - .../storage/v1/object/public/body-photos/<path>
-  // - .../storage/v1/object/sign/body-photos/<path>?token=...
-  // - .../body-photos/<path>?...
-  const match = urlOrPath.match(/\/body-photos\/([^?]+)(\?|$)/);
+  // Try to extract path from URLs - handles both /public/ and /sign/ patterns
+  // Pattern: .../body-photos/<path>?... or .../body-photos/<path>
+  const match = urlOrPath.match(/\/body-photos\/([^?#]+)/);
   if (!match?.[1]) return "";
 
   try {
@@ -24,6 +29,10 @@ export function extractBodyPhotosPath(urlOrPath: string): string {
   }
 }
 
+/**
+ * Create a signed URL for a file in the body-photos bucket.
+ * Accepts either a path or an existing URL (which will be converted to path first).
+ */
 export async function createBodyPhotosSignedUrl(
   urlOrPath: string,
   expiresInSeconds = 60 * 60 * 24 * 7
