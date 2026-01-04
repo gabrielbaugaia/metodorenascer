@@ -414,15 +414,30 @@ export default function Anamnese() {
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Flame className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">MÉTODO RENASCER</span>
           </div>
           <h1 className="text-3xl font-bold uppercase mb-2">Complete sua Anamnese</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             Preencha os dados abaixo para personalizar seu programa
           </p>
+          {/* Progress indicator */}
+          <div className="bg-card border border-border rounded-lg p-4">
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span className="text-muted-foreground">Progresso</span>
+              <span className="text-primary font-medium">
+                {Object.values(formData).filter(v => v !== "").length} de {Object.keys(formData).length} campos preenchidos
+              </span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${(Object.values(formData).filter(v => v !== "").length / Object.keys(formData).length) * 100}%` }}
+              />
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -945,10 +960,13 @@ export default function Anamnese() {
             disabled={loading}
           >
             {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Salvando...
-              </>
+              <div className="flex items-center gap-3">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <div className="text-left">
+                  <p className="font-medium">Gerando seus planos personalizados...</p>
+                  <p className="text-xs opacity-80">Isso pode levar até 1 minuto</p>
+                </div>
+              </div>
             ) : (
               "Finalizar e Gerar Planos"
             )}

@@ -131,24 +131,30 @@ export default function Nutricao() {
           <>
             {/* Macros overview */}
             {conteudo.macros && (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Card className="p-4 text-center bg-primary/10">
-                  <p className="text-2xl font-bold text-primary">
+                  <p className="text-xl md:text-2xl font-bold text-primary">
                     {conteudo.calorias_diarias || conteudo.macros.calorias_diarias || "--"}
                   </p>
-                  <p className="text-xs text-muted-foreground">Calorias/dia</p>
+                  <p className="text-xs text-muted-foreground">kcal/dia</p>
                 </Card>
                 <Card className="p-4 text-center bg-blue-500/10">
-                  <p className="text-2xl font-bold text-blue-500">
+                  <p className="text-xl md:text-2xl font-bold text-blue-500">
                     {conteudo.macros.proteinas_g || "--"}g
                   </p>
                   <p className="text-xs text-muted-foreground">Proteínas</p>
                 </Card>
                 <Card className="p-4 text-center bg-green-500/10">
-                  <p className="text-2xl font-bold text-green-500">
+                  <p className="text-xl md:text-2xl font-bold text-green-500">
                     {conteudo.macros.carboidratos_g || "--"}g
                   </p>
                   <p className="text-xs text-muted-foreground">Carboidratos</p>
+                </Card>
+                <Card className="p-4 text-center bg-yellow-500/10">
+                  <p className="text-xl md:text-2xl font-bold text-yellow-500">
+                    {conteudo.macros.gorduras_g || conteudo.macros.lipidios_g || "--"}g
+                  </p>
+                  <p className="text-xs text-muted-foreground">Gorduras</p>
                 </Card>
               </div>
             )}

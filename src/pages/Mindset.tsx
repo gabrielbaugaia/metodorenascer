@@ -113,15 +113,59 @@ export default function Mindset() {
     }
   };
 
-  const loadCheckedItems = () => {
-    const stored = localStorage.getItem(`mindset-progress-${user?.id}`);
-    if (stored) {
-      setCheckedItems(JSON.parse(stored));
+  const loadCheckedItems = async () => {
+    // Try to load from database first
+    if (!user) return;
+    
+    try {
+      const { data } = await supabase
+        .from("conversas")
+        .select("mensagens")
+        .eq("user_id", user.id)
+        .eq("tipo", "mindset_progress")
+        .maybeSingle();
+      
+      if (data?.mensagens) {
+        setCheckedItems(data.mensagens as Record<string, boolean>);
+      } else {
+        // Fallback to localStorage for migration
+        const stored = localStorage.getItem(`mindset-progress-${user.id}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setCheckedItems(parsed);
+          // Migrate to database
+          saveCheckedItems(parsed);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading mindset progress:", error);
+      // Fallback to localStorage
+      const stored = localStorage.getItem(`mindset-progress-${user.id}`);
+      if (stored) {
+        setCheckedItems(JSON.parse(stored));
+      }
     }
   };
 
-  const saveCheckedItems = (items: Record<string, boolean>) => {
+  const saveCheckedItems = async (items: Record<string, boolean>) => {
+    // Save to localStorage as backup
     localStorage.setItem(`mindset-progress-${user?.id}`, JSON.stringify(items));
+    
+    // Save to database
+    if (!user) return;
+    
+    try {
+      await supabase
+        .from("conversas")
+        .upsert({
+          user_id: user.id,
+          tipo: "mindset_progress",
+          mensagens: items as any,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "user_id,tipo" });
+    } catch (error) {
+      console.error("Error saving mindset progress:", error);
+    }
   };
 
   const toggleItem = (key: string) => {
@@ -307,7 +351,7 @@ export default function Mindset() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Accordion type="single" collapsible className="space-y-2">
+              <Accordion type="single" collapsible defaultValue="crenca-0" className="space-y-2">
                 {content.crencas_limitantes.map((item, index) => {
                   const crenca = item.crenca || item.crenca_original || "";
                   const acao = item.acao || item.acao_pratica || "";
