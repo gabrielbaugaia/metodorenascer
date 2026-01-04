@@ -10,6 +10,7 @@ import { ChefHat, Plus, X, Loader2, Sparkles, Bookmark, BookmarkCheck, Heart, Tr
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { formatRecipeContent } from "@/lib/sanitize";
 
 const popularIngredients = [
   "Frango", "Ovo", "Batata doce", "Arroz integral", "Brócolis",
@@ -376,13 +377,7 @@ export default function Receitas() {
                     <div 
                       className="text-muted-foreground leading-relaxed space-y-2"
                       dangerouslySetInnerHTML={{
-                        __html: recipe
-                          .replace(/## (.*?)(\n|$)/g, '<h2 class="text-lg font-bold text-foreground mt-4 mb-2">$1</h2>')
-                          .replace(/### (.*?)(\n|$)/g, '<h3 class="text-base font-semibold text-foreground mt-3 mb-1">$1</h3>')
-                          .replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>')
-                          .replace(/^- (.*?)$/gm, '<li class="ml-4">$1</li>')
-                          .replace(/^(\d+)\. (.*?)$/gm, '<li class="ml-4 list-decimal">$2</li>')
-                          .replace(/\n/g, '<br/>')
+                        __html: formatRecipeContent(recipe)
                       }}
                     />
                   </div>

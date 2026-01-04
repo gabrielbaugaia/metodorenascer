@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatAiContent } from "@/lib/sanitize";
 import { 
   Camera, 
   Loader2, 
@@ -345,12 +346,7 @@ export default function Evolucao() {
                 <div 
                   className="whitespace-pre-wrap text-sm leading-relaxed"
                   dangerouslySetInnerHTML={{ 
-                    __html: aiAnalysis
-                      .replace(/## /g, '<h2 class="text-lg font-bold text-primary mt-4 mb-2">')
-                      .replace(/### /g, '<h3 class="text-base font-semibold mt-3 mb-1">')
-                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                      .replace(/- /g, '• ')
-                      .replace(/\n/g, '<br/>')
+                    __html: formatAiContent(aiAnalysis)
                   }}
                 />
               </div>
@@ -638,12 +634,7 @@ export default function Evolucao() {
                             <div 
                               className="text-xs leading-relaxed whitespace-pre-wrap"
                               dangerouslySetInnerHTML={{ 
-                                __html: checkin.ai_analysis
-                                  .replace(/## /g, '<h4 class="text-sm font-bold text-primary mt-3 mb-1">')
-                                  .replace(/### /g, '<h5 class="text-xs font-semibold mt-2 mb-1">')
-                                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                                  .replace(/- /g, '• ')
-                                  .replace(/\n/g, '<br/>')
+                                __html: formatAiContent(checkin.ai_analysis, "compact")
                               }}
                             />
                           </div>
