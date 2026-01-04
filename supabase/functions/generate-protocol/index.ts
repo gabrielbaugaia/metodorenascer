@@ -18,6 +18,8 @@ const planDurationWeeks: Record<string, number> = {
   "trimestral": 12,
   "semestral": 24,
   "anual": 48,
+  "free": 4,
+  "gratuito": 4,
 };
 
 serve(async (req) => {
