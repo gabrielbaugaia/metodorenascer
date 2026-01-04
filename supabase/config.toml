@@ -26,3 +26,21 @@ verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.verify-admin]
+verify_jwt = true
+
+[functions.ai-mentor]
+verify_jwt = true
+
+[functions.generate-protocol]
+verify_jwt = true
+
+[functions.analyze-evolution]
+verify_jwt = true
+
+[functions.admin-create-user]
+verify_jwt = true
+
+[functions.admin-reset-password]
+verify_jwt = true

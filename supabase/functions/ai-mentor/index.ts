@@ -6,10 +6,25 @@ import {
   createSuccessResponse,
   mapErrorToUserMessage 
 } from "../_shared/cors.ts";
+import { 
+  getClientIdentifier, 
+  checkRateLimit, 
+  createRateLimitResponse,
+  STRICT_RATE_LIMIT 
+} from "../_shared/rateLimit.ts";
 
 serve(async (req) => {
   const preflightResponse = handleCorsPreflightRequest(req);
   if (preflightResponse) return preflightResponse;
+
+  // Apply rate limiting (10 requests per minute for AI endpoints)
+  const clientId = getClientIdentifier(req);
+  const rateCheck = checkRateLimit(clientId, STRICT_RATE_LIMIT);
+  
+  if (!rateCheck.allowed) {
+    console.log("[AI-MENTOR] Rate limit exceeded for:", clientId);
+    return createRateLimitResponse(rateCheck.resetAt);
+  }
 
   try {
     const { messages, type, userContext } = await req.json();
