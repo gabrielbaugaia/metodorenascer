@@ -110,13 +110,7 @@ export function useSubscription() {
     }
   }, [user, session?.access_token, checkSubscription]);
 
-  // Refresh subscription status every 60 seconds
-  useEffect(() => {
-    if (!user) return;
-
-    const interval = setInterval(checkSubscription, 60000);
-    return () => clearInterval(interval);
-  }, [user, checkSubscription]);
+  // Removed 60s polling - subscription status is checked on mount and on user action
 
   return {
     ...status,

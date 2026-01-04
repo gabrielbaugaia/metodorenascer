@@ -116,11 +116,11 @@ export default function Suporte() {
     fetchData();
   }, [user]);
 
-  // Save messages to database when they change
+  // Save messages to database with debounce to avoid excessive requests
   useEffect(() => {
-    const saveMessages = async () => {
-      if (!user || messages.length === 0 || loadingHistory) return;
-      
+    if (!user || messages.length === 0 || loadingHistory) return;
+    
+    const timeoutId = setTimeout(async () => {
       try {
         if (conversaId) {
           await supabase
@@ -146,9 +146,9 @@ export default function Suporte() {
       } catch (error) {
         console.error("Error saving chat history:", error);
       }
-    };
-    
-    saveMessages();
+    }, 1000); // Debounce de 1 segundo
+
+    return () => clearTimeout(timeoutId);
   }, [messages, user, conversaId, loadingHistory]);
 
   useEffect(() => {
