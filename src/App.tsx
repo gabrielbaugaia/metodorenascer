@@ -49,9 +49,8 @@ const App = () => (
         <BrowserRouter>
           <AnalyticsProvider>
           <Routes>
-            {/* PRÉ-LANÇAMENTO ATIVO: Trocar PreLaunchIndex por Index quando lançar oficialmente */}
-            <Route path="/" element={<PreLaunchIndex />} />
-            <Route path="/landing-original" element={<Index />} />
+            {/* LANÇAMENTO OFICIAL ATIVO */}
+            <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/entrar" element={<Auth />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
