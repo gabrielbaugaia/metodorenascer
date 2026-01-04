@@ -17,6 +17,10 @@ const VALID_PRICE_IDS = [
   "price_1ScZvCCuFZvf5xFdjrs51JQB", // Anual
 ];
 
+// Embaixador plan constants
+const EMBAIXADOR_PRICE_ID = "price_1ScZqTCuFZvf5xFdZuOBMzpt";
+const MAX_EMBAIXADOR_MEMBERS = 25;
+
 // 10% discount coupon ID for referral cashback
 const REFERRAL_DISCOUNT_PERCENT = 10;
 
@@ -39,16 +43,41 @@ serve(async (req) => {
     }
     logStep("Price ID received", { priceId, applyReferralDiscount });
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
-
-    // Use service role key to read/update cashback balance
+    // Use service role key to check embaixador count and cashback balance
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );
+
+    // Check Embaixador limit if user is trying to subscribe to that plan
+    if (priceId === EMBAIXADOR_PRICE_ID) {
+      const { count, error: countError } = await supabaseAdmin
+        .from("subscriptions")
+        .select("*", { count: "exact", head: true })
+        .eq("plan_type", "embaixador")
+        .eq("status", "active");
+      
+      if (countError) {
+        logStep("Error counting Embaixador subscriptions", { error: countError.message });
+      }
+      
+      const currentCount = count || 0;
+      logStep("Embaixador count checked", { currentCount, max: MAX_EMBAIXADOR_MEMBERS });
+      
+      if (currentCount >= MAX_EMBAIXADOR_MEMBERS) {
+        return new Response(
+          JSON.stringify({ 
+            error: "O plano ELITE Fundador atingiu o limite de 25 membros. Por favor, escolha outro plano." 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        );
+      }
+    }
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    logStep("Stripe key verified");
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",

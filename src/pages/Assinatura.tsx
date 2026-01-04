@@ -94,6 +94,8 @@ const plans = [
   },
 ];
 
+const MAX_EMBAIXADOR_MEMBERS = 25;
+
 export default function Assinatura() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -101,6 +103,7 @@ export default function Assinatura() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const [embaixadorCount, setEmbaixadorCount] = useState<number>(0);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -116,7 +119,7 @@ export default function Assinatura() {
 
   const fetchData = async () => {
     try {
-      const [subResult, profileResult] = await Promise.all([
+      const [subResult, profileResult, embaixadorResult] = await Promise.all([
         supabase
           .from("subscriptions")
           .select("*")
@@ -127,7 +130,12 @@ export default function Assinatura() {
           .from("profiles")
           .select("cashback_balance, full_name")
           .eq("id", user!.id)
-          .maybeSingle()
+          .maybeSingle(),
+        supabase
+          .from("subscriptions")
+          .select("*", { count: "exact", head: true })
+          .eq("plan_type", "embaixador")
+          .eq("status", "active")
       ]);
 
       if (subResult.data) {
@@ -136,12 +144,21 @@ export default function Assinatura() {
       if (profileResult.data) {
         setProfile(profileResult.data);
       }
+      setEmbaixadorCount(embaixadorResult.count || 0);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  // Filter out Embaixador plan if limit reached
+  const availablePlans = plans.filter(plan => {
+    if (plan.id === "embaixador" && embaixadorCount >= MAX_EMBAIXADOR_MEMBERS) {
+      return false;
+    }
+    return true;
+  });
 
   const handleRenewPlan = async (plan: typeof plans[0]) => {
     if (!user) return;
@@ -342,7 +359,7 @@ export default function Assinatura() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {plans.map((plan) => (
+            {availablePlans.map((plan) => (
               <Card 
                 key={plan.id} 
                 className={`relative transition-all hover:border-primary/50 ${
