@@ -4,6 +4,12 @@ import { getCorsHeaders, handleCorsPreflightRequest, createErrorResponse, create
 import { getTreinoSystemPrompt, getTreinoUserPrompt } from "./prompts/treino.ts";
 import { getNutricaoSystemPrompt, getNutricaoUserPrompt } from "./prompts/nutricao.ts";
 import { getMindsetSystemPrompt, getMindsetUserPrompt } from "./prompts/mindset.ts";
+import { 
+  validateTreinoProtocol, 
+  validateNutricaoProtocol, 
+  validateMindsetProtocol,
+  normalizeTreinoProtocol
+} from "./schemas.ts";
 
 // Mapear tipo de plano para duração em semanas
 const planDurationWeeks: Record<string, number> = {
@@ -44,9 +50,29 @@ serve(async (req) => {
     let systemPrompt = "";
     let userPrompt = "";
 
+    // P1 FIX: Buscar lista de exercícios ANTES de gerar o prompt
+    // para que a IA use nomes padronizados
+    let exerciseVideos: Record<string, string> = {};
+    let exerciseNames: string[] = [];
+    
+    if (tipo === "treino") {
+      const { data: videos } = await supabaseClient
+        .from("exercise_videos")
+        .select("exercise_name, video_url");
+      
+      if (videos) {
+        videos.forEach((v: { exercise_name: string; video_url: string }) => {
+          exerciseVideos[v.exercise_name.toLowerCase()] = v.video_url;
+          exerciseNames.push(v.exercise_name);
+        });
+        console.log(`Loaded ${videos.length} exercise videos from database`);
+      }
+    }
+
     // Selecionar prompts baseado no tipo
     if (tipo === "treino") {
-      systemPrompt = getTreinoSystemPrompt(durationWeeks, weeksPerCycle, totalCycles);
+      // P1 FIX: Passar lista de exercícios para o prompt
+      systemPrompt = getTreinoSystemPrompt(durationWeeks, weeksPerCycle, totalCycles, exerciseNames);
       userPrompt = getTreinoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, adjustments);
     } else if (tipo === "nutricao") {
       systemPrompt = getNutricaoSystemPrompt(durationWeeks, weeksPerCycle);
@@ -59,21 +85,6 @@ serve(async (req) => {
     }
 
     console.log(`Generating ${tipo} protocol for user ${userId}, plan: ${planType}, weeks: ${durationWeeks}`);
-
-    // Buscar banco de vídeos de exercícios para enriquecer os protocolos de treino
-    let exerciseVideos: Record<string, string> = {};
-    if (tipo === "treino") {
-      const { data: videos } = await supabaseClient
-        .from("exercise_videos")
-        .select("exercise_name, video_url");
-      
-      if (videos) {
-        videos.forEach((v: { exercise_name: string; video_url: string }) => {
-          exerciseVideos[v.exercise_name.toLowerCase()] = v.video_url;
-        });
-        console.log(`Loaded ${videos.length} exercise videos from database`);
-      }
-    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -125,8 +136,32 @@ serve(async (req) => {
       protocolData = JSON.parse(cleanContent);
     } catch (e) {
       console.error("Failed to parse protocol JSON:", content);
-      throw new Error("Erro ao processar protocolo gerado");
+      throw new Error("Erro ao processar protocolo gerado - JSON inválido");
     }
+
+    // P0 FIX: Validar schema do protocolo antes de salvar
+    let validationResult: { valid: boolean; errors: string[] };
+    if (tipo === "treino") {
+      // Normalizar campos numéricos antes de validar
+      normalizeTreinoProtocol(protocolData);
+      validationResult = validateTreinoProtocol(protocolData);
+    } else if (tipo === "nutricao") {
+      validationResult = validateNutricaoProtocol(protocolData);
+    } else {
+      validationResult = validateMindsetProtocol(protocolData);
+    }
+
+    if (!validationResult.valid) {
+      console.error(`Schema validation failed for ${tipo}:`, validationResult.errors);
+      // Log os primeiros 3 erros para debugging
+      console.error("First errors:", validationResult.errors.slice(0, 3));
+      // Continuar mesmo com erros menores, mas logar para análise
+      if (validationResult.errors.some(e => e.includes("é obrigatório"))) {
+        throw new Error(`Protocolo gerado com estrutura incompleta: ${validationResult.errors[0]}`);
+      }
+    }
+    
+    console.log(`Schema validation passed for ${tipo}`);
 
     // Enriquecer exercícios com URLs de vídeo do banco de dados
     if (tipo === "treino" && protocolData.semanas && Object.keys(exerciseVideos).length > 0) {

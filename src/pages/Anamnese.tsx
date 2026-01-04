@@ -153,10 +153,23 @@ export default function Anamnese() {
     }
 
     // Validate required fields
-    if (!formData.data_nascimento || !formData.weight || !formData.height || 
-        !formData.objetivo_principal || !formData.ja_treinou_antes || 
-        !formData.dias_disponiveis || !formData.nivel_condicionamento) {
-      toast.error("Preencha todos os campos obrigatórios");
+    const requiredFields = {
+      'data_nascimento': 'Data de nascimento',
+      'weight': 'Peso',
+      'height': 'Altura',
+      'objetivo_principal': 'Objetivo principal',
+      'ja_treinou_antes': 'Histórico de treino',
+      'dias_disponiveis': 'Dias disponíveis',
+      'nivel_condicionamento': 'Nível de condicionamento',
+      'horario_treino': 'Horário de treino (necessário para nutrição)'
+    };
+    
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key]) => !formData[key as keyof FormData])
+      .map(([, label]) => label);
+    
+    if (missingFields.length > 0) {
+      toast.error(`Preencha: ${missingFields.slice(0, 3).join(', ')}${missingFields.length > 3 ? '...' : ''}`);
       return;
     }
 
@@ -269,6 +282,8 @@ export default function Anamnese() {
         injuries: formData.injuries,
         restricoes_medicas: restricoesMedicasCompletas,
         toma_medicamentos: formData.toma_medicamentos === "sim",
+        // P0 FIX: Incluir detalhes dos medicamentos para a IA adaptar a dieta
+        medicamentos_detalhes: formData.medicamentos_detalhes,
         refeicoes_por_dia: formData.refeicoes_por_dia,
         bebe_agua_frequente: formData.bebe_agua_frequente === "sim",
         restricoes_alimentares: formData.restricoes_alimentares,
@@ -276,6 +291,10 @@ export default function Anamnese() {
         nivel_estresse: formData.nivel_estresse,
         consome_alcool: formData.consome_alcool,
         fuma: formData.fuma,
+        // P1 FIX: Horários obrigatórios para nutrição
+        horario_treino: formData.horario_treino,
+        horario_acorda: formData.horario_acorda,
+        horario_dorme: formData.horario_dorme,
         foto_frente_url: formData.foto_frente_url,
         foto_lado_url: formData.foto_lado_url,
         foto_costas_url: formData.foto_costas_url,
