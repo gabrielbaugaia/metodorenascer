@@ -45,10 +45,44 @@ serve(async (req) => {
       const temNutricao = protocolStatus.temNutricao === true;
       const temMindset = protocolStatus.temMindset === true;
 
-      let protocolInfo = "Status dos protocolos do cliente:\n";
+      let protocolInfo = "STATUS DOS PROTOCOLOS:\n";
       protocolInfo += `- Protocolo de Treino: ${temTreino ? "JÁ FOI GERADO e está disponível na seção 'Treino' do menu" : "AINDA NÃO FOI GERADO - orientar o cliente a aguardar que o admin irá gerar"}\n`;
       protocolInfo += `- Protocolo de Nutrição: ${temNutricao ? "JÁ FOI GERADO e está disponível na seção 'Nutrição' do menu" : "AINDA NÃO FOI GERADO - orientar o cliente a aguardar que o admin irá gerar"}\n`;
       protocolInfo += `- Protocolo de Mindset: ${temMindset ? "JÁ FOI GERADO e está disponível na seção 'Mindset' do menu" : "AINDA NÃO FOI GERADO - orientar o cliente a aguardar que o admin irá gerar"}\n`;
+
+      // Extract check-in and progress info
+      const checkinData = userContext?.checkin || {};
+      const progressData = userContext?.progresso || {};
+
+      let checkinInfo = "\nPROGRESSO E CHECK-INS:\n";
+      if (checkinData.ultimoCheckin) {
+        const ultimoCheckinDate = new Date(checkinData.ultimoCheckin).toLocaleDateString('pt-BR');
+        checkinInfo += `- Último check-in: ${ultimoCheckinDate}\n`;
+        checkinInfo += `- Total de check-ins realizados: ${checkinData.totalCheckins || 0}\n`;
+        
+        if (checkinData.pesoAtual) {
+          checkinInfo += `- Peso atual (último check-in): ${checkinData.pesoAtual}kg\n`;
+        }
+        if (checkinData.pesoInicial && checkinData.pesoAtual) {
+          const diferenca = (checkinData.pesoAtual - checkinData.pesoInicial).toFixed(1);
+          const sinal = parseFloat(diferenca) >= 0 ? "+" : "";
+          checkinInfo += `- Variação de peso desde o início: ${sinal}${diferenca}kg\n`;
+        }
+        if (checkinData.diasParaProximoCheckin !== null) {
+          if (checkinData.diasParaProximoCheckin === 0) {
+            checkinInfo += `- Próximo check-in: DISPONÍVEL AGORA - orientar a acessar seção 'Evolução'\n`;
+          } else {
+            checkinInfo += `- Próximo check-in em: ${checkinData.diasParaProximoCheckin} dias\n`;
+          }
+        }
+      } else {
+        checkinInfo += `- Ainda não realizou nenhum check-in de evolução\n`;
+        checkinInfo += `- Orientar a fazer o primeiro check-in na seção 'Evolução' para acompanhar progresso\n`;
+      }
+
+      if (progressData.treinos_completos !== undefined) {
+        checkinInfo += `- Treinos marcados como concluídos: ${progressData.treinos_completos}\n`;
+      }
 
       systemPrompt = `Você é Gabriel Baú, mentor fitness do Método Renascer. Você é um especialista em transformação corporal com mais de 10 anos de experiência. Seu papel é:
 
@@ -60,7 +94,7 @@ serve(async (req) => {
 
 DADOS DO CLIENTE:
 - Nome: ${userContext?.full_name || "Cliente"}
-- Peso: ${userContext?.weight ? userContext.weight + "kg" : "Não informado"}
+- Peso cadastrado: ${userContext?.weight ? userContext.weight + "kg" : "Não informado"}
 - Altura: ${userContext?.height ? userContext.height + "cm" : "Não informada"}
 - Objetivo: ${userContext?.objetivo_principal || userContext?.objective_primary || userContext?.goals || "Não informado"}
 - Local de treino: ${userContext?.local_treino || "Não informado"}
@@ -71,6 +105,7 @@ DADOS DO CLIENTE:
 - Restrições alimentares: ${userContext?.restricoes_alimentares || "Nenhuma informada"}
 
 ${protocolInfo}
+${checkinInfo}
 
 REGRAS IMPORTANTES:
 - Sempre responda em português brasileiro
