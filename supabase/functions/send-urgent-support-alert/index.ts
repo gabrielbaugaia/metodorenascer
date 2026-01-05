@@ -83,10 +83,10 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`[${requestId}] ✓ Alert saved to database`);
     }
 
-    // 2. Use fixed email while domain is not verified in Resend
+    // 2. Send to admin email
     console.log(`[${requestId}] Step 4: Preparing email...`);
     const adminEmail = "gabrielbaugaia@gmail.com";
-    console.log(`[${requestId}] Sending to: ${adminEmail} (domain not verified in Resend)`);
+    console.log(`[${requestId}] Sending to: ${adminEmail}`);
 
     // 3. Send urgent email alert
     const keywordsList = keywordsDetected.length > 0 
@@ -96,7 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`[${requestId}] Step 5: Sending email via Resend...`);
 
     const emailResponse = await resend.emails.send({
-      from: "Suporte Urgente <onboarding@resend.dev>",
+      from: "Suporte Urgente <noreply@renascerapp.com.br>",
       to: [adminEmail],
       subject: `🚨 SUPORTE URGENTE - ${clientName}`,
       html: `
