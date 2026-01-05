@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Upload, X, Loader2, AlertTriangle } from "lucide-react";
+import { Upload, X, Loader2, AlertTriangle, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PhotoStandardGuide } from "./PhotoStandardGuide";
+import { PhotoUploadSection } from "./PhotoUploadSection";
+import { BodyAnalysisResult } from "./BodyAnalysisResult";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
 
 interface ScheduleAndPhotosFieldsProps {
   formData: {
@@ -17,12 +21,33 @@ interface ScheduleAndPhotosFieldsProps {
     foto_lado_url: string;
     foto_costas_url: string;
     observacoes_adicionais: string;
+    weight?: string;
+    height?: string;
+    sexo?: string;
+    objetivo_principal?: string;
+    data_nascimento?: string;
   };
   userId: string;
+  userName?: string;
   onChange: (field: string, value: string) => void;
 }
 
-export function ScheduleAndPhotosFields({ formData, userId, onChange }: ScheduleAndPhotosFieldsProps) {
+interface BodyAnalysis {
+  resumoGeral: string;
+  biotipo?: {
+    tipo: string;
+    descricao: string;
+  };
+  composicaoCorporal?: {
+    percentualGorduraEstimado: string;
+    classificacao: string;
+    distribuicaoGordura: string;
+    massaMuscular: string;
+  };
+  [key: string]: unknown;
+}
+
+export function ScheduleAndPhotosFields({ formData, userId, userName, onChange }: ScheduleAndPhotosFieldsProps) {
   const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null);
   const [validatingPhoto, setValidatingPhoto] = useState<string | null>(null);
   const [photoPreview, setPhotoPreview] = useState({
@@ -30,6 +55,73 @@ export function ScheduleAndPhotosFields({ formData, userId, onChange }: Schedule
     lado: "",
     costas: "",
   });
+  const [bodyAnalysis, setBodyAnalysis] = useState<BodyAnalysis | null>(null);
+  const [analyzingBody, setAnalyzingBody] = useState(false);
+  const [analysisOpen, setAnalysisOpen] = useState(true);
+
+  // Calculate age from birth date
+  const calculateAge = (birthDate: string): number => {
+    if (!birthDate) return 0;
+    const birth = new Date(birthDate);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Trigger body analysis when all 3 photos are uploaded
+  useEffect(() => {
+    const hasAllPhotos = photoPreview.frente && photoPreview.lado && photoPreview.costas;
+    const hasAllUrls = formData.foto_frente_url && formData.foto_lado_url && formData.foto_costas_url;
+    
+    if (hasAllPhotos && hasAllUrls && !bodyAnalysis && !analyzingBody) {
+      runBodyAnalysis();
+    }
+  }, [formData.foto_frente_url, formData.foto_lado_url, formData.foto_costas_url, photoPreview]);
+
+  const runBodyAnalysis = async () => {
+    if (!photoPreview.frente || !photoPreview.lado || !photoPreview.costas) return;
+    
+    setAnalyzingBody(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-body-composition", {
+        body: {
+          photos: {
+            frente: photoPreview.frente,
+            lado: photoPreview.lado,
+            costas: photoPreview.costas,
+          },
+          clientData: {
+            name: userName || "Cliente",
+            age: calculateAge(formData.data_nascimento || ""),
+            weight: formData.weight,
+            height: formData.height,
+            sex: formData.sexo,
+            goal: formData.objetivo_principal,
+          },
+        },
+      });
+
+      if (error) {
+        console.error("Body analysis error:", error);
+        toast.error("Não foi possível gerar a análise corporal");
+        return;
+      }
+
+      if (data?.analysis) {
+        setBodyAnalysis(data.analysis);
+        toast.success("Avaliação física gerada com sucesso!");
+      }
+    } catch (err) {
+      console.error("Body analysis failed:", err);
+    } finally {
+      setAnalyzingBody(false);
+    }
+  };
 
   const validatePhotoWithAI = async (base64Image: string): Promise<{ valid: boolean; reason: string }> => {
     try {
@@ -111,68 +203,8 @@ export function ScheduleAndPhotosFields({ formData, userId, onChange }: Schedule
   const removePhoto = (type: 'frente' | 'lado' | 'costas') => {
     setPhotoPreview(prev => ({ ...prev, [type]: "" }));
     onChange(`foto_${type}_url`, "");
-  };
-
-  const PhotoUploadBox = ({ type, label }: { type: 'frente' | 'lado' | 'costas'; label: string }) => {
-    const isUploading = uploadingPhoto === type;
-    const isValidating = validatingPhoto === type;
-    const isProcessing = isUploading || isValidating;
-
-    return (
-      <div className="space-y-2">
-        <Label>{label}</Label>
-        <div className="relative">
-          {photoPreview[type] ? (
-            <div className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border">
-              <img 
-                src={photoPreview[type]} 
-                alt={`Foto de ${type}`} 
-                className="w-full h-full object-cover"
-              />
-              {isProcessing && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-1" />
-                    <span className="text-xs">{isValidating ? "Validando..." : "Enviando..."}</span>
-                  </div>
-                </div>
-              )}
-              {!isProcessing && (
-                <button
-                  type="button"
-                  onClick={() => removePhoto(type)}
-                  className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          ) : (
-            <label className="flex flex-col items-center justify-center aspect-[3/4] border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-muted/20">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handlePhotoUpload(e, type)}
-                className="hidden"
-                disabled={isProcessing}
-              />
-              {isProcessing ? (
-                <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-1" />
-                  <span className="text-xs text-muted-foreground">{isValidating ? "Validando..." : "Enviando..."}</span>
-                </div>
-              ) : (
-                <>
-                  <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">Clique para selecionar</span>
-                  <span className="text-xs text-muted-foreground mt-1">Máximo 10MB</span>
-                </>
-              )}
-            </label>
-          )}
-        </div>
-      </div>
-    );
+    // Reset analysis when a photo is removed
+    setBodyAnalysis(null);
   };
 
   return (
@@ -222,27 +254,53 @@ export function ScheduleAndPhotosFields({ formData, userId, onChange }: Schedule
       </Card>
 
       {/* Fotos Obrigatórias */}
-      <Card className="border-primary/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Fotos Corporais <span className="text-destructive">*</span>
-          </CardTitle>
-          <CardDescription>
-            <span className="text-destructive font-medium">Obrigatório:</span> Envie as 3 fotos abaixo para liberar acesso às suas prescrições personalizadas.
-            As fotos são essenciais para análise postural e acompanhamento de evolução.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Photo Standard Guide */}
-          <PhotoStandardGuide />
-          
-          <div className="grid grid-cols-3 gap-4">
-            <PhotoUploadBox type="frente" label="Frente *" />
-            <PhotoUploadBox type="lado" label="Lado *" />
-            <PhotoUploadBox type="costas" label="Costas *" />
-          </div>
-        </CardContent>
-      </Card>
+      <PhotoUploadSection
+        photoPreview={photoPreview}
+        uploadingPhoto={uploadingPhoto}
+        validatingPhoto={validatingPhoto}
+        onUpload={handlePhotoUpload}
+        onRemove={removePhoto}
+      />
+
+      {/* Body Analysis Result */}
+      {analyzingBody && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="py-8">
+            <div className="flex flex-col items-center justify-center text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+              <h3 className="font-medium mb-1">Analisando sua composição corporal...</h3>
+              <p className="text-sm text-muted-foreground">
+                Nossa IA está avaliando suas fotos para gerar uma análise personalizada
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {bodyAnalysis && !analyzingBody && (
+        <Collapsible open={analysisOpen} onOpenChange={setAnalysisOpen}>
+          <Card className="border-primary/30">
+            <CardHeader className="pb-2">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    Avaliação Física por IA
+                  </CardTitle>
+                  <span className="text-sm text-muted-foreground">
+                    {analysisOpen ? "Ocultar" : "Ver análise"}
+                  </span>
+                </Button>
+              </CollapsibleTrigger>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent>
+                <BodyAnalysisResult analysis={bodyAnalysis} />
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+      )}
 
       {/* Observações */}
       <Card>
