@@ -18,11 +18,18 @@ interface SignedPhotos {
   single?: string | null;
 }
 
+interface InitialPhotos {
+  frente?: string | null;
+  lado?: string | null;
+  costas?: string | null;
+}
+
 interface EvolutionPdfData {
   clientName: string;
   initialWeight: number | null;
   checkins: CheckIn[];
   signedPhotos: Record<string, SignedPhotos>;
+  initialPhotos?: InitialPhotos;
 }
 
 function parseAnalysis(analysisStr: string | null): { structured: boolean; data: any } {
@@ -40,7 +47,7 @@ function parseAnalysis(analysisStr: string | null): { structured: boolean; data:
 }
 
 export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void> {
-  const { clientName, initialWeight, checkins, signedPhotos } = data;
+  const { clientName, initialWeight, checkins, signedPhotos, initialPhotos } = data;
   
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -263,6 +270,132 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
     });
     
     yPos = chartY + chartHeight + 20;
+  }
+
+  // Visual comparison page: Initial vs Current photos
+  const lastCheckinPhotos = sortedCheckins.length > 0 ? signedPhotos[sortedCheckins[sortedCheckins.length - 1].id] : null;
+  const hasInitialPhotos = initialPhotos?.frente || initialPhotos?.lado || initialPhotos?.costas;
+  const hasCurrentPhotos = lastCheckinPhotos?.frente || lastCheckinPhotos?.lado || lastCheckinPhotos?.costas;
+  
+  if (hasInitialPhotos && hasCurrentPhotos) {
+    doc.addPage();
+    yPos = 20;
+    
+    addSectionTitle("Comparação Visual: Início vs Atual");
+    
+    const photoWidth = 45;
+    const aspectRatio = 3 / 4;
+    const photoHeight = photoWidth / aspectRatio;
+    const columnGap = 15;
+    const labelHeight = 8;
+    
+    // Load all photos
+    const [
+      initialFrenteBase64,
+      initialLadoBase64,
+      initialCostasBase64,
+      currentFrenteBase64,
+      currentLadoBase64,
+      currentCostasBase64,
+    ] = await Promise.all([
+      initialPhotos?.frente ? loadImage(initialPhotos.frente) : Promise.resolve(null),
+      initialPhotos?.lado ? loadImage(initialPhotos.lado) : Promise.resolve(null),
+      initialPhotos?.costas ? loadImage(initialPhotos.costas) : Promise.resolve(null),
+      lastCheckinPhotos?.frente ? loadImage(lastCheckinPhotos.frente) : Promise.resolve(null),
+      lastCheckinPhotos?.lado ? loadImage(lastCheckinPhotos.lado) : Promise.resolve(null),
+      lastCheckinPhotos?.costas ? loadImage(lastCheckinPhotos.costas) : Promise.resolve(null),
+    ]);
+    
+    // Helper to draw comparison row
+    const drawComparisonRow = (
+      label: string, 
+      initialImg: string | null, 
+      currentImg: string | null,
+      startY: number
+    ) => {
+      if (!initialImg && !currentImg) return startY;
+      
+      const centerX = pageWidth / 2;
+      const leftX = centerX - columnGap / 2 - photoWidth;
+      const rightX = centerX + columnGap / 2;
+      
+      // Row label
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(60, 60, 60);
+      doc.text(label, margin, startY);
+      startY += 5;
+      
+      // Column headers
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text("INÍCIO", leftX + photoWidth / 2 - 8, startY);
+      doc.text("ATUAL", rightX + photoWidth / 2 - 8, startY);
+      startY += labelHeight;
+      
+      // Draw photos
+      if (initialImg) {
+        doc.addImage(initialImg, "JPEG", leftX, startY, photoWidth, photoHeight);
+      } else {
+        doc.setFillColor(240, 240, 240);
+        doc.rect(leftX, startY, photoWidth, photoHeight, "F");
+        doc.setFontSize(7);
+        doc.setTextColor(150, 150, 150);
+        doc.text("Não disponível", leftX + 8, startY + photoHeight / 2);
+      }
+      
+      if (currentImg) {
+        doc.addImage(currentImg, "JPEG", rightX, startY, photoWidth, photoHeight);
+      } else {
+        doc.setFillColor(240, 240, 240);
+        doc.rect(rightX, startY, photoWidth, photoHeight, "F");
+        doc.setFontSize(7);
+        doc.setTextColor(150, 150, 150);
+        doc.text("Não disponível", rightX + 8, startY + photoHeight / 2);
+      }
+      
+      // Arrow between photos
+      const arrowY = startY + photoHeight / 2;
+      doc.setDrawColor(255, 69, 0);
+      doc.setLineWidth(1);
+      doc.line(leftX + photoWidth + 3, arrowY, rightX - 3, arrowY);
+      // Arrow head
+      doc.line(rightX - 8, arrowY - 3, rightX - 3, arrowY);
+      doc.line(rightX - 8, arrowY + 3, rightX - 3, arrowY);
+      
+      return startY + photoHeight + 10;
+    };
+    
+    // Draw comparisons for each angle
+    if (initialFrenteBase64 || currentFrenteBase64) {
+      yPos = drawComparisonRow("Vista Frontal", initialFrenteBase64, currentFrenteBase64, yPos);
+    }
+    
+    checkNewPage(photoHeight + 20);
+    
+    if (initialLadoBase64 || currentLadoBase64) {
+      yPos = drawComparisonRow("Vista Lateral", initialLadoBase64, currentLadoBase64, yPos);
+    }
+    
+    checkNewPage(photoHeight + 20);
+    
+    if (initialCostasBase64 || currentCostasBase64) {
+      yPos = drawComparisonRow("Vista Posterior", initialCostasBase64, currentCostasBase64, yPos);
+    }
+    
+    // Add date labels at bottom
+    yPos += 5;
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    const lastCheckinDate = sortedCheckins[sortedCheckins.length - 1]?.created_at;
+    if (lastCheckinDate) {
+      doc.text(
+        `Comparação: Anamnese inicial → Check-in de ${format(new Date(lastCheckinDate), "dd/MM/yyyy", { locale: ptBR })}`,
+        margin,
+        yPos
+      );
+    }
   }
 
   // Individual check-ins with analysis
