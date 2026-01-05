@@ -4,15 +4,21 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
+import { useAchievements } from "@/hooks/useAchievements";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
-import { Target, Utensils, Brain, BookOpen, MessageCircle } from "lucide-react";
+import { Target, Utensils, Brain, BookOpen, MessageCircle, Trophy, ClipboardCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
 import { PlanSelectionGrid } from "@/components/dashboard/PlanSelectionGrid";
 import { DashboardCardsGrid } from "@/components/dashboard/DashboardCardsGrid";
 import { SubscriptionStatusCard } from "@/components/dashboard/SubscriptionStatusCard";
+import { StreakDisplay } from "@/components/gamification/StreakDisplay";
+import { AchievementsGrid } from "@/components/gamification/AchievementsGrid";
+import { WeeklyCheckinModal } from "@/components/checkin/WeeklyCheckinModal";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const DASHBOARD_CARDS = [
   {
@@ -103,10 +109,14 @@ export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const { subscribed, loading: subLoading, createCheckout, openCustomerPortal, subscriptionEnd } = useSubscription();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
+  const { achievements, userAchievements, streak, totalPoints, loading: achievementsLoading } = useAchievements();
   useActivityTracker();
   const navigate = useNavigate();
   const [checkingAnamnese, setCheckingAnamnese] = useState(true);
   const [userName, setUserName] = useState<string>("");
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [showWeeklyCheckin, setShowWeeklyCheckin] = useState(false);
+  const [canDoWeeklyCheckin, setCanDoWeeklyCheckin] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -120,6 +130,30 @@ export default function Dashboard() {
       navigate("/admin");
     }
   }, [isAdmin, authLoading, adminLoading, navigate]);
+
+  // Check if user can do weekly checkin
+  useEffect(() => {
+    const checkWeeklyCheckin = async () => {
+      if (!user) return;
+      
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+      const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+      
+      const { data } = await supabase
+        .from("weekly_checkins")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("week_number", weekNumber)
+        .eq("year", now.getFullYear())
+        .single();
+      
+      setCanDoWeeklyCheckin(!data);
+    };
+
+    checkWeeklyCheckin();
+  }, [user, showWeeklyCheckin]);
 
   useEffect(() => {
     const checkAnamneseAndGetName = async () => {
@@ -203,13 +237,78 @@ export default function Dashboard() {
       
       <div className="container mx-auto max-w-6xl">
         {/* Welcome Header */}
-        <div className="mb-8 flex items-start justify-between">
+        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold uppercase text-foreground mb-2">
               BEM-VINDO, <span className="text-primary">{userName || "ALUNO"}</span>
             </h1>
             <p className="text-muted-foreground">Sua jornada de transformacao continua hoje</p>
           </div>
+          
+          {/* Streak compact display */}
+          <div className="flex items-center gap-3">
+            <StreakDisplay 
+              currentStreak={streak.current_streak} 
+              longestStreak={streak.longest_streak} 
+              compact 
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowAchievements(!showAchievements)}
+              className="gap-2"
+            >
+              <Trophy className="h-4 w-4 text-yellow-500" />
+              {totalPoints} pts
+            </Button>
+          </div>
+        </div>
+
+        {/* Weekly Checkin Prompt */}
+        {canDoWeeklyCheckin && (
+          <Card className="mb-6 border-primary/30 bg-primary/5">
+            <CardContent className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-3">
+                <ClipboardCheck className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">Check-in semanal disponível</p>
+                  <p className="text-sm text-muted-foreground">Registre como foi sua semana em 1 minuto</p>
+                </div>
+              </div>
+              <Button size="sm" onClick={() => setShowWeeklyCheckin(true)}>
+                Fazer agora
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Achievements Section (collapsible) */}
+        {showAchievements && (
+          <div className="mb-8 animate-fade-in">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  Minhas Conquistas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AchievementsGrid 
+                  achievements={achievements}
+                  userAchievements={userAchievements}
+                  totalPoints={totalPoints}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Streak Full Display */}
+        <div className="mb-8">
+          <StreakDisplay 
+            currentStreak={streak.current_streak} 
+            longestStreak={streak.longest_streak} 
+          />
         </div>
 
         {/* Subscription Status */}
@@ -220,6 +319,13 @@ export default function Dashboard() {
         {/* Main Dashboard Cards */}
         <DashboardCardsGrid cards={DASHBOARD_CARDS} />
       </div>
+
+      {/* Weekly Checkin Modal */}
+      <WeeklyCheckinModal 
+        open={showWeeklyCheckin} 
+        onOpenChange={setShowWeeklyCheckin}
+        onComplete={() => setCanDoWeeklyCheckin(false)}
+      />
     </ClientLayout>
   );
 }
