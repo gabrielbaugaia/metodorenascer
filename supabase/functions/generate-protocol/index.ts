@@ -30,7 +30,56 @@ serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
 
   try {
-    const { tipo, userContext, userId, adjustments, planType } = await req.json();
+    const { tipo, userContext, userId, adjustments, planType, evolutionAdjustments } = await req.json();
+    
+    // Format evolution adjustments into a string if provided
+    let formattedAdjustments = adjustments || "";
+    
+    if (evolutionAdjustments) {
+      const evolutionText: string[] = [];
+      
+      if (tipo === "treino" && evolutionAdjustments) {
+        evolutionText.push("### AJUSTES BASEADOS NA ANÁLISE DE EVOLUÇÃO ###");
+        if (evolutionAdjustments.intensificar?.length > 0) {
+          evolutionText.push(`INTENSIFICAR: ${evolutionAdjustments.intensificar.join(", ")}`);
+        }
+        if (evolutionAdjustments.adicionar?.length > 0) {
+          evolutionText.push(`ADICIONAR FOCO: ${evolutionAdjustments.adicionar.join(", ")}`);
+        }
+        if (evolutionAdjustments.manutencao?.length > 0) {
+          evolutionText.push(`MANTER ÊNFASE: ${evolutionAdjustments.manutencao.join(", ")}`);
+        }
+        if (evolutionAdjustments.observacoes) {
+          evolutionText.push(`OBSERVAÇÕES: ${evolutionAdjustments.observacoes}`);
+        }
+      }
+      
+      if (tipo === "nutricao" && evolutionAdjustments) {
+        evolutionText.push("### AJUSTES BASEADOS NA ANÁLISE DE EVOLUÇÃO ###");
+        if (evolutionAdjustments.calorias) {
+          evolutionText.push(`CALORIAS: ${evolutionAdjustments.calorias}`);
+        }
+        if (evolutionAdjustments.proteina) {
+          evolutionText.push(`PROTEÍNA: ${evolutionAdjustments.proteina}`);
+        }
+        if (evolutionAdjustments.carboidratos) {
+          evolutionText.push(`CARBOIDRATOS: ${evolutionAdjustments.carboidratos}`);
+        }
+        if (evolutionAdjustments.sugestoes?.length > 0) {
+          evolutionText.push(`SUGESTÕES: ${evolutionAdjustments.sugestoes.join("; ")}`);
+        }
+        if (evolutionAdjustments.observacoes) {
+          evolutionText.push(`OBSERVAÇÕES: ${evolutionAdjustments.observacoes}`);
+        }
+      }
+      
+      if (evolutionText.length > 0) {
+        formattedAdjustments = formattedAdjustments 
+          ? `${formattedAdjustments}\n\n${evolutionText.join("\n")}`
+          : evolutionText.join("\n");
+      }
+    }
+    
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -75,13 +124,13 @@ serve(async (req) => {
     if (tipo === "treino") {
       // P1 FIX: Passar lista de exercícios para o prompt
       systemPrompt = getTreinoSystemPrompt(durationWeeks, weeksPerCycle, totalCycles, exerciseNames);
-      userPrompt = getTreinoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, adjustments);
+      userPrompt = getTreinoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments);
     } else if (tipo === "nutricao") {
       systemPrompt = getNutricaoSystemPrompt(durationWeeks, weeksPerCycle);
-      userPrompt = getNutricaoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, adjustments);
+      userPrompt = getNutricaoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments);
     } else if (tipo === "mindset") {
       systemPrompt = getMindsetSystemPrompt(durationWeeks, weeksPerCycle);
-      userPrompt = getMindsetUserPrompt(userContext, planType, durationWeeks, adjustments);
+      userPrompt = getMindsetUserPrompt(userContext, planType, durationWeeks, formattedAdjustments);
     } else {
       throw new Error("Tipo de protocolo inválido");
     }
