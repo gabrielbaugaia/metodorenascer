@@ -41,11 +41,22 @@ interface SignedPhotos {
   single?: string | null;
 }
 
+interface InitialPhotos {
+  frente?: string | null;
+  lado?: string | null;
+  costas?: string | null;
+}
+
 interface AdminEvolutionSectionProps {
   clientId: string;
   clientName: string;
   initialWeight: number | null;
   planType: string | null;
+  initialPhotoPaths?: {
+    frente: string | null;
+    lado: string | null;
+    costas: string | null;
+  };
   onProtocolsGenerated?: () => void;
 }
 
@@ -68,17 +79,20 @@ export function AdminEvolutionSection({
   clientName, 
   initialWeight,
   planType,
+  initialPhotoPaths,
   onProtocolsGenerated 
 }: AdminEvolutionSectionProps) {
   const [checkins, setCheckins] = useState<CheckIn[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkinPhotoSrc, setCheckinPhotoSrc] = useState<Record<string, SignedPhotos>>({});
+  const [initialPhotosSigned, setInitialPhotosSigned] = useState<InitialPhotos>({});
   const [expandedCheckin, setExpandedCheckin] = useState<string | null>(null);
   const [generatingProtocols, setGeneratingProtocols] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
   useEffect(() => {
     fetchCheckins();
+    fetchInitialPhotos();
   }, [clientId]);
 
   const signOrNull = async (value: string | null) => {
@@ -89,6 +103,18 @@ export function AdminEvolutionSection({
       console.warn("Não foi possível gerar URL assinada:", e);
       return null;
     }
+  };
+
+  const fetchInitialPhotos = async () => {
+    if (!initialPhotoPaths) return;
+    
+    const [frente, lado, costas] = await Promise.all([
+      signOrNull(initialPhotoPaths.frente),
+      signOrNull(initialPhotoPaths.lado),
+      signOrNull(initialPhotoPaths.costas),
+    ]);
+    
+    setInitialPhotosSigned({ frente, lado, costas });
   };
 
   const fetchCheckins = async () => {
@@ -218,6 +244,7 @@ export function AdminEvolutionSection({
         initialWeight,
         checkins,
         signedPhotos: checkinPhotoSrc,
+        initialPhotos: initialPhotosSigned,
       });
       toast.success("PDF de evolução gerado com sucesso!");
     } catch (error: any) {

@@ -775,6 +775,11 @@ export default function AdminClienteDetalhes() {
           clientName={profile.full_name}
           initialWeight={profile.weight}
           planType={subscription?.plan_type || null}
+          initialPhotoPaths={{
+            frente: profile.foto_frente_url,
+            lado: profile.foto_lado_url,
+            costas: profile.foto_costas_url,
+          }}
         />
 
         {/* Status & Info */}
