@@ -22,8 +22,11 @@ import {
   AlertTriangle,
   Target,
   Percent,
-  Clock
+  Clock,
+  Mail,
+  Send
 } from "lucide-react";
+import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 
 interface Stats {
@@ -240,6 +243,28 @@ export default function AdminDashboard() {
 
   if (!isAdmin) return null;
 
+  const [sendingReport, setSendingReport] = useState(false);
+
+  const handleSendWeeklyReport = async () => {
+    setSendingReport(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('weekly-support-report');
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast.success("Relatório semanal enviado para seu email!");
+      } else if (data?.error) {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      console.error("Error sending report:", error);
+      toast.error(error.message || "Erro ao enviar relatório");
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
   const quickActions = [
     { title: "Novo Cliente", icon: UserPlus, url: "/admin/criar-cliente", color: "from-green-500 to-emerald-600" },
     { title: "Ver Clientes", icon: Users, url: "/admin/clientes", color: "from-blue-500 to-indigo-600" },
@@ -251,9 +276,24 @@ export default function AdminDashboard() {
   return (
     <ClientLayout>
       <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-display font-bold">Dashboard Admin</h1>
-          <p className="text-muted-foreground">Visão geral do Método Renascer</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-display font-bold">Dashboard Admin</h1>
+            <p className="text-muted-foreground">Visão geral do Método Renascer</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleSendWeeklyReport}
+            disabled={sendingReport}
+            className="flex items-center gap-2"
+          >
+            {sendingReport ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Mail className="h-4 w-4" />
+            )}
+            {sendingReport ? "Enviando..." : "Enviar Relatório Semanal"}
+          </Button>
         </div>
 
         {/* Stats Grid */}
