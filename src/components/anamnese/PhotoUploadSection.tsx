@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2, Upload, X, Camera } from "lucide-react";
+import { PhotoStandardGuide } from "./PhotoStandardGuide";
 
 interface PhotoUploadSectionProps {
   photoPreview: {
@@ -9,25 +10,30 @@ interface PhotoUploadSectionProps {
     costas: string;
   };
   uploadingPhoto: string | null;
-  onPhotoUpload: (e: React.ChangeEvent<HTMLInputElement>, type: 'frente' | 'lado' | 'costas') => void;
-  onRemovePhoto: (type: 'frente' | 'lado' | 'costas') => void;
+  validatingPhoto?: string | null;
+  onUpload: (e: React.ChangeEvent<HTMLInputElement>, type: 'frente' | 'lado' | 'costas') => void;
+  onRemove: (type: 'frente' | 'lado' | 'costas') => void;
 }
 
 function PhotoUploadBox({ 
   type, 
   label, 
   preview, 
-  uploading, 
+  isUploading,
+  isValidating,
   onUpload, 
   onRemove 
 }: { 
   type: 'frente' | 'lado' | 'costas'; 
   label: string; 
   preview: string;
-  uploading: boolean;
+  isUploading: boolean;
+  isValidating: boolean;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemove: () => void;
 }) {
+  const isProcessing = isUploading || isValidating;
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
@@ -39,13 +45,23 @@ function PhotoUploadBox({
               alt={`Foto de ${type}`} 
               className="w-full h-full object-cover"
             />
-            <button
-              type="button"
-              onClick={onRemove}
-              className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            {isProcessing && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <div className="text-center text-white">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-1" />
+                  <span className="text-xs">{isValidating ? "Validando..." : "Enviando..."}</span>
+                </div>
+              </div>
+            )}
+            {!isProcessing && (
+              <button
+                type="button"
+                onClick={onRemove}
+                className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         ) : (
           <label className="flex flex-col items-center justify-center aspect-[3/4] border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-muted/20">
@@ -54,10 +70,13 @@ function PhotoUploadBox({
               accept="image/*"
               onChange={onUpload}
               className="hidden"
-              disabled={uploading}
+              disabled={isProcessing}
             />
-            {uploading ? (
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            {isProcessing ? (
+              <div className="text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-1" />
+                <span className="text-xs text-muted-foreground">{isValidating ? "Validando..." : "Enviando..."}</span>
+              </div>
             ) : (
               <>
                 <Upload className="h-8 w-8 text-muted-foreground mb-2" />
@@ -75,45 +94,52 @@ function PhotoUploadBox({
 export function PhotoUploadSection({ 
   photoPreview, 
   uploadingPhoto, 
-  onPhotoUpload, 
-  onRemovePhoto 
+  validatingPhoto,
+  onUpload, 
+  onRemove 
 }: PhotoUploadSectionProps) {
   return (
-    <Card>
+    <Card className="border-primary/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Camera className="h-5 w-5" />
-          Fotos Corporais
+          Fotos Corporais <span className="text-destructive">*</span>
         </CardTitle>
         <CardDescription>
-          Envie fotos para análise postural e acompanhamento de evolução (opcional, mas recomendado)
+          <span className="text-destructive font-medium">Obrigatório:</span> Envie as 3 fotos abaixo para liberar acesso às suas prescrições personalizadas.
+          As fotos são essenciais para análise postural e acompanhamento de evolução.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Photo Standard Guide */}
+        <PhotoStandardGuide />
+        
         <div className="grid grid-cols-3 gap-4">
           <PhotoUploadBox
             type="frente"
-            label="Frente"
+            label="Frente *"
             preview={photoPreview.frente}
-            uploading={uploadingPhoto === "frente"}
-            onUpload={(e) => onPhotoUpload(e, "frente")}
-            onRemove={() => onRemovePhoto("frente")}
+            isUploading={uploadingPhoto === "frente"}
+            isValidating={validatingPhoto === "frente"}
+            onUpload={(e) => onUpload(e, "frente")}
+            onRemove={() => onRemove("frente")}
           />
           <PhotoUploadBox
             type="lado"
-            label="Lado"
+            label="Lado *"
             preview={photoPreview.lado}
-            uploading={uploadingPhoto === "lado"}
-            onUpload={(e) => onPhotoUpload(e, "lado")}
-            onRemove={() => onRemovePhoto("lado")}
+            isUploading={uploadingPhoto === "lado"}
+            isValidating={validatingPhoto === "lado"}
+            onUpload={(e) => onUpload(e, "lado")}
+            onRemove={() => onRemove("lado")}
           />
           <PhotoUploadBox
             type="costas"
-            label="Costas"
+            label="Costas *"
             preview={photoPreview.costas}
-            uploading={uploadingPhoto === "costas"}
-            onUpload={(e) => onPhotoUpload(e, "costas")}
-            onRemove={() => onRemovePhoto("costas")}
+            isUploading={uploadingPhoto === "costas"}
+            isValidating={validatingPhoto === "costas"}
+            onUpload={(e) => onUpload(e, "costas")}
+            onRemove={() => onRemove("costas")}
           />
         </div>
       </CardContent>

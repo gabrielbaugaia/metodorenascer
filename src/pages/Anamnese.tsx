@@ -452,6 +452,7 @@ export default function Anamnese() {
             <ScheduleAndPhotosFields 
               formData={formData} 
               userId={user.id}
+              userName={user.user_metadata?.full_name || user.email?.split('@')[0]}
               onChange={handleFieldChange} 
             />
           )}
