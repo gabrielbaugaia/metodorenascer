@@ -13,6 +13,7 @@ import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatAiContent } from "@/lib/sanitize";
 import { createBodyPhotosSignedUrl } from "@/lib/bodyPhotos";
+import { EvolutionAnalysisResult } from "@/components/evolution/EvolutionAnalysisResult";
 import { PhotoStandardGuide } from "@/components/anamnese/PhotoStandardGuide";
 import {
   Camera,
@@ -92,8 +93,9 @@ export default function Evolucao() {
   });
   const [checkinPhotoSrc, setCheckinPhotoSrc] = useState<Record<string, SignedCheckinPhotos>>({});
 
-  // AI Analysis state
-  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  // AI Analysis state - can be string (legacy) or structured object
+  const [aiAnalysis, setAiAnalysis] = useState<unknown>(null);
+  const [isStructuredAnalysis, setIsStructuredAnalysis] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [validatingPhoto, setValidatingPhoto] = useState<PhotoKey | null>(null);
 
@@ -409,11 +411,15 @@ export default function Evolucao() {
           toast.error("Não foi possível gerar a análise comparativa");
         } else if (response.data?.analysis) {
           setAiAnalysis(response.data.analysis);
+          setIsStructuredAnalysis(response.data.structured === true);
           setShowAnalysis(true);
 
-          // Save the AI analysis to the checkin record
+          // Save the AI analysis to the checkin record (stringify if structured)
           if (checkinId) {
-            await supabase.from("checkins").update({ ai_analysis: response.data.analysis }).eq("id", checkinId);
+            const analysisToSave = response.data.structured 
+              ? JSON.stringify(response.data.analysis)
+              : response.data.analysis;
+            await supabase.from("checkins").update({ ai_analysis: analysisToSave }).eq("id", checkinId);
           }
         }
       } catch (aiError) {
@@ -481,14 +487,18 @@ export default function Evolucao() {
               <CardDescription>Análise gerada pelo seu mentor com base nas suas fotos</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-invert prose-sm max-w-none">
-                <div
-                  className="whitespace-pre-wrap text-sm leading-relaxed"
-                  dangerouslySetInnerHTML={{
-                    __html: formatAiContent(aiAnalysis),
-                  }}
-                />
-              </div>
+              {isStructuredAnalysis && typeof aiAnalysis === 'object' ? (
+                <EvolutionAnalysisResult analysis={aiAnalysis as any} />
+              ) : (
+                <div className="prose prose-invert prose-sm max-w-none">
+                  <div
+                    className="whitespace-pre-wrap text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{
+                      __html: formatAiContent(typeof aiAnalysis === 'string' ? aiAnalysis : JSON.stringify(aiAnalysis)),
+                    }}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
