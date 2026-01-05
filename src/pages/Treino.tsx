@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Download } from "lucide-react";
 import { WorkoutCard } from "@/components/treino/WorkoutCard";
 import { SuccessAnimation } from "@/components/feedback/SuccessAnimation";
+import { StreakDisplay } from "@/components/gamification/StreakDisplay";
 import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
 import { toast } from "sonner";
+
 interface Exercise {
   name: string;
   sets: number;
@@ -49,13 +51,16 @@ export default function Treino() {
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const { 
+const { 
     getTotalCount, 
     getTotalCalories, 
     getWeeklyCount, 
     todayCompleted, 
-    completeWorkout 
+    completeWorkout,
+    getCurrentStreak 
   } = useWorkoutTracking();
+
+  const currentStreak = getCurrentStreak();
   useEffect(() => {
     const fetchProtocol = async () => {
       if (!user) return;
@@ -220,6 +225,12 @@ export default function Treino() {
           </Card>
         ) : (
           <>
+            {/* Streak Display */}
+            <StreakDisplay 
+              currentStreak={currentStreak} 
+              longestStreak={currentStreak}
+            />
+
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
@@ -235,8 +246,8 @@ export default function Treino() {
                 <div className="flex items-center gap-3">
                   <Flame className="w-5 h-5 text-orange-500" />
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{totalCaloriesFromTracking.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">kcal total</p>
+                    <p className="text-2xl font-bold text-foreground">{currentStreak}</p>
+                    <p className="text-xs text-muted-foreground">Dias seguidos</p>
                   </div>
                 </div>
               </Card>
