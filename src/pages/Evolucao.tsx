@@ -466,10 +466,10 @@ export default function Evolucao() {
 
   return (
     <ClientLayout>
-      <div className="max-w-5xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-8 px-1 sm:px-0 pb-20 sm:pb-0">
         <div>
-          <h1 className="text-2xl font-bold uppercase">Minha Evolução</h1>
-          <p className="text-muted-foreground">Acompanhe seu progresso e envie suas fotos de evolução</p>
+          <h1 className="text-xl sm:text-2xl font-bold uppercase">Minha Evolução</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Acompanhe seu progresso e envie suas fotos</p>
         </div>
 
         {/* AI Analysis Modal/Card */}
@@ -519,19 +519,19 @@ export default function Evolucao() {
 
         {/* Fotos Iniciais da Anamnese */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5 text-primary" />
-              Fotos Iniciais (Anamnese)
+          <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              Fotos Iniciais
             </CardTitle>
-            <CardDescription>Suas fotos de referência do início do programa</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">Referência do início do programa</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
+          <CardContent className="px-3 sm:px-6">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {photoTypes.map(({ key, label }) => {
                 const fotoSrc = anamnesePhotoSrc[key];
                 return (
-                  <div key={key} className="relative aspect-[3/4] rounded-lg bg-muted overflow-hidden">
+                  <div key={key} className="relative aspect-[3/4] rounded-md sm:rounded-lg bg-muted overflow-hidden">
                     {fotoSrc ? (
                       <img
                         src={fotoSrc}
@@ -541,22 +541,22 @@ export default function Evolucao() {
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                        <Camera className="h-8 w-8 mb-2" />
-                        <span className="text-xs">{label}</span>
+                        <Camera className="h-5 w-5 sm:h-8 sm:w-8 mb-1 sm:mb-2" />
+                        <span className="text-[9px] sm:text-xs">{label}</span>
                       </div>
                     )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-1 text-center">
-                      <span className="text-xs font-medium">{label}</span>
+                    <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 sm:p-1 text-center">
+                      <span className="text-[9px] sm:text-xs font-medium">{label}</span>
                     </div>
-                    <div className="absolute top-2 right-2">
-                      <Lock className="h-4 w-4 text-muted-foreground" />
+                    <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
+                      <Lock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                     </div>
                   </div>
                 );
               })}
             </div>
             {profile?.created_at && (
-              <p className="text-xs text-muted-foreground mt-4 text-center">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-2 sm:mt-4 text-center">
                 Registrado em {format(new Date(profile.created_at), "dd/MM/yyyy", { locale: ptBR })}
               </p>
             )}
@@ -565,32 +565,32 @@ export default function Evolucao() {
 
         {/* Novo Check-in */}
         <Card className={!canSubmitNew ? "opacity-70" : ""}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
+          <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Upload className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                  <Upload className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   Enviar Evolução
                 </CardTitle>
-                <CardDescription>Envie suas 3 fotos (frente, lado, costas) e peso atual</CardDescription>
+                <CardDescription className="text-xs sm:text-sm">3 fotos + peso atual</CardDescription>
               </div>
               {lastCheckinDate && (
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Último envio</p>
-                  <p className="text-sm font-medium">{format(lastCheckinDate, "dd/MM/yyyy", { locale: ptBR })}</p>
+                <div className="text-left sm:text-right">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Último envio</p>
+                  <p className="text-xs sm:text-sm font-medium">{format(lastCheckinDate, "dd/MM/yyyy", { locale: ptBR })}</p>
                 </div>
               )}
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6 px-3 sm:px-6">
             {!canSubmitNew && (
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <Clock className="h-5 w-5 text-primary" />
+              <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/20">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-foreground">Próximo check-in em breve</p>
-                  <p className="text-sm text-muted-foreground">
-                    O check-in de evolução é liberado a cada 30 dias para acompanhar suas mudanças com precisão. Faltam{" "}
-                    <span className="text-primary font-medium">{30 - (daysSinceLastCheckin || 0)} dias</span> para seu próximo envio.
+                  <p className="font-medium text-xs sm:text-sm text-foreground">Próximo check-in em breve</p>
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">
+                    Liberado a cada 30 dias. Faltam{" "}
+                    <span className="text-primary font-medium">{30 - (daysSinceLastCheckin || 0)} dias</span>.
                   </p>
                 </div>
               </div>
@@ -603,15 +603,15 @@ export default function Evolucao() {
 
             {/* 3 Photo Uploads */}
             <div>
-              <Label className="mb-3 block">Fotos de Evolução (mesmo padrão da anamnese)</Label>
-              <div className="grid grid-cols-3 gap-4">
+              <Label className="mb-2 sm:mb-3 block text-xs sm:text-sm">Fotos de Evolução</Label>
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
                 {photoTypes.map(({ key, label }) => {
                   const isValidating = validatingPhoto === key;
                   
                   return (
-                    <div key={key} className="space-y-2">
+                    <div key={key} className="space-y-1 sm:space-y-2">
                       <div
-                        className={`relative aspect-[3/4] rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors ${!canSubmitNew || isValidating ? "pointer-events-none" : ""} ${!canSubmitNew ? "opacity-50" : ""}`}
+                        className={`relative aspect-[3/4] rounded-md sm:rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors ${!canSubmitNew || isValidating ? "pointer-events-none" : ""} ${!canSubmitNew ? "opacity-50" : ""}`}
                         onClick={() => canSubmitNew && !isValidating && fileInputRefs[key].current?.click()}
                       >
                         {photoPreviews[key] ? (
@@ -625,8 +625,8 @@ export default function Evolucao() {
                             {isValidating && (
                               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                                 <div className="text-center text-white">
-                                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-1" />
-                                  <span className="text-xs">Validando...</span>
+                                  <Loader2 className="h-4 w-4 sm:h-6 sm:w-6 animate-spin mx-auto mb-0.5 sm:mb-1" />
+                                  <span className="text-[9px] sm:text-xs">Validando...</span>
                                 </div>
                               </div>
                             )}
@@ -637,9 +637,9 @@ export default function Evolucao() {
                                   e.stopPropagation();
                                   removePhoto(key);
                                 }}
-                                className="absolute top-2 right-2 p-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                className="absolute top-1 right-1 sm:top-2 sm:right-2 p-0.5 sm:p-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                <X className="h-3 w-3" />
+                                <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                               </button>
                             )}
                           </>
@@ -647,14 +647,14 @@ export default function Evolucao() {
                           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                             {isValidating ? (
                               <>
-                                <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                                <p className="text-xs">Validando...</p>
+                                <Loader2 className="h-5 w-5 sm:h-8 sm:w-8 animate-spin text-primary mb-1 sm:mb-2" />
+                                <p className="text-[9px] sm:text-xs">Validando...</p>
                               </>
                             ) : (
                               <>
-                                <Camera className="h-8 w-8 mb-2" />
-                                <p className="text-xs font-medium">{label}</p>
-                                <p className="text-[10px]">Clique para adicionar</p>
+                                <Camera className="h-5 w-5 sm:h-8 sm:w-8 mb-1 sm:mb-2" />
+                                <p className="text-[9px] sm:text-xs font-medium">{label}</p>
+                                <p className="text-[8px] sm:text-[10px] hidden sm:block">Clique para adicionar</p>
                               </>
                             )}
                           </div>
@@ -672,7 +672,7 @@ export default function Evolucao() {
                   );
                 })}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">JPG, PNG até 10MB cada. Siga o padrão mostrado acima.</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2">JPG, PNG até 10MB cada.</p>
             </div>
 
             {/* Form Fields */}

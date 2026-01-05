@@ -173,41 +173,41 @@ export function EvolutionAnalysisResult({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Photo Comparison - Before/After Side by Side */}
       {showPhotoComparison && hasPhotos && (
         <Card className="border-primary/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <MoveRight className="h-5 w-5 text-primary" />
-              Comparação Visual: Antes vs Depois
+          <CardHeader className="pb-2 px-3 sm:px-6">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+              <MoveRight className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+              <span className="leading-tight">Comparação Visual</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
+          <CardContent className="px-3 sm:px-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Frente */}
               {(photos.initialFronte || photos.currentFrente) && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">Vista Frontal</h4>
-                  <div className="grid grid-cols-2 gap-4 items-center">
-                    <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">Vista Frontal</h4>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4 items-center">
+                    <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted">
                       {photos.initialFronte ? (
                         <img src={photos.initialFronte} alt="Antes - Frente" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Não disponível</div>
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-[10px] sm:text-sm">N/A</div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-1 text-center">
-                        <span className="text-xs font-medium">ANTES</span>
+                      <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 sm:p-1 text-center">
+                        <span className="text-[9px] sm:text-xs font-medium">ANTES</span>
                       </div>
                     </div>
-                    <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted border-2 border-primary/30">
+                    <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted border-2 border-primary/30">
                       {photos.currentFrente ? (
                         <img src={photos.currentFrente} alt="Depois - Frente" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Não disponível</div>
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-[10px] sm:text-sm">N/A</div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-primary/80 p-1 text-center">
-                        <span className="text-xs font-medium text-primary-foreground">DEPOIS</span>
+                      <div className="absolute bottom-0 left-0 right-0 bg-primary/80 py-0.5 sm:p-1 text-center">
+                        <span className="text-[9px] sm:text-xs font-medium text-primary-foreground">DEPOIS</span>
                       </div>
                     </div>
                   </div>
@@ -216,27 +216,27 @@ export function EvolutionAnalysisResult({
 
               {/* Lado */}
               {(photos.initialLado || photos.currentLado) && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">Vista Lateral</h4>
-                  <div className="grid grid-cols-2 gap-4 items-center">
-                    <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">Vista Lateral</h4>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4 items-center">
+                    <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted">
                       {photos.initialLado ? (
                         <img src={photos.initialLado} alt="Antes - Lado" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Não disponível</div>
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-[10px] sm:text-sm">N/A</div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-1 text-center">
-                        <span className="text-xs font-medium">ANTES</span>
+                      <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 sm:p-1 text-center">
+                        <span className="text-[9px] sm:text-xs font-medium">ANTES</span>
                       </div>
                     </div>
-                    <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted border-2 border-primary/30">
+                    <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted border-2 border-primary/30">
                       {photos.currentLado ? (
                         <img src={photos.currentLado} alt="Depois - Lado" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Não disponível</div>
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-[10px] sm:text-sm">N/A</div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-primary/80 p-1 text-center">
-                        <span className="text-xs font-medium text-primary-foreground">DEPOIS</span>
+                      <div className="absolute bottom-0 left-0 right-0 bg-primary/80 py-0.5 sm:p-1 text-center">
+                        <span className="text-[9px] sm:text-xs font-medium text-primary-foreground">DEPOIS</span>
                       </div>
                     </div>
                   </div>
@@ -245,27 +245,27 @@ export function EvolutionAnalysisResult({
 
               {/* Costas */}
               {(photos.initialCostas || photos.currentCostas) && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">Vista Posterior</h4>
-                  <div className="grid grid-cols-2 gap-4 items-center">
-                    <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">Vista Posterior</h4>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4 items-center">
+                    <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted">
                       {photos.initialCostas ? (
                         <img src={photos.initialCostas} alt="Antes - Costas" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Não disponível</div>
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-[10px] sm:text-sm">N/A</div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-background/80 p-1 text-center">
-                        <span className="text-xs font-medium">ANTES</span>
+                      <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 sm:p-1 text-center">
+                        <span className="text-[9px] sm:text-xs font-medium">ANTES</span>
                       </div>
                     </div>
-                    <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted border-2 border-primary/30">
+                    <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted border-2 border-primary/30">
                       {photos.currentCostas ? (
                         <img src={photos.currentCostas} alt="Depois - Costas" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Não disponível</div>
+                        <div className="flex items-center justify-center h-full text-muted-foreground text-[10px] sm:text-sm">N/A</div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-primary/80 p-1 text-center">
-                        <span className="text-xs font-medium text-primary-foreground">DEPOIS</span>
+                      <div className="absolute bottom-0 left-0 right-0 bg-primary/80 py-0.5 sm:p-1 text-center">
+                        <span className="text-[9px] sm:text-xs font-medium text-primary-foreground">DEPOIS</span>
                       </div>
                     </div>
                   </div>
@@ -278,17 +278,17 @@ export function EvolutionAnalysisResult({
 
       {/* Pontuação e Resumo */}
       <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Análise da Sua Evolução
+        <CardHeader className="pb-2 px-3 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+              Análise da Evolução
             </CardTitle>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
               {analysis.pontuacaoEvolucao && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Nota:</span>
-                  <span className={`text-2xl font-bold ${scoreColor}`}>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Nota:</span>
+                  <span className={`text-xl sm:text-2xl font-bold ${scoreColor}`}>
                     {score}/10
                   </span>
                 </div>
@@ -298,21 +298,22 @@ export function EvolutionAnalysisResult({
                 size="sm" 
                 onClick={handleDownloadPdf}
                 disabled={generatingPdf}
+                className="h-8 px-2 sm:px-3"
               >
                 {generatingPdf ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                 ) : (
-                  <Download className="h-4 w-4" />
+                  <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 )}
-                <span className="ml-2 hidden sm:inline">PDF</span>
+                <span className="ml-1.5 text-xs sm:text-sm">PDF</span>
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm leading-relaxed mb-3">{analysis.resumoGeral}</p>
+        <CardContent className="px-3 sm:px-6">
+          <p className="text-xs sm:text-sm leading-relaxed mb-2 sm:mb-3">{analysis.resumoGeral}</p>
           {analysis.pontuacaoEvolucao?.justificativa && (
-            <p className="text-xs text-muted-foreground italic">
+            <p className="text-[10px] sm:text-xs text-muted-foreground italic">
               {analysis.pontuacaoEvolucao.justificativa}
             </p>
           )}
@@ -322,26 +323,26 @@ export function EvolutionAnalysisResult({
       {/* Análise de Peso */}
       {analysis.analisePeso && (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Scale className="h-4 w-4" />
+          <CardHeader className="pb-2 px-3 sm:px-6">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Scale className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Análise do Peso
               <TrendIcon trend={analysis.analisePeso.tendencia} />
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3 mb-2">
-              <Badge variant="outline" className="text-lg px-3 py-1">
+          <CardContent className="px-3 sm:px-6">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <Badge variant="outline" className="text-sm sm:text-lg px-2 sm:px-3 py-0.5 sm:py-1">
                 {analysis.analisePeso.variacao}
               </Badge>
               <Badge 
                 variant={analysis.analisePeso.tendencia === "positiva" ? "default" : "secondary"}
-                className={analysis.analisePeso.tendencia === "positiva" ? "bg-green-500/20 text-green-400" : ""}
+                className={`text-xs sm:text-sm ${analysis.analisePeso.tendencia === "positiva" ? "bg-green-500/20 text-green-400" : ""}`}
               >
                 {analysis.analisePeso.tendencia}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground">{analysis.analisePeso.interpretacao}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">{analysis.analisePeso.interpretacao}</p>
           </CardContent>
         </Card>
       )}
@@ -349,38 +350,38 @@ export function EvolutionAnalysisResult({
       {/* Mudanças na Composição Corporal */}
       {analysis.mudancasObservadas?.composicaoCorporal && (
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Flame className="h-4 w-4" />
+          <CardHeader className="pb-2 px-3 sm:px-6">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Flame className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Composição Corporal
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="p-3 rounded-lg border border-border/50 bg-muted/30">
-                <div className="flex items-center gap-2 mb-1">
+          <CardContent className="space-y-2 sm:space-y-3 px-3 sm:px-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+              <div className="p-2 sm:p-3 rounded-lg border border-border/50 bg-muted/30">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
                   <TrendIcon trend={analysis.mudancasObservadas.composicaoCorporal.gorduraCorporal} />
-                  <span className="text-sm font-medium">Gordura</span>
+                  <span className="text-xs sm:text-sm font-medium">Gordura</span>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">
                   {analysis.mudancasObservadas.composicaoCorporal.descricaoGordura}
                 </p>
               </div>
-              <div className="p-3 rounded-lg border border-border/50 bg-muted/30">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="p-2 sm:p-3 rounded-lg border border-border/50 bg-muted/30">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
                   <TrendIcon trend={analysis.mudancasObservadas.composicaoCorporal.massaMuscular} />
-                  <span className="text-sm font-medium">Massa Muscular</span>
+                  <span className="text-xs sm:text-sm font-medium">Massa Muscular</span>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">
                   {analysis.mudancasObservadas.composicaoCorporal.descricaoMuscular}
                 </p>
               </div>
-              <div className="p-3 rounded-lg border border-border/50 bg-muted/30">
-                <div className="flex items-center gap-2 mb-1">
+              <div className="p-2 sm:p-3 rounded-lg border border-border/50 bg-muted/30">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
                   <TrendIcon trend={analysis.mudancasObservadas.composicaoCorporal.definicaoGeral} />
-                  <span className="text-sm font-medium">Definição</span>
+                  <span className="text-xs sm:text-sm font-medium">Definição</span>
                 </div>
-                <Badge variant="outline" className="capitalize">
+                <Badge variant="outline" className="capitalize text-[10px] sm:text-xs">
                   {analysis.mudancasObservadas.composicaoCorporal.definicaoGeral}
                 </Badge>
               </div>
@@ -391,37 +392,37 @@ export function EvolutionAnalysisResult({
 
       {/* Mudanças por Ângulo */}
       {analysis.mudancasObservadas && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
           {["frente", "lado", "costas"].map((angle) => {
             const data = analysis.mudancasObservadas?.[angle as keyof typeof analysis.mudancasObservadas];
             if (!data || typeof data !== 'object' || !('mudancasPositivas' in data)) return null;
             
             return (
               <Card key={angle} className="border-border/50">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm capitalize">{angle}</CardTitle>
+                <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                  <CardTitle className="text-xs sm:text-sm capitalize">{angle}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-1.5 sm:space-y-2 px-3 sm:px-6 pb-3 sm:pb-6">
                   {data.mudancasPositivas?.length > 0 && (
                     <div>
-                      <p className="text-xs text-green-500 mb-1 flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3" /> Melhorias
+                      <p className="text-[10px] sm:text-xs text-green-500 mb-0.5 sm:mb-1 flex items-center gap-1">
+                        <CheckCircle2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Melhorias
                       </p>
-                      <ul className="space-y-1">
-                        {data.mudancasPositivas.map((m: string, i: number) => (
-                          <li key={i} className="text-xs text-muted-foreground">• {m}</li>
+                      <ul className="space-y-0.5">
+                        {data.mudancasPositivas.slice(0, 3).map((m: string, i: number) => (
+                          <li key={i} className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">• {m}</li>
                         ))}
                       </ul>
                     </div>
                   )}
                   {data.areasAtencao?.length > 0 && (
                     <div>
-                      <p className="text-xs text-orange-500 mb-1 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> Atenção
+                      <p className="text-[10px] sm:text-xs text-orange-500 mb-0.5 sm:mb-1 flex items-center gap-1">
+                        <AlertCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Atenção
                       </p>
-                      <ul className="space-y-1">
-                        {data.areasAtencao.map((a: string, i: number) => (
-                          <li key={i} className="text-xs text-muted-foreground">• {a}</li>
+                      <ul className="space-y-0.5">
+                        {data.areasAtencao.slice(0, 2).map((a: string, i: number) => (
+                          <li key={i} className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">• {a}</li>
                         ))}
                       </ul>
                     </div>

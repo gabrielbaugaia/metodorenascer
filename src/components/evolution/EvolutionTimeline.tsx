@@ -112,22 +112,22 @@ export function EvolutionTimeline({
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
+      <CardHeader className="pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             Timeline de Evolução
           </CardTitle>
           {checkins.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="flex items-center gap-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="outline" className="flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
                 {checkins.length} check-in{checkins.length > 1 ? "s" : ""}
               </Badge>
               {totalWeightChange !== 0 && (
                 <Badge 
                   variant={totalWeightChange < 0 ? "default" : "secondary"}
-                  className={totalWeightChange < 0 ? "bg-green-500/20 text-green-400" : ""}
+                  className={`text-xs ${totalWeightChange < 0 ? "bg-green-500/20 text-green-400" : ""}`}
                 >
                   <TrendingUp className="h-3 w-3 mr-1" />
                   {totalWeightChange > 0 ? "+" : ""}{totalWeightChange.toFixed(1)} kg
@@ -157,40 +157,40 @@ export function EvolutionTimeline({
                 : null;
 
               return (
-                <div key={checkin.id} className="relative pl-10">
+                <div key={checkin.id} className="relative pl-8 sm:pl-10">
                   {/* Timeline dot */}
-                  <div className="absolute left-2.5 top-1.5 w-3 h-3 rounded-full bg-primary ring-4 ring-background" />
+                  <div className="absolute left-1.5 sm:left-2.5 top-1.5 w-3 h-3 rounded-full bg-primary ring-4 ring-background" />
 
                   <Collapsible open={isExpanded} onOpenChange={() => toggleExpand(checkin.id)}>
-                    <div className="p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors">
+                    <div className="p-3 sm:p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors">
                       {/* Header */}
                       <CollapsibleTrigger asChild>
                         <button className="w-full text-left">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-2">
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                <span className="font-medium">
-                                  {format(new Date(checkin.created_at), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="flex items-center gap-1.5 sm:gap-2">
+                                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500 shrink-0" />
+                                <span className="font-medium text-sm sm:text-base">
+                                  {format(new Date(checkin.created_at), "dd/MM/yyyy", { locale: ptBR })}
                                 </span>
                               </div>
                               {checkin.semana_numero && (
-                                <Badge variant="outline" className="text-xs">
-                                  Semana {checkin.semana_numero}
+                                <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0">
+                                  Sem. {checkin.semana_numero}
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
                               {checkin.peso_atual && (
-                                <div className="flex items-center gap-2">
-                                  <span className="flex items-center gap-1 text-sm">
+                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                  <span className="flex items-center gap-1 text-xs sm:text-sm">
                                     <Scale className="h-3 w-3" />
                                     {checkin.peso_atual} kg
                                   </span>
                                   {weightChange !== null && weightChange !== 0 && (
                                     <Badge 
                                       variant="outline" 
-                                      className={`text-xs ${weightChange < 0 ? "text-green-500 border-green-500/50" : "text-orange-500 border-orange-500/50"}`}
+                                      className={`text-[10px] sm:text-xs px-1 ${weightChange < 0 ? "text-green-500 border-green-500/50" : "text-orange-500 border-orange-500/50"}`}
                                     >
                                       {weightChange > 0 ? "+" : ""}{weightChange.toFixed(1)}
                                     </Badge>
@@ -198,9 +198,9 @@ export function EvolutionTimeline({
                                 </div>
                               )}
                               {isExpanded ? (
-                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
                               ) : (
-                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                               )}
                             </div>
                           </div>
@@ -226,30 +226,30 @@ export function EvolutionTimeline({
                       </CollapsibleTrigger>
 
                       <CollapsibleContent>
-                        <div className="mt-4 space-y-4">
+                        <div className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
                           {/* Photos */}
                           {hasPhotos && (
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                               {signed?.frente && (
-                                <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                                <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted">
                                   <img src={signed.frente} alt="Evolução - Frente" className="w-full h-full object-cover" loading="lazy" />
-                                  <span className="absolute bottom-1 left-1 text-xs bg-black/70 px-1.5 py-0.5 rounded">Frente</span>
+                                  <span className="absolute bottom-0.5 left-0.5 sm:bottom-1 sm:left-1 text-[9px] sm:text-xs bg-black/70 px-1 sm:px-1.5 py-0.5 rounded">Frente</span>
                                 </div>
                               )}
                               {signed?.lado && (
-                                <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                                <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted">
                                   <img src={signed.lado} alt="Evolução - Lado" className="w-full h-full object-cover" loading="lazy" />
-                                  <span className="absolute bottom-1 left-1 text-xs bg-black/70 px-1.5 py-0.5 rounded">Lado</span>
+                                  <span className="absolute bottom-0.5 left-0.5 sm:bottom-1 sm:left-1 text-[9px] sm:text-xs bg-black/70 px-1 sm:px-1.5 py-0.5 rounded">Lado</span>
                                 </div>
                               )}
                               {signed?.costas && (
-                                <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-muted">
+                                <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted">
                                   <img src={signed.costas} alt="Evolução - Costas" className="w-full h-full object-cover" loading="lazy" />
-                                  <span className="absolute bottom-1 left-1 text-xs bg-black/70 px-1.5 py-0.5 rounded">Costas</span>
+                                  <span className="absolute bottom-0.5 left-0.5 sm:bottom-1 sm:left-1 text-[9px] sm:text-xs bg-black/70 px-1 sm:px-1.5 py-0.5 rounded">Costas</span>
                                 </div>
                               )}
                               {signed?.single && !signed?.frente && !signed?.lado && !signed?.costas && (
-                                <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted col-span-3 max-w-[200px]">
+                                <div className="aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted col-span-3 max-w-[200px]">
                                   <img src={signed.single} alt="Evolução" className="w-full h-full object-cover" loading="lazy" />
                                 </div>
                               )}
