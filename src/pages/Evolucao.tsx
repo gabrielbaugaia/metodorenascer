@@ -13,6 +13,7 @@ import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatAiContent } from "@/lib/sanitize";
 import { createBodyPhotosSignedUrl } from "@/lib/bodyPhotos";
+import { PhotoStandardGuide } from "@/components/anamnese/PhotoStandardGuide";
 import {
   Camera,
   Loader2,
@@ -25,6 +26,7 @@ import {
   Lock,
   Sparkles,
   X,
+  AlertTriangle,
 } from "lucide-react";
 
 interface CheckIn {
@@ -93,6 +95,7 @@ export default function Evolucao() {
   // AI Analysis state
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
+  const [validatingPhoto, setValidatingPhoto] = useState<PhotoKey | null>(null);
 
   const fileInputRefs = {
     frente: useRef<HTMLInputElement>(null),
@@ -203,8 +206,26 @@ export default function Evolucao() {
     }
   };
 
+  const validatePhotoWithAI = async (base64Image: string): Promise<{ valid: boolean; reason: string }> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("validate-body-photo", {
+        body: { imageBase64: base64Image },
+      });
+
+      if (error) {
+        console.error("Validation error:", error);
+        return { valid: true, reason: "OK" };
+      }
+
+      return data || { valid: true, reason: "OK" };
+    } catch (err) {
+      console.error("Validation failed:", err);
+      return { valid: true, reason: "OK" };
+    }
+  };
+
   const handlePhotoSelect =
-    (type: keyof PhotoState) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    (type: keyof PhotoState) => async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
 
@@ -218,8 +239,38 @@ export default function Evolucao() {
         return;
       }
 
-      setPhotos((prev) => ({ ...prev, [type]: file }));
-      setPhotoPreviews((prev) => ({ ...prev, [type]: URL.createObjectURL(file) }));
+      // Read as base64 for preview and validation
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string;
+        
+        // Show preview
+        setPhotoPreviews((prev) => ({ ...prev, [type]: base64 }));
+        
+        // Validate with AI
+        setValidatingPhoto(type);
+        const validation = await validatePhotoWithAI(base64);
+        setValidatingPhoto(null);
+
+        if (!validation.valid) {
+          toast.error(validation.reason, {
+            duration: 6000,
+            icon: <AlertTriangle className="h-5 w-5 text-destructive" />,
+          });
+          // Remove the preview since it was rejected
+          setPhotoPreviews((prev) => ({ ...prev, [type]: null }));
+          setPhotos((prev) => ({ ...prev, [type]: null }));
+          if (fileInputRefs[type].current) {
+            fileInputRefs[type].current.value = "";
+          }
+          return;
+        }
+
+        // Photo is valid, store it
+        setPhotos((prev) => ({ ...prev, [type]: file }));
+        toast.success(`Foto de ${type} aprovada!`);
+      };
+      reader.readAsDataURL(file);
     };
 
   const removePhoto = (type: keyof PhotoState) => {
@@ -521,55 +572,83 @@ export default function Evolucao() {
               </div>
             )}
 
+            {/* Photo Standard Guide */}
+            {canSubmitNew && (
+              <PhotoStandardGuide compact />
+            )}
+
             {/* 3 Photo Uploads */}
             <div>
               <Label className="mb-3 block">Fotos de Evolução (mesmo padrão da anamnese)</Label>
               <div className="grid grid-cols-3 gap-4">
-                {photoTypes.map(({ key, label }) => (
-                  <div key={key} className="space-y-2">
-                    <div
-                      className={`relative aspect-[3/4] rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors ${!canSubmitNew ? "pointer-events-none opacity-50" : ""}`}
-                      onClick={() => canSubmitNew && fileInputRefs[key].current?.click()}
-                    >
-                      {photoPreviews[key] ? (
-                        <>
-                          <img
-                            src={photoPreviews[key]!}
-                            alt={`Preview ${label}`}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removePhoto(key);
-                            }}
-                            className="absolute top-2 right-2 p-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                          <Camera className="h-8 w-8 mb-2" />
-                          <p className="text-xs font-medium">{label}</p>
-                          <p className="text-[10px]">Clique para adicionar</p>
-                        </div>
-                      )}
+                {photoTypes.map(({ key, label }) => {
+                  const isValidating = validatingPhoto === key;
+                  
+                  return (
+                    <div key={key} className="space-y-2">
+                      <div
+                        className={`relative aspect-[3/4] rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors ${!canSubmitNew || isValidating ? "pointer-events-none" : ""} ${!canSubmitNew ? "opacity-50" : ""}`}
+                        onClick={() => canSubmitNew && !isValidating && fileInputRefs[key].current?.click()}
+                      >
+                        {photoPreviews[key] ? (
+                          <>
+                            <img
+                              src={photoPreviews[key]!}
+                              alt={`Preview ${label}`}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                            {isValidating && (
+                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                <div className="text-center text-white">
+                                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-1" />
+                                  <span className="text-xs">Validando...</span>
+                                </div>
+                              </div>
+                            )}
+                            {!isValidating && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removePhoto(key);
+                                }}
+                                className="absolute top-2 right-2 p-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                            {isValidating ? (
+                              <>
+                                <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                                <p className="text-xs">Validando...</p>
+                              </>
+                            ) : (
+                              <>
+                                <Camera className="h-8 w-8 mb-2" />
+                                <p className="text-xs font-medium">{label}</p>
+                                <p className="text-[10px]">Clique para adicionar</p>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        ref={fileInputRefs[key]}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoSelect(key)}
+                        className="hidden"
+                        disabled={!canSubmitNew || isValidating}
+                      />
                     </div>
-                    <input
-                      ref={fileInputRefs[key]}
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoSelect(key)}
-                      className="hidden"
-                      disabled={!canSubmitNew}
-                    />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">JPG, PNG até 10MB cada. Mantenha o mesmo padrão das fotos iniciais.</p>
+              <p className="text-xs text-muted-foreground mt-2">JPG, PNG até 10MB cada. Siga o padrão mostrado acima.</p>
             </div>
 
             {/* Form Fields */}
