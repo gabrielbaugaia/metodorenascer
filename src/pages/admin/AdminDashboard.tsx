@@ -109,16 +109,24 @@ export default function AdminDashboard() {
         const canceledSubs = allSubs?.filter(s => s.status === "canceled") || [];
         const trialSubs = allSubs?.filter(s => s.status === "trialing") || [];
 
+        // Filter out free plans for financial calculations
+        const paidActiveSubs = activeSubs.filter(s => s.plan_type !== "free" && (s.price_cents || 0) > 0);
+        const paidAllSubs = allSubs?.filter(s => s.plan_type !== "free" && (s.price_cents || 0) > 0) || [];
+        const paidCanceledSubs = canceledSubs.filter(s => s.plan_type !== "free");
+
         const activeSubsCount = activeSubs.length;
-        const monthlyRevenue = activeSubs.reduce((sum, s) => sum + (s.price_cents || 0), 0) / 100;
-        const avgTicket = activeSubsCount > 0 ? monthlyRevenue / activeSubsCount : 0;
+        const paidActiveSubsCount = paidActiveSubs.length;
+        const monthlyRevenue = paidActiveSubs.reduce((sum, s) => sum + (s.price_cents || 0), 0) / 100;
+        const avgTicket = paidActiveSubsCount > 0 ? monthlyRevenue / paidActiveSubsCount : 0;
         
-        // Churn rate (canceled / total)
-        const totalSubsEver = allSubs?.length || 0;
-        const churnRate = totalSubsEver > 0 ? (canceledSubs.length / totalSubsEver) * 100 : 0;
+        // Churn rate (canceled paid / total paid) - exclude free plans
+        const totalPaidSubsEver = paidAllSubs.length;
+        const churnRate = totalPaidSubsEver > 0 ? (paidCanceledSubs.length / totalPaidSubsEver) * 100 : 0;
         
-        // Conversion rate (active / total clients)
-        const conversionRate = (clientCount || 0) > 0 ? (activeSubsCount / (clientCount || 1)) * 100 : 0;
+        // Conversion rate (paid active / total clients minus free) - more accurate for financial analysis
+        const freeSubsCount = activeSubs.filter(s => s.plan_type === "free" || (s.price_cents || 0) === 0).length;
+        const paidEligibleClients = (clientCount || 0) - freeSubsCount;
+        const conversionRate = paidEligibleClients > 0 ? (paidActiveSubsCount / paidEligibleClients) * 100 : 0;
 
         // Plan distribution
         const planCounts: Record<string, { count: number; revenue: number }> = {};
@@ -167,11 +175,13 @@ export default function AdminDashboard() {
             .gte("created_at", monthStart)
             .lt("created_at", nextMonth);
 
-          // Count active subscriptions created in this month (revenue)
+          // Count active PAID subscriptions created in this month (revenue) - exclude free plans
           const { data: monthSubs } = await supabase
             .from("subscriptions")
-            .select("price_cents")
+            .select("price_cents, plan_type")
             .eq("status", "active")
+            .neq("plan_type", "free")
+            .gt("price_cents", 0)
             .gte("created_at", monthStart)
             .lt("created_at", nextMonth);
 
