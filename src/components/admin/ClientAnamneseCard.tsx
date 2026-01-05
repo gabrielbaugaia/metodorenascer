@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -15,8 +16,11 @@ import {
   Cigarette,
   Wine,
   Phone,
-  Camera
+  Camera,
+  Loader2,
+  TrendingUp
 } from "lucide-react";
+import { createBodyPhotosSignedUrl } from "@/lib/bodyPhotos";
 
 interface Profile {
   full_name: string;
@@ -60,10 +64,56 @@ interface Profile {
 
 interface ClientAnamneseCardProps {
   profile: Profile;
+  currentWeight?: number | null;
 }
 
-export function ClientAnamneseCard({ profile }: ClientAnamneseCardProps) {
+export function ClientAnamneseCard({ profile, currentWeight }: ClientAnamneseCardProps) {
   const hasPhotos = profile.foto_frente_url || profile.foto_lado_url || profile.foto_costas_url;
+  const [signedPhotos, setSignedPhotos] = useState<{ frente: string | null; lado: string | null; costas: string | null }>({
+    frente: null,
+    lado: null,
+    costas: null,
+  });
+  const [loadingPhotos, setLoadingPhotos] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const signOrNull = async (value: string | null | undefined): Promise<string | null> => {
+      if (!value) return null;
+      try {
+        return await createBodyPhotosSignedUrl(value);
+      } catch (e) {
+        console.warn("Erro ao gerar URL assinada:", e);
+        return null;
+      }
+    };
+
+    const loadPhotos = async () => {
+      if (!hasPhotos) {
+        setLoadingPhotos(false);
+        return;
+      }
+      
+      const [frente, lado, costas] = await Promise.all([
+        signOrNull(profile.foto_frente_url),
+        signOrNull(profile.foto_lado_url),
+        signOrNull(profile.foto_costas_url),
+      ]);
+
+      if (!cancelled) {
+        setSignedPhotos({ frente, lado, costas });
+        setLoadingPhotos(false);
+      }
+    };
+
+    loadPhotos();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile.foto_frente_url, profile.foto_lado_url, profile.foto_costas_url, hasPhotos]);
+
+  const weightChange = currentWeight && profile.weight ? currentWeight - profile.weight : null;
 
   return (
     <Card className="bg-muted/30">
@@ -81,10 +131,26 @@ export function ClientAnamneseCard({ profile }: ClientAnamneseCardProps) {
             <div className="flex items-center gap-2">
               <Scale className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground">Peso</p>
+                <p className="text-xs text-muted-foreground">Peso Inicial</p>
                 <p className="font-medium">{profile.weight ? `${profile.weight} kg` : "—"}</p>
               </div>
             </div>
+            {currentWeight && (
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Peso Atual</p>
+                  <div className="flex items-center gap-1">
+                    <p className="font-medium text-primary">{currentWeight} kg</p>
+                    {weightChange !== null && weightChange !== 0 && (
+                      <Badge variant="outline" className={`text-xs ${weightChange < 0 ? "text-green-500 border-green-500/50" : "text-orange-500 border-orange-500/50"}`}>
+                        {weightChange > 0 ? "+" : ""}{weightChange.toFixed(1)}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Ruler className="h-4 w-4 text-muted-foreground" />
               <div>
@@ -254,44 +320,62 @@ export function ClientAnamneseCard({ profile }: ClientAnamneseCardProps) {
               <Camera className="h-4 w-4" />
               Fotos Corporais
             </h4>
-            <div className="grid grid-cols-3 gap-3">
-              {profile.foto_frente_url && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground text-center">Frente</p>
-                  <a href={profile.foto_frente_url} target="_blank" rel="noopener noreferrer">
-                    <img 
-                      src={profile.foto_frente_url} 
-                      alt="Foto de frente" 
-                      className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                    />
-                  </a>
-                </div>
-              )}
-              {profile.foto_lado_url && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground text-center">Lado</p>
-                  <a href={profile.foto_lado_url} target="_blank" rel="noopener noreferrer">
-                    <img 
-                      src={profile.foto_lado_url} 
-                      alt="Foto de lado" 
-                      className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                    />
-                  </a>
-                </div>
-              )}
-              {profile.foto_costas_url && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground text-center">Costas</p>
-                  <a href={profile.foto_costas_url} target="_blank" rel="noopener noreferrer">
-                    <img 
-                      src={profile.foto_costas_url} 
-                      alt="Foto de costas" 
-                      className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                    />
-                  </a>
-                </div>
-              )}
-            </div>
+            {loadingPhotos ? (
+              <div className="grid grid-cols-3 gap-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3">
+                {signedPhotos.frente && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground text-center">Frente</p>
+                    <a href={signedPhotos.frente} target="_blank" rel="noopener noreferrer">
+                      <img 
+                        src={signedPhotos.frente} 
+                        alt="Foto de frente" 
+                        className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
+                        loading="lazy"
+                      />
+                    </a>
+                  </div>
+                )}
+                {signedPhotos.lado && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground text-center">Lado</p>
+                    <a href={signedPhotos.lado} target="_blank" rel="noopener noreferrer">
+                      <img 
+                        src={signedPhotos.lado} 
+                        alt="Foto de lado" 
+                        className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
+                        loading="lazy"
+                      />
+                    </a>
+                  </div>
+                )}
+                {signedPhotos.costas && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground text-center">Costas</p>
+                    <a href={signedPhotos.costas} target="_blank" rel="noopener noreferrer">
+                      <img 
+                        src={signedPhotos.costas} 
+                        alt="Foto de costas" 
+                        className="aspect-[3/4] object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
+                        loading="lazy"
+                      />
+                    </a>
+                  </div>
+                )}
+                {!signedPhotos.frente && !signedPhotos.lado && !signedPhotos.costas && (
+                  <div className="col-span-3 text-center py-4 text-muted-foreground text-sm">
+                    Erro ao carregar fotos
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
