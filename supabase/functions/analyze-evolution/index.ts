@@ -23,52 +23,94 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("[ANALYZE-EVOLUTION] Starting analysis");
+    console.log("[ANALYZE-EVOLUTION] Starting comparative analysis");
 
     // Build the content array with text and images
     const content: unknown[] = [
       {
         type: "text",
-        text: `Você é Gabriel Baú, mentor fitness do Método Renascer. Faça uma análise comparativa VISUAL detalhada entre as fotos iniciais (anamnese) e as fotos de evolução atuais do cliente.
+        text: `Você é Gabriel Baú, mentor fitness do Método Renascer, especialista em composição corporal e prescrição de treinos e dietas personalizadas. 
+
+Analise VISUALMENTE as fotos ANTES (anamnese/inicial) e DEPOIS (evolução/atual) do cliente e gere uma análise comparativa completa com recomendações específicas para ajustes no treino e na dieta.
 
 DADOS DO CLIENTE:
 - Nome: ${clientData.name || "Cliente"}
 - Peso inicial: ${clientData.initialWeight || "Não informado"} kg
 - Peso atual: ${clientData.currentWeight || "Não informado"} kg
+- Variação de peso: ${clientData.initialWeight && clientData.currentWeight ? `${(clientData.currentWeight - clientData.initialWeight).toFixed(1)} kg` : "Não calculável"}
 - Observações do cliente: ${clientData.notes || "Nenhuma"}
 
-INSTRUÇÕES:
-1. Compare VISUALMENTE as fotos de frente, lado e costas entre o ANTES (anamnese) e o DEPOIS (evolução)
-2. Identifique mudanças positivas na composição corporal
-3. Note áreas de melhoria e áreas que ainda precisam de trabalho
-4. Seja motivador e construtivo
-5. Dê recomendações específicas para os próximos 30 dias
+INSTRUÇÕES DE ANÁLISE:
+1. Compare VISUALMENTE cada ângulo (frente, lado, costas) entre ANTES e DEPOIS
+2. Identifique mudanças na composição corporal (gordura, músculo)
+3. Avalie mudanças posturais
+4. Identifique áreas que melhoraram e áreas que precisam mais atenção
+5. Baseado nas mudanças observadas, sugira ajustes específicos no treino
+6. Baseado nas mudanças observadas, sugira ajustes específicos na dieta
+7. Seja motivador mas realista
 
-FORMATO DA RESPOSTA (use exatamente esta estrutura):
+RESPONDA EXATAMENTE NESTE FORMATO JSON:
+{
+  "resumoGeral": "Parágrafo resumindo a evolução geral do cliente",
+  "mudancasObservadas": {
+    "composicaoCorporal": {
+      "gorduraCorporal": "aumentou | diminuiu | manteve",
+      "descricaoGordura": "Descrição da mudança na gordura",
+      "massaMuscular": "aumentou | diminuiu | manteve", 
+      "descricaoMuscular": "Descrição da mudança na massa muscular",
+      "definicaoGeral": "melhorou | piorou | manteve"
+    },
+    "frente": {
+      "mudancasPositivas": ["mudança 1", "mudança 2"],
+      "areasAtencao": ["área 1", "área 2"],
+      "observacoes": "comentário específico"
+    },
+    "lado": {
+      "mudancasPositivas": ["mudança 1", "mudança 2"],
+      "areasAtencao": ["área 1", "área 2"],
+      "observacoes": "comentário específico"
+    },
+    "costas": {
+      "mudancasPositivas": ["mudança 1", "mudança 2"],
+      "areasAtencao": ["área 1", "área 2"],
+      "observacoes": "comentário específico"
+    },
+    "postura": {
+      "mudou": true ou false,
+      "descricao": "descrição das mudanças posturais se houver"
+    }
+  },
+  "analisePeso": {
+    "variacao": "${clientData.initialWeight && clientData.currentWeight ? (clientData.currentWeight - clientData.initialWeight).toFixed(1) : 0} kg",
+    "interpretacao": "Interpretação da mudança de peso considerando as fotos (ex: ganho de músculo vs gordura)",
+    "tendencia": "positiva | neutra | negativa"
+  },
+  "ajustesTreino": {
+    "manutencao": ["exercício/grupo muscular para manter a ênfase"],
+    "intensificar": ["área/exercício para intensificar", "justificativa"],
+    "adicionar": ["novo foco de treino sugerido"],
+    "observacoes": "comentário geral sobre ajustes no treino"
+  },
+  "ajustesDieta": {
+    "calorias": "aumentar | manter | reduzir",
+    "proteina": "aumentar | manter | reduzir",
+    "carboidratos": "aumentar | manter | reduzir (especificar timing se relevante)",
+    "sugestoes": ["sugestão específica 1", "sugestão específica 2"],
+    "observacoes": "comentário geral sobre ajustes na dieta"
+  },
+  "metasProximos30Dias": [
+    "Meta específica 1",
+    "Meta específica 2", 
+    "Meta específica 3"
+  ],
+  "pontuacaoEvolucao": {
+    "nota": 1-10,
+    "justificativa": "Breve justificativa da nota"
+  },
+  "mensagemMotivacional": "Mensagem personalizada de incentivo baseada na evolução observada"
+}
 
-## 🔥 ANÁLISE DA SUA EVOLUÇÃO
-
-### 📊 Resumo Geral
-[Breve parágrafo sobre a evolução geral]
-
-### 💪 Mudanças Positivas Identificadas
-- **Frente:** [o que melhorou visualmente]
-- **Lado:** [o que melhorou visualmente]  
-- **Costas:** [o que melhorou visualmente]
-
-### 📈 Análise do Peso
-[Comentário sobre a mudança de peso se houver dados]
-
-### 🎯 Áreas de Foco para os Próximos 30 Dias
-1. [Recomendação específica 1]
-2. [Recomendação específica 2]
-3. [Recomendação específica 3]
-
-### 🏆 Mensagem Motivacional
-[Mensagem personalizada de incentivo]
-
----
-*Análise gerada em ${new Date().toLocaleDateString("pt-BR")}*`
+IMPORTANTE: Retorne APENAS o JSON, sem markdown, sem blocos de código, sem texto adicional.`
       }
     ];
 
@@ -76,7 +118,7 @@ FORMATO DA RESPOSTA (use exatamente esta estrutura):
     if (anamnesePhotos.frente) {
       content.push({
         type: "text",
-        text: "FOTO INICIAL (ANAMNESE) - FRENTE:"
+        text: "📸 FOTO INICIAL (ANAMNESE) - FRENTE:"
       });
       content.push({
         type: "image_url",
@@ -87,7 +129,7 @@ FORMATO DA RESPOSTA (use exatamente esta estrutura):
     if (anamnesePhotos.lado) {
       content.push({
         type: "text",
-        text: "FOTO INICIAL (ANAMNESE) - LADO:"
+        text: "📸 FOTO INICIAL (ANAMNESE) - LADO:"
       });
       content.push({
         type: "image_url",
@@ -98,7 +140,7 @@ FORMATO DA RESPOSTA (use exatamente esta estrutura):
     if (anamnesePhotos.costas) {
       content.push({
         type: "text",
-        text: "FOTO INICIAL (ANAMNESE) - COSTAS:"
+        text: "📸 FOTO INICIAL (ANAMNESE) - COSTAS:"
       });
       content.push({
         type: "image_url",
@@ -110,7 +152,7 @@ FORMATO DA RESPOSTA (use exatamente esta estrutura):
     if (evolutionPhotos.frente) {
       content.push({
         type: "text",
-        text: "FOTO ATUAL (EVOLUÇÃO) - FRENTE:"
+        text: "📸 FOTO ATUAL (EVOLUÇÃO) - FRENTE:"
       });
       content.push({
         type: "image_url",
@@ -121,7 +163,7 @@ FORMATO DA RESPOSTA (use exatamente esta estrutura):
     if (evolutionPhotos.lado) {
       content.push({
         type: "text",
-        text: "FOTO ATUAL (EVOLUÇÃO) - LADO:"
+        text: "📸 FOTO ATUAL (EVOLUÇÃO) - LADO:"
       });
       content.push({
         type: "image_url",
@@ -132,13 +174,15 @@ FORMATO DA RESPOSTA (use exatamente esta estrutura):
     if (evolutionPhotos.costas) {
       content.push({
         type: "text",
-        text: "FOTO ATUAL (EVOLUÇÃO) - COSTAS:"
+        text: "📸 FOTO ATUAL (EVOLUÇÃO) - COSTAS:"
       });
       content.push({
         type: "image_url",
         image_url: { url: evolutionPhotos.costas }
       });
     }
+
+    console.log("[ANALYZE-EVOLUTION] Calling AI gateway with", content.length, "content items");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -172,13 +216,39 @@ FORMATO DA RESPOSTA (use exatamente esta estrutura):
     }
 
     const data = await response.json();
-    const analysis = data.choices?.[0]?.message?.content || "Não foi possível gerar a análise.";
+    const rawContent = data.choices?.[0]?.message?.content || "";
 
-    console.log("[ANALYZE-EVOLUTION] Analysis generated successfully");
+    console.log("[ANALYZE-EVOLUTION] Raw response length:", rawContent.length);
 
-    return createSuccessResponse(req, { analysis });
+    // Try to parse JSON from response
+    let analysis;
+    try {
+      // Remove possible markdown code blocks
+      const cleanedContent = rawContent
+        .replace(/```json\s*/g, '')
+        .replace(/```\s*/g, '')
+        .trim();
+      
+      analysis = JSON.parse(cleanedContent);
+      console.log("[ANALYZE-EVOLUTION] JSON parsed successfully");
+    } catch (parseError) {
+      console.error("[ANALYZE-EVOLUTION] Failed to parse JSON:", parseError);
+      // Return the raw content as a fallback (legacy format)
+      return createSuccessResponse(req, { 
+        analysis: rawContent,
+        structured: null,
+        parseError: true
+      });
+    }
+
+    console.log("[ANALYZE-EVOLUTION] Analysis completed successfully");
+
+    return createSuccessResponse(req, { 
+      analysis: analysis,
+      structured: true
+    });
   } catch (error) {
     console.error("[ANALYZE-EVOLUTION] Error:", error);
-    return createErrorResponse(req, "Erro ao processar análise. Tente novamente.");
+    return createErrorResponse(req, "Erro ao processar análise comparativa. Tente novamente.");
   }
 });
