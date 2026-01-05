@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { EvolutionAnalysisResult } from "@/components/evolution/EvolutionAnalysisResult";
 import { createBodyPhotosSignedUrl } from "@/lib/bodyPhotos";
+import { generateEvolutionPdf } from "@/lib/generateEvolutionPdf";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,10 +18,10 @@ import {
   ChevronRight,
   Sparkles,
   RefreshCw,
-  TrendingUp,
   Camera,
   Dumbbell,
   Utensils,
+  FileDown,
 } from "lucide-react";
 
 interface CheckIn {
@@ -74,6 +75,7 @@ export function AdminEvolutionSection({
   const [checkinPhotoSrc, setCheckinPhotoSrc] = useState<Record<string, SignedPhotos>>({});
   const [expandedCheckin, setExpandedCheckin] = useState<string | null>(null);
   const [generatingProtocols, setGeneratingProtocols] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   useEffect(() => {
     fetchCheckins();
@@ -208,6 +210,24 @@ export function AdminEvolutionSection({
     }
   };
 
+  const handleDownloadPdf = async () => {
+    setGeneratingPdf(true);
+    try {
+      await generateEvolutionPdf({
+        clientName,
+        initialWeight,
+        checkins,
+        signedPhotos: checkinPhotoSrc,
+      });
+      toast.success("PDF de evolução gerado com sucesso!");
+    } catch (error: any) {
+      console.error("Error generating evolution PDF:", error);
+      toast.error("Erro ao gerar PDF de evolução");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -259,21 +279,36 @@ export function AdminEvolutionSection({
               {checkins.length} check-in{checkins.length > 1 ? "s" : ""} registrado{checkins.length > 1 ? "s" : ""}
             </CardDescription>
           </div>
-          {latestWithAnalysis && (
+          <div className="flex gap-2">
             <Button
-              variant="fire"
+              variant="outline"
               size="sm"
-              onClick={() => handleGenerateAdjustedProtocols(latestWithAnalysis)}
-              disabled={generatingProtocols}
+              onClick={handleDownloadPdf}
+              disabled={generatingPdf}
             >
-              {generatingProtocols ? (
+              {generatingPdf ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <FileDown className="h-4 w-4 mr-2" />
               )}
-              Ajustar Protocolos
+              Baixar PDF
             </Button>
-          )}
+            {latestWithAnalysis && (
+              <Button
+                variant="fire"
+                size="sm"
+                onClick={() => handleGenerateAdjustedProtocols(latestWithAnalysis)}
+                disabled={generatingProtocols}
+              >
+                {generatingProtocols ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Ajustar Protocolos
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
