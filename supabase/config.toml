@@ -50,3 +50,12 @@ verify_jwt = false
 
 [functions.weekly-support-report]
 verify_jwt = false
+
+[functions.send-password-reset]
+verify_jwt = false
+
+[functions.analyze-body-composition]
+verify_jwt = true
+
+[functions.validate-body-photo]
+verify_jwt = true
