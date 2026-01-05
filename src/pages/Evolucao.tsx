@@ -489,7 +489,20 @@ export default function Evolucao() {
             </CardHeader>
             <CardContent>
               {isStructuredAnalysis && typeof aiAnalysis === 'object' ? (
-                <EvolutionAnalysisResult analysis={aiAnalysis as any} />
+                <EvolutionAnalysisResult 
+                  analysis={aiAnalysis as any} 
+                  clientName={profile?.full_name || "Cliente"}
+                  checkinDate={new Date()}
+                  showPhotoComparison={true}
+                  photos={{
+                    initialFronte: anamnesePhotoSrc.frente,
+                    initialLado: anamnesePhotoSrc.lado,
+                    initialCostas: anamnesePhotoSrc.costas,
+                    currentFrente: photoPreviews.frente || undefined,
+                    currentLado: photoPreviews.lado || undefined,
+                    currentCostas: photoPreviews.costas || undefined
+                  }}
+                />
               ) : (
                 <div className="prose prose-invert prose-sm max-w-none">
                   <div
@@ -719,6 +732,12 @@ export default function Evolucao() {
           checkins={checkins} 
           checkinPhotoSrc={checkinPhotoSrc}
           initialWeight={profile?.weight}
+          clientName={profile?.full_name || "Cliente"}
+          initialPhotos={{
+            frente: anamnesePhotoSrc.frente,
+            lado: anamnesePhotoSrc.lado,
+            costas: anamnesePhotoSrc.costas
+          }}
         />
       </div>
     </ClientLayout>

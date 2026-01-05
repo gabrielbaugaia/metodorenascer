@@ -36,10 +36,18 @@ interface SignedPhotos {
   single?: string | null;
 }
 
+interface InitialPhotos {
+  frente?: string | null;
+  lado?: string | null;
+  costas?: string | null;
+}
+
 interface EvolutionTimelineProps {
   checkins: CheckIn[];
   checkinPhotoSrc: Record<string, SignedPhotos>;
   initialWeight?: number | null;
+  initialPhotos?: InitialPhotos;
+  clientName?: string;
 }
 
 function parseAnalysis(analysisStr: string | null): { structured: boolean; data: any } {
@@ -57,7 +65,13 @@ function parseAnalysis(analysisStr: string | null): { structured: boolean; data:
   }
 }
 
-export function EvolutionTimeline({ checkins, checkinPhotoSrc, initialWeight }: EvolutionTimelineProps) {
+export function EvolutionTimeline({ 
+  checkins, 
+  checkinPhotoSrc, 
+  initialWeight,
+  initialPhotos,
+  clientName = "Cliente"
+}: EvolutionTimelineProps) {
   const [expandedCheckins, setExpandedCheckins] = useState<Set<string>>(new Set());
 
   const toggleExpand = (id: string) => {
@@ -258,7 +272,20 @@ export function EvolutionTimeline({ checkins, checkinPhotoSrc, initialWeight }: 
                               </div>
                               
                               {analysis.structured ? (
-                                <EvolutionAnalysisResult analysis={analysis.data} />
+                                <EvolutionAnalysisResult 
+                                  analysis={analysis.data}
+                                  clientName={clientName}
+                                  checkinDate={new Date(checkin.created_at)}
+                                  showPhotoComparison={true}
+                                  photos={{
+                                    initialFronte: initialPhotos?.frente,
+                                    initialLado: initialPhotos?.lado,
+                                    initialCostas: initialPhotos?.costas,
+                                    currentFrente: signed?.frente,
+                                    currentLado: signed?.lado,
+                                    currentCostas: signed?.costas
+                                  }}
+                                />
                               ) : (
                                 <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
                                   <div
