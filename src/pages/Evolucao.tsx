@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { formatAiContent } from "@/lib/sanitize";
 import { createBodyPhotosSignedUrl } from "@/lib/bodyPhotos";
 import { EvolutionAnalysisResult } from "@/components/evolution/EvolutionAnalysisResult";
+import { EvolutionTimeline } from "@/components/evolution/EvolutionTimeline";
 import { PhotoStandardGuide } from "@/components/anamnese/PhotoStandardGuide";
 import {
   Camera,
@@ -713,92 +714,12 @@ export default function Evolucao() {
           </CardContent>
         </Card>
 
-        {/* Histórico de Check-ins */}
-        {checkins.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                Histórico de Evolução
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {checkins.map((checkin) => {
-                  const signed = checkinPhotoSrc[checkin.id];
-
-                  return (
-                    <div key={checkin.id} className="p-4 rounded-lg bg-muted/30 border border-border/50">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          <span className="font-medium">{format(new Date(checkin.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          {checkin.peso_atual && (
-                            <span className="flex items-center gap-1 text-sm">
-                              <Scale className="h-3 w-3" />
-                              {checkin.peso_atual} kg
-                            </span>
-                          )}
-                          {checkin.semana_numero && (
-                            <span className="text-xs text-muted-foreground">Semana {checkin.semana_numero}</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Display checkin photos */}
-                      {(signed?.frente || signed?.lado || signed?.costas || signed?.single) && (
-                        <div className="grid grid-cols-3 gap-2 mb-3">
-                          {signed?.frente && (
-                            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
-                              <img src={signed.frente} alt="Evolução - Frente" className="w-full h-full object-cover" loading="lazy" />
-                            </div>
-                          )}
-                          {signed?.lado && (
-                            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
-                              <img src={signed.lado} alt="Evolução - Lado" className="w-full h-full object-cover" loading="lazy" />
-                            </div>
-                          )}
-                          {signed?.costas && (
-                            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted">
-                              <img src={signed.costas} alt="Evolução - Costas" className="w-full h-full object-cover" loading="lazy" />
-                            </div>
-                          )}
-                          {signed?.single && (
-                            <div className="aspect-[3/4] rounded-lg overflow-hidden bg-muted col-span-3 max-w-[200px]">
-                              <img src={signed.single} alt="Evolução" className="w-full h-full object-cover" loading="lazy" />
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {checkin.notas && <p className="text-sm text-muted-foreground mb-3">{checkin.notas}</p>}
-
-                      {/* AI Analysis */}
-                      {checkin.ai_analysis && (
-                        <details className="mt-3 border-t border-border/30 pt-3">
-                          <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:text-primary/80">
-                            <Sparkles className="h-4 w-4" />
-                            Ver Análise do Mentor
-                          </summary>
-                          <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                            <div
-                              className="text-xs leading-relaxed whitespace-pre-wrap"
-                              dangerouslySetInnerHTML={{
-                                __html: formatAiContent(checkin.ai_analysis, "compact"),
-                              }}
-                            />
-                          </div>
-                        </details>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Histórico de Check-ins com Timeline */}
+        <EvolutionTimeline 
+          checkins={checkins} 
+          checkinPhotoSrc={checkinPhotoSrc}
+          initialWeight={profile?.weight}
+        />
       </div>
     </ClientLayout>
   );
