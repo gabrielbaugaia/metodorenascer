@@ -22,7 +22,9 @@ import {
   Sparkles,
   CreditCard,
   KeyRound,
+  Download,
 } from "lucide-react";
+import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
 import {
   Dialog,
   DialogContent,
@@ -111,6 +113,7 @@ export default function AdminClienteDetalhes() {
   const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [signedBodyPhotos, setSignedBodyPhotos] = useState<{ frente: string | null; lado: string | null; costas: string | null }>(
     {
       frente: null,
@@ -365,6 +368,21 @@ export default function AdminClienteDetalhes() {
       toast.error(error.message || "Erro ao redefinir senha");
     } finally {
       setResettingPassword(false);
+    }
+  };
+
+  const handleDownloadAnamnesePdf = async () => {
+    if (!profile) return;
+    
+    setGeneratingPdf(true);
+    try {
+      await generateAnamnesePdf(profile, signedBodyPhotos);
+      toast.success("PDF da anamnese gerado com sucesso!");
+    } catch (error) {
+      console.error("Error generating anamnese PDF:", error);
+      toast.error("Erro ao gerar PDF da anamnese");
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
@@ -629,6 +647,28 @@ export default function AdminClienteDetalhes() {
                 </Dialog>
                 <p className="text-xs text-muted-foreground mt-1">
                   Cria uma senha provisória para o cliente acessar
+                </p>
+              </div>
+
+              {/* Download Anamnese PDF */}
+              <div>
+                <Label className="mb-2 block">Baixar Anamnese</Label>
+                <Button 
+                  variant="outline" 
+                  onClick={handleDownloadAnamnesePdf} 
+                  disabled={generatingPdf}
+                  className="w-full"
+                  size="sm"
+                >
+                  {generatingPdf ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  <span className="text-xs sm:text-sm">Baixar PDF da Anamnese</span>
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Gera um PDF com todas as informações e fotos do cliente
                 </p>
               </div>
             </CardContent>
