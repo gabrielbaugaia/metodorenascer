@@ -44,3 +44,9 @@ verify_jwt = true
 
 [functions.admin-reset-password]
 verify_jwt = true
+
+[functions.send-urgent-support-alert]
+verify_jwt = false
+
+[functions.weekly-support-report]
+verify_jwt = false
