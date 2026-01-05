@@ -125,7 +125,7 @@ serve(async (req) => {
 
     // Send invitation email
     const emailResult = await resend.emails.send({
-      from: "Método Renascer <onboarding@resend.dev>",
+      from: "Método Renascer <noreply@renascerapp.com.br>",
       to: [email],
       subject: "Seu convite para o Método Renascer",
       html: `

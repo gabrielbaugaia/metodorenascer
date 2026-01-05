@@ -186,8 +186,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Metrics calculated:", metrics);
 
-    // 4. Get admin email - use gabrielbaugaia@gmail.com as Resend requires verified domain
-    // Until domain is verified at resend.com/domains, we can only send to the account owner email
+    // 4. Get admin email
     const adminEmail = "gabrielbaugaia@gmail.com";
 
     // 5. Format date range for email
@@ -201,7 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // 6. Send email report
     const emailResponse = await resend.emails.send({
-      from: "Relatório Semanal <onboarding@resend.dev>",
+      from: "Relatório Semanal <noreply@renascerapp.com.br>",
       to: [adminEmail],
       subject: `📊 Relatório Semanal de Suporte - ${formatDate(startDate)} a ${formatDate(endDate)}`,
       html: `

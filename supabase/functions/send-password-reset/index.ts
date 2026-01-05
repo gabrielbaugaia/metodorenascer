@@ -120,15 +120,11 @@ const handler = async (req: Request): Promise<Response> => {
     // 6. Send email via Resend
     console.log(`[${requestId}] Step 6: Sending email via Resend...`);
     console.log(`[${requestId}] To: ${email}`);
-    console.log(`[${requestId}] From: Método Renascer <onboarding@resend.dev>`);
-
-    // Use gabrielbaugaia@gmail.com while domain is not verified
-    const recipientEmail = "gabrielbaugaia@gmail.com";
-    console.log(`[${requestId}] NOTE: Sending to ${recipientEmail} (domain not verified in Resend)`);
+    console.log(`[${requestId}] From: Método Renascer <noreply@renascerapp.com.br>`);
 
     const emailResponse = await resend.emails.send({
-      from: "Método Renascer <onboarding@resend.dev>",
-      to: [recipientEmail],
+      from: "Método Renascer <noreply@renascerapp.com.br>",
+      to: [email],
       subject: "🔑 Recuperação de Senha - Método Renascer",
       html: `
         <!DOCTYPE html>
@@ -226,8 +222,7 @@ const handler = async (req: Request): Promise<Response> => {
       emailId: emailResponse.data?.id,
       debug: {
         requestId,
-        elapsedMs: elapsed,
-        recipientNote: `Email enviado para ${recipientEmail} (verificar domínio em resend.com/domains para enviar para ${email})`
+        elapsedMs: elapsed
       }
     }), {
       status: 200,
