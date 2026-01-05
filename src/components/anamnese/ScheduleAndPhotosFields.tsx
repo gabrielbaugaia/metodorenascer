@@ -164,19 +164,25 @@ export function ScheduleAndPhotosFields({ formData, userId, onChange }: Schedule
         </CardContent>
       </Card>
 
-      {/* Fotos */}
-      <Card>
+      {/* Fotos Obrigatórias */}
+      <Card className="border-primary/50">
         <CardHeader>
-          <CardTitle>Fotos Corporais (Opcional)</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            Fotos Corporais <span className="text-destructive">*</span>
+          </CardTitle>
           <CardDescription>
-            Envie fotos para análise postural e acompanhamento de evolução
+            <span className="text-destructive font-medium">Obrigatório:</span> Envie as 3 fotos abaixo para liberar acesso às suas prescrições personalizadas.
+            As fotos são essenciais para análise postural e acompanhamento de evolução.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm text-amber-600 dark:text-amber-400">
+            ⚠️ <strong>Atenção:</strong> Sem as 3 fotos corporais você não poderá acessar seus protocolos de treino, nutrição e mindset.
+          </div>
           <div className="grid grid-cols-3 gap-4">
-            <PhotoUploadBox type="frente" label="Frente" />
-            <PhotoUploadBox type="lado" label="Lado" />
-            <PhotoUploadBox type="costas" label="Costas" />
+            <PhotoUploadBox type="frente" label="Frente *" />
+            <PhotoUploadBox type="lado" label="Lado *" />
+            <PhotoUploadBox type="costas" label="Costas *" />
           </div>
         </CardContent>
       </Card>
