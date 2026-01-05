@@ -186,26 +186,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Metrics calculated:", metrics);
 
-    // 4. Get admin email
-    const { data: adminRoles } = await supabase
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "admin")
-      .limit(1);
-
-    let adminEmail = "contato@gabrielbau.com.br";
-
-    if (adminRoles && adminRoles.length > 0) {
-      const { data: adminProfile } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", adminRoles[0].user_id)
-        .single();
-      
-      if (adminProfile?.email) {
-        adminEmail = adminProfile.email;
-      }
-    }
+    // 4. Get admin email - use gabrielbaugaia@gmail.com as Resend requires verified domain
+    // Until domain is verified at resend.com/domains, we can only send to the account owner email
+    const adminEmail = "gabrielbaugaia@gmail.com";
 
     // 5. Format date range for email
     const formatDate = (date: Date) => {
