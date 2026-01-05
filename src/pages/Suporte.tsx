@@ -569,7 +569,7 @@ export default function Suporte() {
                       <div className="space-y-4">
                         <Bot className="h-16 w-16 mx-auto text-muted-foreground" />
                         <div>
-                          <h3 className="font-semibold uppercase">Olá, Guerreiro!</h3>
+                          <h3 className="font-semibold uppercase">Olá, {profile?.full_name?.split(' ')[0] || 'Bem-vindo'}!</h3>
                           <p className="text-sm text-muted-foreground">
                             Sou seu mentor. Você pode me perguntar sobre seu treino, nutrição, mindset ou qualquer dúvida relacionada que estou aqui para te ajudar!
                           </p>
