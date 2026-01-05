@@ -20,7 +20,16 @@ export function extractBodyPhotosPath(urlOrPath: string): string {
   // Try to extract path from URLs - handles both /public/ and /sign/ patterns
   // Pattern: .../body-photos/<path>?... or .../body-photos/<path>
   const match = urlOrPath.match(/\/body-photos\/([^?#]+)/);
-  if (!match?.[1]) return "";
+  if (!match?.[1]) {
+    // Fallback: try to extract path from object/sign or object/public pattern
+    const altMatch = urlOrPath.match(/\/object\/(?:sign|public)\/body-photos\/([^?#]+)/);
+    if (!altMatch?.[1]) return "";
+    try {
+      return decodeURIComponent(altMatch[1]);
+    } catch {
+      return altMatch[1];
+    }
+  }
 
   try {
     return decodeURIComponent(match[1]);
