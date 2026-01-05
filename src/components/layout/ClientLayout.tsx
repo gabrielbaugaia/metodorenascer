@@ -5,6 +5,7 @@ import { ClientSidebar } from "./ClientSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { AdminSupportNotifications } from "@/components/admin/AdminSupportNotifications";
+import { BottomNav } from "@/components/navigation/BottomNav";
 import { Loader2, Menu, Flame } from "lucide-react";
 
 interface ClientLayoutProps {
@@ -58,10 +59,12 @@ export function ClientLayout({ children }: ClientLayoutProps) {
               <AdminSupportNotifications />
             </div>
           )}
-          <div className="p-4 md:p-6 max-w-full">
+          <div className="p-4 md:p-6 pb-20 md:pb-6 max-w-full">
             {children}
           </div>
         </main>
+        {/* Bottom navigation for mobile - only for clients */}
+        {!isAdmin && <BottomNav />}
       </div>
     </SidebarProvider>
   );

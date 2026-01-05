@@ -7,6 +7,7 @@ import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AdminAlertsPanel } from "@/components/admin/AdminAlertsPanel";
 import { 
   Users, 
   TrendingUp, 
@@ -24,7 +25,8 @@ import {
   Percent,
   Clock,
   Mail,
-  Send
+  Send,
+  Wallet
 } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
@@ -40,6 +42,8 @@ interface Stats {
   avgTicket: number;
   churnRate: number;
   conversionRate: number;
+  ltv: number;
+  mrr: number;
 }
 
 interface RecentClient {
@@ -67,7 +71,7 @@ export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const navigate = useNavigate();
-  const [stats, setStats] = useState<Stats>({
+const [stats, setStats] = useState<Stats>({
     totalClients: 0,
     activeSubscriptions: 0,
     totalProtocols: 0,
@@ -78,6 +82,8 @@ export default function AdminDashboard() {
     avgTicket: 0,
     churnRate: 0,
     conversionRate: 0,
+    ltv: 0,
+    mrr: 0,
   });
   const [recentClients, setRecentClients] = useState<RecentClient[]>([]);
   const [chartData, setChartData] = useState<MonthlyData[]>([]);
@@ -206,6 +212,11 @@ export default function AdminDashboard() {
           });
         }
 
+// Calculate LTV and MRR
+        const mrr = monthlyRevenue;
+        const avgLifetimeMonths = churnRate > 0 ? 100 / churnRate : 12; // Average months before churn
+        const ltv = avgTicket * avgLifetimeMonths;
+
         setChartData(months);
         setStats({
           totalClients: clientCount || 0,
@@ -218,6 +229,8 @@ export default function AdminDashboard() {
           avgTicket,
           churnRate,
           conversionRate,
+          ltv,
+          mrr,
         });
 
         setRecentClients(clients || []);
@@ -295,6 +308,9 @@ export default function AdminDashboard() {
             {sendingReport ? "Enviando..." : "Enviar Relatório Semanal"}
           </Button>
         </div>
+
+        {/* Alerts Panel */}
+        <AdminAlertsPanel />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -393,6 +409,30 @@ export default function AdminDashboard() {
                   <p className="text-xl font-bold text-red-400">{stats.churnRate.toFixed(1)}%</p>
                 </div>
                 <TrendingDown className="h-5 w-5 text-red-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card variant="glass">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">MRR</p>
+                  <p className="text-xl font-bold text-green-400">R$ {stats.mrr.toFixed(0)}</p>
+                </div>
+                <DollarSign className="h-5 w-5 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card variant="glass">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">LTV Médio</p>
+                  <p className="text-xl font-bold text-purple-400">R$ {stats.ltv.toFixed(0)}</p>
+                </div>
+                <Wallet className="h-5 w-5 text-purple-500" />
               </div>
             </CardContent>
           </Card>

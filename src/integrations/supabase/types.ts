@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievement_types: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          icon: string
+          id: string
+          name: string
+          points: number
+          requirement_value: number
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          icon: string
+          id: string
+          name: string
+          points?: number
+          requirement_value?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          points?: number
+          requirement_value?: number
+        }
+        Relationships: []
+      }
       admin_support_alerts: {
         Row: {
           alert_type: string
@@ -934,6 +967,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          notified: boolean | null
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          notified?: boolean | null
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          notified?: boolean | null
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_activity: {
         Row: {
           created_at: string
@@ -982,6 +1047,72 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          current_streak: number
+          id: string
+          last_activity_date: string | null
+          longest_streak: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          current_streak?: number
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_checkins: {
+        Row: {
+          adherence_level: number | null
+          created_at: string | null
+          current_weight: number | null
+          energy_level: number | null
+          id: string
+          mood: string | null
+          notes: string | null
+          user_id: string
+          week_number: number
+          year: number
+        }
+        Insert: {
+          adherence_level?: number | null
+          created_at?: string | null
+          current_weight?: number | null
+          energy_level?: number | null
+          id?: string
+          mood?: string | null
+          notes?: string | null
+          user_id: string
+          week_number: number
+          year: number
+        }
+        Update: {
+          adherence_level?: number | null
+          created_at?: string | null
+          current_weight?: number | null
+          energy_level?: number | null
+          id?: string
+          mood?: string | null
+          notes?: string | null
+          user_id?: string
+          week_number?: number
+          year?: number
         }
         Relationships: []
       }
