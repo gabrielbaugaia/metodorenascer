@@ -107,8 +107,10 @@ export default function AdminMetricas() {
     );
   }
 
-  const totalMrr = mrrSummary.reduce((acc, s) => acc + (Number(s.total_mrr) || 0), 0);
-  const totalActiveSubscribers = mrrSummary.reduce((acc, s) => acc + (Number(s.active_subscriptions) || 0), 0);
+  // Exclude free plans from financial metrics
+  const paidMrrSummary = mrrSummary.filter(s => s.plan_name?.toLowerCase() !== "gratuito" && s.plan_name?.toLowerCase() !== "free");
+  const totalMrr = paidMrrSummary.reduce((acc, s) => acc + (Number(s.total_mrr) || 0), 0);
+  const totalActiveSubscribers = paidMrrSummary.reduce((acc, s) => acc + (Number(s.active_subscriptions) || 0), 0);
 
   const funnelConversion = funnel ? {
     landingToPlans: funnel.landing_views > 0 ? ((funnel.plan_views / funnel.landing_views) * 100).toFixed(1) : "0",
