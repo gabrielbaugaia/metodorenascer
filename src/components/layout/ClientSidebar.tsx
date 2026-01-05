@@ -32,7 +32,8 @@ import {
   Mail,
   BarChart3,
   Target,
-  Camera
+  Camera,
+  Settings
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ const clientMenuItems = [
   { title: "Receitas", url: "/receitas", icon: ChefHat },
   { title: "Suporte", url: "/suporte", icon: MessageCircle },
   { title: "Assinatura", url: "/assinatura", icon: CreditCard },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
 const adminMenuItems = [

@@ -32,6 +32,7 @@ import MeuPerfil from "./pages/MeuPerfil";
 import Indicacoes from "./pages/Indicacoes";
 import RedefinirSenha from "./pages/RedefinirSenha";
 import Assinatura from "./pages/Assinatura";
+import Configuracoes from "./pages/Configuracoes";
 import AdminPlanosVenda from "./pages/admin/AdminPlanosVenda";
 import AdminMetricas from "./pages/admin/AdminMetricas";
 import AdminConvites from "./pages/admin/AdminConvites";
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/meu-perfil" element={<MeuPerfil />} />
             <Route path="/indicacoes" element={<Indicacoes />} />
             <Route path="/assinatura" element={<Assinatura />} />
+            <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/clientes" element={<AdminClientes />} />
             <Route path="/admin/clientes/:id" element={<AdminClienteDetalhes />} />
