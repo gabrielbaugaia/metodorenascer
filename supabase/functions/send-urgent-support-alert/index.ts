@@ -19,24 +19,36 @@ interface UrgentAlertRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const requestId = crypto.randomUUID().slice(0, 8);
+  const startTime = Date.now();
+  
+  console.log(`[${requestId}] ========================================`);
+  console.log(`[${requestId}] URGENT SUPPORT ALERT REQUEST`);
+  console.log(`[${requestId}] Timestamp: ${new Date().toISOString()}`);
+
   if (req.method === "OPTIONS") {
+    console.log(`[${requestId}] Handling CORS preflight`);
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log(`[${requestId}] Step 1: Checking RESEND_API_KEY...`);
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
+      console.error(`[${requestId}] ERROR: RESEND_API_KEY not configured`);
       return new Response(JSON.stringify({ error: "RESEND_API_KEY não configurada" }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
+    console.log(`[${requestId}] ✓ RESEND_API_KEY present: ${resendApiKey.slice(0, 8)}...`);
     
     const resend = new Resend(resendApiKey);
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    console.log(`[${requestId}] Step 2: Parsing request body...`);
     const {
       userId,
       conversaId,
@@ -46,8 +58,14 @@ const handler = async (req: Request): Promise<Response> => {
       keywordsDetected,
       urgencyReason
     }: UrgentAlertRequest = await req.json();
+    
+    console.log(`[${requestId}] Alert details:`);
+    console.log(`[${requestId}] - Client: ${clientName}`);
+    console.log(`[${requestId}] - Keywords: ${keywordsDetected.join(', ')}`);
+    console.log(`[${requestId}] - Reason: ${urgencyReason}`);
 
     // 1. Save alert to database
+    console.log(`[${requestId}] Step 3: Saving alert to database...`);
     const { error: alertError } = await supabase
       .from("admin_support_alerts")
       .insert({
@@ -60,34 +78,22 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
     if (alertError) {
-      console.error("Error saving alert:", alertError);
+      console.error(`[${requestId}] ERROR saving alert:`, alertError);
+    } else {
+      console.log(`[${requestId}] ✓ Alert saved to database`);
     }
 
-    // 2. Get admin email - first fetch admin users
-    const { data: adminRoles } = await supabase
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "admin")
-      .limit(1);
-
-    let adminEmail = "contato@gabrielbau.com.br"; // fallback
-
-    if (adminRoles && adminRoles.length > 0) {
-      const { data: adminProfile } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("id", adminRoles[0].user_id)
-        .single();
-      
-      if (adminProfile?.email) {
-        adminEmail = adminProfile.email;
-      }
-    }
+    // 2. Use fixed email while domain is not verified in Resend
+    console.log(`[${requestId}] Step 4: Preparing email...`);
+    const adminEmail = "gabrielbaugaia@gmail.com";
+    console.log(`[${requestId}] Sending to: ${adminEmail} (domain not verified in Resend)`);
 
     // 3. Send urgent email alert
     const keywordsList = keywordsDetected.length > 0 
       ? keywordsDetected.join(", ") 
       : "Não identificadas";
+
+    console.log(`[${requestId}] Step 5: Sending email via Resend...`);
 
     const emailResponse = await resend.emails.send({
       from: "Suporte Urgente <onboarding@resend.dev>",
@@ -169,16 +175,42 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Urgent alert email sent:", emailResponse);
+    const elapsed = Date.now() - startTime;
+    
+    console.log(`[${requestId}] ========================================`);
+    console.log(`[${requestId}] EMAIL SEND RESULT:`);
+    console.log(`[${requestId}] Response:`, JSON.stringify(emailResponse, null, 2));
+    
+    if (emailResponse.error) {
+      console.error(`[${requestId}] ❌ EMAIL SEND FAILED`);
+      console.error(`[${requestId}] Error: ${emailResponse.error.message}`);
+    } else {
+      console.log(`[${requestId}] ✓ EMAIL SENT SUCCESSFULLY`);
+      console.log(`[${requestId}] Email ID: ${emailResponse.data?.id}`);
+    }
+    console.log(`[${requestId}] Total time: ${elapsed}ms`);
+    console.log(`[${requestId}] ========================================`);
 
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      emailResponse,
+      requestId,
+      elapsedMs: elapsed
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
-    console.error("Error in send-urgent-support-alert:", error);
+    const elapsed = Date.now() - startTime;
+    console.error(`[${requestId}] ========================================`);
+    console.error(`[${requestId}] ❌ CRITICAL ERROR in send-urgent-support-alert`);
+    console.error(`[${requestId}] Error:`, error);
+    console.error(`[${requestId}] Stack:`, error.stack);
+    console.error(`[${requestId}] Time elapsed: ${elapsed}ms`);
+    console.error(`[${requestId}] ========================================`);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message, requestId }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

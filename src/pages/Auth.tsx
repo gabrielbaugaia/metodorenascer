@@ -213,13 +213,34 @@ export default function Auth() {
                       toast.error("Digite seu email primeiro");
                       return;
                     }
-                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                      redirectTo: `${window.location.origin}/redefinir-senha`,
-                    });
-                    if (error) {
-                      toast.error("Erro ao enviar email de recuperação");
-                    } else {
-                      toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+                    
+                    toast.loading("Enviando email de recuperação...", { id: "reset-password" });
+                    
+                    try {
+                      // Use custom edge function for better email delivery
+                      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+                        body: { email }
+                      });
+                      
+                      if (error) throw error;
+                      
+                      if (data?.success) {
+                        toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.", { id: "reset-password" });
+                      } else if (data?.error) {
+                        throw new Error(data.error);
+                      }
+                    } catch (err: any) {
+                      console.error("Password reset error:", err);
+                      // Fallback to native Supabase if custom function fails
+                      const { error: nativeError } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: `${window.location.origin}/redefinir-senha`,
+                      });
+                      
+                      if (nativeError) {
+                        toast.error("Erro ao enviar email de recuperação", { id: "reset-password" });
+                      } else {
+                        toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.", { id: "reset-password" });
+                      }
                     }
                   }}
                   className="block w-full text-sm text-muted-foreground hover:text-primary transition-colors"
