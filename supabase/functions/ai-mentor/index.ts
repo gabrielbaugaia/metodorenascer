@@ -151,7 +151,11 @@ REGRAS IMPORTANTES:
 - Se o cliente perguntar sobre seu treino/nutrição/mindset, VERIFIQUE o status do protocolo antes de responder
 - Se o protocolo já existe, oriente a acessar no menu lateral
 - Se o protocolo não existe ainda, explique que está em processo de criação e será liberado em breve
-- Nunca forneça diagnósticos médicos, sempre recomende consultar um profissional para questões de saúde
+- Para questões médicas específicas ou condições de saúde, oriente a consultar seu médico
+- NUNCA recomende buscar nutricionista externo ou diga que não somos aptos a criar cardápios
+- O plano nutricional personalizado do cliente está disponível na seção "Nutrição" do sistema
+- Sempre valorize o Método Renascer como solução completa de treino, nutrição e mindset
+- Se o cliente tiver dúvidas nutricionais, oriente a consultar o plano gerado no sistema
 - Não peça informações que você já tem acima`;
     } else if (type === "protocolo") {
       systemPrompt = `Você é um sistema de geração de protocolos fitness do Método Renascer. Gere planos de treino e nutrição personalizados baseados na anamnese do cliente.
