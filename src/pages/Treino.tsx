@@ -172,7 +172,7 @@ const {
         message="Treino Concluído!"
         subMessage="Você está cada vez mais perto do seu objetivo!"
       />
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -232,44 +232,44 @@ const {
             />
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-primary" />
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{weeklyCount}</p>
-                    <p className="text-xs text-muted-foreground">Esta semana</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+              <Card className="p-2.5 sm:p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-lg sm:text-2xl font-bold text-foreground">{weeklyCount}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Esta semana</p>
                   </div>
                 </div>
               </Card>
-              <Card className="p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
-                <div className="flex items-center gap-3">
-                  <Flame className="w-5 h-5 text-orange-500" />
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{currentStreak}</p>
-                    <p className="text-xs text-muted-foreground">Dias seguidos</p>
+              <Card className="p-2.5 sm:p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-lg sm:text-2xl font-bold text-foreground">{currentStreak}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Dias seguidos</p>
                   </div>
                 </div>
               </Card>
-              <Card className="p-4 bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-                <div className="flex items-center gap-3">
-                  <Trophy className="w-5 h-5 text-green-500" />
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{totalCount}</p>
-                    <p className="text-xs text-muted-foreground">Treinos feitos</p>
+              <Card className="p-2.5 sm:p-4 bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-lg sm:text-2xl font-bold text-foreground">{totalCount}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Treinos feitos</p>
                   </div>
                 </div>
               </Card>
-              <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
-                <div className="flex items-center gap-3">
+              <Card className="p-2.5 sm:p-4 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+                <div className="flex items-center gap-2 sm:gap-3">
                   {todayCompleted ? (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
                   ) : (
-                    <Target className="w-5 h-5 text-purple-500" />
+                    <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 shrink-0" />
                   )}
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{todayCompleted ? "Feito!" : "Pendente"}</p>
-                    <p className="text-xs text-muted-foreground">Treino hoje</p>
+                  <div className="min-w-0">
+                    <p className="text-lg sm:text-2xl font-bold text-foreground">{todayCompleted ? "Feito!" : "Pendente"}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Treino hoje</p>
                   </div>
                 </div>
               </Card>
@@ -277,23 +277,23 @@ const {
 
             {/* Week phase */}
             {protocol?.conteudo?.fase && (
-              <Card className="p-4 border-primary/20 bg-primary/5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                      <Trophy className="w-5 h-5 text-primary" />
+              <Card className="p-3 sm:p-4 border-primary/20 bg-primary/5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                      <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
-                    <div>
-                      <p className="font-semibold text-foreground">{protocol.conteudo.fase}</p>
-                      <p className="text-sm text-muted-foreground">{protocol.conteudo.descricao || "Fase do seu protocolo"}</p>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm sm:text-base text-foreground truncate">{protocol.conteudo.fase}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{protocol.conteudo.descricao || "Fase do seu protocolo"}</p>
                     </div>
                   </div>
                   {protocol.conteudo.total_semanas && (
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-primary">
-                        Semana {protocol.conteudo.semana_atual || 1} de {protocol.conteudo.total_semanas}
+                    <div className="text-right shrink-0">
+                      <p className="text-xs sm:text-sm font-medium text-primary whitespace-nowrap">
+                        Sem. {protocol.conteudo.semana_atual || 1}/{protocol.conteudo.total_semanas}
                       </p>
-                      <div className="w-24 h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
+                      <div className="w-16 sm:w-24 h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
                         <div
                           className="h-full bg-primary rounded-full"
                           style={{ width: `${((protocol.conteudo.semana_atual || 1) / protocol.conteudo.total_semanas) * 100}%` }}
@@ -306,7 +306,7 @@ const {
             )}
 
             {/* Workouts */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {workouts.map((workout, index) => (
                 <WorkoutCard
                   key={workout.day || index}
