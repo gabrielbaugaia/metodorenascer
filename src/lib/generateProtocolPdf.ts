@@ -370,18 +370,42 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     });
   }
 
-  // Hidratação
+  // Hidratação - only show if there's valid content
   if (conteudo?.hidratacao) {
-    addSectionTitle("Hidratação");
-    addBoldText(conteudo.hidratacao);
+    const hidratacaoText = typeof conteudo.hidratacao === 'string' 
+      ? conteudo.hidratacao 
+      : conteudo.hidratacao?.quantidade || conteudo.hidratacao?.recomendacao || null;
+    
+    if (hidratacaoText && hidratacaoText.trim() && !hidratacaoText.includes('[object Object]')) {
+      addSectionTitle("Hidratação");
+      addBoldText(hidratacaoText);
+    }
   }
 
-  // Suplementação em tabela
-  if (conteudo?.suplementacao && conteudo.suplementacao.length > 0) {
-    addSectionTitle("Suplementação");
-    conteudo.suplementacao.forEach((supl: string) => {
-      addText(`• ${supl}`, 5);
+  // Suplementação - only show if there's valid content
+  if (conteudo?.suplementacao && Array.isArray(conteudo.suplementacao) && conteudo.suplementacao.length > 0) {
+    // Filter out invalid entries
+    const validSupl = conteudo.suplementacao.filter((supl: any) => {
+      if (typeof supl === 'string') {
+        return supl.trim() && !supl.includes('[object Object]');
+      }
+      // Handle object format
+      if (typeof supl === 'object' && supl !== null) {
+        const suplText = supl.nome || supl.suplemento || supl.item || '';
+        return suplText.trim() && !suplText.includes('[object Object]');
+      }
+      return false;
     });
+
+    if (validSupl.length > 0) {
+      addSectionTitle("Suplementação");
+      validSupl.forEach((supl: any) => {
+        const suplText = typeof supl === 'string' 
+          ? supl 
+          : `${supl.nome || supl.suplemento || supl.item}${supl.dosagem ? ` - ${supl.dosagem}` : ''}${supl.horario ? ` (${supl.horario})` : ''}`;
+        addText(`• ${suplText}`, 5);
+      });
+    }
   }
 
   // Dicas
