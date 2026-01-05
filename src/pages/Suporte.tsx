@@ -282,15 +282,112 @@ export default function Suporte() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Urgent keywords detection
+  const urgentKeywords = {
+    pain: ['dor', 'doendo', 'machuca', 'machucando', 'lesão', 'lesionei', 'lesionado', 'ferido', 'inchado', 'inchaço'],
+    exerciseSwap: ['trocar exercício', 'trocar exercicio', 'substituir exercício', 'substituir exercicio', 'outro exercício', 'outro exercicio', 'não consigo fazer', 'nao consigo fazer'],
+    humanSupport: ['falar com humano', 'atendimento humano', 'pessoa real', 'gabriel bau', 'gabriel bau', 'falar com você', 'falar com voce', 'quero cancelar', 'preciso de ajuda urgente', 'emergência', 'emergencia'],
+    urgent: ['urgente', 'socorro', 'ajuda', 'grave', 'sério', 'serio', 'problema', 'não funciona', 'nao funciona', 'erro']
+  };
+
+  const detectUrgency = (message: string): { isUrgent: boolean; keywords: string[]; reason: string } => {
+    const lowerMessage = message.toLowerCase();
+    const detectedKeywords: string[] = [];
+    let reason = '';
+
+    // Check pain keywords
+    for (const keyword of urgentKeywords.pain) {
+      if (lowerMessage.includes(keyword)) {
+        detectedKeywords.push(keyword);
+        reason = 'Cliente relatou dor ou desconforto durante exercício';
+      }
+    }
+
+    // Check exercise swap requests
+    for (const keyword of urgentKeywords.exerciseSwap) {
+      if (lowerMessage.includes(keyword)) {
+        detectedKeywords.push(keyword);
+        reason = 'Cliente solicitou troca de exercício';
+      }
+    }
+
+    // Check human support requests
+    for (const keyword of urgentKeywords.humanSupport) {
+      if (lowerMessage.includes(keyword)) {
+        detectedKeywords.push(keyword);
+        reason = 'Cliente solicitou atendimento humano direto';
+      }
+    }
+
+    // Check general urgent keywords
+    for (const keyword of urgentKeywords.urgent) {
+      if (lowerMessage.includes(keyword)) {
+        detectedKeywords.push(keyword);
+        if (!reason) reason = 'Mensagem contém indicação de urgência';
+      }
+    }
+
+    return {
+      isUrgent: detectedKeywords.length > 0,
+      keywords: [...new Set(detectedKeywords)],
+      reason
+    };
+  };
+
+  const createSupportAlert = async (message: string, isUrgent: boolean, keywords: string[], reason: string) => {
+    try {
+      if (isUrgent) {
+        // Send urgent alert via edge function (includes email)
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-urgent-support-alert`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              userId: user?.id,
+              conversaId: conversaId,
+              clientName: profile?.full_name || 'Cliente',
+              clientEmail: user?.email,
+              messagePreview: message.substring(0, 200),
+              keywordsDetected: keywords,
+              urgencyReason: reason
+            }),
+          }
+        );
+      } else {
+        // Normal alert - just insert to database
+        await supabase
+          .from("admin_support_alerts")
+          .insert({
+            user_id: user?.id,
+            conversa_id: conversaId,
+            alert_type: "new_message",
+            urgency_level: "normal",
+            message_preview: message.substring(0, 200),
+            keywords_detected: keywords.length > 0 ? keywords : null
+          });
+      }
+    } catch (error) {
+      console.error("Error creating support alert:", error);
+    }
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isLoading || !user) return;
 
     const userMessage: Message = { role: "user", content: input };
+    const messageContent = input;
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     let assistantContent = "";
+
+    // Detect urgency in user message
+    const { isUrgent, keywords, reason } = detectUrgency(messageContent);
 
     try {
       // Buscar protocolos frescos no momento do envio para garantir dados atualizados
@@ -383,6 +480,10 @@ export default function Suporte() {
           }
         }
       }
+
+      // Create alert after message is sent (with or without urgency)
+      await createSupportAlert(messageContent, isUrgent, keywords, reason);
+
     } catch (error: any) {
       console.error("Chat error:", error);
       toast.error(error.message || "Erro ao enviar mensagem");

@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_support_alerts: {
+        Row: {
+          alert_type: string
+          conversa_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          keywords_detected: string[] | null
+          message_preview: string | null
+          read_at: string | null
+          urgency_level: string
+          user_id: string
+        }
+        Insert: {
+          alert_type?: string
+          conversa_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          keywords_detected?: string[] | null
+          message_preview?: string | null
+          read_at?: string | null
+          urgency_level?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          conversa_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          keywords_detected?: string[] | null
+          message_preview?: string | null
+          read_at?: string | null
+          urgency_level?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_support_alerts_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "conversas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automated_messages: {
         Row: {
           created_at: string
