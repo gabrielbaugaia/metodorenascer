@@ -100,6 +100,7 @@ interface Protocol {
   data_geracao: string;
   ativo: boolean;
   profile?: Profile;
+  currentWeight?: number | null;
 }
 
 export default function AdminPlanos() {
@@ -152,16 +153,29 @@ export default function AdminPlanos() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Fetch profile info for each protocol
+      // Fetch profile info and latest check-in weight for each protocol
       const protocolsWithProfiles = await Promise.all(
         (data || []).map(async (protocol) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name, email, weight, height, age, sexo, goals, injuries, availability, nivel_experiencia, restricoes_medicas, objetivos_detalhados, medidas, telefone, whatsapp, objetivo_principal, ja_treinou_antes, local_treino, dias_disponiveis, nivel_condicionamento, pratica_aerobica, escada_sem_cansar, condicoes_saude, toma_medicamentos, refeicoes_por_dia, bebe_agua_frequente, restricoes_alimentares, qualidade_sono, nivel_estresse, consome_alcool, fuma, foto_frente_url, foto_lado_url, foto_costas_url, observacoes_adicionais")
-            .eq("id", protocol.user_id)
-            .single();
+          const [profileResult, checkinResult] = await Promise.all([
+            supabase
+              .from("profiles")
+              .select("full_name, email, weight, height, age, sexo, goals, injuries, availability, nivel_experiencia, restricoes_medicas, objetivos_detalhados, medidas, telefone, whatsapp, objetivo_principal, ja_treinou_antes, local_treino, dias_disponiveis, nivel_condicionamento, pratica_aerobica, escada_sem_cansar, condicoes_saude, toma_medicamentos, refeicoes_por_dia, bebe_agua_frequente, restricoes_alimentares, qualidade_sono, nivel_estresse, consome_alcool, fuma, foto_frente_url, foto_lado_url, foto_costas_url, observacoes_adicionais")
+              .eq("id", protocol.user_id)
+              .single(),
+            supabase
+              .from("checkins")
+              .select("peso_atual")
+              .eq("user_id", protocol.user_id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle()
+          ]);
 
-          return { ...protocol, profile };
+          return { 
+            ...protocol, 
+            profile: profileResult.data,
+            currentWeight: checkinResult.data?.peso_atual || null
+          };
         })
       );
 
@@ -543,7 +557,10 @@ export default function AdminPlanos() {
             
             {/* Client Anamnese */}
             {editDialog.protocol?.profile && (
-              <ClientAnamneseCard profile={editDialog.protocol.profile} />
+              <ClientAnamneseCard 
+                profile={editDialog.protocol.profile} 
+                currentWeight={editDialog.protocol.currentWeight}
+              />
             )}
 
             {/* Protocol Editor */}
