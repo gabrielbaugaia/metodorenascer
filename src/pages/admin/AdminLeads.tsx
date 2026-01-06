@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Loader2, Download, Users, TrendingUp, Calendar } from "lucide-react";
+import { Search, Loader2, Download, Users, TrendingUp, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -133,55 +133,60 @@ export default function AdminLeads() {
 
   return (
     <ClientLayout>
-      <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold uppercase">Leads</h1>
-            <p className="text-muted-foreground">Leads capturados na página de lançamento</p>
+      <div className="space-y-6 max-w-full overflow-hidden">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="shrink-0">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold uppercase truncate">Leads</h1>
+              <p className="text-muted-foreground text-xs sm:text-sm truncate">Leads capturados na página de lançamento</p>
+            </div>
           </div>
-          <Button variant="outline" onClick={exportCSV}>
+          <Button variant="outline" size="sm" onClick={exportCSV} className="self-start">
             <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
+            <span className="text-xs sm:text-sm">Exportar CSV</span>
           </Button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <Card variant="glass">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-primary/10">
-                  <Users className="h-6 w-6 text-primary" />
+            <CardContent className="p-3 sm:pt-6">
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+                <div className="p-2 sm:p-3 rounded-full bg-primary/10">
+                  <Users className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total de Leads</p>
-                  <p className="text-2xl font-bold">{leads.length}</p>
+                <div className="text-center sm:text-left">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Total</p>
+                  <p className="text-lg sm:text-2xl font-bold">{leads.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card variant="glass">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-green-500/10">
-                  <TrendingUp className="h-6 w-6 text-green-500" />
+            <CardContent className="p-3 sm:pt-6">
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+                <div className="p-2 sm:p-3 rounded-full bg-green-500/10">
+                  <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6 text-green-500" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Últimos 7 dias</p>
-                  <p className="text-2xl font-bold">{weekLeads}</p>
+                <div className="text-center sm:text-left">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">7 dias</p>
+                  <p className="text-lg sm:text-2xl font-bold">{weekLeads}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card variant="glass">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-blue-500/10">
-                  <Calendar className="h-6 w-6 text-blue-500" />
+            <CardContent className="p-3 sm:pt-6">
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+                <div className="p-2 sm:p-3 rounded-full bg-blue-500/10">
+                  <Calendar className="h-4 w-4 sm:h-6 sm:w-6 text-blue-500" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Hoje</p>
-                  <p className="text-2xl font-bold">{todayLeads}</p>
+                <div className="text-center sm:text-left">
+                  <p className="text-[10px] sm:text-sm text-muted-foreground">Hoje</p>
+                  <p className="text-lg sm:text-2xl font-bold">{todayLeads}</p>
                 </div>
               </div>
             </CardContent>
@@ -189,16 +194,16 @@ export default function AdminLeads() {
         </div>
 
         <Card variant="glass">
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <CardHeader className="pb-2 sm:pb-4">
+            <div className="flex flex-col gap-3">
               <div>
-                <CardTitle>Lista de Leads</CardTitle>
-                <CardDescription>{filteredLeads.length} leads encontrados</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Lista de Leads</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">{filteredLeads.length} leads encontrados</CardDescription>
               </div>
-              <div className="relative w-full md:w-64">
+              <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por nome, email ou telefone..."
+                  placeholder="Buscar..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -206,33 +211,55 @@ export default function AdminLeads() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
+          <CardContent className="px-0 sm:px-6">
+            {/* Mobile: Card layout */}
+            <div className="sm:hidden space-y-2 px-4">
+              {filteredLeads.map((lead) => (
+                <div key={lead.id} className="p-3 rounded-lg border border-border/50 bg-card/50">
+                  <p className="font-medium text-sm truncate">{lead.nome}</p>
+                  <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <Badge variant="outline" className="text-[10px]">{lead.origem || "lancamento"}</Badge>
+                    <span className="text-[10px] text-muted-foreground">
+                      {format(new Date(lead.created_at), "dd/MM/yy", { locale: ptBR })}
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {filteredLeads.length === 0 && (
+                <p className="text-center py-8 text-muted-foreground text-sm">
+                  Nenhum lead encontrado
+                </p>
+              )}
+            </div>
+
+            {/* Desktop: Table layout */}
+            <div className="hidden sm:block rounded-md border mx-0 sm:mx-0">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
                     <TableHead>Contato</TableHead>
-                    <TableHead>Origem</TableHead>
-                    <TableHead>Data Captura</TableHead>
+                    <TableHead className="hidden md:table-cell">Origem</TableHead>
+                    <TableHead className="hidden lg:table-cell">Data Captura</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredLeads.map((lead) => (
                     <TableRow key={lead.id}>
                       <TableCell>
-                        <p className="font-medium">{lead.nome}</p>
+                        <p className="font-medium text-sm truncate max-w-[150px]">{lead.nome}</p>
                       </TableCell>
                       <TableCell>
-                        <div>
-                          <p className="text-sm">{lead.email}</p>
-                          <p className="text-sm text-muted-foreground">{formatPhone(lead.telefone)}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm truncate max-w-[180px]">{lead.email}</p>
+                          <p className="text-xs text-muted-foreground">{formatPhone(lead.telefone)}</p>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{lead.origem || "lancamento"}</Badge>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant="outline" className="text-xs">{lead.origem || "lancamento"}</Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm">
                         {format(new Date(lead.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                       </TableCell>
                     </TableRow>

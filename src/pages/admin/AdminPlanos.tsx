@@ -44,6 +44,7 @@ import {
   Edit,
   Loader2,
   Brain,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -343,79 +344,130 @@ export default function AdminPlanos() {
 
   if (!isAdmin) return null;
 
-  const ProtocolTable = ({ protocols, tipo }: { protocols: Protocol[]; tipo: string }) => (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Título</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Data Geração</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {protocols.map((protocol) => (
-            <TableRow key={protocol.id}>
-              <TableCell>
-                <div>
-                  <p className="font-medium">{protocol.profile?.full_name || "—"}</p>
-                  <p className="text-sm text-muted-foreground">{protocol.profile?.email || "—"}</p>
-                </div>
-              </TableCell>
-              <TableCell>{protocol.titulo}</TableCell>
-              <TableCell>
-                <Badge variant={protocol.ativo ? "default" : "secondary"}>
-                  {protocol.ativo ? "Ativo" : "Inativo"}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {format(new Date(protocol.data_geracao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditDialog({ open: true, protocol })}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Editar
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => setDeleteDialog({ open: true, protocolId: protocol.id })}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-          {protocols.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                Nenhum protocolo encontrado
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+  // Mobile-friendly Protocol Card
+  const ProtocolCard = ({ protocol }: { protocol: Protocol }) => (
+    <div className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card/50 gap-3">
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-sm truncate">{protocol.profile?.full_name || "—"}</p>
+        <p className="text-xs text-muted-foreground truncate">{protocol.titulo}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <Badge variant={protocol.ativo ? "default" : "secondary"} className="text-[10px]">
+            {protocol.ativo ? "Ativo" : "Inativo"}
+          </Badge>
+          <span className="text-[10px] text-muted-foreground">
+            {format(new Date(protocol.data_geracao), "dd/MM", { locale: ptBR })}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <Button variant="ghost" size="icon" onClick={() => setEditDialog({ open: true, protocol })}>
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-destructive hover:text-destructive"
+          onClick={() => setDeleteDialog({ open: true, protocolId: protocol.id })}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
+  );
+
+  const ProtocolTable = ({ protocols, tipo }: { protocols: Protocol[]; tipo: string }) => (
+    <>
+      {/* Mobile: Card layout */}
+      <div className="sm:hidden space-y-2">
+        {protocols.map((protocol) => (
+          <ProtocolCard key={protocol.id} protocol={protocol} />
+        ))}
+        {protocols.length === 0 && (
+          <p className="text-center py-8 text-muted-foreground text-sm">
+            Nenhum protocolo encontrado
+          </p>
+        )}
+      </div>
+      
+      {/* Desktop: Table layout */}
+      <div className="hidden sm:block rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Título</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="hidden md:table-cell">Data Geração</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {protocols.map((protocol) => (
+              <TableRow key={protocol.id}>
+                <TableCell>
+                  <div className="min-w-0">
+                    <p className="font-medium truncate max-w-[150px]">{protocol.profile?.full_name || "—"}</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-[150px]">{protocol.profile?.email || "—"}</p>
+                  </div>
+                </TableCell>
+                <TableCell className="max-w-[150px] truncate">{protocol.titulo}</TableCell>
+                <TableCell>
+                  <Badge variant={protocol.ativo ? "default" : "secondary"}>
+                    {protocol.ativo ? "Ativo" : "Inativo"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="hidden md:table-cell text-sm">
+                  {format(new Date(protocol.data_geracao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditDialog({ open: true, protocol })}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      <span className="hidden lg:inline">Editar</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setDeleteDialog({ open: true, protocolId: protocol.id })}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {protocols.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  Nenhum protocolo encontrado
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 
   return (
     <ClientLayout>
-      <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-display font-bold">Gerenciar Protocolos</h1>
-            <p className="text-muted-foreground">
-              {userId ? "Protocolos do cliente selecionado" : "Todos os protocolos gerados"}
-            </p>
+      <div className="space-y-6 max-w-full overflow-hidden">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="shrink-0">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-display font-bold truncate">Gerenciar Protocolos</h1>
+              <p className="text-muted-foreground text-sm truncate">
+                {userId ? "Protocolos do cliente selecionado" : "Todos os protocolos gerados"}
+              </p>
+            </div>
           </div>
         </div>
 
