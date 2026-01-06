@@ -689,9 +689,9 @@ export default function AdminClienteDetalhes() {
           </CardHeader>
           <CardContent>
             {(profile.foto_frente_url || profile.foto_lado_url || profile.foto_costas_url) ? (
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-center">Frente</p>
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <p className="text-xs sm:text-sm font-medium text-center">Frente</p>
                   {profile.foto_frente_url ? (
                     signedBodyPhotos.frente ? (
                       <a href={signedBodyPhotos.frente} target="_blank" rel="noopener noreferrer">
@@ -704,17 +704,17 @@ export default function AdminClienteDetalhes() {
                       </a>
                     ) : (
                       <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        <Loader2 className="h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground" />
                       </div>
                     )
                   ) : (
                     <div className="aspect-[3/4] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 flex items-center justify-center">
-                      <span className="text-xs text-muted-foreground">Não enviada</span>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">Não enviada</span>
                     </div>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-center">Lado</p>
+                <div className="space-y-1 sm:space-y-2">
+                  <p className="text-xs sm:text-sm font-medium text-center">Lado</p>
                   {profile.foto_lado_url ? (
                     signedBodyPhotos.lado ? (
                       <a href={signedBodyPhotos.lado} target="_blank" rel="noopener noreferrer">
@@ -727,17 +727,17 @@ export default function AdminClienteDetalhes() {
                       </a>
                     ) : (
                       <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        <Loader2 className="h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground" />
                       </div>
                     )
                   ) : (
                     <div className="aspect-[3/4] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 flex items-center justify-center">
-                      <span className="text-xs text-muted-foreground">Não enviada</span>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">Não enviada</span>
                     </div>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-center">Costas</p>
+                <div className="space-y-1 sm:space-y-2">
+                  <p className="text-xs sm:text-sm font-medium text-center">Costas</p>
                   {profile.foto_costas_url ? (
                     signedBodyPhotos.costas ? (
                       <a href={signedBodyPhotos.costas} target="_blank" rel="noopener noreferrer">
@@ -750,20 +750,20 @@ export default function AdminClienteDetalhes() {
                       </a>
                     ) : (
                       <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        <Loader2 className="h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground" />
                       </div>
                     )
                   ) : (
                     <div className="aspect-[3/4] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 flex items-center justify-center">
-                      <span className="text-xs text-muted-foreground">Não enviada</span>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">Não enviada</span>
                     </div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Camera className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                <p>Cliente ainda não enviou fotos corporais</p>
+              <div className="text-center py-6 sm:py-8 text-muted-foreground">
+                <Camera className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Cliente ainda não enviou fotos corporais</p>
               </div>
             )}
           </CardContent>
@@ -790,7 +790,7 @@ export default function AdminClienteDetalhes() {
               Informações Básicas
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <div>
               <Label>Nome Completo</Label>
               <Input 
@@ -870,7 +870,7 @@ export default function AdminClienteDetalhes() {
           <CardHeader>
             <CardTitle className="text-lg">Objetivo e Treino</CardTitle>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <div>
               <Label>Objetivo Principal</Label>
               <Select value={profile.objetivo_principal || profile.goals || ""} onValueChange={(v) => updateField("objetivo_principal", v)}>
@@ -947,7 +947,7 @@ export default function AdminClienteDetalhes() {
           <CardHeader>
             <CardTitle className="text-lg">Saúde</CardTitle>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-2 gap-4">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <Label>Condições de Saúde</Label>
               <Textarea 
@@ -982,7 +982,7 @@ export default function AdminClienteDetalhes() {
           <CardHeader>
             <CardTitle className="text-lg">Alimentação</CardTitle>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <div>
               <Label>Refeições por dia</Label>
               <Select value={profile.refeicoes_por_dia || ""} onValueChange={(v) => updateField("refeicoes_por_dia", v)}>
@@ -1007,7 +1007,7 @@ export default function AdminClienteDetalhes() {
                 <span className="text-sm">{profile.bebe_agua_frequente ? "Sim" : "Não"}</span>
               </div>
             </div>
-            <div className="md:col-span-2 lg:col-span-1">
+            <div className="sm:col-span-2 lg:col-span-1">
               <Label>Restrições Alimentares</Label>
               <Textarea 
                 value={profile.restricoes_alimentares || ""} 
@@ -1023,7 +1023,7 @@ export default function AdminClienteDetalhes() {
           <CardHeader>
             <CardTitle className="text-lg">Estilo de Vida</CardTitle>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <CardContent className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div>
               <Label>Qualidade do Sono</Label>
               <Select value={profile.qualidade_sono || ""} onValueChange={(v) => updateField("qualidade_sono", v)}>
