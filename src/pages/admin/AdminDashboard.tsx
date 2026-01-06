@@ -288,170 +288,171 @@ const [stats, setStats] = useState<Stats>({
 
   return (
     <ClientLayout>
-      <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-6 max-w-full overflow-hidden">
+        <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold">Dashboard Admin</h1>
-            <p className="text-muted-foreground">Visão geral do Método Renascer</p>
+            <h1 className="text-2xl sm:text-3xl font-display font-bold">Dashboard Admin</h1>
+            <p className="text-muted-foreground text-sm">Visão geral do Método Renascer</p>
           </div>
           <Button
             variant="outline"
+            size="sm"
             onClick={handleSendWeeklyReport}
             disabled={sendingReport}
-            className="flex items-center gap-2"
+            className="w-full sm:w-auto self-start"
           >
             {sendingReport ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
-              <Mail className="h-4 w-4" />
+              <Mail className="h-4 w-4 mr-2" />
             )}
-            {sendingReport ? "Enviando..." : "Enviar Relatório Semanal"}
+            <span className="text-xs sm:text-sm">{sendingReport ? "Enviando..." : "Enviar Relatório Semanal"}</span>
           </Button>
         </div>
 
         {/* Alerts Panel */}
         <AdminAlertsPanel />
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Stats Grid - Responsive */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <Card variant="glass">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Clientes</p>
-                  <p className="text-3xl font-bold">{stats.totalClients}</p>
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Total Clientes</p>
+                  <p className="text-xl sm:text-3xl font-bold">{stats.totalClients}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-primary" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card variant="glass">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Assinaturas Ativas</p>
-                  <p className="text-3xl font-bold">{stats.activeSubscriptions}</p>
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Assinaturas Ativas</p>
+                  <p className="text-xl sm:text-3xl font-bold">{stats.activeSubscriptions}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-green-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card variant="glass">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Protocolos Gerados</p>
-                  <p className="text-3xl font-bold">{stats.totalProtocols}</p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-purple-500" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                  <Activity className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card variant="glass">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Receita Mensal</p>
-                  <p className="text-3xl font-bold">
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Protocolos Gerados</p>
+                  <p className="text-xl sm:text-3xl font-bold">{stats.totalProtocols}</p>
+                </div>
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-purple-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card variant="glass">
+            <CardContent className="p-3 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Receita Mensal</p>
+                  <p className="text-xl sm:text-3xl font-bold">
                     {stats.monthlyRevenue > 0 
                       ? `R$ ${(stats.monthlyRevenue / 1000).toFixed(1)}k`
                       : "R$ 0"}
                   </p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-yellow-500" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-yellow-500/20 flex items-center justify-center shrink-0">
+                  <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Financial Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Financial Metrics - Compact for mobile */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
           <Card variant="glass">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">Ticket Médio</p>
-                  <p className="text-xl font-bold">R$ {stats.avgTicket.toFixed(2)}</p>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Ticket Médio</p>
+                  <p className="text-base sm:text-lg font-bold">R$ {stats.avgTicket.toFixed(0)}</p>
                 </div>
-                <Target className="h-5 w-5 text-blue-500" />
+                <Target className="h-4 w-4 text-blue-500 shrink-0" />
               </div>
             </CardContent>
           </Card>
 
           <Card variant="glass">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">Taxa Conversão</p>
-                  <p className="text-xl font-bold">{stats.conversionRate.toFixed(1)}%</p>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Conversão</p>
+                  <p className="text-base sm:text-lg font-bold">{stats.conversionRate.toFixed(1)}%</p>
                 </div>
-                <Percent className="h-5 w-5 text-green-500" />
+                <Percent className="h-4 w-4 text-green-500 shrink-0" />
               </div>
             </CardContent>
           </Card>
 
           <Card variant="glass">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">Taxa Churn</p>
-                  <p className="text-xl font-bold text-red-400">{stats.churnRate.toFixed(1)}%</p>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Churn</p>
+                  <p className="text-base sm:text-lg font-bold text-red-400">{stats.churnRate.toFixed(1)}%</p>
                 </div>
-                <TrendingDown className="h-5 w-5 text-red-500" />
+                <TrendingDown className="h-4 w-4 text-red-500 shrink-0" />
               </div>
             </CardContent>
           </Card>
 
           <Card variant="glass">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">MRR</p>
-                  <p className="text-xl font-bold text-green-400">R$ {stats.mrr.toFixed(0)}</p>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">MRR</p>
+                  <p className="text-base sm:text-lg font-bold text-green-400">R$ {stats.mrr.toFixed(0)}</p>
                 </div>
-                <DollarSign className="h-5 w-5 text-green-500" />
+                <DollarSign className="h-4 w-4 text-green-500 shrink-0" />
               </div>
             </CardContent>
           </Card>
 
           <Card variant="glass">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">LTV Médio</p>
-                  <p className="text-xl font-bold text-purple-400">R$ {stats.ltv.toFixed(0)}</p>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">LTV</p>
+                  <p className="text-base sm:text-lg font-bold text-purple-400">R$ {stats.ltv.toFixed(0)}</p>
                 </div>
-                <Wallet className="h-5 w-5 text-purple-500" />
+                <Wallet className="h-4 w-4 text-purple-500 shrink-0" />
               </div>
             </CardContent>
           </Card>
 
           <Card variant="glass">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">Pendentes</p>
-                  <p className="text-xl font-bold text-yellow-400">{stats.pendingSubscriptions}</p>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Pendentes</p>
+                  <p className="text-base sm:text-lg font-bold text-yellow-400">{stats.pendingSubscriptions}</p>
                 </div>
-                <Clock className="h-5 w-5 text-yellow-500" />
+                <Clock className="h-4 w-4 text-yellow-500 shrink-0" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
           {quickActions.map((action) => (
             <Card 
               key={action.title}
@@ -459,11 +460,11 @@ const [stats, setStats] = useState<Stats>({
               onClick={() => navigate(action.url)}
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none`} />
-              <CardContent className="p-4 flex items-center gap-3 relative z-10">
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${action.color}`}>
-                  <action.icon className="h-5 w-5 text-white" />
+              <CardContent className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3 relative z-10">
+                <div className={`p-1.5 sm:p-2 rounded-lg bg-gradient-to-br ${action.color} shrink-0`}>
+                  <action.icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
-                <span className="font-medium text-sm">{action.title}</span>
+                <span className="font-medium text-xs sm:text-sm truncate">{action.title}</span>
               </CardContent>
             </Card>
           ))}
@@ -522,33 +523,33 @@ const [stats, setStats] = useState<Stats>({
           </Card>
         )}
 
-        {/* Plan Distribution */}
+        {/* Plan Distribution - Mobile optimized */}
         {planDistribution.length > 0 && (
           <Card variant="glass">
-            <CardHeader>
-              <CardTitle>Distribuição por Plano</CardTitle>
-              <CardDescription>Análise de assinaturas ativas por tipo</CardDescription>
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Distribuição por Plano</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Análise de assinaturas ativas por tipo</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-3">
+              <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-2 sm:space-y-3">
                   {planDistribution.map((plan, idx) => {
                     const colors = ["bg-primary", "bg-green-500", "bg-blue-500", "bg-purple-500", "bg-yellow-500"];
                     return (
-                      <div key={plan.plan} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-3 h-3 rounded-full ${colors[idx % colors.length]}`} />
-                          <span className="font-medium">{plan.plan}</span>
+                      <div key={plan.plan} className="flex items-center justify-between p-2 sm:p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${colors[idx % colors.length]} shrink-0`} />
+                          <span className="font-medium text-sm truncate">{plan.plan}</span>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold">{plan.count} assinantes</p>
-                          <p className="text-sm text-muted-foreground">R$ {plan.revenue.toFixed(2)}</p>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold text-sm">{plan.count}</p>
+                          <p className="text-xs text-muted-foreground">R$ {plan.revenue.toFixed(0)}</p>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <div className="h-48">
+                <div className="h-40 sm:h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -557,8 +558,8 @@ const [stats, setStats] = useState<Stats>({
                         nameKey="plan"
                         cx="50%"
                         cy="50%"
-                        outerRadius={70}
-                        label={({ plan, percent }) => `${plan}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={60}
+                        label={({ plan, percent }) => `${(percent * 100).toFixed(0)}%`}
                         labelLine={false}
                       >
                         {planDistribution.map((_, idx) => {
@@ -570,7 +571,8 @@ const [stats, setStats] = useState<Stats>({
                         contentStyle={{ 
                           backgroundColor: "hsl(var(--card))", 
                           border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px"
+                          borderRadius: "8px",
+                          fontSize: "12px"
                         }}
                       />
                     </PieChart>
@@ -581,25 +583,26 @@ const [stats, setStats] = useState<Stats>({
           </Card>
         )}
 
-        {/* Charts */}
-        <div className="grid md:grid-cols-2 gap-6">
+        {/* Charts - Stacked on mobile */}
+        <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
           <Card variant="glass">
-            <CardHeader>
-              <CardTitle>Receita Mensal</CardTitle>
-              <CardDescription>Últimos 6 meses</CardDescription>
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Receita Mensal</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Últimos 6 meses</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="h-64">
+            <CardContent className="px-2 sm:px-6">
+              <div className="h-48 sm:h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData}>
+                  <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
+                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: "hsl(var(--card))", 
                         border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px"
+                        borderRadius: "8px",
+                        fontSize: "12px"
                       }}
                       formatter={(value) => [`R$ ${value}`, "Receita"]}
                     />
@@ -611,26 +614,27 @@ const [stats, setStats] = useState<Stats>({
           </Card>
 
           <Card variant="glass">
-            <CardHeader>
-              <CardTitle>Novos vs Cancelados</CardTitle>
-              <CardDescription>Movimento de clientes</CardDescription>
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Novos vs Cancelados</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Movimento de clientes</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="h-64">
+            <CardContent className="px-2 sm:px-6">
+              <div className="h-48 sm:h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
+                  <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
+                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: "hsl(var(--card))", 
                         border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px"
+                        borderRadius: "8px",
+                        fontSize: "12px"
                       }}
                     />
-                    <Line type="monotone" dataKey="novos" stroke="#22c55e" strokeWidth={2} dot={{ fill: "#22c55e" }} />
-                    <Line type="monotone" dataKey="cancelados" stroke="#ef4444" strokeWidth={2} dot={{ fill: "#ef4444" }} />
+                    <Line type="monotone" dataKey="novos" stroke="#22c55e" strokeWidth={2} dot={{ fill: "#22c55e", r: 3 }} />
+                    <Line type="monotone" dataKey="cancelados" stroke="#ef4444" strokeWidth={2} dot={{ fill: "#ef4444", r: 3 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -640,25 +644,25 @@ const [stats, setStats] = useState<Stats>({
 
         {/* Recent Clients */}
         <Card variant="glass">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 sm:pb-4">
             <div>
-              <CardTitle>Clientes Recentes</CardTitle>
-              <CardDescription>Últimos cadastros</CardDescription>
+              <CardTitle className="text-base sm:text-lg">Clientes Recentes</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Últimos cadastros</CardDescription>
             </div>
-            <Button variant="outline" onClick={() => navigate("/admin/clientes")}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/clientes")} className="self-start sm:self-auto">
               Ver Todos
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-3">
               {recentClients.map((client) => (
-                <div key={client.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                  <div>
-                    <p className="font-medium">{client.full_name}</p>
-                    <p className="text-sm text-muted-foreground">{client.email}</p>
+                <div key={client.id} className="flex items-center justify-between p-2 sm:p-3 bg-muted/30 rounded-lg gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{client.full_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{client.email}</p>
                   </div>
-                  <Badge variant={client.client_status === "active" ? "default" : "secondary"}>
+                  <Badge variant={client.client_status === "active" ? "default" : "secondary"} className="shrink-0 text-xs">
                     {client.client_status || "Ativo"}
                   </Badge>
                 </div>
