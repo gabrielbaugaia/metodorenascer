@@ -89,6 +89,7 @@ const [stats, setStats] = useState<Stats>({
   const [chartData, setChartData] = useState<MonthlyData[]>([]);
   const [planDistribution, setPlanDistribution] = useState<PlanDistribution[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sendingReport, setSendingReport] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -254,9 +255,8 @@ const [stats, setStats] = useState<Stats>({
     );
   }
 
-  if (!isAdmin) return null;
 
-  const [sendingReport, setSendingReport] = useState(false);
+
 
   const handleSendWeeklyReport = async () => {
     setSendingReport(true);
