@@ -227,39 +227,122 @@ export default function AdminClientes() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <div className="min-w-[600px] sm:min-w-0 px-4 sm:px-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden sm:table-cell">Plano</TableHead>
-                      <TableHead className="hidden md:table-cell">Cadastro</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredClients.map((client) => (
-                      <TableRow key={client.id}>
-                        <TableCell>
-                          <div className="min-w-0">
-                            <p className="font-medium truncate">{client.full_name}</p>
-                            <p className="text-xs sm:text-sm text-muted-foreground truncate">{client.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(client.client_status)}</TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          {client.subscription ? (
-                            <Badge variant="outline" className="text-xs">{client.subscription.plan_type}</Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">Sem plano</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-xs">
-                          {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                        </TableCell>
+          <CardContent className="px-0 sm:px-6">
+            {/* Mobile: Card layout */}
+            <div className="sm:hidden space-y-3 px-4">
+              {filteredClients.map((client) => (
+                <div 
+                  key={client.id} 
+                  className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card/50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{client.full_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{client.email}</p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="shrink-0 ml-2">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => navigate(`/admin/clientes/${client.id}`)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        Ver Detalhes
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/admin/planos?userId=${client.id}`)}>
+                        <FileText className="h-4 w-4 mr-2" />
+                        Ver Protocolos
+                      </DropdownMenuItem>
+                      {client.client_status !== "paused" && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setConfirmDialog({
+                              open: true,
+                              action: "paused",
+                              clientId: client.id,
+                              clientName: client.full_name,
+                            })
+                          }
+                        >
+                          <Pause className="h-4 w-4 mr-2" />
+                          Pausar
+                        </DropdownMenuItem>
+                      )}
+                      {client.client_status === "paused" && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setConfirmDialog({
+                              open: true,
+                              action: "active",
+                              clientId: client.id,
+                              clientName: client.full_name,
+                            })
+                          }
+                        >
+                          <Play className="h-4 w-4 mr-2" />
+                          Reativar
+                        </DropdownMenuItem>
+                      )}
+                      {client.client_status !== "blocked" && (
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() =>
+                            setConfirmDialog({
+                              open: true,
+                              action: "blocked",
+                              clientId: client.id,
+                              clientName: client.full_name,
+                            })
+                          }
+                        >
+                          <Ban className="h-4 w-4 mr-2" />
+                          Bloquear
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))}
+              {filteredClients.length === 0 && (
+                <p className="text-center py-8 text-muted-foreground">
+                  Nenhum cliente encontrado
+                </p>
+              )}
+            </div>
+
+            {/* Desktop: Table layout */}
+            <div className="hidden sm:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden md:table-cell">Plano</TableHead>
+                    <TableHead className="hidden lg:table-cell">Cadastro</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClients.map((client) => (
+                    <TableRow key={client.id}>
+                      <TableCell>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate max-w-[200px]">{client.full_name}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">{client.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(client.client_status)}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {client.subscription ? (
+                          <Badge variant="outline" className="text-xs">{client.subscription.plan_type}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">Sem plano</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-xs">
+                        {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -325,18 +408,17 @@ export default function AdminClientes() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
-                      </TableRow>
-                    ))}
-                    {filteredClients.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                          Nenhum cliente encontrado
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableRow>
+                  ))}
+                  {filteredClients.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        Nenhum cliente encontrado
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
