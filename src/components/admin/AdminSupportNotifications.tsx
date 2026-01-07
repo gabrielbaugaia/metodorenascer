@@ -277,7 +277,7 @@ export function AdminSupportNotifications() {
             className="w-full" 
             onClick={() => {
               setOpen(false);
-              navigate("/admin/suporte-chats");
+              navigate("/admin/suporte");
             }}
           >
             Ver todos os chats
