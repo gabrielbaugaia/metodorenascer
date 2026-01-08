@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Calendar, Clock, ArrowRight, Flame, Search, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { Menu, X as CloseIcon } from "lucide-react";
+import { Link as RouterLink } from "react-router-dom";
+import { useState as useMenuState } from "react";
 
 interface BlogPost {
   id: string;
@@ -94,6 +96,7 @@ export default function Blog() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("todos");
+  const [mobileMenuOpen, setMobileMenuOpen] = useMenuState(false);
 
   useEffect(() => {
     updateMetaTags();
@@ -156,19 +159,61 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
-      {/* Simple Header */}
-      <section className="pt-24 pb-8">
+      {/* Blog Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <Flame className="w-5 h-5 text-primary" />
-            </div>
-            <span className="text-primary font-display text-2xl uppercase tracking-wider">Blog</span>
+          <div className="flex items-center justify-between h-16">
+            <RouterLink to="/blog" className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
+                <Flame className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-primary font-display text-xl uppercase tracking-wider">Blog</span>
+            </RouterLink>
+
+            {/* Desktop nav */}
+            <nav className="hidden md:flex items-center gap-6">
+              <RouterLink to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                Início
+              </RouterLink>
+              <RouterLink to="/#preco" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                Planos
+              </RouterLink>
+            </nav>
+
+            {/* Mobile menu button */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+              className="md:hidden text-foreground"
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? <CloseIcon className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
+
+          {/* Mobile menu */}
+          {mobileMenuOpen && (
+            <nav className="md:hidden py-4 border-t border-border flex flex-col gap-3">
+              <RouterLink 
+                to="/" 
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Início
+              </RouterLink>
+              <RouterLink 
+                to="/#preco" 
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Planos
+              </RouterLink>
+            </nav>
+          )}
         </div>
-      </section>
+      </header>
+
+      {/* Spacer for fixed header */}
+      <div className="h-20" />
 
       {/* Featured Posts - First 3 */}
       <section className="pb-8 px-4">
