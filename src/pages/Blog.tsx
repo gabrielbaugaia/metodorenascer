@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Clock, ArrowRight, Flame } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Calendar, Clock, ArrowRight, Flame, Search, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Header } from "@/components/Header";
@@ -16,7 +17,17 @@ interface BlogPost {
   cover_image_url: string | null;
   published_at: string | null;
   views_count: number;
+  category: string | null;
 }
+
+const CATEGORIES = [
+  { id: 'todos', label: 'Todos' },
+  { id: 'treino', label: 'Treino' },
+  { id: 'nutricao', label: 'Nutrição' },
+  { id: 'mindset', label: 'Mindset' },
+  { id: 'lifestyle', label: 'Lifestyle' },
+  { id: 'geral', label: 'Geral' }
+];
 
 const updateMetaTags = () => {
   const baseUrl = window.location.origin;
@@ -79,18 +90,25 @@ const updateMetaTags = () => {
 
 export default function Blog() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("todos");
 
   useEffect(() => {
     updateMetaTags();
     fetchPosts();
   }, []);
 
+  useEffect(() => {
+    filterPosts();
+  }, [posts, searchQuery, selectedCategory]);
+
   const fetchPosts = async () => {
     try {
       const { data, error } = await supabase
         .from('blog_posts')
-        .select('id, title, slug, excerpt, cover_image_url, published_at, views_count')
+        .select('id, title, slug, excerpt, cover_image_url, published_at, views_count, category')
         .eq('status', 'published')
         .order('published_at', { ascending: false });
 
@@ -103,17 +121,42 @@ export default function Blog() {
     }
   };
 
+  const filterPosts = () => {
+    let result = [...posts];
+
+    // Filter by category
+    if (selectedCategory !== 'todos') {
+      result = result.filter(post => post.category === selectedCategory);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(post =>
+        post.title.toLowerCase().includes(query) ||
+        (post.excerpt && post.excerpt.toLowerCase().includes(query))
+      );
+    }
+
+    setFilteredPosts(result);
+  };
+
   const estimateReadTime = (excerpt: string | null) => {
     const words = (excerpt || '').split(' ').length;
     return Math.max(1, Math.ceil(words / 200)) + ' min';
+  };
+
+  const getCategoryLabel = (categoryId: string | null) => {
+    const cat = CATEGORIES.find(c => c.id === categoryId);
+    return cat?.label || 'Geral';
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Hero Section - Same style as landing */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-background">
           <div 
             className="absolute inset-0" 
@@ -137,9 +180,52 @@ export default function Blog() {
               <span className="text-primary">TRANSFORMAÇÃO</span>
             </h1>
             
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in mb-10" style={{ animationDelay: "0.1s" }}>
               Artigos exclusivos sobre treino, nutrição e mindset para acelerar seus resultados
             </p>
+
+            {/* Search Bar */}
+            <div className="max-w-xl mx-auto animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar artigos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 pr-12 py-6 text-base bg-card border-border focus:border-primary"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Categories Filter */}
+      <section className="py-6 px-4 border-b border-border">
+        <div className="container mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+                  selectedCategory === cat.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>
@@ -160,77 +246,106 @@ export default function Blog() {
                 </div>
               ))}
             </div>
-          ) : posts.length === 0 ? (
+          ) : filteredPosts.length === 0 ? (
             <div className="text-center py-20">
               <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-                <Flame className="w-10 h-10 text-muted-foreground" />
+                <Search className="w-10 h-10 text-muted-foreground" />
               </div>
-              <h2 className="font-display text-2xl text-foreground mb-3">Nenhum artigo ainda</h2>
+              <h2 className="font-display text-2xl text-foreground mb-3">
+                {searchQuery || selectedCategory !== 'todos' ? 'Nenhum artigo encontrado' : 'Nenhum artigo ainda'}
+              </h2>
               <p className="text-muted-foreground">
-                Novos conteúdos em breve. Fique ligado!
+                {searchQuery || selectedCategory !== 'todos' 
+                  ? 'Tente outra busca ou categoria' 
+                  : 'Novos conteúdos em breve. Fique ligado!'}
               </p>
+              {(searchQuery || selectedCategory !== 'todos') && (
+                <button
+                  onClick={() => { setSearchQuery(""); setSelectedCategory("todos"); }}
+                  className="mt-6 text-primary hover:underline"
+                >
+                  Limpar filtros
+                </button>
+              )}
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {posts.map((post, index) => (
-                <Link 
-                  key={post.id} 
-                  to={`/blog/${post.slug}`}
-                  className="group animate-fade-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <article className="glass-card-hover overflow-hidden h-full flex flex-col">
-                    {post.cover_image_url ? (
-                      <div className="relative h-56 overflow-hidden">
-                        <img
-                          src={post.cover_image_url}
-                          alt={post.title}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-                      </div>
-                    ) : (
-                      <div className="h-56 flex items-center justify-center" style={{ background: 'var(--gradient-card)' }}>
-                        <Flame className="w-16 h-16 text-primary/30" />
-                      </div>
-                    )}
-                    
-                    <div className="p-6 flex-1 flex flex-col">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                        {post.published_at && (
-                          <span className="flex items-center gap-1.5">
-                            <Calendar className="h-4 w-4 text-primary/70" />
-                            {format(new Date(post.published_at), "d MMM yyyy", { locale: ptBR })}
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1.5">
-                          <Clock className="h-4 w-4 text-primary/70" />
-                          {estimateReadTime(post.excerpt)}
-                        </span>
-                      </div>
-                      
-                      <h2 className="font-display text-xl md:text-2xl text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2">
-                        {post.title}
-                      </h2>
-                      
-                      {post.excerpt && (
-                        <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 flex-1">
-                          {post.excerpt}
-                        </p>
+            <>
+              {/* Results count */}
+              <p className="text-muted-foreground text-sm mb-8">
+                {filteredPosts.length} {filteredPosts.length === 1 ? 'artigo encontrado' : 'artigos encontrados'}
+              </p>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredPosts.map((post, index) => (
+                  <Link 
+                    key={post.id} 
+                    to={`/blog/${post.slug}`}
+                    className="group animate-fade-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <article className="glass-card-hover overflow-hidden h-full flex flex-col">
+                      {post.cover_image_url ? (
+                        <div className="relative h-56 overflow-hidden">
+                          <img
+                            src={post.cover_image_url}
+                            alt={post.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+                          {post.category && (
+                            <span className="absolute top-4 left-4 px-3 py-1 bg-primary/90 text-primary-foreground text-xs font-medium rounded-full">
+                              {getCategoryLabel(post.category)}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="relative h-56 flex items-center justify-center" style={{ background: 'var(--gradient-card)' }}>
+                          <Flame className="w-16 h-16 text-primary/30" />
+                          {post.category && (
+                            <span className="absolute top-4 left-4 px-3 py-1 bg-primary/90 text-primary-foreground text-xs font-medium rounded-full">
+                              {getCategoryLabel(post.category)}
+                            </span>
+                          )}
+                        </div>
                       )}
                       
-                      <div className="mt-4 pt-4 border-t border-border">
-                        <span className="text-primary font-medium text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
-                          Ler artigo 
-                          <ArrowRight className="h-4 w-4" />
-                        </span>
+                      <div className="p-6 flex-1 flex flex-col">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                          {post.published_at && (
+                            <span className="flex items-center gap-1.5">
+                              <Calendar className="h-4 w-4 text-primary/70" />
+                              {format(new Date(post.published_at), "d MMM yyyy", { locale: ptBR })}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="h-4 w-4 text-primary/70" />
+                            {estimateReadTime(post.excerpt)}
+                          </span>
+                        </div>
+                        
+                        <h2 className="font-display text-xl md:text-2xl text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                          {post.title}
+                        </h2>
+                        
+                        {post.excerpt && (
+                          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3 flex-1">
+                            {post.excerpt}
+                          </p>
+                        )}
+                        
+                        <div className="mt-4 pt-4 border-t border-border">
+                          <span className="text-primary font-medium text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                            Ler artigo 
+                            <ArrowRight className="h-4 w-4" />
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                </Link>
-              ))}
-            </div>
+                    </article>
+                  </Link>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </section>
