@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart, Mail, MousePointerClick, Eye, TrendingUp } from "lucide-react";
+import { BarChart, Mail, MousePointerClick, Eye, TrendingUp, FileDown, Loader2 } from "lucide-react";
+import { generateMessageReportPdf } from "@/lib/generateMessageReportPdf";
+import { toast } from "sonner";
 
 interface MessageMetric {
   message_id: string;
@@ -20,6 +23,7 @@ interface MessageMetric {
 export function MessageMetricsPanel() {
   const [metrics, setMetrics] = useState<MessageMetric[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [totals, setTotals] = useState({ sent: 0, opened: 0, clicked: 0 });
 
   useEffect(() => {
@@ -70,8 +74,39 @@ export function MessageMetricsPanel() {
     ? ((totals.clicked / totals.opened) * 100).toFixed(1) 
     : "0";
 
+  const handleGenerateReport = async () => {
+    setGenerating(true);
+    try {
+      await generateMessageReportPdf(metrics, totals);
+      toast.success("Relatório gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error);
+      toast.error("Erro ao gerar relatório");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header with Report Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h3 className="text-lg font-semibold">Métricas de Envio</h3>
+        <Button 
+          onClick={handleGenerateReport} 
+          disabled={generating}
+          variant="outline"
+          className="gap-2 w-full sm:w-auto"
+        >
+          {generating ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FileDown className="h-4 w-4" />
+          )}
+          Gerar Relatório PDF
+        </Button>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
