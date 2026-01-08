@@ -56,14 +56,16 @@ O artigo deve:
 5. Ter uma introdução engajadora e conclusão com call-to-action
 6. Ser otimizado para SEO com palavras-chave relevantes`;
 
-    const response = await fetch('https://api.lovable.dev/v1/chat/completions', {
+    console.log('Calling Lovable AI API...');
+    
+    const response = await fetch('https://ai.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'openai/gpt-5-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Gere um artigo de blog sobre: ${prompt}` }
@@ -75,11 +77,13 @@ O artigo deve:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI API error:', errorText);
-      throw new Error('Failed to generate content');
+      console.error('AI API error:', response.status, errorText);
+      throw new Error(`Failed to generate content: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('AI response received');
+    
     const generatedText = data.choices[0]?.message?.content;
 
     if (!generatedText) {
@@ -95,6 +99,7 @@ O artigo deve:
         .replace(/```\n?/g, '')
         .trim();
       parsedContent = JSON.parse(cleanedText);
+      console.log('Content parsed successfully');
     } catch (e) {
       console.error('Failed to parse AI response:', generatedText);
       throw new Error('Failed to parse generated content');
