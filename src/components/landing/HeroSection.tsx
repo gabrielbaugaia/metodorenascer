@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Dumbbell, Utensils, MessageCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export const HeroSection = memo(function HeroSection() {
   return (
@@ -19,44 +19,58 @@ export const HeroSection = memo(function HeroSection() {
       <div className="relative z-10 container mx-auto px-4 py-24 md:py-32">
         <div className="max-w-4xl mx-auto text-center">
           
-          {/* Main Title Block - Clean Typography */}
-          <div className="mb-8 animate-fade-in">
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl tracking-tight leading-none mb-2">
-              <span className="text-foreground">NÃO BUSQUE EVOLUÇÃO,</span>
+          {/* Main Title Block */}
+          <div className="mb-6 animate-fade-in">
+            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl tracking-tight leading-tight mb-2">
+              <span className="text-foreground">NÃO BUSQUE EVOLUÇÃO</span>
             </h1>
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl tracking-tight leading-none">
+            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl tracking-tight leading-tight">
               <span className="text-foreground">BUSQUE </span>
               <span className="text-primary">RENASCIMENTO</span>
             </h1>
           </div>
 
-          {/* Subtitle - Clean and readable */}
+          {/* Subtitle - Orange */}
           <div 
-            className="mb-10 animate-fade-in" 
+            className="mb-6 animate-fade-in" 
+            style={{ animationDelay: "0.1s" }}
+          >
+            <h2 className="text-lg md:text-xl text-primary font-medium">
+              Para quem já gastou fortunas em métodos que duram 2 semanas
+            </h2>
+          </div>
+
+          {/* Paragraph */}
+          <div 
+            className="mb-8 animate-fade-in" 
             style={{ animationDelay: "0.15s" }}
           >
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Perca até <span className="text-primary font-semibold">15kg em 90 dias</span> com 
-              seu plano personalizado e acompanhamento 24h.
+            <p className="text-sm md:text-base text-foreground/90 max-w-xl mx-auto leading-relaxed">
+              Você não é fraco. São as soluções que ignoram sua vida real.<br />
+              Quebramos o ciclo esperança → fracasso → vergonha para sempre.
             </p>
           </div>
 
-          {/* Benefits Bullets */}
+          {/* Benefits Bullets - 4 items */}
           <div 
-            className="mb-12 animate-fade-in flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8"
+            className="mb-10 animate-fade-in grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto text-left"
             style={{ animationDelay: "0.2s" }}
           >
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Dumbbell className="w-5 h-5 text-primary" />
-              <span className="text-sm md:text-base">Treino 100% personalizado</span>
+            <div className="flex items-center gap-3 text-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+              <span className="text-sm md:text-base">Força e composição corporal sem extremos</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Utensils className="w-5 h-5 text-primary" />
-              <span className="text-sm md:text-base">Nutrição baseada em você</span>
+            <div className="flex items-center gap-3 text-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+              <span className="text-sm md:text-base">Energia para render no trabalho e na vida</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MessageCircle className="w-5 h-5 text-primary" />
-              <span className="text-sm md:text-base">Suporte 24h no App</span>
+            <div className="flex items-center gap-3 text-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+              <span className="text-sm md:text-base">Disciplina que roda no automático</span>
+            </div>
+            <div className="flex items-center gap-3 text-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+              <span className="text-sm md:text-base">Autoestima que encara espelho sem culpa</span>
             </div>
           </div>
 
@@ -76,6 +90,11 @@ export const HeroSection = memo(function HeroSection() {
                 <ArrowRight className="w-5 h-5 relative z-10 ml-2 group-hover:translate-x-1 transition-transform" />
               </a>
             </Button>
+            
+            {/* Microtext */}
+            <p className="mt-4 text-xs md:text-sm text-muted-foreground">
+              R$47/mês inaugural | Cancela quando quiser
+            </p>
           </div>
         </div>
       </div>
