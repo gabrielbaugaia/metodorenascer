@@ -12,14 +12,17 @@ export const HeroSection = memo(function HeroSection() {
       <div className="relative z-10 container mx-auto px-6 md:px-8">
         <div className="max-w-2xl mx-auto text-center flex flex-col items-center gap-10 md:gap-12">
           
-          {/* Main Title - Improved hierarchy */}
+          {/* Main Title - 3 lines hierarchy */}
           <div className="animate-fade-in">
             <h1 className="font-display tracking-tight leading-[0.95]">
-              <span className="text-foreground block text-[2.75rem] sm:text-6xl md:text-7xl lg:text-8xl">
-                NÃO BUSQUE EVOLUÇÃO
+              <span className="text-muted-foreground block text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-1 md:mb-2">
+                NÃO BUSQUE
               </span>
-              <span className="block text-[2rem] sm:text-4xl md:text-5xl lg:text-6xl mt-2 md:mt-3">
-                <span className="text-muted-foreground/90">BUSQUE </span>
+              <span className="text-foreground block text-[3rem] sm:text-6xl md:text-7xl lg:text-8xl">
+                EVOLUÇÃO
+              </span>
+              <span className="block text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl mt-1 md:mt-2">
+                <span className="text-foreground">BUSQUE </span>
                 <span className="text-primary">RENASCIMENTO</span>
               </span>
             </h1>
