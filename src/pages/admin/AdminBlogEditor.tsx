@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor, ContentBlock } from "@/components/blog/RichTextEditor";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   ArrowLeft, 
   Save, 
@@ -681,76 +682,90 @@ export default function AdminBlogEditor() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
-                    {uploadingCover ? (
-                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    ) : (
-                      <>
-                        <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
-                        <span className="text-xs text-muted-foreground">Upload manual</span>
-                      </>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCoverUpload}
-                      className="hidden"
-                    />
-                  </label>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
+                  {generatingCoverAI ? (
+                    <div className="space-y-3">
+                      <div className="relative h-40 rounded-lg overflow-hidden">
+                        <Skeleton className="w-full h-full" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                          <span className="text-sm font-medium text-foreground">Gerando imagem IA...</span>
+                          <span className="text-xs text-muted-foreground mt-1">Isso pode levar alguns segundos</span>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        disabled
+                      >
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Aguarde...
+                      </Button>
                     </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">ou gerar com IA</span>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                        {uploadingCover ? (
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        ) : (
+                          <>
+                            <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
+                            <span className="text-xs text-muted-foreground">Upload manual</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCoverUpload}
+                          className="hidden"
+                        />
+                      </label>
 
-                  <div className="space-y-2">
-                    <Select value={coverAIStyle} onValueChange={setCoverAIStyle}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="design-only">🎨 Moderno (sem texto)</SelectItem>
-                        <SelectItem value="design-headline">📝 Design + Headline</SelectItem>
-                        <SelectItem value="minimal">✨ Minimalista</SelectItem>
-                        <SelectItem value="illustration">🖼️ Ilustração</SelectItem>
-                        <SelectItem value="photo">📷 Fotografia</SelectItem>
-                        <SelectItem value="gradient">🌈 Gradiente</SelectItem>
-                        <SelectItem value="dark">🌙 Dark Mode</SelectItem>
-                        <SelectItem value="fitness">💪 Fitness</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-card px-2 text-muted-foreground">ou gerar com IA</span>
+                        </div>
+                      </div>
 
-                    <Input
-                      value={coverAIPrompt}
-                      onChange={(e) => setCoverAIPrompt(e.target.value)}
-                      placeholder="Tema da imagem (opcional)"
-                      className="h-8 text-xs"
-                    />
+                      <div className="space-y-2">
+                        <Select value={coverAIStyle} onValueChange={setCoverAIStyle}>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="design-only">🎨 Moderno (sem texto)</SelectItem>
+                            <SelectItem value="design-headline">📝 Design + Headline</SelectItem>
+                            <SelectItem value="minimal">✨ Minimalista</SelectItem>
+                            <SelectItem value="illustration">🖼️ Ilustração</SelectItem>
+                            <SelectItem value="photo">📷 Fotografia</SelectItem>
+                            <SelectItem value="gradient">🌈 Gradiente</SelectItem>
+                            <SelectItem value="dark">🌙 Dark Mode</SelectItem>
+                            <SelectItem value="fitness">💪 Fitness</SelectItem>
+                          </SelectContent>
+                        </Select>
 
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={handleGenerateCoverWithAI}
-                      disabled={generatingCoverAI}
-                    >
-                      {generatingCoverAI ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Gerando...
-                        </>
-                      ) : (
-                        <>
+                        <Input
+                          value={coverAIPrompt}
+                          onChange={(e) => setCoverAIPrompt(e.target.value)}
+                          placeholder="Tema da imagem (opcional)"
+                          className="h-8 text-xs"
+                        />
+
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          className="w-full"
+                          onClick={handleGenerateCoverWithAI}
+                        >
                           <Wand2 className="h-4 w-4 mr-2" />
                           Gerar Capa IA
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>
