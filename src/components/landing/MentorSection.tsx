@@ -27,15 +27,10 @@ export const MentorSection = () => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 text-center lg:text-left max-w-xl lg:max-w-lg flex flex-col gap-6">
-            <div className="flex flex-col gap-4">
-              <h2 className="font-display font-black text-foreground text-[2rem] sm:text-3xl md:text-4xl lg:text-5xl leading-[1.1] tracking-[-0.02em]">
-                Liderado por
-              </h2>
-              <p className="text-primary font-bold text-[1.5rem] sm:text-2xl md:text-3xl tracking-wide">
-                Gabriel Baú
-              </p>
-            </div>
+          <div className="flex-1 text-center lg:text-left max-w-xl lg:max-w-lg flex flex-col gap-5">
+            <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em]">
+              Liderado por <span className="text-primary">Gabriel Baú</span>
+            </h2>
 
             <p className="text-foreground text-[1.1rem] md:text-lg leading-relaxed">
               Eu não sou apenas um treinador online. Sou o estrategista que vai guiar sua jornada de reconstrução.

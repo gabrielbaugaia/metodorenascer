@@ -20,11 +20,9 @@ export const CTASection = forwardRef<HTMLElement>((_, forwardedRef) => {
       />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl mx-auto text-center space-y-6">
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl tracking-wide leading-tight">
-            <span className="text-foreground">Sua Nova Vida </span>
-            <span className="text-primary">Começa Quando </span>
-            <span className="text-foreground">a Antiga Termina</span>
+        <div className="max-w-3xl mx-auto text-center flex flex-col items-center gap-5">
+          <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center">
+            Sua Nova Vida <span className="text-primary">Começa Agora</span>
           </h2>
 
           <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">

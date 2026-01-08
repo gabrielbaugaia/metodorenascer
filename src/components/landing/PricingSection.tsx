@@ -113,13 +113,12 @@ export function PricingSection() {
     >
       <div className="container mx-auto px-4">
         {/* Section Header */}
-        <div className="text-center mb-14 max-w-3xl mx-auto">
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground mb-5 tracking-wide">
-            Plano <span className="text-primary">Embaixador</span>
+        <div className="text-center mb-14 max-w-3xl mx-auto flex flex-col items-center gap-4">
+          <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center">
+            Escolha Seu <span className="text-primary">Plano</span>
           </h2>
-          <p className="text-muted-foreground text-base md:text-lg leading-relaxed mb-4">
-            De R$197/mês por apenas R$49/mês — os embaixadores terão preço vitalício sem acréscimos. 
-            Apenas para os primeiros 25 clientes cadastrados. Não perca essa oportunidade única.
+          <p className="text-muted-foreground text-base md:text-lg leading-relaxed text-center max-w-xl">
+            De R$197/mês por apenas R$49/mês — preço vitalício para os primeiros 25 embaixadores.
           </p>
           <p className="text-primary text-sm font-medium">
             Não gostou? Devolvemos 100% do seu investimento.
