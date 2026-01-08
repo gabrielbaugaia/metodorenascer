@@ -14,7 +14,8 @@ import {
   Type,
   Quote,
   Loader2,
-  Sparkles
+  Sparkles,
+  Wand2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,9 +39,11 @@ export interface ContentBlock {
 interface RichTextEditorProps {
   blocks: ContentBlock[];
   onChange: (blocks: ContentBlock[]) => void;
+  onRewriteSection?: (index: number) => void;
+  rewritingSection?: number | null;
 }
 
-export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
+export function RichTextEditor({ blocks, onChange, onRewriteSection, rewritingSection }: RichTextEditorProps) {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [generatingAiImage, setGeneratingAiImage] = useState(false);
@@ -216,6 +219,9 @@ export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
   };
 
   const renderBlockEditor = (block: ContentBlock, index: number) => {
+    const canRewrite = block.type !== 'image' && block.type !== 'youtube' && block.type !== 'document';
+    const isRewriting = rewritingSection === index;
+
     return (
       <div key={block.id} className="relative group border border-border rounded-lg p-4 mb-3 bg-card">
         <div className="absolute -top-3 left-3 bg-muted px-2 py-0.5 rounded text-xs text-muted-foreground">
@@ -232,6 +238,22 @@ export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
         </div>
         
         <div className="absolute -top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {canRewrite && onRewriteSection && (
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-6 w-6 bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-500/30 hover:from-purple-600/40 hover:to-pink-600/40"
+              onClick={() => onRewriteSection(index)}
+              disabled={isRewriting}
+              title="Reescrever com IA"
+            >
+              {isRewriting ? (
+                <Loader2 className="h-3 w-3 animate-spin text-purple-500" />
+              ) : (
+                <Wand2 className="h-3 w-3 text-purple-500" />
+              )}
+            </Button>
+          )}
           <Button 
             variant="outline" 
             size="icon" 

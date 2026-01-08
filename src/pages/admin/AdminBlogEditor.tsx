@@ -18,7 +18,9 @@ import {
   Sparkles, 
   Loader2, 
   Image as ImageIcon,
-  Send
+  Send,
+  RefreshCw,
+  Wand2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,6 +43,9 @@ export default function AdminBlogEditor() {
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [generatingCoverAI, setGeneratingCoverAI] = useState(false);
+  const [rewriting, setRewriting] = useState(false);
+  const [rewritingSection, setRewritingSection] = useState<number | null>(null);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -61,6 +66,10 @@ export default function AdminBlogEditor() {
   const [aiLanguage, setAiLanguage] = useState("conversacional");
   const [aiFormat, setAiFormat] = useState("artigo-completo");
   const [aiAudience, setAiAudience] = useState("iniciantes");
+
+  // AI cover image options
+  const [coverAIPrompt, setCoverAIPrompt] = useState("");
+  const [coverAIStyle, setCoverAIStyle] = useState("design-only");
 
   useEffect(() => {
     if (!isNew && id) {
@@ -245,6 +254,112 @@ export default function AdminBlogEditor() {
     }
   };
 
+  const handleGenerateCoverWithAI = async () => {
+    const promptToUse = coverAIPrompt || title || aiPrompt;
+    if (!promptToUse) {
+      toast.error("Digite um tema para a imagem ou preencha o título");
+      return;
+    }
+
+    setGeneratingCoverAI(true);
+    try {
+      let fullPrompt = promptToUse;
+      
+      if (coverAIStyle === "design-headline") {
+        fullPrompt = `Thumbnail de blog profissional com headline "${title || promptToUse}". Design moderno, fitness e wellness, cores vibrantes, tipografia impactante.`;
+      } else {
+        fullPrompt = `Imagem profissional de blog sobre: ${promptToUse}. Design moderno para fitness e wellness, sem texto, cores vibrantes, alta qualidade.`;
+      }
+
+      const { data, error } = await supabase.functions.invoke('generate-blog-image', {
+        body: { prompt: fullPrompt }
+      });
+
+      if (error) throw error;
+
+      if (data.imageUrl) {
+        setCoverImageUrl(data.imageUrl);
+        toast.success("Imagem de capa gerada com IA!");
+      }
+    } catch (error: any) {
+      console.error('Error generating cover:', error);
+      if (error.message?.includes('429')) {
+        toast.error("Limite de requisições atingido. Tente novamente em alguns segundos.");
+      } else if (error.message?.includes('402')) {
+        toast.error("Créditos insuficientes para geração de imagem.");
+      } else {
+        toast.error("Erro ao gerar imagem. Tente novamente.");
+      }
+    } finally {
+      setGeneratingCoverAI(false);
+    }
+  };
+
+  const handleRewriteContent = async () => {
+    if (content.length === 0) {
+      toast.error("Não há conteúdo para reescrever");
+      return;
+    }
+
+    setRewriting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-blog-post', {
+        body: { 
+          prompt: `Reescreva e melhore este artigo mantendo o mesmo tema: ${title}. Conteúdo atual: ${JSON.stringify(content)}`,
+          language: aiLanguage,
+          format: aiFormat,
+          audience: aiAudience
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.content) {
+        setContent(data.content);
+        toast.success("Conteúdo reescrito com sucesso!");
+      }
+    } catch (error) {
+      console.error('Error rewriting content:', error);
+      toast.error("Erro ao reescrever. Tente novamente.");
+    } finally {
+      setRewriting(false);
+    }
+  };
+
+  const handleRewriteSection = async (index: number) => {
+    const block = content[index];
+    if (!block || block.type === 'image') {
+      toast.error("Esta seção não pode ser reescrita");
+      return;
+    }
+
+    setRewritingSection(index);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-blog-post', {
+        body: { 
+          prompt: `Reescreva apenas este trecho de forma mais envolvente, mantendo o contexto do artigo "${title}": "${block.content}"`,
+          language: aiLanguage,
+          format: "paragrafo",
+          audience: aiAudience
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.content && data.content[0]) {
+        const newContent = [...content];
+        newContent[index] = { ...newContent[index], content: data.content[0].content };
+        setContent(newContent);
+        toast.success("Seção reescrita!");
+      }
+    } catch (error) {
+      console.error('Error rewriting section:', error);
+      toast.error("Erro ao reescrever seção.");
+    } finally {
+      setRewritingSection(null);
+    }
+  };
+
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -401,6 +516,26 @@ export default function AdminBlogEditor() {
                 </>
               )}
             </Button>
+            {content.length > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={handleRewriteContent} 
+                disabled={rewriting}
+                className="min-w-[160px]"
+              >
+                {rewriting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Reescrevendo...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reescrever Tudo
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -466,8 +601,20 @@ export default function AdminBlogEditor() {
               </div>
 
               <div className="space-y-2">
-                <Label>Conteúdo do Artigo</Label>
-                <RichTextEditor blocks={content} onChange={setContent} />
+                <div className="flex items-center justify-between">
+                  <Label>Conteúdo do Artigo</Label>
+                  {content.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      💡 Clique no ícone ✨ em cada bloco para reescrever individualmente
+                    </p>
+                  )}
+                </div>
+                <RichTextEditor 
+                  blocks={content} 
+                  onChange={setContent} 
+                  onRewriteSection={handleRewriteSection}
+                  rewritingSection={rewritingSection}
+                />
               </div>
             </CardContent>
           </Card>
@@ -483,7 +630,7 @@ export default function AdminBlogEditor() {
                 Imagem de Capa
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {coverImageUrl ? (
                 <div className="space-y-2">
                   <img 
@@ -491,32 +638,100 @@ export default function AdminBlogEditor() {
                     alt="Cover" 
                     className="w-full h-40 object-cover rounded-lg"
                   />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={() => setCoverImageUrl("")}
-                  >
-                    Remover
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => setCoverImageUrl("")}
+                    >
+                      Remover
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={handleGenerateCoverWithAI}
+                      disabled={generatingCoverAI}
+                    >
+                      {generatingCoverAI ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Wand2 className="h-4 w-4 mr-1" />
+                          Nova IA
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
-                  {uploadingCover ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  ) : (
-                    <>
-                      <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">Clique para enviar</span>
-                    </>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverUpload}
-                    className="hidden"
-                  />
-                </label>
+                <div className="space-y-3">
+                  <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                    {uploadingCover ? (
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    ) : (
+                      <>
+                        <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
+                        <span className="text-xs text-muted-foreground">Upload manual</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverUpload}
+                      className="hidden"
+                    />
+                  </label>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">ou gerar com IA</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Select value={coverAIStyle} onValueChange={setCoverAIStyle}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="design-only">🎨 Só Design (sem texto)</SelectItem>
+                        <SelectItem value="design-headline">📝 Design + Headline</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Input
+                      value={coverAIPrompt}
+                      onChange={(e) => setCoverAIPrompt(e.target.value)}
+                      placeholder="Tema da imagem (opcional)"
+                      className="h-8 text-xs"
+                    />
+
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={handleGenerateCoverWithAI}
+                      disabled={generatingCoverAI}
+                    >
+                      {generatingCoverAI ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Gerando...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="h-4 w-4 mr-2" />
+                          Gerar Capa IA
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
