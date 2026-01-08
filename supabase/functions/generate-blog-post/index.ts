@@ -22,7 +22,29 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    const systemPrompt = `Você é um especialista em fitness, nutrição e mindset. Gere artigos de blog em português brasileiro para o Método Renascer, um programa de transformação física e mental.
+    const systemPrompt = `Você é um copywriter especializado em transformação física e mental. Gere artigos de blog em português brasileiro para o Método Renascer.
+
+CONTEXTO DO PÚBLICO-ALVO:
+- Pessoas comuns que querem transformar seu corpo e mente
+- Não são profissionais de fitness, são potenciais CLIENTES
+- Querem entender como o método funciona e se sentir seguros para começar
+- Buscam resultados reais sem complicações
+
+TOM E ESTILO:
+- Escreva como se estivesse conversando com um amigo
+- Seja acolhedor, empático e inspirador
+- NÃO use linguagem técnica ou jargões de academia
+- NÃO pareça vendedor - mostre valor naturalmente
+- Faça o leitor se imaginar alcançando seus objetivos
+- Transmita confiança e segurança sobre o método
+- Use histórias e exemplos que conectem emocionalmente
+
+IMPORTANTE:
+- NÃO use asteriscos (**) para negrito no texto
+- Use linguagem limpa e natural
+- Foque nos benefícios e transformações reais
+- Faça o leitor sentir que é possível para ele também
+- Termine sempre incentivando a dar o primeiro passo
 
 Retorne APENAS um JSON válido com a seguinte estrutura (sem markdown, sem \`\`\`):
 {
@@ -41,20 +63,14 @@ Retorne APENAS um JSON válido com a seguinte estrutura (sem markdown, sem \`\`\
   ]
 }
 
-Tipos de blocos permitidos:
-- paragraph: texto normal
+Tipos de blocos:
+- paragraph: texto normal (SEM asteriscos ou markdown)
 - heading1, heading2, heading3: títulos
-- list: lista com bullets (usar "items": ["item1", "item2"])
-- ordered-list: lista numerada (usar "items": ["item1", "item2"])
-- quote: citação
+- list: lista com bullets
+- ordered-list: lista numerada
+- quote: citação inspiradora
 
-O artigo deve:
-1. Ter entre 800-1200 palavras
-2. Ser informativo e prático
-3. Usar linguagem acessível mas profissional
-4. Incluir pelo menos 3-4 seções com subtítulos (heading2)
-5. Ter uma introdução engajadora e conclusão com call-to-action
-6. Ser otimizado para SEO com palavras-chave relevantes`;
+O artigo deve ter 800-1200 palavras, ser envolvente e fazer o leitor querer conhecer mais sobre o Método Renascer.`;
 
     console.log('Calling Lovable AI Gateway...');
     

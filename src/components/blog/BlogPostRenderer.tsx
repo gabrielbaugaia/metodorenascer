@@ -11,9 +11,22 @@ export function BlogPostRenderer({ blocks, onDocumentClick }: BlogPostRendererPr
   const renderBlock = (block: ContentBlock) => {
     switch (block.type) {
       case 'paragraph':
+        // Parse markdown bold (**text**) and italic (*text*)
+        const parseMarkdown = (text: string) => {
+          const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+          return parts.map((part, i) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return <strong key={i}>{part.slice(2, -2)}</strong>;
+            }
+            if (part.startsWith('*') && part.endsWith('*')) {
+              return <em key={i}>{part.slice(1, -1)}</em>;
+            }
+            return part;
+          });
+        };
         return (
           <p key={block.id} className="text-foreground leading-relaxed mb-4">
-            {block.content}
+            {parseMarkdown(block.content || '')}
           </p>
         );
       
