@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor, ContentBlock } from "@/components/blog/RichTextEditor";
 import { 
   ArrowLeft, 
@@ -20,6 +20,14 @@ import {
   Send
 } from "lucide-react";
 import { toast } from "sonner";
+
+const BLOG_CATEGORIES = [
+  { id: 'treino', label: 'Treino' },
+  { id: 'nutricao', label: 'Nutrição' },
+  { id: 'mindset', label: 'Mindset' },
+  { id: 'lifestyle', label: 'Lifestyle' },
+  { id: 'geral', label: 'Geral' }
+];
 
 export default function AdminBlogEditor() {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +47,7 @@ export default function AdminBlogEditor() {
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState<ContentBlock[]>([]);
   const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [category, setCategory] = useState("geral");
   const [status, setStatus] = useState<'draft' | 'published'>('draft');
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
@@ -83,6 +92,7 @@ export default function AdminBlogEditor() {
       setExcerpt(data.excerpt || '');
       setContent((data.content as unknown as ContentBlock[]) || []);
       setCoverImageUrl(data.cover_image_url || '');
+      setCategory(data.category || 'geral');
       setStatus(data.status as 'draft' | 'published');
       setMetaTitle(data.meta_title || '');
       setMetaDescription(data.meta_description || '');
@@ -117,6 +127,7 @@ export default function AdminBlogEditor() {
         excerpt,
         content: content as unknown as any,
         cover_image_url: coverImageUrl || null,
+        category,
         status: publish ? 'published' : status,
         published_at: publish ? new Date().toISOString() : null,
         meta_title: metaTitle || null,
@@ -370,6 +381,22 @@ export default function AdminBlogEditor() {
                   placeholder="Breve descrição do artigo para listagens e SEO"
                   rows={3}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoria</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BLOG_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
