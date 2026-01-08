@@ -26,6 +26,8 @@ interface BlogPostData {
   enable_lead_capture: boolean;
   lead_capture_title: string | null;
   lead_capture_description: string | null;
+  lead_document_url: string | null;
+  lead_cta_text: string | null;
   views_count: number;
 }
 
@@ -302,8 +304,9 @@ export default function BlogPost() {
                 postId={post.id}
                 title={post.lead_capture_title || "Receba mais conteúdos exclusivos"}
                 description={post.lead_capture_description || "Cadastre-se para receber novidades e materiais exclusivos."}
-                documentUrl={pendingDocument?.url}
+                documentUrl={post.lead_document_url || pendingDocument?.url}
                 documentName={pendingDocument?.name}
+                ctaText={post.lead_cta_text || "Baixar Agora"}
               />
             </div>
           )}

@@ -13,6 +13,7 @@ interface LeadCaptureFormProps {
   description: string;
   documentUrl?: string;
   documentName?: string;
+  ctaText?: string;
 }
 
 export function LeadCaptureForm({ 
@@ -20,19 +21,21 @@ export function LeadCaptureForm({
   title, 
   description, 
   documentUrl,
-  documentName 
+  documentName,
+  ctaText = "Baixar Agora"
 }: LeadCaptureFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !email) {
-      toast.error("Preencha nome e email");
+    if (!name || !email || !city) {
+      toast.error("Preencha nome, email e cidade");
       return;
     }
 
@@ -45,6 +48,7 @@ export function LeadCaptureForm({
           name,
           email,
           phone: phone || null,
+          city,
           document_downloaded: documentName || null
         });
 
@@ -118,6 +122,17 @@ export function LeadCaptureForm({
           </div>
           
           <div className="space-y-2">
+            <Label htmlFor="lead-city">Cidade *</Label>
+            <Input
+              id="lead-city"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="Sua cidade"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="lead-phone">WhatsApp (opcional)</Label>
             <Input
               id="lead-phone"
@@ -134,9 +149,7 @@ export function LeadCaptureForm({
                 Enviando...
               </>
             ) : (
-              <>
-                {documentUrl ? "Baixar Agora" : "Quero Receber"}
-              </>
+              ctaText
             )}
           </Button>
         </form>
