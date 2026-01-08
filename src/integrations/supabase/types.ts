@@ -165,6 +165,7 @@ export type Database = {
       }
       blog_leads: {
         Row: {
+          city: string | null
           created_at: string
           document_downloaded: string | null
           email: string
@@ -174,6 +175,7 @@ export type Database = {
           post_id: string | null
         }
         Insert: {
+          city?: string | null
           created_at?: string
           document_downloaded?: string | null
           email: string
@@ -183,6 +185,7 @@ export type Database = {
           post_id?: string | null
         }
         Update: {
+          city?: string | null
           created_at?: string
           document_downloaded?: string | null
           email?: string
@@ -213,6 +216,8 @@ export type Database = {
           id: string
           lead_capture_description: string | null
           lead_capture_title: string | null
+          lead_cta_text: string | null
+          lead_document_url: string | null
           meta_description: string | null
           meta_title: string | null
           published_at: string | null
@@ -233,6 +238,8 @@ export type Database = {
           id?: string
           lead_capture_description?: string | null
           lead_capture_title?: string | null
+          lead_cta_text?: string | null
+          lead_document_url?: string | null
           meta_description?: string | null
           meta_title?: string | null
           published_at?: string | null
@@ -253,6 +260,8 @@ export type Database = {
           id?: string
           lead_capture_description?: string | null
           lead_capture_title?: string | null
+          lead_cta_text?: string | null
+          lead_document_url?: string | null
           meta_description?: string | null
           meta_title?: string | null
           published_at?: string | null

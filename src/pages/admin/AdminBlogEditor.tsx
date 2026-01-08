@@ -61,6 +61,9 @@ export default function AdminBlogEditor() {
   const [enableLeadCapture, setEnableLeadCapture] = useState(false);
   const [leadCaptureTitle, setLeadCaptureTitle] = useState("");
   const [leadCaptureDescription, setLeadCaptureDescription] = useState("");
+  const [leadDocumentUrl, setLeadDocumentUrl] = useState("");
+  const [leadCtaText, setLeadCtaText] = useState("Baixar Agora");
+  const [uploadingLeadDoc, setUploadingLeadDoc] = useState(false);
 
   // AI generation options
   const [aiPrompt, setAiPrompt] = useState("");
@@ -113,6 +116,8 @@ export default function AdminBlogEditor() {
       setEnableLeadCapture(data.enable_lead_capture || false);
       setLeadCaptureTitle(data.lead_capture_title || '');
       setLeadCaptureDescription(data.lead_capture_description || '');
+      setLeadDocumentUrl(data.lead_document_url || '');
+      setLeadCtaText(data.lead_cta_text || 'Baixar Agora');
     } catch (error) {
       console.error('Error fetching post:', error);
       toast.error("Erro ao carregar artigo");
@@ -149,6 +154,8 @@ export default function AdminBlogEditor() {
         enable_lead_capture: enableLeadCapture,
         lead_capture_title: leadCaptureTitle || null,
         lead_capture_description: leadCaptureDescription || null,
+        lead_document_url: leadDocumentUrl || null,
+        lead_cta_text: leadCtaText || 'Baixar Agora',
         author_id: user?.id
       };
 
@@ -401,6 +408,35 @@ export default function AdminBlogEditor() {
       toast.error("Erro ao enviar imagem");
     } finally {
       setUploadingCover(false);
+    }
+  };
+
+  const handleLeadDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLeadDoc(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `lead-docs/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('blog-assets')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('blog-assets')
+        .getPublicUrl(fileName);
+
+      setLeadDocumentUrl(publicUrl);
+      toast.success("Documento enviado com sucesso!");
+    } catch (error) {
+      console.error('Error uploading lead document:', error);
+      toast.error("Erro ao enviar documento");
+    } finally {
+      setUploadingLeadDoc(false);
     }
   };
 
@@ -843,6 +879,84 @@ export default function AdminBlogEditor() {
                       placeholder="Preencha seus dados para receber..."
                       rows={2}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="leadCta">Texto do botão CTA</Label>
+                    <Input
+                      id="leadCta"
+                      value={leadCtaText}
+                      onChange={(e) => setLeadCtaText(e.target.value)}
+                      placeholder="Baixar Agora"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Documento para download</Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Suba um e-book, PDF ou cole um link de YouTube privado
+                    </p>
+                    
+                    {leadDocumentUrl ? (
+                      <div className="space-y-2">
+                        <div className="p-3 bg-muted rounded-lg flex items-center justify-between">
+                          <span className="text-sm text-foreground truncate max-w-[180px]">
+                            {leadDocumentUrl.includes('youtube') || leadDocumentUrl.includes('youtu.be') 
+                              ? '🎬 Link do YouTube' 
+                              : '📄 Documento anexado'}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setLeadDocumentUrl("")}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            Remover
+                          </Button>
+                        </div>
+                        <Input
+                          value={leadDocumentUrl}
+                          onChange={(e) => setLeadDocumentUrl(e.target.value)}
+                          placeholder="Ou cole um link de YouTube"
+                          className="text-xs"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                          {uploadingLeadDoc ? (
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                          ) : (
+                            <>
+                              <ImageIcon className="h-5 w-5 text-muted-foreground mb-1" />
+                              <span className="text-xs text-muted-foreground">Upload PDF/E-book</span>
+                            </>
+                          )}
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx,.epub"
+                            onChange={handleLeadDocUpload}
+                            className="hidden"
+                          />
+                        </label>
+                        
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-card px-2 text-muted-foreground">ou</span>
+                          </div>
+                        </div>
+
+                        <Input
+                          value={leadDocumentUrl}
+                          onChange={(e) => setLeadDocumentUrl(e.target.value)}
+                          placeholder="Cole link do YouTube privado"
+                          className="text-xs"
+                        />
+                      </div>
+                    )}
                   </div>
                 </>
               )}
