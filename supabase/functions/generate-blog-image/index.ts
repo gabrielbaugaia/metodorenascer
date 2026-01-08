@@ -62,29 +62,43 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('AI response received');
+    console.log('AI response structure:', JSON.stringify(data).substring(0, 1000));
     
-    // Extract image from response
-    const content = data.choices?.[0]?.message?.content;
-    
-    // The response might contain a base64 image or URL
+    // Extract image from response - check multiple possible locations
     let imageData = null;
     
-    if (typeof content === 'string') {
-      // Check if it's a base64 image
+    // Check for images array in message (new format)
+    const message = data.choices?.[0]?.message;
+    if (message?.images && Array.isArray(message.images)) {
+      for (const img of message.images) {
+        if (img.type === 'image_url' && img.image_url?.url) {
+          imageData = img.image_url.url;
+          break;
+        }
+      }
+    }
+    
+    // Check content as string for base64
+    const content = message?.content;
+    if (!imageData && typeof content === 'string') {
       if (content.startsWith('data:image')) {
         imageData = content;
-      } else if (content.includes('base64')) {
-        // Extract base64 from markdown or other formats
+      } else {
         const base64Match = content.match(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/);
         if (base64Match) {
           imageData = base64Match[0];
         }
       }
-    } else if (Array.isArray(content)) {
-      // Handle array response format
+    }
+    
+    // Check content as array
+    if (!imageData && Array.isArray(content)) {
       for (const item of content) {
         if (item.type === 'image' && item.image_url?.url) {
+          imageData = item.image_url.url;
+          break;
+        }
+        if (item.type === 'image_url' && item.image_url?.url) {
           imageData = item.image_url.url;
           break;
         }
@@ -92,8 +106,8 @@ serve(async (req) => {
     }
     
     // Check message parts for inline data
-    const messageParts = data.choices?.[0]?.message?.parts;
-    if (messageParts && Array.isArray(messageParts)) {
+    const messageParts = message?.parts;
+    if (!imageData && messageParts && Array.isArray(messageParts)) {
       for (const part of messageParts) {
         if (part.inline_data?.mime_type?.startsWith('image/')) {
           imageData = `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`;
@@ -103,9 +117,11 @@ serve(async (req) => {
     }
 
     if (!imageData) {
-      console.error('No image found in response:', JSON.stringify(data).substring(0, 500));
-      throw new Error('No image generated');
+      console.error('No image found in response. Full response:', JSON.stringify(data));
+      throw new Error('No image generated - the model returned text only');
     }
+
+    console.log('Image extracted successfully, length:', imageData.length);
 
     return new Response(JSON.stringify({ imageUrl: imageData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
