@@ -18,9 +18,19 @@ import { toast } from "sonner";
 import { 
   ArrowLeft, Save, MessageSquare, Bell, Camera, UserPlus, Plus, 
   Trash2, Users, UserX, Gift, Target, Zap, Calendar, Cake, 
-  BarChart, Send, Clock
+  BarChart, Send, Clock, Pencil, AlertTriangle
 } from "lucide-react";
 import { MessageMetricsPanel } from "@/components/admin/MessageMetricsPanel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TargetAudience {
   type: string;
@@ -125,6 +135,8 @@ export default function AdminMensagens() {
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [sending, setSending] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [editingMessage, setEditingMessage] = useState<AutomatedMessage | null>(null);
   
   // New message form state
   const [newTitle, setNewTitle] = useState("");
@@ -259,11 +271,43 @@ export default function AdminMensagens() {
       
       toast.success("Mensagem excluída");
       setMessages(prev => prev.filter(msg => msg.id !== id));
+      setDeleteConfirmId(null);
     } catch (error) {
       console.error("Erro ao excluir mensagem:", error);
       toast.error("Erro ao excluir mensagem");
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleUpdateEditing = async () => {
+    if (!editingMessage) return;
+    
+    setSaving(editingMessage.id);
+    try {
+      const { error } = await supabase
+        .from("automated_messages")
+        .update({
+          message_title: editingMessage.message_title,
+          message_content: editingMessage.message_content,
+          is_active: editingMessage.is_active,
+        })
+        .eq("id", editingMessage.id);
+
+      if (error) throw error;
+      
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === editingMessage.id ? editingMessage : msg
+        )
+      );
+      toast.success("Mensagem atualizada com sucesso");
+      setEditingMessage(null);
+    } catch (error) {
+      console.error("Erro ao atualizar mensagem:", error);
+      toast.error("Erro ao atualizar mensagem");
+    } finally {
+      setSaving(null);
     }
   };
 
@@ -518,61 +562,41 @@ export default function AdminMensagens() {
                           </>
                         )}
                       </Button>
-                      {message.is_custom && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive shrink-0"
-                          onClick={() => handleDelete(message.id)}
-                          disabled={deleting === message.id}
-                        >
-                          {deleting === message.id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-destructive"></div>
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0"
+                        onClick={() => setEditingMessage(message)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive shrink-0"
+                        onClick={() => setDeleteConfirmId(message.id)}
+                        disabled={deleting === message.id}
+                      >
+                        {deleting === message.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-destructive"></div>
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor={`title-${message.id}`}>Título</Label>
-                    <Input
-                      id={`title-${message.id}`}
-                      value={message.message_title}
-                      onChange={(e) => updateMessage(message.id, "message_title", e.target.value)}
-                      placeholder="Título da mensagem"
-                    />
+                <CardContent>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Título</p>
+                      <p className="text-sm">{message.message_title}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Conteúdo</p>
+                      <p className="text-sm whitespace-pre-wrap line-clamp-4">{message.message_content}</p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`content-${message.id}`}>Conteúdo da Mensagem</Label>
-                    <Textarea
-                      id={`content-${message.id}`}
-                      value={message.message_content}
-                      onChange={(e) => updateMessage(message.id, "message_content", e.target.value)}
-                      placeholder="Conteúdo da mensagem automática"
-                      rows={4}
-                    />
-                  </div>
-                  <Button
-                    onClick={() => handleSave(message)}
-                    disabled={saving === message.id}
-                    className="w-full"
-                  >
-                    {saving === message.id ? (
-                      <span className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Salvando...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <Save className="h-4 w-4" />
-                        Salvar Mensagem
-                      </span>
-                    )}
-                  </Button>
                 </CardContent>
               </Card>
             );
@@ -584,6 +608,125 @@ export default function AdminMensagens() {
             <MessageMetricsPanel />
           </TabsContent>
         </Tabs>
+
+        {/* Dialog de Edição */}
+        <Dialog open={!!editingMessage} onOpenChange={(open) => !open && setEditingMessage(null)}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Pencil className="h-5 w-5" />
+                Editar Mensagem
+              </DialogTitle>
+            </DialogHeader>
+            {editingMessage && (
+              <div className="space-y-4 pt-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <span className="text-sm font-medium">Status</span>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="edit-active" className="text-sm">
+                      {editingMessage.is_active ? "Ativa" : "Inativa"}
+                    </Label>
+                    <Switch
+                      id="edit-active"
+                      checked={editingMessage.is_active}
+                      onCheckedChange={(checked) => 
+                        setEditingMessage({ ...editingMessage, is_active: checked })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Título</Label>
+                  <Input
+                    value={editingMessage.message_title}
+                    onChange={(e) => 
+                      setEditingMessage({ ...editingMessage, message_title: e.target.value })
+                    }
+                    placeholder="Título da mensagem"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Conteúdo da Mensagem</Label>
+                  <Textarea
+                    value={editingMessage.message_content}
+                    onChange={(e) => 
+                      setEditingMessage({ ...editingMessage, message_content: e.target.value })
+                    }
+                    placeholder="Conteúdo da mensagem... Use {nome} para personalizar"
+                    rows={6}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use <code className="px-1 py-0.5 rounded bg-muted">{"{nome}"}</code> para incluir o nome do cliente
+                  </p>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditingMessage(null)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleUpdateEditing}
+                    disabled={saving === editingMessage.id}
+                    className="flex-1"
+                  >
+                    {saving === editingMessage.id ? (
+                      <span className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Salvando...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Save className="h-4 w-4" />
+                        Salvar Alterações
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Confirmação de Exclusão */}
+        <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                Confirmar Exclusão
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir esta mensagem automática? 
+                Esta ação não pode ser desfeita e o histórico de envios será perdido.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? (
+                  <span className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Excluindo...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Trash2 className="h-4 w-4" />
+                    Excluir
+                  </span>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </ClientLayout>
   );
