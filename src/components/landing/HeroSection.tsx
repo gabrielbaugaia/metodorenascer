@@ -12,7 +12,8 @@ export const HeroSection = memo(function HeroSection() {
           {/* Title Block - same pattern as other sections */}
           <div className="animate-fade-in w-full flex flex-col items-center gap-4">
             <h1 className="font-display font-black text-foreground text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1] tracking-[-0.02em] text-center">
-              Não Busque Evolução, Busque <span className="text-primary drop-shadow-[0_0_30px_rgba(255,69,0,0.6)]">RENASCIMENTO</span>
+              <span className="block">Não Busque Evolução,</span>
+              <span className="block">Busque <span className="text-primary drop-shadow-[0_0_30px_rgba(255,69,0,0.6)]">RENASCIMENTO</span></span>
             </h1>
           </div>
 
