@@ -10,6 +10,12 @@ import {
   validateMindsetProtocol,
   normalizeTreinoProtocol
 } from "./schemas.ts";
+import { 
+  getClientIdentifier, 
+  checkRateLimit, 
+  STRICT_RATE_LIMIT, 
+  createRateLimitResponse 
+} from "../_shared/rateLimit.ts";
 
 // Mapear tipo de plano para duração em semanas
 const planDurationWeeks: Record<string, number> = {
@@ -30,8 +36,58 @@ serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
 
   try {
+    // SECURITY FIX: Validate authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("Missing authorization header");
+      return createErrorResponse(req, "Não autorizado - sessão não encontrada", 401);
+    }
+
+    // Create admin client for operations
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Validate the user's session token
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error("Auth validation failed:", authError);
+      return createErrorResponse(req, "Sessão inválida ou expirada", 401);
+    }
+
+    console.log("Authenticated user:", user.id);
+
+    // Rate limiting per user
+    const clientId = getClientIdentifier(req, user.id);
+    const rateCheck = checkRateLimit(clientId, STRICT_RATE_LIMIT);
+
+    if (!rateCheck.allowed) {
+      console.log("Rate limit exceeded for user:", user.id);
+      return createRateLimitResponse(rateCheck.resetAt);
+    }
+
     const { tipo, userContext, userId, adjustments, planType, evolutionAdjustments } = await req.json();
-    
+
+    // SECURITY FIX: Verify user can generate for this userId
+    if (userId !== user.id) {
+      // Check if requesting user is admin
+      const { data: roleData } = await supabaseClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (!roleData) {
+        console.error("Non-admin trying to generate for other user:", user.id, "target:", userId);
+        return createErrorResponse(req, "Acesso negado - não pode gerar protocolo para outro usuário", 403);
+      }
+      console.log("Admin authorized to generate for user:", userId);
+    }
+
     // Format evolution adjustments into a string if provided
     let formattedAdjustments = adjustments || "";
     
@@ -79,17 +135,12 @@ serve(async (req) => {
           : evolutionText.join("\n");
       }
     }
-    
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
-
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
 
     // Determinar duração do protocolo baseado no plano
     const durationWeeks = planDurationWeeks[planType?.toLowerCase()] || 4;
