@@ -13,11 +13,16 @@ export const HeroSection = memo(function HeroSection() {
         <div className="max-w-2xl mx-auto text-center flex flex-col items-center gap-10 md:gap-12">
           
           {/* Main Title - Improved hierarchy */}
-          <div className="animate-fade-in space-y-2">
-            <h1 className="font-display text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-[1.05]">
-              <span className="text-foreground block mb-1">NÃO BUSQUE EVOLUÇÃO</span>
-              <span className="block">
-                <span className="text-foreground">BUSQUE </span>
+          <div className="animate-fade-in space-y-1 md:space-y-2">
+            <p className="text-primary/80 text-sm md:text-base font-medium tracking-[0.2em] uppercase mb-4 md:mb-6">
+              Método Renascer
+            </p>
+            <h1 className="font-display tracking-tight leading-[0.95]">
+              <span className="text-foreground block text-[2.75rem] sm:text-6xl md:text-7xl lg:text-8xl">
+                NÃO BUSQUE EVOLUÇÃO
+              </span>
+              <span className="block text-[2rem] sm:text-4xl md:text-5xl lg:text-6xl mt-2 md:mt-3">
+                <span className="text-muted-foreground/90">BUSQUE </span>
                 <span className="text-primary">RENASCIMENTO</span>
               </span>
             </h1>
