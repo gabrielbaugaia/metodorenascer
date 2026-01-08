@@ -1,7 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +35,7 @@ import {
   Eye, 
   ExternalLink,
   FileText,
-  Users,
-  ArrowLeft
+  Users
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -139,17 +146,28 @@ export default function AdminBlog() {
   return (
     <ClientLayout>
       <div className="space-y-6">
+        {/* Breadcrumbs */}
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/admin" className="text-muted-foreground hover:text-primary transition-colors">
+                  Admin
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="text-primary">Blog</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Blog</h1>
-              <p className="text-muted-foreground">Gerencie artigos e leads capturados</p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Blog</h1>
+            <p className="text-muted-foreground">Gerencie artigos e leads capturados</p>
           </div>
           <Button onClick={() => navigate('/admin/blog/novo')}>
             <Plus className="h-4 w-4 mr-2" />

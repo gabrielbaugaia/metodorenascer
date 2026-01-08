@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { ClientLayout } from "@/components/layout/ClientLayout";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +21,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RichTextEditor, ContentBlock } from "@/components/blog/RichTextEditor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
-  ArrowLeft, 
   Save, 
   Eye, 
   Sparkles, 
@@ -453,21 +460,42 @@ export default function AdminBlogEditor() {
   return (
     <ClientLayout>
       <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/admin" className="text-muted-foreground hover:text-primary transition-colors">
+                Admin
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/admin/blog" className="text-muted-foreground hover:text-primary transition-colors">
+                Blog
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="text-primary">
+              {isNew ? 'Novo Artigo' : 'Editar'}
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {isNew ? 'Novo Artigo' : 'Editar Artigo'}
-            </h1>
-            {status === 'published' && (
-              <p className="text-sm text-green-500">✓ Publicado</p>
-            )}
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {isNew ? 'Novo Artigo' : 'Editar Artigo'}
+          </h1>
+          {status === 'published' && (
+            <p className="text-sm text-green-500">✓ Publicado</p>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => handleSave(false)} disabled={saving || publishing}>
