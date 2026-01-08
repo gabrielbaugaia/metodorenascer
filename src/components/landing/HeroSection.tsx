@@ -47,7 +47,7 @@ export const HeroSection = memo(function HeroSection() {
             </Button>
             
             <p className="mt-5 text-sm text-muted-foreground/70">
-              A partir de R$47/mês · Cancele quando quiser
+              A partir de R$49,90/mês · Cancele quando quiser
             </p>
           </div>
         </div>
