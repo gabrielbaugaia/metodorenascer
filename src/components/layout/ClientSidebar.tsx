@@ -33,7 +33,8 @@ import {
   BarChart3,
   Target,
   Camera,
-  Settings
+  Settings,
+  PenSquare
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -61,6 +62,7 @@ const adminMenuItems = [
   { title: "Leads", url: "/admin/leads", icon: Target },
   { title: "Protocolos", url: "/admin/planos", icon: FileText },
   { title: "Planos de Venda", url: "/admin/planos-venda", icon: CreditCard },
+  { title: "Blog", url: "/admin/blog", icon: PenSquare },
   { title: "Banco de Vídeos", url: "/admin/videos", icon: Video },
   { title: "Métricas", url: "/admin/metricas", icon: BarChart3 },
   { title: "Mensagens Auto", url: "/admin/mensagens", icon: Bell },
