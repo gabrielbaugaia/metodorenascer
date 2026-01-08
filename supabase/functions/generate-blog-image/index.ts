@@ -38,6 +38,7 @@ serve(async (req) => {
         messages: [
           { role: 'user', content: enhancedPrompt }
         ],
+        modalities: ["image", "text"],
       }),
     });
 
