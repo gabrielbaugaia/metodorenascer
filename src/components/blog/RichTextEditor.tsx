@@ -3,9 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  Bold, 
-  Italic, 
-  Underline, 
   List, 
   ListOrdered, 
   Heading1, 
@@ -16,7 +13,8 @@ import {
   FileDown,
   Type,
   Quote,
-  Loader2
+  Loader2,
+  Sparkles
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -45,8 +43,11 @@ interface RichTextEditorProps {
 export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [generatingAiImage, setGeneratingAiImage] = useState(false);
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [showYoutubeInput, setShowYoutubeInput] = useState(false);
+  const [showAiImageInput, setShowAiImageInput] = useState(false);
+  const [aiImagePrompt, setAiImagePrompt] = useState("");
   const imageInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
@@ -162,6 +163,55 @@ export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
       toast.success("Vídeo adicionado!");
     } else {
       toast.error("URL do YouTube inválida");
+    }
+  };
+
+  const handleAiImageGenerate = async () => {
+    if (!aiImagePrompt.trim()) {
+      toast.error("Digite um tema para a imagem");
+      return;
+    }
+
+    setGeneratingAiImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-blog-image', {
+        body: { prompt: aiImagePrompt }
+      });
+
+      if (error) throw error;
+
+      if (data?.imageUrl) {
+        // If it's base64, upload to storage for permanent URL
+        if (data.imageUrl.startsWith('data:')) {
+          const response = await fetch(data.imageUrl);
+          const blob = await response.blob();
+          const fileName = `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
+          const filePath = `images/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('blog-assets')
+            .upload(filePath, blob, { contentType: 'image/png' });
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('blog-assets')
+            .getPublicUrl(filePath);
+
+          addBlock('image', { url: publicUrl, alt: aiImagePrompt });
+        } else {
+          addBlock('image', { url: data.imageUrl, alt: aiImagePrompt });
+        }
+        
+        toast.success("Imagem gerada com sucesso!");
+        setAiImagePrompt("");
+        setShowAiImageInput(false);
+      }
+    } catch (error) {
+      console.error('Error generating AI image:', error);
+      toast.error("Erro ao gerar imagem. Tente novamente.");
+    } finally {
+      setGeneratingAiImage(false);
     }
   };
 
@@ -349,7 +399,24 @@ export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={() => setShowYoutubeInput(!showYoutubeInput)}
+          onClick={() => {
+            setShowAiImageInput(!showAiImageInput);
+            setShowYoutubeInput(false);
+          }}
+          disabled={generatingAiImage}
+          className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 hover:opacity-90"
+        >
+          {generatingAiImage ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+          Gerar Imagem IA
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => {
+            setShowYoutubeInput(!showYoutubeInput);
+            setShowAiImageInput(false);
+          }}
         >
           <Youtube className="h-4 w-4 mr-1" /> YouTube
         </Button>
@@ -371,6 +438,28 @@ export function RichTextEditor({ blocks, onChange }: RichTextEditorProps) {
           className="hidden"
         />
       </div>
+
+      {/* AI Image Generation Input */}
+      {showAiImageInput && (
+        <div className="flex gap-2 p-3 bg-gradient-to-r from-purple-600/10 to-pink-600/10 rounded-lg border border-purple-500/30">
+          <Input
+            value={aiImagePrompt}
+            onChange={(e) => setAiImagePrompt(e.target.value)}
+            placeholder="Descreva a imagem: ex. pessoa feliz treinando, alimentação saudável..."
+            disabled={generatingAiImage}
+          />
+          <Button 
+            onClick={handleAiImageGenerate} 
+            disabled={generatingAiImage}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90"
+          >
+            {generatingAiImage ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Gerar'}
+          </Button>
+          <Button variant="outline" onClick={() => setShowAiImageInput(false)} disabled={generatingAiImage}>
+            Cancelar
+          </Button>
+        </div>
+      )}
 
       {/* YouTube URL Input */}
       {showYoutubeInput && (
