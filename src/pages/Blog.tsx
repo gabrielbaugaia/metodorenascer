@@ -162,6 +162,7 @@ export default function Blog() {
       {/* Blog Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
+          {/* Top row: Logo + Navigation */}
           <div className="flex items-center justify-between h-16">
             <RouterLink to="/blog" className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
@@ -170,15 +171,88 @@ export default function Blog() {
               <span className="text-primary font-display text-xl uppercase tracking-wider">Blog</span>
             </RouterLink>
 
-            {/* Desktop nav */}
-            <nav className="hidden md:flex items-center gap-6">
-              <RouterLink to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Início
-              </RouterLink>
-              <RouterLink to="/#preco" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Planos
-              </RouterLink>
-            </nav>
+            {/* Desktop: Categories + Search + Nav */}
+            <div className="hidden lg:flex items-center gap-6">
+              {/* Categories */}
+              <div className="flex items-center gap-2">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      selectedCategory === cat.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search */}
+              <div className="relative w-52">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar artigos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-8 py-1.5 h-9 text-sm bg-muted/30 border-border focus:border-primary"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Separator */}
+              <div className="h-6 w-px bg-border" />
+
+              {/* Navigation */}
+              <nav className="flex items-center gap-4">
+                <RouterLink to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Início
+                </RouterLink>
+                <RouterLink to="/#preco" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Planos
+                </RouterLink>
+              </nav>
+            </div>
+
+            {/* Tablet: Search + Nav */}
+            <div className="hidden md:flex lg:hidden items-center gap-4">
+              <div className="relative w-44">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-8 py-1.5 h-9 text-sm bg-muted/30 border-border focus:border-primary"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <nav className="flex items-center gap-4">
+                <RouterLink to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Início
+                </RouterLink>
+                <RouterLink to="/#preco" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Planos
+                </RouterLink>
+              </nav>
+            </div>
 
             {/* Mobile menu button */}
             <button 
@@ -190,30 +264,87 @@ export default function Blog() {
             </button>
           </div>
 
+          {/* Tablet: Categories row */}
+          <div className="hidden md:flex lg:hidden items-center gap-2 pb-3 overflow-x-auto scrollbar-none">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                  selectedCategory === cat.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
           {/* Mobile menu */}
           {mobileMenuOpen && (
-            <nav className="md:hidden py-4 border-t border-border flex flex-col gap-3">
-              <RouterLink 
-                to="/" 
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Início
-              </RouterLink>
-              <RouterLink 
-                to="/#preco" 
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Planos
-              </RouterLink>
-            </nav>
+            <div className="md:hidden py-4 border-t border-border space-y-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar artigos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10 py-2 text-sm bg-muted/30 border-border focus:border-primary"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Categories */}
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setSelectedCategory(cat.id); setMobileMenuOpen(false); }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      selectedCategory === cat.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Nav links */}
+              <div className="flex items-center gap-4 pt-2 border-t border-border">
+                <RouterLink 
+                  to="/" 
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Início
+                </RouterLink>
+                <RouterLink 
+                  to="/#preco" 
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Planos
+                </RouterLink>
+              </div>
+            </div>
           )}
         </div>
       </header>
 
       {/* Spacer for fixed header */}
-      <div className="h-20" />
+      <div className="h-20 md:h-24 lg:h-20" />
 
       {/* Featured Posts - First 3 */}
       <section className="pb-8 px-4">
@@ -325,50 +456,6 @@ export default function Blog() {
               ))}
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Filter Bar - Categories + Search in one line */}
-      <section className="py-4 px-4 border-y border-border bg-card/50">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Categories */}
-            <div className="flex flex-wrap items-center gap-2">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedCategory === cat.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-background border border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Search */}
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar artigos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10 py-2 text-sm bg-background border-border focus:border-primary"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
         </div>
       </section>
 
