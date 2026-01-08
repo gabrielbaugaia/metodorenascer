@@ -173,16 +173,16 @@ export default function Blog() {
             </RouterLink>
 
             {/* Desktop/Tablet: Categories + Search + Nav - all in one line */}
-            <div className="hidden md:flex items-center gap-3 flex-1 justify-end">
+            <div className="hidden md:flex items-center gap-2 lg:gap-3 flex-1 justify-end">
               {/* Categories */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 lg:gap-1">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                    className={`px-2 lg:px-2.5 py-1 rounded-full text-[10px] lg:text-xs font-medium transition-all whitespace-nowrap ${
                       selectedCategory === cat.id
-                        ? 'bg-primary text-primary-foreground'
+                        ? 'bg-primary text-primary-foreground shadow-[0_0_12px_rgba(255,69,0,0.5)] ring-1 ring-primary/50'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                     }`}
                   >
@@ -192,19 +192,19 @@ export default function Blog() {
               </div>
 
               {/* Search */}
-              <div className="relative w-40 lg:w-48">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <div className="relative w-32 lg:w-44">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 lg:h-3.5 lg:w-3.5 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Buscar..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-7 py-1 h-8 text-xs bg-muted/30 border-border focus:border-primary"
+                  className="pl-7 lg:pl-8 pr-6 py-1 h-7 lg:h-8 text-[10px] lg:text-xs bg-muted/30 border-border focus:border-primary"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -212,14 +212,14 @@ export default function Blog() {
               </div>
 
               {/* Separator */}
-              <div className="h-5 w-px bg-border" />
+              <div className="h-4 lg:h-5 w-px bg-border" />
 
               {/* Navigation */}
-              <nav className="flex items-center gap-3">
-                <RouterLink to="/" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+              <nav className="flex items-center gap-2 lg:gap-3">
+                <RouterLink to="/" className="text-[10px] lg:text-xs text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
                   Início
                 </RouterLink>
-                <RouterLink to="/#preco" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                <RouterLink to="/#preco" className="text-[10px] lg:text-xs text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
                   Planos
                 </RouterLink>
               </nav>
