@@ -162,24 +162,25 @@ export default function Blog() {
       {/* Blog Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
-          {/* Top row: Logo + Navigation */}
-          <div className="flex items-center justify-between h-16">
-            <RouterLink to="/blog" className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
-                <Flame className="w-5 h-5 text-primary" />
+          {/* Single row: Logo + Categories + Search + Nav */}
+          <div className="flex items-center justify-between h-16 gap-4">
+            {/* Logo */}
+            <RouterLink to="/blog" className="flex items-center gap-2 shrink-0">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                <Flame className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-primary font-display text-xl uppercase tracking-wider">Blog</span>
+              <span className="text-primary font-display text-lg uppercase tracking-wider">Blog</span>
             </RouterLink>
 
-            {/* Desktop: Categories + Search + Nav */}
-            <div className="hidden lg:flex items-center gap-6">
+            {/* Desktop/Tablet: Categories + Search + Nav - all in one line */}
+            <div className="hidden md:flex items-center gap-3 flex-1 justify-end">
               {/* Categories */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                       selectedCategory === cat.id
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -191,64 +192,34 @@ export default function Blog() {
               </div>
 
               {/* Search */}
-              <div className="relative w-52">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Buscar artigos..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-8 py-1.5 h-9 text-sm bg-muted/30 border-border focus:border-primary"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Separator */}
-              <div className="h-6 w-px bg-border" />
-
-              {/* Navigation */}
-              <nav className="flex items-center gap-4">
-                <RouterLink to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Início
-                </RouterLink>
-                <RouterLink to="/#preco" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Planos
-                </RouterLink>
-              </nav>
-            </div>
-
-            {/* Tablet: Search + Nav */}
-            <div className="hidden md:flex lg:hidden items-center gap-4">
-              <div className="relative w-44">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <div className="relative w-40 lg:w-48">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   type="text"
                   placeholder="Buscar..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-8 py-1.5 h-9 text-sm bg-muted/30 border-border focus:border-primary"
+                  className="pl-8 pr-7 py-1 h-8 text-xs bg-muted/30 border-border focus:border-primary"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-3 w-3" />
                   </button>
                 )}
               </div>
-              <nav className="flex items-center gap-4">
-                <RouterLink to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+
+              {/* Separator */}
+              <div className="h-5 w-px bg-border" />
+
+              {/* Navigation */}
+              <nav className="flex items-center gap-3">
+                <RouterLink to="/" className="text-xs text-muted-foreground hover:text-primary transition-colors">
                   Início
                 </RouterLink>
-                <RouterLink to="/#preco" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <RouterLink to="/#preco" className="text-xs text-muted-foreground hover:text-primary transition-colors">
                   Planos
                 </RouterLink>
               </nav>
@@ -262,23 +233,6 @@ export default function Blog() {
             >
               {mobileMenuOpen ? <CloseIcon className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
-          </div>
-
-          {/* Tablet: Categories row */}
-          <div className="hidden md:flex lg:hidden items-center gap-2 pb-3 overflow-x-auto scrollbar-none">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-                  selectedCategory === cat.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
           </div>
 
           {/* Mobile menu */}
@@ -344,7 +298,7 @@ export default function Blog() {
       </header>
 
       {/* Spacer for fixed header */}
-      <div className="h-20 md:h-24 lg:h-20" />
+      <div className="h-20" />
 
       {/* Featured Posts - First 3 */}
       <section className="pb-8 px-4">
