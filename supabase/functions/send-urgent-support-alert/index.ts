@@ -9,10 +9,7 @@ const corsHeaders = {
 };
 
 interface UrgentAlertRequest {
-  userId: string;
   conversaId?: string;
-  clientName: string;
-  clientEmail?: string;
   messagePreview: string;
   keywordsDetected: string[];
   urgencyReason: string;
@@ -32,7 +29,44 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log(`[${requestId}] Step 1: Checking RESEND_API_KEY...`);
+    // Step 1: Authenticate the user
+    console.log(`[${requestId}] Step 1: Authenticating user...`);
+    const authHeader = req.headers.get("Authorization");
+    
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.error(`[${requestId}] ERROR: Missing or invalid Authorization header`);
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    // Create client with user's token for authentication
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+
+    if (claimsError || !claimsData?.claims) {
+      console.error(`[${requestId}] ERROR: Invalid token`, claimsError);
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+    console.log(`[${requestId}] ✓ Authenticated user: ${userId}`);
+
+    // Step 2: Check RESEND_API_KEY
+    console.log(`[${requestId}] Step 2: Checking RESEND_API_KEY...`);
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
       console.error(`[${requestId}] ERROR: RESEND_API_KEY not configured`);
@@ -44,28 +78,37 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`[${requestId}] ✓ RESEND_API_KEY present: ${resendApiKey.slice(0, 8)}...`);
     
     const resend = new Resend(resendApiKey);
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    // Create service client for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`[${requestId}] Step 2: Parsing request body...`);
+    // Step 3: Parse request body
+    console.log(`[${requestId}] Step 3: Parsing request body...`);
     const {
-      userId,
       conversaId,
-      clientName,
-      clientEmail,
       messagePreview,
       keywordsDetected,
       urgencyReason
     }: UrgentAlertRequest = await req.json();
+
+    // Step 4: Get user profile for client name
+    console.log(`[${requestId}] Step 4: Fetching user profile...`);
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", userId)
+      .single();
+
+    const clientName = profileData?.full_name || "Cliente";
     
     console.log(`[${requestId}] Alert details:`);
+    console.log(`[${requestId}] - User ID: ${userId}`);
     console.log(`[${requestId}] - Client: ${clientName}`);
     console.log(`[${requestId}] - Keywords: ${keywordsDetected.join(', ')}`);
     console.log(`[${requestId}] - Reason: ${urgencyReason}`);
 
-    // 1. Save alert to database
-    console.log(`[${requestId}] Step 3: Saving alert to database...`);
+    // Step 5: Save alert to database
+    console.log(`[${requestId}] Step 5: Saving alert to database...`);
     const { error: alertError } = await supabase
       .from("admin_support_alerts")
       .insert({
@@ -83,17 +126,16 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`[${requestId}] ✓ Alert saved to database`);
     }
 
-    // 2. Send to admin email
-    console.log(`[${requestId}] Step 4: Preparing email...`);
+    // Step 6: Send to admin email
+    console.log(`[${requestId}] Step 6: Preparing email...`);
     const adminEmail = "gabrielbaugaia@gmail.com";
     console.log(`[${requestId}] Sending to: ${adminEmail}`);
 
-    // 3. Send urgent email alert
     const keywordsList = keywordsDetected.length > 0 
       ? keywordsDetected.join(", ") 
       : "Não identificadas";
 
-    console.log(`[${requestId}] Step 5: Sending email via Resend...`);
+    console.log(`[${requestId}] Step 7: Sending email via Resend...`);
 
     const emailResponse = await resend.emails.send({
       from: "Suporte Urgente <noreply@renascerapp.com.br>",
@@ -124,7 +166,7 @@ const handler = async (req: Request): Promise<Response> => {
         <body>
           <div class="container">
             <div class="header">
-              <h1>🚨 Alerta de Suporte Urgente</h1>
+              <h1>Alerta de Suporte Urgente</h1>
               <p style="margin: 8px 0 0 0; opacity: 0.9;">Intervenção imediata necessária</p>
             </div>
             <div class="content">
@@ -138,10 +180,10 @@ const handler = async (req: Request): Promise<Response> => {
                 <span class="info-value">${clientName}</span>
               </div>
               
-              ${clientEmail ? `
+              ${userEmail ? `
               <div class="info-row">
                 <span class="info-label">Email:</span>
-                <span class="info-value">${clientEmail}</span>
+                <span class="info-value">${userEmail}</span>
               </div>
               ` : ''}
 
