@@ -18,7 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { RichTextEditor, ContentBlock } from "@/components/blog/RichTextEditor";
+import { BlogPostRenderer } from "@/components/blog/BlogPostRenderer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Save, 
@@ -54,6 +57,7 @@ export default function AdminBlogEditor() {
   const [generatingCoverAI, setGeneratingCoverAI] = useState(false);
   const [rewriting, setRewriting] = useState(false);
   const [rewritingSection, setRewritingSection] = useState<number | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -498,6 +502,10 @@ export default function AdminBlogEditor() {
           )}
         </div>
         <div className="flex gap-2">
+          <Button variant="ghost" onClick={() => setShowPreview(true)} disabled={!title && content.length === 0}>
+            <Eye className="h-4 w-4 mr-2" />
+            Preview
+          </Button>
           <Button variant="outline" onClick={() => handleSave(false)} disabled={saving || publishing}>
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             Salvar Rascunho
@@ -992,6 +1000,78 @@ export default function AdminBlogEditor() {
           </Card>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              Preview do Artigo
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[calc(90vh-80px)]">
+            <div className="p-6 pt-4">
+              {/* Cover Image */}
+              {coverImageUrl && (
+                <div className="relative h-64 md:h-80 rounded-xl overflow-hidden mb-6">
+                  <img
+                    src={coverImageUrl}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                </div>
+              )}
+
+              {/* Title */}
+              <h1 className="font-display text-3xl md:text-4xl text-foreground leading-tight mb-4">
+                {title || "Título do artigo"}
+              </h1>
+
+              {/* Category Badge */}
+              {category && (
+                <span className="inline-block px-3 py-1 bg-primary/20 text-primary text-sm rounded-full mb-4">
+                  {BLOG_CATEGORIES.find(c => c.id === category)?.label || category}
+                </span>
+              )}
+
+              {/* Excerpt */}
+              {excerpt && (
+                <p className="text-lg text-muted-foreground mb-6 border-l-4 border-primary pl-4">
+                  {excerpt}
+                </p>
+              )}
+
+              {/* Content */}
+              <div className="glass-card p-6 md:p-8">
+                {content.length > 0 ? (
+                  <BlogPostRenderer blocks={content} />
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    Nenhum conteúdo adicionado ainda
+                  </p>
+                )}
+              </div>
+
+              {/* Lead Capture Preview */}
+              {enableLeadCapture && (
+                <div className="mt-6 glass-card p-6 border-primary/30 bg-gradient-to-r from-primary/10 to-purple-500/10">
+                  <h3 className="font-display text-xl text-foreground mb-2">
+                    {leadCaptureTitle || "Receba mais conteúdos exclusivos"}
+                  </h3>
+                  <p className="text-muted-foreground mb-4">
+                    {leadCaptureDescription || "Cadastre-se para receber novidades e materiais exclusivos."}
+                  </p>
+                  <Button className="btn-fire">
+                    {leadCtaText || "Baixar Agora"}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
       </div>
     </ClientLayout>
   );
