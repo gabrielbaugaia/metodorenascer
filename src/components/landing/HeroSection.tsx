@@ -9,19 +9,11 @@ export const HeroSection = memo(function HeroSection() {
       <div className="relative z-10 container mx-auto px-4 md:px-8">
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-8 md:gap-10">
           
-          {/* Title Block - unified dramatic block */}
-          <div className="animate-fade-in w-full flex flex-col items-center gap-4 md:gap-6">
-            <h1 className="font-display font-black text-center leading-[1.05] tracking-[-0.02em]">
-              <span className="text-foreground block text-[3rem] sm:text-6xl md:text-7xl lg:text-8xl">
-                NÃO BUSQUE
-              </span>
-              <span className="text-foreground block text-[3rem] sm:text-6xl md:text-7xl lg:text-8xl">
-                EVOLUÇÃO
-              </span>
+          {/* Title Block - same pattern as other sections */}
+          <div className="animate-fade-in w-full flex flex-col items-center gap-4">
+            <h1 className="font-display font-black text-foreground text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1] tracking-[-0.02em] text-center">
+              Não Busque Evolução, Busque <span className="text-primary drop-shadow-[0_0_30px_rgba(255,69,0,0.6)]">RENASCIMENTO</span>
             </h1>
-            <h2 className="font-display font-black text-primary text-[2.2rem] sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.08em] text-center drop-shadow-[0_0_30px_rgba(255,69,0,0.6)] animate-pulse-subtle">
-              BUSQUE RENASCIMENTO
-            </h2>
           </div>
 
           {/* Subtitle - Better spacing and size */}
