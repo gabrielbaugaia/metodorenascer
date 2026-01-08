@@ -180,10 +180,10 @@ export default function Blog() {
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-2 lg:px-2.5 py-1 rounded-full text-[10px] lg:text-xs font-medium transition-all whitespace-nowrap ${
+                    className={`px-2 lg:px-2.5 py-1 rounded-full text-[10px] lg:text-xs font-medium whitespace-nowrap transition-all duration-300 ease-out ${
                       selectedCategory === cat.id
-                        ? 'bg-primary text-primary-foreground shadow-[0_0_12px_rgba(255,69,0,0.5)] ring-1 ring-primary/50'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        ? 'bg-primary text-primary-foreground shadow-[0_0_12px_rgba(255,69,0,0.5)] ring-1 ring-primary/50 scale-105'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 scale-100'
                     }`}
                   >
                     {cat.label}
