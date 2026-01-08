@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { supabase } from "@/integrations/supabase/client";
 import { BlogPostRenderer } from "@/components/blog/BlogPostRenderer";
 import { LeadCaptureForm } from "@/components/blog/LeadCaptureForm";
@@ -249,14 +257,32 @@ export default function BlogPost() {
 
       <article className={`container mx-auto px-4 ${post.cover_image_url ? '-mt-40 relative z-10' : 'pt-32'} pb-16`}>
         <div className="max-w-3xl mx-auto">
-          {/* Back Link */}
-          <Link 
-            to="/blog" 
-            className="inline-flex items-center text-muted-foreground hover:text-primary mb-8 transition-colors text-sm"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar ao Blog
-          </Link>
+          {/* Breadcrumbs */}
+          <Breadcrumb className="mb-8">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
+                    Início
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/blog" className="text-muted-foreground hover:text-primary transition-colors">
+                    Blog
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-primary truncate max-w-[200px] md:max-w-[300px]">
+                  {post.title}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
 
           {/* Title & Meta */}
           <header className="mb-10">
