@@ -27,6 +27,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Search, 
   MessageCircle, 
@@ -35,8 +45,17 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
-  Clock
+  Clock,
+  Pencil,
+  Trash2,
+  MoreVertical
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -45,6 +64,7 @@ interface Mensagem {
   role: string;
   content: string;
   timestamp?: string;
+  editedAt?: string;
 }
 
 interface Conversa {
@@ -70,6 +90,8 @@ export default function AdminSuporteChats() {
   const [selectedConversa, setSelectedConversa] = useState<Conversa | null>(null);
   const [adminMessage, setAdminMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<{ index: number; content: string } | null>(null);
+  const [deletingMessageIndex, setDeletingMessageIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -183,6 +205,75 @@ export default function AdminSuporteChats() {
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Erro ao enviar mensagem");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleEditMessage = async () => {
+    if (!selectedConversa || editingMessage === null) return;
+
+    setSending(true);
+    try {
+      const updatedMensagens = [...selectedConversa.mensagens];
+      updatedMensagens[editingMessage.index] = {
+        ...updatedMensagens[editingMessage.index],
+        content: editingMessage.content,
+        editedAt: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from("conversas")
+        .update({ 
+          mensagens: updatedMensagens as unknown as Json,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", selectedConversa.id);
+
+      if (error) throw error;
+
+      toast.success("Mensagem editada com sucesso!");
+      setEditingMessage(null);
+      setSelectedConversa({
+        ...selectedConversa,
+        mensagens: updatedMensagens
+      });
+      fetchConversas();
+    } catch (error) {
+      console.error("Error editing message:", error);
+      toast.error("Erro ao editar mensagem");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleDeleteMessage = async () => {
+    if (!selectedConversa || deletingMessageIndex === null) return;
+
+    setSending(true);
+    try {
+      const updatedMensagens = selectedConversa.mensagens.filter((_, idx) => idx !== deletingMessageIndex);
+
+      const { error } = await supabase
+        .from("conversas")
+        .update({ 
+          mensagens: updatedMensagens as unknown as Json,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", selectedConversa.id);
+
+      if (error) throw error;
+
+      toast.success("Mensagem excluída com sucesso!");
+      setDeletingMessageIndex(null);
+      setSelectedConversa({
+        ...selectedConversa,
+        mensagens: updatedMensagens
+      });
+      fetchConversas();
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      toast.error("Erro ao excluir mensagem");
     } finally {
       setSending(false);
     }
@@ -386,12 +477,12 @@ export default function AdminSuporteChats() {
                 {Array.isArray(selectedConversa?.mensagens) && selectedConversa.mensagens.map((msg, idx) => (
                   <div
                     key={idx}
-                    className={`flex ${
+                    className={`group flex ${
                       msg.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-lg p-3 ${
+                      className={`relative max-w-[80%] rounded-lg p-3 ${
                         msg.role === "user"
                           ? "bg-primary text-primary-foreground"
                           : msg.role === "admin"
@@ -399,6 +490,33 @@ export default function AdminSuporteChats() {
                           : "bg-muted"
                       }`}
                     >
+                      {/* Menu de ações (apenas para mensagens da IA ou admin) */}
+                      {(msg.role === "assistant" || msg.role === "admin") && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute -right-2 -top-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-background border shadow-sm"
+                            >
+                              <MoreVertical className="h-3 w-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setEditingMessage({ index: idx, content: msg.content })}>
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => setDeletingMessageIndex(idx)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant="outline" className="text-xs">
                           {msg.role === "user" ? "Cliente" : msg.role === "admin" ? "Admin" : "IA"}
@@ -407,6 +525,9 @@ export default function AdminSuporteChats() {
                           <span className="text-xs opacity-70">
                             {format(new Date(msg.timestamp), "HH:mm")}
                           </span>
+                        )}
+                        {(msg as any).editedAt && (
+                          <span className="text-xs opacity-50">(editado)</span>
                         )}
                       </div>
                       <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -447,6 +568,52 @@ export default function AdminSuporteChats() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Message Dialog */}
+        <Dialog open={editingMessage !== null} onOpenChange={(open) => !open && setEditingMessage(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Mensagem</DialogTitle>
+              <DialogDescription>
+                Edite o conteúdo da mensagem abaixo
+              </DialogDescription>
+            </DialogHeader>
+            <Textarea
+              value={editingMessage?.content || ""}
+              onChange={(e) => setEditingMessage(prev => prev ? { ...prev, content: e.target.value } : null)}
+              rows={5}
+              className="resize-none"
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingMessage(null)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleEditMessage} disabled={sending}>
+                {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation */}
+        <AlertDialog open={deletingMessageIndex !== null} onOpenChange={(open) => !open && setDeletingMessageIndex(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir mensagem?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita. A mensagem será removida permanentemente do histórico.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteMessage} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </ClientLayout>
   );
