@@ -10,6 +10,72 @@ import { ptBR } from "date-fns/locale";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
+const updateMetaTags = () => {
+  const baseUrl = window.location.origin;
+  const title = "Blog do Método Renascer | Dicas de Transformação Física e Mental";
+  const description = "Dicas, estratégias e conhecimento para sua transformação física e mental. Artigos sobre treino, nutrição e mindset.";
+  const image = `${baseUrl}/og-blog.png`;
+
+  document.title = title;
+
+  // Meta description
+  let metaDesc = document.querySelector('meta[name="description"]');
+  if (!metaDesc) {
+    metaDesc = document.createElement('meta');
+    metaDesc.setAttribute('name', 'description');
+    document.head.appendChild(metaDesc);
+  }
+  metaDesc.setAttribute('content', description);
+
+  // Open Graph tags
+  const ogTags = {
+    'og:type': 'website',
+    'og:url': `${baseUrl}/blog`,
+    'og:title': title,
+    'og:description': description,
+    'og:image': image,
+    'og:site_name': 'Método Renascer'
+  };
+
+  Object.entries(ogTags).forEach(([property, content]) => {
+    let tag = document.querySelector(`meta[property="${property}"]`);
+    if (!tag) {
+      tag = document.createElement('meta');
+      tag.setAttribute('property', property);
+      document.head.appendChild(tag);
+    }
+    tag.setAttribute('content', content);
+  });
+
+  // Twitter Card tags
+  const twitterTags = {
+    'twitter:card': 'summary_large_image',
+    'twitter:url': `${baseUrl}/blog`,
+    'twitter:title': title,
+    'twitter:description': description,
+    'twitter:image': image
+  };
+
+  Object.entries(twitterTags).forEach(([name, content]) => {
+    let tag = document.querySelector(`meta[name="${name}"]`);
+    if (!tag) {
+      tag = document.createElement('meta');
+      tag.setAttribute('name', name);
+      document.head.appendChild(tag);
+    }
+    tag.setAttribute('content', content);
+  });
+
+  // Canonical URL
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.setAttribute('rel', 'canonical');
+    document.head.appendChild(canonical);
+  }
+  canonical.setAttribute('href', `${baseUrl}/blog`);
+};
+
 interface BlogPost {
   id: string;
   title: string;
@@ -25,6 +91,7 @@ export default function Blog() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    updateMetaTags();
     fetchPosts();
   }, []);
 

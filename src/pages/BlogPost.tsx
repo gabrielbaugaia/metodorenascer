@@ -44,18 +44,77 @@ export default function BlogPost() {
 
   useEffect(() => {
     if (post) {
-      // Update page title and meta for SEO
-      document.title = post.meta_title || post.title;
-      
-      const metaDescription = document.querySelector('meta[name="description"]');
-      if (metaDescription) {
-        metaDescription.setAttribute('content', post.meta_description || post.excerpt || '');
-      }
-
-      // Increment view count
+      updatePostMetaTags(post);
       incrementViews(post.id);
     }
   }, [post]);
+
+  const updatePostMetaTags = (postData: BlogPostData) => {
+    const baseUrl = window.location.origin;
+    const title = postData.meta_title || postData.title;
+    const description = postData.meta_description || postData.excerpt || '';
+    const image = postData.cover_image_url || `${baseUrl}/og-blog.png`;
+    const url = `${baseUrl}/blog/${postData.slug}`;
+
+    document.title = title;
+
+    // Meta description
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', description);
+
+    // Open Graph tags
+    const ogTags = {
+      'og:type': 'article',
+      'og:url': url,
+      'og:title': title,
+      'og:description': description,
+      'og:image': image,
+      'og:site_name': 'Método Renascer'
+    };
+
+    Object.entries(ogTags).forEach(([property, content]) => {
+      let tag = document.querySelector(`meta[property="${property}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('property', property);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    });
+
+    // Twitter Card tags
+    const twitterTags = {
+      'twitter:card': 'summary_large_image',
+      'twitter:url': url,
+      'twitter:title': title,
+      'twitter:description': description,
+      'twitter:image': image
+    };
+
+    Object.entries(twitterTags).forEach(([name, content]) => {
+      let tag = document.querySelector(`meta[name="${name}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('name', name);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    });
+
+    // Canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', url);
+  };
 
   const fetchPost = async (postSlug: string) => {
     try {
