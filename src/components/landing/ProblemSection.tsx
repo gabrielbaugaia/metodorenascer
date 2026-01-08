@@ -30,15 +30,12 @@ export function ProblemSection() {
     >
       <div className="container mx-auto px-4">
         {/* Section Header */}
-        <div className="text-center mb-14 max-w-3xl mx-auto flex flex-col items-center gap-6">
-          <h2 className="font-display font-black text-foreground text-[2rem] sm:text-3xl md:text-4xl lg:text-5xl leading-[1.1] tracking-[-0.02em] text-center">
-            O Fitness Tradicional FALHOU com Você
+        <div className="text-center mb-14 max-w-3xl mx-auto flex flex-col items-center gap-4">
+          <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center">
+            O Fitness Tradicional <span className="text-primary">FALHOU</span> com Você
           </h2>
-          <p className="text-primary font-bold text-[1.5rem] sm:text-2xl md:text-3xl tracking-wide">
-            O problema é a falta de estratégia
-          </p>
-          <p className="text-foreground text-[1.1rem] md:text-lg leading-relaxed text-center max-w-xl">
-            O problema não é a falta de esforço.
+          <p className="text-muted-foreground text-base md:text-lg leading-relaxed text-center max-w-xl">
+            O problema não é a falta de esforço — é a falta de estratégia.
           </p>
         </div>
 
