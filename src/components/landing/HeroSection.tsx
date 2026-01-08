@@ -6,22 +6,20 @@ export const HeroSection = memo(function HeroSection() {
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-background">
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-[5%] pt-[15vh] pb-[10vh] md:py-0">
-        <div className="max-w-4xl mx-auto flex flex-col items-center gap-8 md:gap-12">
+      <div className="relative z-10 container mx-auto px-4 md:px-8">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-10 md:gap-12">
           
-          {/* Title Block */}
-          <div className="animate-fade-in flex flex-col items-center gap-2 w-full">
-            <h1 className="font-display tracking-[-0.05em] leading-[0.9] text-center">
-              <span className="text-foreground block text-[2.8rem] sm:text-[3.5rem] md:text-6xl lg:text-7xl font-black">
-                NÃO BUSQUE
+          {/* Title Block - 2 lines, unified block */}
+          <div className="animate-fade-in w-full">
+            <h1 className="font-display font-black text-center leading-[1.1] tracking-tight">
+              <span className="text-foreground block text-[2.2rem] sm:text-5xl md:text-6xl lg:text-7xl">
+                NÃO BUSQUE EVOLUÇÃO
               </span>
-              <span className="text-foreground block text-[4.5rem] sm:text-[5.5rem] md:text-8xl lg:text-[10rem] font-black">
-                EVOLUÇÃO
+              <span className="block text-[2.2rem] sm:text-5xl md:text-6xl lg:text-7xl">
+                <span className="text-foreground">BUSQUE </span>
+                <span className="text-primary">RENASCIMENTO</span>
               </span>
             </h1>
-            <p className="text-primary text-[1.1rem] sm:text-xl md:text-2xl font-bold tracking-[0.1em] mt-2">
-              BUSQUE RENASCIMENTO
-            </p>
           </div>
 
           {/* Subtitle - Better spacing and size */}
