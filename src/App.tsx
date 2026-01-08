@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { SubscriptionGuard } from "@/components/auth/SubscriptionGuard";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Convite from "./pages/Convite";
@@ -49,27 +51,33 @@ const App = () => (
         <BrowserRouter>
           <AnalyticsProvider>
           <Routes>
-            {/* LANÇAMENTO OFICIAL ATIVO */}
+            {/* ROTAS PÚBLICAS */}
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/entrar" element={<Auth />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/convite" element={<Convite />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/anamnese" element={<Anamnese />} />
             <Route path="/checkout-success" element={<CheckoutSuccess />} />
-            <Route path="/treino" element={<Treino />} />
-            <Route path="/nutricao" element={<Nutricao />} />
-            <Route path="/mindset" element={<Mindset />} />
-            <Route path="/evolucao" element={<Evolucao />} />
-            <Route path="/receitas" element={<Receitas />} />
-            <Route path="/area-cliente" element={<AreaCliente />} />
-            <Route path="/protocolos" element={<Protocolos />} />
-            <Route path="/suporte" element={<Suporte />} />
-            <Route path="/meu-perfil" element={<MeuPerfil />} />
-            <Route path="/indicacoes" element={<Indicacoes />} />
-            <Route path="/assinatura" element={<Assinatura />} />
-            <Route path="/configuracoes" element={<Configuracoes />} />
+
+            {/* ROTAS QUE REQUEREM APENAS AUTENTICAÇÃO (mostram planos se sem assinatura) */}
+            <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+            <Route path="/anamnese" element={<AuthGuard><Anamnese /></AuthGuard>} />
+
+            {/* ROTAS QUE REQUEREM ASSINATURA ATIVA */}
+            <Route path="/treino" element={<SubscriptionGuard><Treino /></SubscriptionGuard>} />
+            <Route path="/nutricao" element={<SubscriptionGuard><Nutricao /></SubscriptionGuard>} />
+            <Route path="/mindset" element={<SubscriptionGuard><Mindset /></SubscriptionGuard>} />
+            <Route path="/evolucao" element={<SubscriptionGuard><Evolucao /></SubscriptionGuard>} />
+            <Route path="/receitas" element={<SubscriptionGuard><Receitas /></SubscriptionGuard>} />
+            <Route path="/area-cliente" element={<SubscriptionGuard><AreaCliente /></SubscriptionGuard>} />
+            <Route path="/protocolos" element={<SubscriptionGuard><Protocolos /></SubscriptionGuard>} />
+            <Route path="/suporte" element={<SubscriptionGuard><Suporte /></SubscriptionGuard>} />
+            <Route path="/meu-perfil" element={<SubscriptionGuard><MeuPerfil /></SubscriptionGuard>} />
+            <Route path="/indicacoes" element={<SubscriptionGuard><Indicacoes /></SubscriptionGuard>} />
+            <Route path="/assinatura" element={<SubscriptionGuard><Assinatura /></SubscriptionGuard>} />
+            <Route path="/configuracoes" element={<SubscriptionGuard><Configuracoes /></SubscriptionGuard>} />
+
+            {/* ROTAS ADMIN (verificação de admin é feita internamente) */}
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/clientes" element={<AdminClientes />} />
             <Route path="/admin/clientes/:id" element={<AdminClienteDetalhes />} />
@@ -82,6 +90,7 @@ const App = () => (
             <Route path="/admin/metricas" element={<AdminMetricas />} />
             <Route path="/admin/convites" element={<AdminConvites />} />
             <Route path="/admin/leads" element={<AdminLeads />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
           </AnalyticsProvider>

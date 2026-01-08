@@ -95,9 +95,10 @@ serve(async (req) => {
       console.error("Error updating profile:", profileError);
     }
 
-    // Create subscription if plan_type is provided and not 'free'
-    if (plan_type && plan_type !== "free") {
+    // Create subscription if plan_type is provided
+    if (plan_type) {
       const planDurations: Record<string, number> = {
+        free: 365,
         elite_founder: 30,
         mensal: 30,
         trimestral: 90,
@@ -106,6 +107,7 @@ serve(async (req) => {
       };
 
       const planPrices: Record<string, number> = {
+        free: 0,
         elite_founder: 4990,
         mensal: 19700,
         trimestral: 49700,
@@ -113,8 +115,18 @@ serve(async (req) => {
         anual: 99700,
       };
 
+      const planNames: Record<string, string> = {
+        free: "Gratuito",
+        elite_founder: "Elite Fundador",
+        mensal: "Mensal",
+        trimestral: "Trimestral",
+        semestral: "Semestral",
+        anual: "Anual",
+      };
+
       const durationDays = planDurations[plan_type] || 30;
-      const priceCents = planPrices[plan_type] || 4990;
+      const priceCents = planPrices[plan_type] || 0;
+      const planName = planNames[plan_type] || plan_type;
       const currentPeriodStart = new Date();
       const currentPeriodEnd = new Date();
       currentPeriodEnd.setDate(currentPeriodEnd.getDate() + durationDays);
@@ -123,6 +135,7 @@ serve(async (req) => {
         user_id: newUser.user.id,
         status: "active",
         plan_type,
+        plan_name: planName,
         price_cents: priceCents,
         current_period_start: currentPeriodStart.toISOString(),
         current_period_end: currentPeriodEnd.toISOString(),
