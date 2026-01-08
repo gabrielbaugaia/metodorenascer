@@ -56,9 +56,9 @@ O artigo deve:
 5. Ter uma introdução engajadora e conclusão com call-to-action
 6. Ser otimizado para SEO com palavras-chave relevantes`;
 
-    console.log('Calling Lovable AI API...');
+    console.log('Calling Lovable AI Gateway...');
     
-    const response = await fetch('https://ai.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,
