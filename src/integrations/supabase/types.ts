@@ -148,6 +148,104 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_leads: {
+        Row: {
+          created_at: string
+          document_downloaded: string | null
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          post_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_downloaded?: string | null
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          post_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_downloaded?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_leads_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_posts: {
+        Row: {
+          author_id: string | null
+          content: Json
+          cover_image_url: string | null
+          created_at: string
+          enable_lead_capture: boolean | null
+          excerpt: string | null
+          id: string
+          lead_capture_description: string | null
+          lead_capture_title: string | null
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+          views_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          content?: Json
+          cover_image_url?: string | null
+          created_at?: string
+          enable_lead_capture?: boolean | null
+          excerpt?: string | null
+          id?: string
+          lead_capture_description?: string | null
+          lead_capture_title?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          content?: Json
+          cover_image_url?: string | null
+          created_at?: string
+          enable_lead_capture?: boolean | null
+          excerpt?: string | null
+          id?: string
+          lead_capture_description?: string | null
+          lead_capture_title?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       checkins: {
         Row: {
           ai_analysis: string | null
