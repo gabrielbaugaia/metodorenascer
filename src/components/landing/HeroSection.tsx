@@ -10,16 +10,18 @@ export const HeroSection = memo(function HeroSection() {
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-10 md:gap-12">
           
           {/* Title Block - 2 lines, unified block */}
-          <div className="animate-fade-in w-full">
-            <h1 className="font-display font-black text-center leading-[1.1] tracking-tight">
-              <span className="text-foreground block text-[2.2rem] sm:text-5xl md:text-6xl lg:text-7xl">
-                NÃO BUSQUE EVOLUÇÃO
+          <div className="animate-fade-in w-full flex flex-col items-center gap-6 md:gap-8">
+            <h1 className="font-display font-black text-center leading-[1.05] tracking-[-0.02em]">
+              <span className="text-foreground block text-[3.5rem] sm:text-6xl md:text-7xl lg:text-8xl">
+                NÃO BUSQUE
               </span>
-              <span className="block text-[2.2rem] sm:text-5xl md:text-6xl lg:text-7xl">
-                <span className="text-foreground">BUSQUE </span>
-                <span className="text-primary">RENASCIMENTO</span>
+              <span className="text-foreground block text-[3.5rem] sm:text-6xl md:text-7xl lg:text-8xl">
+                EVOLUÇÃO
               </span>
             </h1>
+            <h2 className="font-display font-bold text-primary text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl tracking-wide text-center">
+              BUSQUE RENASCIMENTO
+            </h2>
           </div>
 
           {/* Subtitle - Better spacing and size */}
