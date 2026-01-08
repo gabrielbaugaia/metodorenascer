@@ -55,12 +55,15 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#metodologia" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
+            <a href="/#metodologia" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
               Metodologia
             </a>
-            <a href="#preco" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
+            <a href="/#preco" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
               Planos
             </a>
+            <Link to="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
+              Blog
+            </Link>
             {user && (
               <Link to="/dashboard" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
                 Dashboard
@@ -95,19 +98,26 @@ export function Header() {
           <div className="md:hidden py-4 border-t border-border animate-fade-in">
             <nav className="flex flex-col gap-4">
               <a 
-                href="#metodologia" 
+                href="/#metodologia" 
                 className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Metodologia
               </a>
               <a 
-                href="#preco" 
+                href="/#preco" 
                 className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Planos
               </a>
+              <Link 
+                to="/blog" 
+                className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Blog
+              </Link>
               {user ? (
                 <>
                   <Link 

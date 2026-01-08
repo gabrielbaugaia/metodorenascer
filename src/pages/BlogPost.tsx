@@ -6,7 +6,7 @@ import { LeadCaptureForm } from "@/components/blog/LeadCaptureForm";
 import { ContentBlock } from "@/components/blog/RichTextEditor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, ArrowLeft, Share2 } from "lucide-react";
+import { Calendar, Clock, ArrowLeft, Share2, ArrowRight, Flame } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -51,24 +51,19 @@ export default function BlogPost() {
 
   const updatePostMetaTags = (postData: BlogPostData) => {
     const baseUrl = window.location.origin;
-    const title = postData.meta_title || postData.title;
+    const title = postData.meta_title || `${postData.title} | Método Renascer`;
     const description = postData.meta_description || postData.excerpt || '';
     const image = postData.cover_image_url || `${baseUrl}/og-blog.png`;
     const url = `${baseUrl}/blog/${postData.slug}`;
 
     document.title = title;
 
-    // Meta description
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.setAttribute('name', 'description');
-      document.head.appendChild(metaDesc);
-    }
+    const metaDesc = document.querySelector('meta[name="description"]') || document.createElement('meta');
+    metaDesc.setAttribute('name', 'description');
     metaDesc.setAttribute('content', description);
+    if (!metaDesc.parentNode) document.head.appendChild(metaDesc);
 
-    // Open Graph tags
-    const ogTags = {
+    const ogTags: Record<string, string> = {
       'og:type': 'article',
       'og:url': url,
       'og:title': title,
@@ -78,7 +73,7 @@ export default function BlogPost() {
     };
 
     Object.entries(ogTags).forEach(([property, content]) => {
-      let tag = document.querySelector(`meta[property="${property}"]`);
+      let tag = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
       if (!tag) {
         tag = document.createElement('meta');
         tag.setAttribute('property', property);
@@ -87,8 +82,7 @@ export default function BlogPost() {
       tag.setAttribute('content', content);
     });
 
-    // Twitter Card tags
-    const twitterTags = {
+    const twitterTags: Record<string, string> = {
       'twitter:card': 'summary_large_image',
       'twitter:url': url,
       'twitter:title': title,
@@ -97,7 +91,7 @@ export default function BlogPost() {
     };
 
     Object.entries(twitterTags).forEach(([name, content]) => {
-      let tag = document.querySelector(`meta[name="${name}"]`);
+      let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement;
       if (!tag) {
         tag = document.createElement('meta');
         tag.setAttribute('name', name);
@@ -106,8 +100,7 @@ export default function BlogPost() {
       tag.setAttribute('content', content);
     });
 
-    // Canonical URL
-    let canonical = document.querySelector('link[rel="canonical"]');
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
     if (!canonical) {
       canonical = document.createElement('link');
       canonical.setAttribute('rel', 'canonical');
@@ -127,7 +120,6 @@ export default function BlogPost() {
 
       if (error) throw error;
       
-      // Parse content as ContentBlock array
       const parsedPost = {
         ...data,
         content: (data.content as unknown as ContentBlock[]) || []
@@ -166,7 +158,7 @@ export default function BlogPost() {
           text: post?.excerpt || '',
           url
         });
-      } catch (e) {
+      } catch {
         // User cancelled
       }
     } else {
@@ -182,21 +174,28 @@ export default function BlogPost() {
       .map(b => b.content || '')
       .join(' ');
     const words = textContent.split(' ').length;
-    return Math.max(1, Math.ceil(words / 200)) + ' min de leitura';
+    return Math.max(1, Math.ceil(words / 200)) + ' min';
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto px-4 pt-24">
-          <Skeleton className="h-96 w-full rounded-xl" />
-          <Skeleton className="h-12 w-3/4 mt-8" />
-          <Skeleton className="h-6 w-1/2 mt-4" />
-          <div className="space-y-4 mt-8">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
+        <div className="container mx-auto px-4 pt-32 pb-16">
+          <div className="max-w-3xl mx-auto">
+            <Skeleton className="h-8 w-32 mb-8" />
+            <Skeleton className="h-12 w-full mb-4" />
+            <Skeleton className="h-12 w-3/4 mb-8" />
+            <div className="flex gap-4 mb-8">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+            <Skeleton className="h-80 w-full rounded-xl mb-8" />
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
           </div>
         </div>
         <Footer />
@@ -208,17 +207,22 @@ export default function BlogPost() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto px-4 pt-24 text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Artigo não encontrado</h1>
-          <p className="text-muted-foreground mb-8">
-            O artigo que você está procurando não existe ou foi removido.
-          </p>
-          <Link to="/blog">
-            <Button>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar ao Blog
-            </Button>
-          </Link>
+        <div className="container mx-auto px-4 pt-32 pb-16 text-center">
+          <div className="max-w-xl mx-auto">
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+              <Flame className="w-10 h-10 text-muted-foreground" />
+            </div>
+            <h1 className="font-display text-3xl text-foreground mb-4">Artigo não encontrado</h1>
+            <p className="text-muted-foreground mb-8">
+              O artigo que você procura não existe ou foi removido.
+            </p>
+            <Link to="/blog">
+              <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar ao Blog
+              </Button>
+            </Link>
+          </div>
         </div>
         <Footer />
       </div>
@@ -231,46 +235,46 @@ export default function BlogPost() {
       
       {/* Hero / Cover Image */}
       {post.cover_image_url && (
-        <div className="relative h-[50vh] min-h-[400px] mt-16">
+        <div className="relative h-[60vh] min-h-[450px] mt-16">
           <img
             src={post.cover_image_url}
             alt={post.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/20" />
         </div>
       )}
 
-      <article className={`container mx-auto px-4 ${post.cover_image_url ? '-mt-32 relative z-10' : 'pt-24'}`}>
+      <article className={`container mx-auto px-4 ${post.cover_image_url ? '-mt-40 relative z-10' : 'pt-32'} pb-16`}>
         <div className="max-w-3xl mx-auto">
           {/* Back Link */}
           <Link 
             to="/blog" 
-            className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6 transition-colors"
+            className="inline-flex items-center text-muted-foreground hover:text-primary mb-8 transition-colors text-sm"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar ao Blog
           </Link>
 
           {/* Title & Meta */}
-          <header className="mb-8">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+          <header className="mb-10">
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-foreground leading-tight mb-6">
               {post.title}
             </h1>
             
             <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
               {post.published_at && (
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
+                <span className="flex items-center gap-1.5 text-sm">
+                  <Calendar className="h-4 w-4 text-primary/70" />
                   {format(new Date(post.published_at), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </span>
               )}
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                {estimateReadTime()}
+              <span className="flex items-center gap-1.5 text-sm">
+                <Clock className="h-4 w-4 text-primary/70" />
+                {estimateReadTime()} de leitura
               </span>
-              <Button variant="ghost" size="sm" onClick={handleShare}>
-                <Share2 className="h-4 w-4 mr-1" />
+              <Button variant="ghost" size="sm" onClick={handleShare} className="text-muted-foreground hover:text-primary">
+                <Share2 className="h-4 w-4 mr-1.5" />
                 Compartilhar
               </Button>
             </div>
@@ -278,13 +282,13 @@ export default function BlogPost() {
 
           {/* Excerpt */}
           {post.excerpt && (
-            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+            <p className="text-xl text-muted-foreground mb-10 leading-relaxed border-l-4 border-primary pl-6">
               {post.excerpt}
             </p>
           )}
 
           {/* Content */}
-          <div className="bg-card rounded-xl p-6 md:p-8 shadow-sm border border-border">
+          <div className="glass-card p-8 md:p-12">
             <BlogPostRenderer 
               blocks={post.content} 
               onDocumentClick={handleDocumentClick}
@@ -305,17 +309,19 @@ export default function BlogPost() {
           )}
 
           {/* CTA Section */}
-          <div className="mt-12 p-8 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20 text-center">
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              Pronto para sua transformação?
+          <div className="mt-16 glass-card p-10 md:p-14 text-center border-primary/20">
+            <h3 className="font-display text-3xl md:text-4xl text-foreground mb-4">
+              PRONTO PARA <span className="text-primary">RENASCER</span>?
             </h3>
-            <p className="text-muted-foreground mb-6">
-              Conheça o Método Renascer e comece sua jornada de evolução física e mental.
+            <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
+              Conheça o Método Renascer e comece sua jornada de transformação física e mental.
             </p>
-            <Link to="/#preco">
-              <Button size="lg" className="px-8">
-                Conhecer o Método
-              </Button>
+            <Link 
+              to="/#preco"
+              className="btn-fire inline-flex items-center gap-2 px-10 py-4 rounded-lg text-primary-foreground font-semibold uppercase tracking-wider"
+            >
+              <span className="relative z-10">Conhecer os Planos</span>
+              <ArrowRight className="w-5 h-5 relative z-10" />
             </Link>
           </div>
         </div>
