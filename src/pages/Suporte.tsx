@@ -337,20 +337,25 @@ export default function Suporte() {
   const createSupportAlert = async (message: string, isUrgent: boolean, keywords: string[], reason: string) => {
     try {
       if (isUrgent) {
-        // Send urgent alert via edge function (includes email)
+        // Get session for authenticated request
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.access_token) {
+          console.error("No active session for urgent alert");
+          return;
+        }
+
+        // Send urgent alert via edge function with user's auth token
         await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-urgent-support-alert`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              Authorization: `Bearer ${session.access_token}`,
             },
             body: JSON.stringify({
-              userId: user?.id,
               conversaId: conversaId,
-              clientName: profile?.full_name || 'Cliente',
-              clientEmail: user?.email,
               messagePreview: message.substring(0, 200),
               keywordsDetected: keywords,
               urgencyReason: reason
