@@ -9,19 +9,19 @@ export const HeroSection = memo(function HeroSection() {
       <div className="absolute inset-0 bg-background" />
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-6 md:px-8">
-        <div className="max-w-2xl mx-auto flex flex-col items-center gap-10 md:gap-12">
+      <div className="relative z-10 container mx-auto px-4 md:px-8">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-10 md:gap-12">
           
-          {/* Main Title - 3 lines, left aligned on mobile */}
+          {/* Main Title - 3 lines, centered, full width impact */}
           <div className="animate-fade-in w-full">
-            <h1 className="font-display tracking-tight leading-[0.9] text-left md:text-center">
-              <span className="text-foreground block text-[1.75rem] sm:text-3xl md:text-4xl lg:text-5xl tracking-wide">
+            <h1 className="font-display tracking-tight leading-[0.9] text-center">
+              <span className="text-foreground block text-[2rem] sm:text-4xl md:text-5xl lg:text-6xl tracking-[0.15em]">
                 NÃO BUSQUE
               </span>
-              <span className="text-foreground block text-[3.5rem] sm:text-7xl md:text-8xl lg:text-[10rem] -ml-1 md:ml-0">
+              <span className="text-foreground block text-[4rem] sm:text-7xl md:text-9xl lg:text-[11rem]">
                 EVOLUÇÃO
               </span>
-              <span className="block text-[1.5rem] sm:text-3xl md:text-4xl lg:text-5xl mt-4 md:mt-6 tracking-wide">
+              <span className="block text-[1.75rem] sm:text-3xl md:text-4xl lg:text-5xl mt-3 md:mt-5 tracking-wide">
                 <span className="text-foreground">BUSQUE </span>
                 <span className="text-primary">RENASCIMENTO</span>
               </span>
