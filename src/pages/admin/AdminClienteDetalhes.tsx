@@ -23,6 +23,7 @@ import {
   CreditCard,
   KeyRound,
   Download,
+  Unlock,
 } from "lucide-react";
 import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
@@ -88,6 +89,8 @@ interface Subscription {
   plan_type: string;
   current_period_start: string | null;
   current_period_end: string | null;
+  access_blocked: boolean | null;
+  blocked_reason: string | null;
 }
 
 const PLAN_OPTIONS = [
@@ -115,6 +118,7 @@ export default function AdminClienteDetalhes() {
   const [newPassword, setNewPassword] = useState("");
   const [resettingPassword, setResettingPassword] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [unblocking, setUnblocking] = useState(false);
   const [signedBodyPhotos, setSignedBodyPhotos] = useState<{ frente: string | null; lado: string | null; costas: string | null }>(
     {
       frente: null,
@@ -257,6 +261,46 @@ export default function AdminClienteDetalhes() {
       toast.error("Erro ao atribuir plano");
     } finally {
       setAssigningPlan(false);
+    }
+  };
+
+  const handleUnblockAccess = async () => {
+    if (!id || !subscription) {
+      toast.error("Nenhuma assinatura encontrada");
+      return;
+    }
+
+    setUnblocking(true);
+    try {
+      // Update subscription to unblock
+      const { error: subError } = await supabase
+        .from("subscriptions")
+        .update({
+          access_blocked: false,
+          blocked_reason: null,
+          // Reset expiration to 7 more days
+          invitation_expires_at: addDays(new Date(), 7).toISOString(),
+        })
+        .eq("id", subscription.id);
+
+      if (subError) throw subError;
+
+      // Update profile status to active
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ client_status: "active" })
+        .eq("id", id);
+
+      if (profileError) throw profileError;
+
+      toast.success("Acesso desbloqueado com sucesso! O cliente tem mais 7 dias.");
+      fetchSubscription();
+      fetchProfile();
+    } catch (error) {
+      console.error("Error unblocking access:", error);
+      toast.error("Erro ao desbloquear acesso");
+    } finally {
+      setUnblocking(false);
     }
   };
 
@@ -521,12 +565,45 @@ export default function AdminClienteDetalhes() {
                     <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
                       {subscription.status === "active" ? "Ativo" : subscription.status}
                     </Badge>
+                    {subscription.access_blocked && (
+                      <Badge variant="destructive">Bloqueado</Badge>
+                    )}
                     <span className="text-sm text-muted-foreground">
                       {subscription.plan_type}
                       {subscription.current_period_end && (
                         <> - Até {format(new Date(subscription.current_period_end), "dd/MM/yyyy", { locale: ptBR })}</>
                       )}
                     </span>
+                  </div>
+                )}
+
+                {/* Unblock Access Button */}
+                {subscription?.access_blocked && (
+                  <div className="pt-2 border-t border-destructive/20">
+                    <div className="flex items-center gap-3 p-3 bg-destructive/10 rounded-lg">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-destructive">Acesso Bloqueado</p>
+                        <p className="text-xs text-muted-foreground">
+                          {subscription.blocked_reason || "Acesso expirado por inatividade"}
+                        </p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleUnblockAccess}
+                        disabled={unblocking}
+                        className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        {unblocking ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Unlock className="h-4 w-4 mr-2" />
+                            Desbloquear
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
