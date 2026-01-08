@@ -4,22 +4,22 @@ import { ArrowRight } from "lucide-react";
 
 export const HeroSection = memo(function HeroSection() {
   return (
-    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-background">
+    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-background pt-24 md:pt-32">
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 md:px-8">
-        <div className="max-w-4xl mx-auto flex flex-col items-center gap-10 md:gap-12">
+        <div className="max-w-4xl mx-auto flex flex-col items-center gap-8 md:gap-10">
           
-          {/* Title Block - 2 lines, unified block */}
-          <div className="animate-fade-in w-full flex flex-col items-center gap-6 md:gap-8">
+          {/* Title Block - unified dramatic block */}
+          <div className="animate-fade-in w-full flex flex-col items-center gap-4 md:gap-6">
             <h1 className="font-display font-black text-center leading-[1.05] tracking-[-0.02em]">
-              <span className="text-foreground block text-[3.5rem] sm:text-6xl md:text-7xl lg:text-8xl">
+              <span className="text-foreground block text-[3rem] sm:text-6xl md:text-7xl lg:text-8xl">
                 NÃO BUSQUE
               </span>
-              <span className="text-foreground block text-[3.5rem] sm:text-6xl md:text-7xl lg:text-8xl">
+              <span className="text-foreground block text-[3rem] sm:text-6xl md:text-7xl lg:text-8xl">
                 EVOLUÇÃO
               </span>
             </h1>
-            <h2 className="font-display font-bold text-primary text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl tracking-wide text-center">
+            <h2 className="font-display font-black text-primary text-[2.2rem] sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.08em] text-center drop-shadow-[0_0_30px_rgba(255,69,0,0.6)] animate-pulse-subtle">
               BUSQUE RENASCIMENTO
             </h2>
           </div>

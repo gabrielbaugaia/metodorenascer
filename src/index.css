@@ -302,6 +302,19 @@
   }
 }
 
+@keyframes pulseShadow {
+  0%, 100% {
+    filter: drop-shadow(0 0 30px rgba(255, 69, 0, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 50px rgba(255, 69, 0, 0.9));
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulseShadow 3s ease-in-out infinite;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
