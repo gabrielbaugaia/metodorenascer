@@ -99,8 +99,11 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean | null
+          is_custom: boolean | null
           message_content: string
           message_title: string
+          schedule_type: string | null
+          target_audience: Json | null
           trigger_type: string
           updated_at: string
         }
@@ -108,8 +111,11 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean | null
+          is_custom?: boolean | null
           message_content: string
           message_title: string
+          schedule_type?: string | null
+          target_audience?: Json | null
           trigger_type: string
           updated_at?: string
         }
@@ -117,8 +123,11 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean | null
+          is_custom?: boolean | null
           message_content?: string
           message_title?: string
+          schedule_type?: string | null
+          target_audience?: Json | null
           trigger_type?: string
           updated_at?: string
         }
