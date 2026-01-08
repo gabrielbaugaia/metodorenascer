@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { 
   getCorsHeaders, 
   handleCorsPreflightRequest, 
@@ -17,16 +18,41 @@ serve(async (req) => {
   const preflightResponse = handleCorsPreflightRequest(req);
   if (preflightResponse) return preflightResponse;
 
-  // Apply rate limiting (10 requests per minute for AI endpoints)
-  const clientId = getClientIdentifier(req);
-  const rateCheck = checkRateLimit(clientId, STRICT_RATE_LIMIT);
-  
-  if (!rateCheck.allowed) {
-    console.log("[AI-MENTOR] Rate limit exceeded for:", clientId);
-    return createRateLimitResponse(rateCheck.resetAt);
-  }
-
   try {
+    // SECURITY FIX: Validate authentication using user's session token
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.error("[AI-MENTOR] Missing or invalid authorization header");
+      return createErrorResponse(req, "Não autorizado - faça login novamente", 401);
+    }
+
+    // Create Supabase client for auth validation
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Validate the user's session token
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error("[AI-MENTOR] Auth validation failed:", authError?.message);
+      return createErrorResponse(req, "Sessão inválida ou expirada", 401);
+    }
+
+    console.log("[AI-MENTOR] Authenticated user:", user.id);
+
+    // Apply rate limiting per authenticated user (more secure than IP-based)
+    const clientId = getClientIdentifier(req, user.id);
+    const rateCheck = checkRateLimit(clientId, STRICT_RATE_LIMIT);
+    
+    if (!rateCheck.allowed) {
+      console.log("[AI-MENTOR] Rate limit exceeded for user:", user.id);
+      return createRateLimitResponse(rateCheck.resetAt);
+    }
+
     const { messages, type, userContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
