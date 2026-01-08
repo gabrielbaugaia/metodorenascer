@@ -76,12 +76,15 @@ export const FAQSection = () => {
     >
       <div className="container mx-auto px-4">
         {/* Section Header */}
-        <div className="text-center mb-14 max-w-3xl mx-auto">
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-foreground mb-5 tracking-wide">
-            Perguntas <span className="text-primary">Frequentes</span>
+        <div className="text-center mb-14 max-w-3xl mx-auto flex flex-col items-center gap-6">
+          <h2 className="font-display font-black text-foreground text-[2rem] sm:text-3xl md:text-4xl lg:text-5xl leading-[1.1] tracking-[-0.02em] text-center">
+            Perguntas Frequentes
           </h2>
-          <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
-            Tire suas dúvidas sobre o Método Renascer
+          <p className="text-primary font-bold text-[1.5rem] sm:text-2xl md:text-3xl tracking-wide">
+            Tire Suas Dúvidas
+          </p>
+          <p className="text-foreground text-[1.1rem] md:text-lg leading-relaxed text-center max-w-xl">
+            Tudo sobre o Método Renascer
           </p>
         </div>
 
