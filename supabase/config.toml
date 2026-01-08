@@ -59,3 +59,12 @@ verify_jwt = true
 
 [functions.validate-body-photo]
 verify_jwt = true
+
+[functions.generate-blog-image]
+verify_jwt = true
+
+[functions.generate-blog-post]
+verify_jwt = true
+
+[functions.process-automated-messages]
+verify_jwt = true
