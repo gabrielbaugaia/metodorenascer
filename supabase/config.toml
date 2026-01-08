@@ -68,3 +68,6 @@ verify_jwt = true
 
 [functions.process-automated-messages]
 verify_jwt = true
+
+[functions.check-free-expiration]
+verify_jwt = false
