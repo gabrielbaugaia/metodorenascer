@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
+    const { prompt, language = 'conversacional', format = 'artigo-completo', audience = 'iniciantes' } = await req.json();
 
     if (!prompt) {
       throw new Error('Prompt is required');
@@ -22,57 +22,77 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
+    // Language style mapping
+    const languageStyles: Record<string, string> = {
+      'conversacional': 'Use um tom de conversa amigável, como se estivesse falando com um amigo. Seja próximo e acessível.',
+      'inspiracional': 'Use um tom motivador e inspiracional. Faça o leitor sentir que é capaz de alcançar seus objetivos.',
+      'educativo': 'Use um tom educativo e informativo. Explique conceitos de forma clara e didática.',
+      'persuasivo': 'Use técnicas de copywriting sutil. Mostre valor sem parecer vendedor. Faça o leitor querer começar naturalmente.',
+      'tecnico': 'Use uma linguagem mais técnica, mas ainda acessível. Inclua termos específicos quando necessário.'
+    };
+
+    // Format mapping
+    const formatStyles: Record<string, string> = {
+      'artigo-completo': 'Estruture como um artigo completo com introdução, desenvolvimento com subtítulos e conclusão.',
+      'lista': 'Estruture como uma lista de dicas ou pontos principais. Use listas bullet para destacar cada item.',
+      'guia-passo': 'Estruture como um guia passo a passo numerado. Cada seção deve ser uma etapa clara.',
+      'historia': 'Conte uma história ou case de sucesso. Use narrativa envolvente para ilustrar os pontos.',
+      'faq': 'Estruture como perguntas e respostas. Antecipe as dúvidas mais comuns do público.'
+    };
+
+    // Audience mapping
+    const audienceStyles: Record<string, string> = {
+      'iniciantes': 'O público nunca treinou ou está começando agora. Evite jargões, explique tudo de forma simples.',
+      'intermediarios': 'O público já treina há algum tempo mas quer evoluir. Pode usar termos básicos de treino.',
+      'avancados': 'O público é experiente e busca otimização. Pode usar termos técnicos.',
+      'ocupados': 'O público tem pouco tempo. Foque em soluções práticas e rápidas.',
+      'mulheres': 'Adapte a linguagem para o público feminino. Aborde questões específicas.',
+      'homens': 'Adapte a linguagem para o público masculino.',
+      'acima-40': 'O público tem mais de 40 anos. Considere cuidados com saúde e adaptações necessárias.'
+    };
+
     const systemPrompt = `Você é um copywriter especializado em transformação física e mental. Gere artigos de blog em português brasileiro para o Método Renascer.
 
-CONTEXTO DO PÚBLICO-ALVO:
-- Pessoas comuns que querem transformar seu corpo e mente
-- Não são profissionais de fitness, são potenciais CLIENTES
-- Querem entender como o método funciona e se sentir seguros para começar
-- Buscam resultados reais sem complicações
+ESTILO DE LINGUAGEM:
+${languageStyles[language] || languageStyles['conversacional']}
 
-TOM E ESTILO:
-- Escreva como se estivesse conversando com um amigo
-- Seja acolhedor, empático e inspirador
-- NÃO use linguagem técnica ou jargões de academia
-- NÃO pareça vendedor - mostre valor naturalmente
-- Faça o leitor se imaginar alcançando seus objetivos
-- Transmita confiança e segurança sobre o método
-- Use histórias e exemplos que conectem emocionalmente
+FORMATO DO ARTIGO:
+${formatStyles[format] || formatStyles['artigo-completo']}
 
-IMPORTANTE:
-- NÃO use asteriscos (**) para negrito no texto
+PÚBLICO-ALVO:
+${audienceStyles[audience] || audienceStyles['iniciantes']}
+
+CONTEXTO IMPORTANTE:
+- O Método Renascer é um programa de transformação física e mental personalizado
+- Os leitores são potenciais CLIENTES, não profissionais
+- O objetivo é fazer o leitor se sentir seguro e animado para começar
+- Transmita confiança sem ser vendedor
+
+REGRAS:
+- NÃO use asteriscos (**) para negrito
 - Use linguagem limpa e natural
 - Foque nos benefícios e transformações reais
-- Faça o leitor sentir que é possível para ele também
-- Termine sempre incentivando a dar o primeiro passo
+- Termine incentivando o primeiro passo
 
-Retorne APENAS um JSON válido com a seguinte estrutura (sem markdown, sem \`\`\`):
+Retorne APENAS um JSON válido (sem markdown):
 {
   "title": "Título do artigo (máximo 60 caracteres)",
-  "excerpt": "Resumo do artigo em 2-3 frases (máximo 160 caracteres)",
-  "metaTitle": "Título SEO otimizado (máximo 60 caracteres)",
+  "excerpt": "Resumo em 2-3 frases (máximo 160 caracteres)",
+  "metaTitle": "Título SEO (máximo 60 caracteres)",
   "metaDescription": "Descrição SEO (máximo 160 caracteres)",
   "content": [
-    { "id": "1", "type": "paragraph", "content": "Texto introdutório..." },
-    { "id": "2", "type": "heading2", "content": "Subtítulo da seção" },
-    { "id": "3", "type": "paragraph", "content": "Conteúdo da seção..." },
-    { "id": "4", "type": "list", "items": ["Item 1", "Item 2", "Item 3"] },
-    { "id": "5", "type": "quote", "content": "Citação inspiradora..." },
-    { "id": "6", "type": "heading2", "content": "Conclusão" },
-    { "id": "7", "type": "paragraph", "content": "Texto de conclusão..." }
+    { "id": "1", "type": "paragraph", "content": "Texto..." },
+    { "id": "2", "type": "heading2", "content": "Subtítulo..." },
+    { "id": "3", "type": "paragraph", "content": "Texto..." },
+    { "id": "4", "type": "list", "items": ["Item 1", "Item 2"] },
+    { "id": "5", "type": "quote", "content": "Citação..." }
   ]
 }
 
-Tipos de blocos:
-- paragraph: texto normal (SEM asteriscos ou markdown)
-- heading1, heading2, heading3: títulos
-- list: lista com bullets
-- ordered-list: lista numerada
-- quote: citação inspiradora
+Tipos de blocos: paragraph, heading1, heading2, heading3, list, ordered-list, quote
+O artigo deve ter 800-1200 palavras.`;
 
-O artigo deve ter 800-1200 palavras, ser envolvente e fazer o leitor querer conhecer mais sobre o Método Renascer.`;
-
-    console.log('Calling Lovable AI Gateway...');
+    console.log('Generating with options:', { language, format, audience });
     
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -84,7 +104,7 @@ O artigo deve ter 800-1200 palavras, ser envolvente e fazer o leitor querer conh
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Gere um artigo de blog sobre: ${prompt}` }
+          { role: 'user', content: `Gere um artigo sobre: ${prompt}` }
         ],
       }),
     });

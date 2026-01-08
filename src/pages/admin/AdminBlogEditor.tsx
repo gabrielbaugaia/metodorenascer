@@ -55,8 +55,11 @@ export default function AdminBlogEditor() {
   const [leadCaptureTitle, setLeadCaptureTitle] = useState("");
   const [leadCaptureDescription, setLeadCaptureDescription] = useState("");
 
-  // AI prompt
+  // AI generation options
   const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLanguage, setAiLanguage] = useState("conversacional");
+  const [aiFormat, setAiFormat] = useState("artigo-completo");
+  const [aiAudience, setAiAudience] = useState("iniciantes");
 
   useEffect(() => {
     if (!isNew && id) {
@@ -215,7 +218,12 @@ export default function AdminBlogEditor() {
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-blog-post', {
-        body: { prompt: aiPrompt }
+        body: { 
+          prompt: aiPrompt,
+          language: aiLanguage,
+          format: aiFormat,
+          audience: aiAudience
+        }
       });
 
       if (error) throw error;
@@ -304,25 +312,79 @@ export default function AdminBlogEditor() {
       </div>
 
       {/* AI Generation */}
-      <Card className="border-primary/20 bg-primary/5">
+      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-purple-500/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             Gerar com IA
           </CardTitle>
           <CardDescription>
-            Descreva o tema e deixe a IA criar o artigo para você
+            Personalize como o artigo será gerado
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Options Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Linguagem</Label>
+              <Select value={aiLanguage} onValueChange={setAiLanguage}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="conversacional">💬 Conversacional</SelectItem>
+                  <SelectItem value="inspiracional">✨ Inspiracional</SelectItem>
+                  <SelectItem value="educativo">📚 Educativo</SelectItem>
+                  <SelectItem value="persuasivo">🎯 Persuasivo (vendas sutil)</SelectItem>
+                  <SelectItem value="tecnico">🔬 Técnico</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Formato</Label>
+              <Select value={aiFormat} onValueChange={setAiFormat}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="artigo-completo">📄 Artigo Completo</SelectItem>
+                  <SelectItem value="lista">📝 Lista/Dicas</SelectItem>
+                  <SelectItem value="guia-passo">🗺️ Guia Passo a Passo</SelectItem>
+                  <SelectItem value="historia">📖 História/Case</SelectItem>
+                  <SelectItem value="faq">❓ Perguntas e Respostas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Público-Alvo</Label>
+              <Select value={aiAudience} onValueChange={setAiAudience}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="iniciantes">🌱 Iniciantes (nunca treinaram)</SelectItem>
+                  <SelectItem value="intermediarios">💪 Intermediários (treinam há pouco)</SelectItem>
+                  <SelectItem value="avancados">🏆 Avançados (experientes)</SelectItem>
+                  <SelectItem value="ocupados">⏰ Pessoas ocupadas</SelectItem>
+                  <SelectItem value="mulheres">👩 Mulheres</SelectItem>
+                  <SelectItem value="homens">👨 Homens</SelectItem>
+                  <SelectItem value="acima-40">🎂 Acima de 40 anos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Topic Input */}
           <div className="flex gap-2">
             <Input
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
-              placeholder="Ex: Como montar um treino de hipertrofia para iniciantes"
+              placeholder="Tema do artigo: ex. Como começar a treinar em casa"
               className="flex-1"
             />
-            <Button onClick={handleGenerateWithAI} disabled={generating}>
+            <Button onClick={handleGenerateWithAI} disabled={generating} className="min-w-[120px]">
               {generating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
