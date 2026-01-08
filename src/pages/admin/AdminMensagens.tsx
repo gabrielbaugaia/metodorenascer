@@ -311,14 +311,14 @@ export default function AdminMensagens() {
   return (
     <ClientLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/admin/dashboard")}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="shrink-0">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Mensagens Automáticas</h1>
-              <p className="text-muted-foreground">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">Mensagens Automáticas</h1>
+              <p className="text-sm text-muted-foreground hidden sm:block">
                 Configure as mensagens enviadas automaticamente aos clientes
               </p>
             </div>
@@ -326,12 +326,12 @@ export default function AdminMensagens() {
           
           <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="gap-2 w-full sm:w-auto shrink-0">
                 <Plus className="h-4 w-4" />
                 Nova Mensagem
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Criar Nova Mensagem</DialogTitle>
               </DialogHeader>
@@ -461,31 +461,34 @@ export default function AdminMensagens() {
 
             return (
               <Card key={message.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                        {config.icon}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-lg">{config.label}</CardTitle>
-                          {message.is_custom && (
-                            <Badge variant="secondary" className="text-xs">Personalizada</Badge>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col gap-3">
+                    {/* Header row */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2 bg-primary/10 rounded-lg text-primary shrink-0">
+                          {config.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <CardTitle className="text-base sm:text-lg">{config.label}</CardTitle>
+                            {message.is_custom && (
+                              <Badge variant="secondary" className="text-xs">Personalizada</Badge>
+                            )}
+                          </div>
+                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{config.description}</p>
+                          {message.target_audience && message.is_custom && (
+                            <Badge variant="outline" className="mt-1 text-xs">
+                              <Users className="h-3 w-3 mr-1" />
+                              {getAudienceLabel(message.target_audience)}
+                            </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">{config.description}</p>
-                        {message.target_audience && message.is_custom && (
-                          <Badge variant="outline" className="mt-1 text-xs">
-                            <Users className="h-3 w-3 mr-1" />
-                            {getAudienceLabel(message.target_audience)}
-                          </Badge>
-                        )}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`active-${message.id}`} className="text-sm">
+                      
+                      {/* Toggle on right */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Label htmlFor={`active-${message.id}`} className="text-xs sm:text-sm whitespace-nowrap">
                           {message.is_active ? "Ativa" : "Inativa"}
                         </Label>
                         <Switch
@@ -494,10 +497,14 @@ export default function AdminMensagens() {
                           onCheckedChange={(checked) => updateMessage(message.id, "is_active", checked)}
                         />
                       </div>
+                    </div>
+                    
+                    {/* Actions row */}
+                    <div className="flex items-center gap-2 justify-end">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="gap-2"
+                        className="gap-2 text-xs sm:text-sm"
                         onClick={() => handleSendNow(message.id)}
                         disabled={sending === message.id}
                       >
@@ -506,7 +513,8 @@ export default function AdminMensagens() {
                         ) : (
                           <>
                             <Send className="h-4 w-4" />
-                            Enviar Agora
+                            <span className="hidden xs:inline">Enviar Agora</span>
+                            <span className="xs:hidden">Enviar</span>
                           </>
                         )}
                       </Button>
@@ -514,7 +522,7 @@ export default function AdminMensagens() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive shrink-0"
                           onClick={() => handleDelete(message.id)}
                           disabled={deleting === message.id}
                         >
