@@ -13,11 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
   ArrowLeft, Save, MessageSquare, Bell, Camera, UserPlus, Plus, 
-  Trash2, Users, UserX, Gift, Target, Zap, Calendar, Cake
+  Trash2, Users, UserX, Gift, Target, Zap, Calendar, Cake, 
+  BarChart, Send, Clock
 } from "lucide-react";
+import { MessageMetricsPanel } from "@/components/admin/MessageMetricsPanel";
 
 interface TargetAudience {
   type: string;
@@ -121,12 +124,15 @@ export default function AdminMensagens() {
   const [saving, setSaving] = useState<string | null>(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [sending, setSending] = useState<string | null>(null);
   
   // New message form state
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [newAudience, setNewAudience] = useState("all");
   const [newPlanFilter, setNewPlanFilter] = useState("all");
+  const [newScheduledAt, setNewScheduledAt] = useState("");
+  const [newRecurring, setNewRecurring] = useState("once");
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -218,6 +224,8 @@ export default function AdminMensagens() {
           is_active: true,
           is_custom: true,
           target_audience: JSON.parse(JSON.stringify(targetAudience)),
+          scheduled_at: newScheduledAt || null,
+          schedule_recurring: newRecurring,
         }]);
 
       if (error) throw error;
@@ -228,6 +236,8 @@ export default function AdminMensagens() {
       setNewContent("");
       setNewAudience("all");
       setNewPlanFilter("all");
+      setNewScheduledAt("");
+      setNewRecurring("once");
       fetchMessages();
     } catch (error) {
       console.error("Erro ao criar mensagem:", error);
@@ -254,6 +264,24 @@ export default function AdminMensagens() {
       toast.error("Erro ao excluir mensagem");
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleSendNow = async (messageId: string) => {
+    setSending(messageId);
+    try {
+      const { data, error } = await supabase.functions.invoke("process-automated-messages", {
+        body: { messageId, sendNow: true },
+      });
+
+      if (error) throw error;
+      
+      toast.success(`Mensagem enviada para ${data?.totalSent || 0} clientes`);
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+      toast.error("Erro ao enviar mensagem");
+    } finally {
+      setSending(null);
     }
   };
 
@@ -354,9 +382,37 @@ export default function AdminMensagens() {
                   <Textarea
                     value={newContent}
                     onChange={(e) => setNewContent(e.target.value)}
-                    placeholder="Digite o conteúdo da mensagem..."
+                    placeholder="Digite o conteúdo da mensagem... Use {nome} para personalizar"
                     rows={4}
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Agendar Envio
+                    </Label>
+                    <Input
+                      type="datetime-local"
+                      value={newScheduledAt}
+                      onChange={(e) => setNewScheduledAt(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Recorrência</Label>
+                    <Select value={newRecurring} onValueChange={setNewRecurring}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="once">Uma vez</SelectItem>
+                        <SelectItem value="daily">Diário</SelectItem>
+                        <SelectItem value="weekly">Semanal</SelectItem>
+                        <SelectItem value="monthly">Mensal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <Button 
@@ -381,7 +437,20 @@ export default function AdminMensagens() {
           </Dialog>
         </div>
 
-        <div className="grid gap-6">
+        <Tabs defaultValue="messages" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="messages" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Mensagens
+            </TabsTrigger>
+            <TabsTrigger value="metrics" className="gap-2">
+              <BarChart className="h-4 w-4" />
+              Métricas
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="messages">
+            <div className="grid gap-6">
           {messages.map((message) => {
             const config = triggerTypeLabels[message.trigger_type] || 
               (message.is_custom ? triggerTypeLabels.custom : {
@@ -425,6 +494,22 @@ export default function AdminMensagens() {
                           onCheckedChange={(checked) => updateMessage(message.id, "is_active", checked)}
                         />
                       </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => handleSendNow(message.id)}
+                        disabled={sending === message.id}
+                      >
+                        {sending === message.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4" />
+                            Enviar Agora
+                          </>
+                        )}
+                      </Button>
                       {message.is_custom && (
                         <Button
                           variant="ghost"
@@ -484,7 +569,13 @@ export default function AdminMensagens() {
               </Card>
             );
           })}
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="metrics">
+            <MessageMetricsPanel />
+          </TabsContent>
+        </Tabs>
       </div>
     </ClientLayout>
   );

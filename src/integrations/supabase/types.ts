@@ -102,7 +102,9 @@ export type Database = {
           is_custom: boolean | null
           message_content: string
           message_title: string
+          schedule_recurring: string | null
           schedule_type: string | null
+          scheduled_at: string | null
           target_audience: Json | null
           trigger_type: string
           updated_at: string
@@ -114,7 +116,9 @@ export type Database = {
           is_custom?: boolean | null
           message_content: string
           message_title: string
+          schedule_recurring?: string | null
           schedule_type?: string | null
+          scheduled_at?: string | null
           target_audience?: Json | null
           trigger_type: string
           updated_at?: string
@@ -126,7 +130,9 @@ export type Database = {
           is_custom?: boolean | null
           message_content?: string
           message_title?: string
+          schedule_recurring?: string | null
           schedule_type?: string | null
+          scheduled_at?: string | null
           target_audience?: Json | null
           trigger_type?: string
           updated_at?: string
@@ -584,6 +590,57 @@ export type Database = {
           telefone?: string
         }
         Relationships: []
+      }
+      message_sends: {
+        Row: {
+          clicked_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          message_id: string | null
+          opened_at: string | null
+          sent_at: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          opened_at?: string | null
+          sent_at?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          clicked_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          opened_at?: string | null
+          sent_at?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_sends_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "automated_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_sends_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "v_message_metrics"
+            referencedColumns: ["message_id"]
+          },
+        ]
       }
       notification_logs: {
         Row: {
@@ -1353,6 +1410,20 @@ export type Database = {
           avg_workouts: number | null
           status_engagement: string | null
           user_count: number | null
+        }
+        Relationships: []
+      }
+      v_message_metrics: {
+        Row: {
+          click_rate: number | null
+          is_custom: boolean | null
+          message_id: string | null
+          message_title: string | null
+          open_rate: number | null
+          total_clicked: number | null
+          total_opened: number | null
+          total_sent: number | null
+          trigger_type: string | null
         }
         Relationships: []
       }
