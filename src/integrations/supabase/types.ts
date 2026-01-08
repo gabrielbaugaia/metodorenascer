@@ -1088,11 +1088,14 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          access_blocked: boolean | null
+          blocked_reason: string | null
           canceled_at: string | null
           created_at: string | null
           current_period_end: string | null
           current_period_start: string | null
           id: string
+          invitation_expires_at: string | null
           mrr_value: number | null
           payments_count: number | null
           plan_name: string | null
@@ -1106,11 +1109,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          access_blocked?: boolean | null
+          blocked_reason?: string | null
           canceled_at?: string | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          invitation_expires_at?: string | null
           mrr_value?: number | null
           payments_count?: number | null
           plan_name?: string | null
@@ -1124,11 +1130,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          access_blocked?: boolean | null
+          blocked_reason?: string | null
           canceled_at?: string | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          invitation_expires_at?: string | null
           mrr_value?: number | null
           payments_count?: number | null
           plan_name?: string | null

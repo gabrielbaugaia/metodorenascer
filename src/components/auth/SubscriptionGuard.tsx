@@ -10,18 +10,24 @@ interface SubscriptionGuardProps {
   children: ReactNode;
 }
 
+interface LocalSubscriptionState {
+  hasSubscription: boolean;
+  isBlocked: boolean;
+}
+
 /**
  * Protege rotas que requerem assinatura ativa.
  * Usuários sem assinatura são redirecionados para o Dashboard (que mostra planos).
  * Admins têm acesso livre.
  * Usuários com plano free (criado pelo admin) têm acesso.
+ * Usuários com acesso bloqueado são redirecionados para página de bloqueio.
  */
 export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { subscribed, loading: subLoading } = useSubscription();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
-  const [hasLocalSubscription, setHasLocalSubscription] = useState<boolean | null>(null);
+  const [localState, setLocalState] = useState<LocalSubscriptionState | null>(null);
   const [checkingLocal, setCheckingLocal] = useState(true);
 
   // Check local subscription in database (for admin-created free plans)
@@ -35,7 +41,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
       try {
         const { data, error } = await supabase
           .from("subscriptions")
-          .select("status, current_period_end")
+          .select("status, current_period_end, access_blocked")
           .eq("user_id", user.id)
           .in("status", ["active", "trialing", "free"])
           .order("created_at", { ascending: false })
@@ -44,18 +50,25 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
 
         if (error) {
           console.error("Error checking local subscription:", error);
-          setHasLocalSubscription(false);
+          setLocalState({ hasSubscription: false, isBlocked: false });
         } else if (data) {
-          // Check if subscription is still valid
-          const isActive = data.status === "active" || data.status === "trialing" || data.status === "free";
-          const notExpired = !data.current_period_end || new Date(data.current_period_end) > new Date();
-          setHasLocalSubscription(isActive && notExpired);
+          // Check if access is blocked (for expired free plans)
+          const isBlocked = data.access_blocked === true;
+          
+          if (isBlocked) {
+            setLocalState({ hasSubscription: false, isBlocked: true });
+          } else {
+            // Check if subscription is still valid
+            const isActive = data.status === "active" || data.status === "trialing" || data.status === "free";
+            const notExpired = !data.current_period_end || new Date(data.current_period_end) > new Date();
+            setLocalState({ hasSubscription: isActive && notExpired, isBlocked: false });
+          }
         } else {
-          setHasLocalSubscription(false);
+          setLocalState({ hasSubscription: false, isBlocked: false });
         }
       } catch (err) {
         console.error("Error checking subscription:", err);
-        setHasLocalSubscription(false);
+        setLocalState({ hasSubscription: false, isBlocked: false });
       } finally {
         setCheckingLocal(false);
       }
@@ -63,6 +76,10 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
 
     checkLocalSubscription();
   }, [user]);
+
+  // Derive values from state
+  const hasLocalSubscription = localState?.hasSubscription ?? false;
+  const isBlocked = localState?.isBlocked ?? false;
 
   const isLoading = authLoading || subLoading || adminLoading || checkingLocal;
 
@@ -80,16 +97,26 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
     }
   }, [isAdmin, authLoading, adminLoading, navigate]);
 
-  // Redirect to dashboard (plan selection) if no subscription
+  // Redirect to blocked page if access is blocked
   useEffect(() => {
     if (isLoading || !user || isAdmin) return;
+
+    if (isBlocked) {
+      navigate("/acesso-bloqueado");
+      return;
+    }
+  }, [isLoading, user, isAdmin, isBlocked, navigate]);
+
+  // Redirect to dashboard (plan selection) if no subscription
+  useEffect(() => {
+    if (isLoading || !user || isAdmin || isBlocked) return;
 
     const hasAccess = subscribed || hasLocalSubscription;
     
     if (!hasAccess) {
       navigate("/dashboard");
     }
-  }, [isLoading, user, isAdmin, subscribed, hasLocalSubscription, navigate]);
+  }, [isLoading, user, isAdmin, isBlocked, subscribed, hasLocalSubscription, navigate]);
 
   if (isLoading) {
     return <FullPageLoader />;
