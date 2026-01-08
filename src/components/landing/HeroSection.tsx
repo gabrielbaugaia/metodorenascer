@@ -10,18 +10,18 @@ export const HeroSection = memo(function HeroSection() {
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-6 md:px-8">
-        <div className="max-w-2xl mx-auto text-center flex flex-col items-center gap-10 md:gap-12">
+        <div className="max-w-2xl mx-auto flex flex-col items-center gap-10 md:gap-12">
           
-          {/* Main Title - 3 lines hierarchy */}
-          <div className="animate-fade-in">
-            <h1 className="font-display tracking-tight leading-[0.95]">
-              <span className="text-foreground block text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+          {/* Main Title - 3 lines, left aligned on mobile */}
+          <div className="animate-fade-in w-full">
+            <h1 className="font-display tracking-tight leading-[0.9] text-left md:text-center">
+              <span className="text-foreground block text-[1.75rem] sm:text-3xl md:text-4xl lg:text-5xl tracking-wide">
                 NÃO BUSQUE
               </span>
-              <span className="text-foreground block text-5xl sm:text-6xl md:text-8xl lg:text-[10rem] my-1 md:my-2">
+              <span className="text-foreground block text-[3.5rem] sm:text-7xl md:text-8xl lg:text-[10rem] -ml-1 md:ml-0">
                 EVOLUÇÃO
               </span>
-              <span className="block text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+              <span className="block text-[1.5rem] sm:text-3xl md:text-4xl lg:text-5xl mt-4 md:mt-6 tracking-wide">
                 <span className="text-foreground">BUSQUE </span>
                 <span className="text-primary">RENASCIMENTO</span>
               </span>
