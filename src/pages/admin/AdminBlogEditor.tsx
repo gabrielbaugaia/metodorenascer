@@ -254,6 +254,17 @@ export default function AdminBlogEditor() {
     }
   };
 
+  const COVER_AI_STYLES = [
+    { id: 'design-only', label: '🎨 Moderno (sem texto)', prompt: 'Design moderno e limpo, sem texto, cores vibrantes, alta qualidade' },
+    { id: 'design-headline', label: '📝 Design + Headline', prompt: 'Com headline tipografia impactante, design moderno' },
+    { id: 'minimal', label: '✨ Minimalista', prompt: 'Estilo minimalista, poucos elementos, muito espaço em branco, elegante e sofisticado' },
+    { id: 'illustration', label: '🖼️ Ilustração', prompt: 'Estilo ilustração vetorial, flat design, cores vibrantes, artístico' },
+    { id: 'photo', label: '📷 Fotografia', prompt: 'Estilo fotografia profissional, realista, alta definição, iluminação perfeita' },
+    { id: 'gradient', label: '🌈 Gradiente', prompt: 'Fundo gradiente vibrante com formas abstratas, moderno e tecnológico' },
+    { id: 'dark', label: '🌙 Dark Mode', prompt: 'Tema escuro, elegante, com acentos de cor neon, estilo premium' },
+    { id: 'fitness', label: '💪 Fitness', prompt: 'Atlético, energia, movimento, fotografia de fitness, motivacional' },
+  ];
+
   const handleGenerateCoverWithAI = async () => {
     const promptToUse = coverAIPrompt || title || aiPrompt;
     if (!promptToUse) {
@@ -263,12 +274,15 @@ export default function AdminBlogEditor() {
 
     setGeneratingCoverAI(true);
     try {
-      let fullPrompt = promptToUse;
+      const selectedStyle = COVER_AI_STYLES.find(s => s.id === coverAIStyle);
+      const stylePrompt = selectedStyle?.prompt || COVER_AI_STYLES[0].prompt;
+      
+      let fullPrompt: string;
       
       if (coverAIStyle === "design-headline") {
-        fullPrompt = `Thumbnail de blog profissional com headline "${title || promptToUse}". Design moderno, fitness e wellness, cores vibrantes, tipografia impactante.`;
+        fullPrompt = `Thumbnail de blog profissional sobre "${promptToUse}" com headline "${title || promptToUse}". ${stylePrompt}. Fitness e wellness.`;
       } else {
-        fullPrompt = `Imagem profissional de blog sobre: ${promptToUse}. Design moderno para fitness e wellness, sem texto, cores vibrantes, alta qualidade.`;
+        fullPrompt = `Imagem de capa de blog sobre: ${promptToUse}. ${stylePrompt}. Fitness e wellness, sem texto overlay.`;
       }
 
       const { data, error } = await supabase.functions.invoke('generate-blog-image', {
@@ -699,8 +713,14 @@ export default function AdminBlogEditor() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="design-only">🎨 Só Design (sem texto)</SelectItem>
+                        <SelectItem value="design-only">🎨 Moderno (sem texto)</SelectItem>
                         <SelectItem value="design-headline">📝 Design + Headline</SelectItem>
+                        <SelectItem value="minimal">✨ Minimalista</SelectItem>
+                        <SelectItem value="illustration">🖼️ Ilustração</SelectItem>
+                        <SelectItem value="photo">📷 Fotografia</SelectItem>
+                        <SelectItem value="gradient">🌈 Gradiente</SelectItem>
+                        <SelectItem value="dark">🌙 Dark Mode</SelectItem>
+                        <SelectItem value="fitness">💪 Fitness</SelectItem>
                       </SelectContent>
                     </Select>
 
