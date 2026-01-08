@@ -39,6 +39,10 @@ import AdminPlanosVenda from "./pages/admin/AdminPlanosVenda";
 import AdminMetricas from "./pages/admin/AdminMetricas";
 import AdminConvites from "./pages/admin/AdminConvites";
 import AdminLeads from "./pages/admin/AdminLeads";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import AdminBlog from "./pages/admin/AdminBlog";
+import AdminBlogEditor from "./pages/admin/AdminBlogEditor";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +62,8 @@ const App = () => (
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/convite" element={<Convite />} />
             <Route path="/checkout-success" element={<CheckoutSuccess />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
 
             {/* ROTAS QUE REQUEREM APENAS AUTENTICAÇÃO (mostram planos se sem assinatura) */}
             <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
@@ -90,6 +96,8 @@ const App = () => (
             <Route path="/admin/metricas" element={<AdminMetricas />} />
             <Route path="/admin/convites" element={<AdminConvites />} />
             <Route path="/admin/leads" element={<AdminLeads />} />
+            <Route path="/admin/blog" element={<AdminBlog />} />
+            <Route path="/admin/blog/:id" element={<AdminBlogEditor />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
