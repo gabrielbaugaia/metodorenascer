@@ -24,6 +24,8 @@ import {
   KeyRound,
   Download,
   Unlock,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
@@ -119,6 +121,8 @@ export default function AdminClienteDetalhes() {
   const [resettingPassword, setResettingPassword] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [unblocking, setUnblocking] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [signedBodyPhotos, setSignedBodyPhotos] = useState<{ frente: string | null; lado: string | null; costas: string | null }>(
     {
       frente: null,
@@ -487,6 +491,31 @@ export default function AdminClienteDetalhes() {
     setProfile({ ...profile, [field]: value });
   };
 
+  const handleDeleteClient = async () => {
+    if (!profile?.email) {
+      toast.error("Email do cliente não encontrado");
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+        body: { email: profile.email },
+      });
+
+      if (error) throw error;
+
+      toast.success(`Cliente ${profile.full_name} excluído com sucesso!`);
+      setDeleteDialogOpen(false);
+      navigate("/admin/clientes");
+    } catch (error: any) {
+      console.error("Error deleting client:", error);
+      toast.error(error.message || "Erro ao excluir cliente");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (authLoading || adminLoading || loading) {
     return (
       <ClientLayout>
@@ -747,6 +776,59 @@ export default function AdminClienteDetalhes() {
                 </Button>
                 <p className="text-xs text-muted-foreground mt-1">
                   Gera um PDF com todas as informações e fotos do cliente
+                </p>
+              </div>
+
+              {/* Delete Client */}
+              <div className="pt-4 border-t border-destructive/20">
+                <Label className="mb-2 block text-destructive">Zona de Perigo</Label>
+                <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive" className="w-full" size="sm">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      <span className="text-xs sm:text-sm">Excluir Cliente</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2 text-destructive">
+                        <AlertTriangle className="h-5 w-5" />
+                        Excluir Cliente
+                      </DialogTitle>
+                      <DialogDescription>
+                        Você tem certeza que deseja excluir <strong>{profile.full_name}</strong>?
+                        <br /><br />
+                        Esta ação é <strong>irreversível</strong> e irá remover:
+                        <ul className="list-disc list-inside mt-2 text-left">
+                          <li>Conta de acesso</li>
+                          <li>Dados do perfil</li>
+                          <li>Histórico de protocolos</li>
+                          <li>Registros de check-ins</li>
+                          <li>Conversas de suporte</li>
+                        </ul>
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        onClick={handleDeleteClient}
+                        disabled={deleting}
+                      >
+                        {deleting ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 mr-2" />
+                        )}
+                        Sim, Excluir
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Remove permanentemente o cliente e todos os seus dados
                 </p>
               </div>
             </CardContent>
