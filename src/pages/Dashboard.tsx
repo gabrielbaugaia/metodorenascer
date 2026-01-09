@@ -118,6 +118,7 @@ export default function Dashboard() {
   const [showWeeklyCheckin, setShowWeeklyCheckin] = useState(false);
   const [canDoWeeklyCheckin, setCanDoWeeklyCheckin] = useState(false);
   const [pendingPaymentInfo, setPendingPaymentInfo] = useState<{ planType: string; planName: string; priceId?: string } | null>(null);
+  const [checkingPayment, setCheckingPayment] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -156,43 +157,67 @@ export default function Dashboard() {
     checkWeeklyCheckin();
   }, [user, showWeeklyCheckin]);
 
-  // Check for pending payment status
+  // Check for pending payment status FIRST (before anamnese check)
   useEffect(() => {
     const checkPendingPayment = async () => {
-      if (!user || isAdmin) return;
+      if (!user) {
+        setCheckingPayment(false);
+        return;
+      }
       
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("status, plan_type, plan_name")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (isAdmin) {
+        setCheckingPayment(false);
+        return;
+      }
       
-      if (data?.status === "pending_payment") {
-        // Map plan_type to Stripe price ID
-        const priceIdMap: Record<string, string> = {
-          elite_founder: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
-          mensal: "price_1ScZrECuFZvf5xFdfS9W8kvY",
-          trimestral: "price_1ScZsTCuFZvf5xFdbW8kJeQF",
-          semestral: "price_1ScZtrCuFZvf5xFd8iXDfbEp",
-          anual: "price_1ScZvCCuFZvf5xFdjrs51JQB",
-        };
+      try {
+        const { data } = await supabase
+          .from("subscriptions")
+          .select("status, plan_type, plan_name")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
         
-        setPendingPaymentInfo({
-          planType: data.plan_type || "mensal",
-          planName: data.plan_name || "Plano",
-          priceId: priceIdMap[data.plan_type || "mensal"],
-        });
+        if (data?.status === "pending_payment") {
+          // Map plan_type to Stripe price ID
+          const priceIdMap: Record<string, string> = {
+            elite_founder: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
+            mensal: "price_1ScZrECuFZvf5xFdfS9W8kvY",
+            trimestral: "price_1ScZsTCuFZvf5xFdbW8kJeQF",
+            semestral: "price_1ScZtrCuFZvf5xFd8iXDfbEp",
+            anual: "price_1ScZvCCuFZvf5xFdjrs51JQB",
+          };
+          
+          setPendingPaymentInfo({
+            planType: data.plan_type || "mensal",
+            planName: data.plan_name || "Plano",
+            priceId: priceIdMap[data.plan_type || "mensal"],
+          });
+        }
+      } catch (error) {
+        console.error("Error checking pending payment:", error);
+      } finally {
+        setCheckingPayment(false);
       }
     };
     
     checkPendingPayment();
   }, [user, isAdmin]);
 
+  // Check anamnese ONLY after payment status is resolved
   useEffect(() => {
     const checkAnamneseAndGetName = async () => {
       if (!user) return;
+      
+      // Wait for payment check to complete first
+      if (checkingPayment) return;
+      
+      // If pending payment, don't redirect to anamnese - stay here to show payment screen
+      if (pendingPaymentInfo) {
+        setCheckingAnamnese(false);
+        return;
+      }
       
       try {
         const { data } = await supabase
@@ -213,8 +238,7 @@ export default function Dashboard() {
         
         // Redirect to anamnese only for subscribed non-admin users with incomplete anamnese
         // Admins bypass anamnese requirement entirely
-        // Don't redirect if pending payment
-        if (!anamneseComplete && subscribed && !isAdmin && !pendingPaymentInfo) {
+        if (!anamneseComplete && subscribed && !isAdmin) {
           navigate("/anamnese");
         }
       } catch (error) {
@@ -224,10 +248,10 @@ export default function Dashboard() {
       }
     };
     
-    if (!subLoading) {
+    if (!subLoading && !checkingPayment) {
       checkAnamneseAndGetName();
     }
-  }, [user, subscribed, isAdmin, subLoading, navigate, pendingPaymentInfo]);
+  }, [user, subscribed, isAdmin, subLoading, navigate, pendingPaymentInfo, checkingPayment]);
 
   const handleManageSubscription = async () => {
     try {
@@ -253,7 +277,7 @@ export default function Dashboard() {
     }
   };
 
-  const isLoading = authLoading || subLoading || checkingAnamnese;
+  const isLoading = authLoading || subLoading || checkingAnamnese || checkingPayment;
 
   if (isLoading) {
     return <FullPageLoader />;
