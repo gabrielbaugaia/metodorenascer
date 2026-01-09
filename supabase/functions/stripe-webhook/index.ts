@@ -29,6 +29,15 @@ const PRICE_TO_MRR: Record<string, number> = {
 type SupabaseClient = any;
 
 serve(async (req) => {
+  // Health check endpoint for testing
+  if (req.method === "GET") {
+    logStep("Health check request");
+    return new Response(
+      JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200 });
   }
@@ -229,12 +238,28 @@ serve(async (req) => {
         const invoice = event.data.object as Stripe.Invoice;
         if (!invoice.subscription) break;
         
-        await supabase
+        logStep("Payment failed, blocking access immediately", {
+          subscriptionId: invoice.subscription,
+          customerId: invoice.customer,
+          invoiceId: invoice.id,
+        });
+        
+        // Immediate blocking on payment failure
+        const { error: updateError } = await supabase
           .from("subscriptions")
-          .update({ status: "past_due", updated_at: new Date().toISOString() })
+          .update({ 
+            status: "past_due", 
+            access_blocked: true,
+            blocked_reason: "Pagamento não realizado",
+            updated_at: new Date().toISOString() 
+          })
           .eq("stripe_subscription_id", invoice.subscription as string);
         
-        logStep("Subscription marked as past_due");
+        if (updateError) {
+          logStep("Error updating subscription to past_due", { error: updateError.message });
+        } else {
+          logStep("Subscription marked as past_due and access blocked");
+        }
         break;
       }
       
@@ -256,16 +281,27 @@ serve(async (req) => {
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
         
-        await supabase
+        logStep("Subscription deleted, canceling and blocking access", {
+          subscriptionId: subscription.id,
+          customerId: subscription.customer,
+        });
+        
+        const { error: cancelError } = await supabase
           .from("subscriptions")
           .update({ 
             status: "canceled", 
+            access_blocked: true,
+            blocked_reason: "Assinatura cancelada",
             canceled_at: new Date().toISOString(), 
             updated_at: new Date().toISOString() 
           })
           .eq("stripe_subscription_id", subscription.id);
         
-        logStep("Subscription marked as canceled");
+        if (cancelError) {
+          logStep("Error canceling subscription", { error: cancelError.message });
+        } else {
+          logStep("Subscription marked as canceled and access blocked");
+        }
         break;
       }
       
