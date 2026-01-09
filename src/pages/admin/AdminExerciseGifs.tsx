@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -53,7 +53,10 @@ import {
   XCircle,
   Clock,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Download,
+  AlertTriangle,
+  FileSearch
 } from "lucide-react";
 
 interface ExerciseGif {
@@ -67,6 +70,315 @@ interface ExerciseGif {
   last_checked_at: string | null;
   created_at: string;
 }
+
+interface MissingExercise {
+  name: string;
+  protocol_count: number;
+  users: string[];
+}
+
+// Map Portuguese exercise names to English for API search
+const PT_TO_EN_MAP: Record<string, { en: string; group: string }> = {
+  // Chest / Peito
+  "supino reto": { en: "bench press", group: "Peito" },
+  "supino reto com barra": { en: "barbell bench press", group: "Peito" },
+  "supino reto com halteres": { en: "dumbbell bench press", group: "Peito" },
+  "supino inclinado": { en: "incline bench press", group: "Peito" },
+  "supino inclinado com barra": { en: "incline barbell bench press", group: "Peito" },
+  "supino inclinado com halteres": { en: "incline dumbbell bench press", group: "Peito" },
+  "supino inclinado halteres": { en: "incline dumbbell bench press", group: "Peito" },
+  "supino declinado": { en: "decline bench press", group: "Peito" },
+  "supino com halteres": { en: "dumbbell bench press", group: "Peito" },
+  "supino halter": { en: "dumbbell bench press", group: "Peito" },
+  "supino maquina": { en: "chest press machine", group: "Peito" },
+  "crucifixo": { en: "chest fly", group: "Peito" },
+  "crucifixo inclinado": { en: "incline dumbbell fly", group: "Peito" },
+  "crucifixo reto": { en: "dumbbell fly", group: "Peito" },
+  "crucifixo com halteres": { en: "dumbbell fly", group: "Peito" },
+  "crucifixo maquina": { en: "pec deck fly", group: "Peito" },
+  "crucifixo inverso": { en: "reverse fly", group: "Ombros" },
+  "crucifixo inverso maquina": { en: "reverse machine fly", group: "Ombros" },
+  "crucifixo invertido": { en: "reverse fly", group: "Ombros" },
+  "flexao": { en: "push up", group: "Peito" },
+  "flexoes": { en: "push up", group: "Peito" },
+  "flexao de braco": { en: "push up", group: "Peito" },
+  "flexao de bracos": { en: "push up", group: "Peito" },
+  "flexao diamante": { en: "diamond push up", group: "Peito" },
+  "flexao inclinada": { en: "incline push up", group: "Peito" },
+  "flexao declinada": { en: "decline push up", group: "Peito" },
+  "crossover": { en: "cable crossover", group: "Peito" },
+  "cross over": { en: "cable crossover", group: "Peito" },
+  "crossover na polia": { en: "cable crossover", group: "Peito" },
+  "crossover alto": { en: "high cable crossover", group: "Peito" },
+  "crossover baixo": { en: "low cable crossover", group: "Peito" },
+  "peck deck": { en: "pec deck fly", group: "Peito" },
+  "fly maquina": { en: "pec deck fly", group: "Peito" },
+  "pullover peito": { en: "dumbbell pullover", group: "Peito" },
+  
+  // Back / Costas
+  "puxada frontal": { en: "lat pulldown", group: "Costas" },
+  "puxada aberta": { en: "wide grip lat pulldown", group: "Costas" },
+  "puxada fechada": { en: "close grip lat pulldown", group: "Costas" },
+  "puxada neutra": { en: "neutral grip lat pulldown", group: "Costas" },
+  "puxada triangulo": { en: "close grip lat pulldown", group: "Costas" },
+  "puxada alta": { en: "lat pulldown", group: "Costas" },
+  "pulldown pegada neutra": { en: "neutral grip lat pulldown", group: "Costas" },
+  "remada curvada": { en: "bent over row", group: "Costas" },
+  "remada baixa": { en: "seated cable row", group: "Costas" },
+  "remada sentada": { en: "seated cable row", group: "Costas" },
+  "remada unilateral": { en: "one arm dumbbell row", group: "Costas" },
+  "remada serrote": { en: "one arm dumbbell row", group: "Costas" },
+  "remada cavalinho": { en: "t bar row", group: "Costas" },
+  "remada maquina": { en: "seated row machine", group: "Costas" },
+  "remada alta": { en: "upright row", group: "Ombros" },
+  "remada alta com barra": { en: "barbell upright row", group: "Ombros" },
+  "remada articulada": { en: "t bar row", group: "Costas" },
+  "remada com barra": { en: "barbell row", group: "Costas" },
+  "remada com halter": { en: "dumbbell row", group: "Costas" },
+  "levantamento terra": { en: "deadlift", group: "Costas" },
+  "levantamento terra romeno": { en: "romanian deadlift", group: "Pernas" },
+  "terra romeno": { en: "romanian deadlift", group: "Pernas" },
+  "stiff": { en: "stiff leg deadlift", group: "Pernas" },
+  "stiff com halteres": { en: "dumbbell stiff leg deadlift", group: "Pernas" },
+  "barra fixa": { en: "pull up", group: "Costas" },
+  "barra fixa supinada": { en: "chin up", group: "Costas" },
+  "barra fixa pronada": { en: "pull up", group: "Costas" },
+  "chin up": { en: "chin up", group: "Costas" },
+  "pullover": { en: "pullover", group: "Costas" },
+  "pullover costas": { en: "dumbbell pullover", group: "Costas" },
+  "hiperextensao": { en: "back extension", group: "Costas" },
+  "extensao lombar": { en: "back extension", group: "Costas" },
+  "good morning": { en: "good morning", group: "Costas" },
+  "bom dia": { en: "good morning", group: "Costas" },
+  "superman": { en: "superman exercise", group: "Costas" },
+  "face pull costas": { en: "face pull", group: "Ombros" },
+  
+  // Shoulders / Ombros
+  "desenvolvimento": { en: "shoulder press", group: "Ombros" },
+  "desenvolvimento militar": { en: "military press", group: "Ombros" },
+  "desenvolvimento halteres": { en: "dumbbell shoulder press", group: "Ombros" },
+  "desenvolvimento com halteres": { en: "dumbbell shoulder press", group: "Ombros" },
+  "desenvolvimento maquina": { en: "machine shoulder press", group: "Ombros" },
+  "desenvolvimento arnold": { en: "arnold press", group: "Ombros" },
+  "arnold press": { en: "arnold press", group: "Ombros" },
+  "elevacao lateral": { en: "lateral raise", group: "Ombros" },
+  "elevacao lateral halteres": { en: "dumbbell lateral raise", group: "Ombros" },
+  "elevacao lateral cabo": { en: "cable lateral raise", group: "Ombros" },
+  "elevacao lateral maquina": { en: "machine lateral raise", group: "Ombros" },
+  "elevacao frontal": { en: "front raise", group: "Ombros" },
+  "elevacao frontal halter": { en: "dumbbell front raise", group: "Ombros" },
+  "elevacao frontal halteres": { en: "dumbbell front raise", group: "Ombros" },
+  "elevacao frontal barra": { en: "barbell front raise", group: "Ombros" },
+  "fly inverso": { en: "reverse fly", group: "Ombros" },
+  "face pull": { en: "face pull", group: "Ombros" },
+  "face pull na polia": { en: "cable face pull", group: "Ombros" },
+  "encolhimento": { en: "shrug", group: "Ombros" },
+  "encolhimento halteres": { en: "dumbbell shrug", group: "Ombros" },
+  "encolhimento com halteres": { en: "dumbbell shrug", group: "Ombros" },
+  "encolhimento barra": { en: "barbell shrug", group: "Ombros" },
+  "encolhimento com barra": { en: "barbell shrug", group: "Ombros" },
+  "remada alta ombros": { en: "upright row", group: "Ombros" },
+  "ombro posterior": { en: "rear delt fly", group: "Ombros" },
+  "deltoides posterior": { en: "rear delt fly", group: "Ombros" },
+  
+  // Arms - Biceps / Braços - Bíceps
+  "rosca direta": { en: "barbell curl", group: "Bíceps" },
+  "rosca direta barra": { en: "barbell curl", group: "Bíceps" },
+  "rosca alternada": { en: "alternating dumbbell curl", group: "Bíceps" },
+  "rosca simultanea": { en: "dumbbell curl", group: "Bíceps" },
+  "rosca martelo": { en: "hammer curl", group: "Bíceps" },
+  "rosca concentrada": { en: "concentration curl", group: "Bíceps" },
+  "rosca scott": { en: "preacher curl", group: "Bíceps" },
+  "rosca banco scott": { en: "preacher curl", group: "Bíceps" },
+  "rosca inclinada": { en: "incline dumbbell curl", group: "Bíceps" },
+  "rosca cabo": { en: "cable curl", group: "Bíceps" },
+  "rosca corda": { en: "rope cable curl", group: "Bíceps" },
+  "rosca inversa": { en: "reverse curl", group: "Bíceps" },
+  "rosca 21": { en: "21s bicep curl", group: "Bíceps" },
+  "rosca punho": { en: "wrist curl", group: "Bíceps" },
+  "rosca spider": { en: "spider curl", group: "Bíceps" },
+  "curl biceps": { en: "bicep curl", group: "Bíceps" },
+  
+  // Arms - Triceps / Braços - Tríceps
+  "triceps pulley": { en: "tricep pushdown", group: "Tríceps" },
+  "triceps puxada": { en: "tricep pushdown", group: "Tríceps" },
+  "triceps corda": { en: "rope pushdown", group: "Tríceps" },
+  "triceps corda na polia": { en: "cable rope pushdown", group: "Tríceps" },
+  "triceps barra": { en: "tricep pushdown", group: "Tríceps" },
+  "triceps testa": { en: "skull crusher", group: "Tríceps" },
+  "triceps frances": { en: "overhead tricep extension", group: "Tríceps" },
+  "triceps frances halter": { en: "dumbbell overhead tricep extension", group: "Tríceps" },
+  "triceps frances cabo": { en: "cable overhead tricep extension", group: "Tríceps" },
+  "triceps coice": { en: "tricep kickback", group: "Tríceps" },
+  "triceps banco": { en: "bench dip", group: "Tríceps" },
+  "triceps mergulho": { en: "dip", group: "Tríceps" },
+  "mergulho": { en: "dip", group: "Tríceps" },
+  "mergulho paralelas": { en: "dip", group: "Tríceps" },
+  "mergulho no banco": { en: "bench dip", group: "Tríceps" },
+  "mergulho entre bancos": { en: "bench dip", group: "Tríceps" },
+  "paralelas": { en: "dip", group: "Tríceps" },
+  "triceps unilateral": { en: "single arm tricep pushdown", group: "Tríceps" },
+  "flexao triceps": { en: "close grip push up", group: "Tríceps" },
+  "supino fechado": { en: "close grip bench press", group: "Tríceps" },
+  
+  // Arms - Forearms / Antebraço
+  "rosca de punho": { en: "wrist curl", group: "Bíceps" },
+  "flexao de punho": { en: "wrist curl", group: "Bíceps" },
+  "extensao de punho": { en: "reverse wrist curl", group: "Bíceps" },
+  "hand grip": { en: "grip strengthener", group: "Bíceps" },
+  
+  // Legs - Quadriceps / Pernas - Quadríceps
+  "agachamento": { en: "squat", group: "Pernas" },
+  "agachamento livre": { en: "barbell squat", group: "Pernas" },
+  "agachamento barra": { en: "barbell squat", group: "Pernas" },
+  "agachamento com barra": { en: "barbell squat", group: "Pernas" },
+  "agachamento goblet": { en: "goblet squat", group: "Pernas" },
+  "agachamento hack": { en: "hack squat", group: "Pernas" },
+  "agachamento smith": { en: "smith machine squat", group: "Pernas" },
+  "agachamento frontal": { en: "front squat", group: "Pernas" },
+  "agachamento frontal barra": { en: "barbell front squat", group: "Pernas" },
+  "agachamento bulgaro": { en: "bulgarian split squat", group: "Pernas" },
+  "agachamento sumo": { en: "sumo squat", group: "Pernas" },
+  "agachamento sumo largo": { en: "wide stance sumo squat", group: "Pernas" },
+  "agachamento unilateral": { en: "single leg squat", group: "Pernas" },
+  "agachamento sissy": { en: "sissy squat", group: "Pernas" },
+  "sissy squat": { en: "sissy squat", group: "Pernas" },
+  "leg press": { en: "leg press", group: "Pernas" },
+  "leg press 45": { en: "leg press", group: "Pernas" },
+  "leg press horizontal": { en: "horizontal leg press", group: "Pernas" },
+  "cadeira extensora": { en: "leg extension", group: "Pernas" },
+  "extensora": { en: "leg extension", group: "Pernas" },
+  "extensao de pernas": { en: "leg extension", group: "Pernas" },
+  "afundo": { en: "lunge", group: "Pernas" },
+  "afundo frontal": { en: "forward lunge", group: "Pernas" },
+  "afundo reverso": { en: "reverse lunge", group: "Pernas" },
+  "afundo lateral": { en: "side lunge", group: "Pernas" },
+  "passada": { en: "walking lunge", group: "Pernas" },
+  "passada caminhando": { en: "walking lunge", group: "Pernas" },
+  "avanco": { en: "lunge", group: "Pernas" },
+  "pistol squat": { en: "pistol squat", group: "Pernas" },
+  
+  // Legs - Hamstrings / Pernas - Posterior
+  "mesa flexora": { en: "leg curl", group: "Pernas" },
+  "flexora deitada": { en: "lying leg curl", group: "Pernas" },
+  "flexora sentada": { en: "seated leg curl", group: "Pernas" },
+  "flexora em pe": { en: "standing leg curl", group: "Pernas" },
+  "cadeira flexora": { en: "seated leg curl", group: "Pernas" },
+  "stiff pernas": { en: "stiff leg deadlift", group: "Pernas" },
+  "stiff unilateral": { en: "single leg romanian deadlift", group: "Pernas" },
+  "terra romeno unilateral": { en: "single leg romanian deadlift", group: "Pernas" },
+  
+  // Legs - Glutes / Pernas - Glúteos
+  "elevacao pelvica": { en: "hip thrust", group: "Glúteos" },
+  "elevacao pelica": { en: "hip thrust", group: "Glúteos" },
+  "hip thrust": { en: "hip thrust", group: "Glúteos" },
+  "hip thrust com barra": { en: "barbell hip thrust", group: "Glúteos" },
+  "ponte gluteo": { en: "glute bridge", group: "Glúteos" },
+  "ponte de gluteo": { en: "glute bridge", group: "Glúteos" },
+  "glute bridge": { en: "glute bridge", group: "Glúteos" },
+  "gluteo maquina": { en: "glute machine", group: "Glúteos" },
+  "kickback gluteo": { en: "glute kickback", group: "Glúteos" },
+  "kickback na polia": { en: "cable glute kickback", group: "Glúteos" },
+  "coice gluteo": { en: "glute kickback", group: "Glúteos" },
+  "gluteo cabo": { en: "cable glute kickback", group: "Glúteos" },
+  "abdutora": { en: "hip abduction", group: "Glúteos" },
+  "abdutora maquina": { en: "hip abduction machine", group: "Glúteos" },
+  "abducao de quadril": { en: "hip abduction", group: "Glúteos" },
+  "abducao de quadril deitado": { en: "lying hip abduction", group: "Glúteos" },
+  "adutora": { en: "hip adduction", group: "Pernas" },
+  "adutora maquina": { en: "hip adduction machine", group: "Pernas" },
+  "aducao com elastico": { en: "resistance band hip adduction", group: "Pernas" },
+  "aducao na maquina": { en: "hip adduction machine", group: "Pernas" },
+  "agachamento gluteo": { en: "glute squat", group: "Glúteos" },
+  "cadeira abdutora": { en: "hip abduction machine", group: "Glúteos" },
+  "cadeira adutora": { en: "hip adduction machine", group: "Pernas" },
+  
+  // Legs - Calves / Pernas - Panturrilha
+  "panturrilha": { en: "calf raise", group: "Pernas" },
+  "panturrilha em pe": { en: "standing calf raise", group: "Pernas" },
+  "elevacao de panturrilha em pe": { en: "standing calf raise", group: "Pernas" },
+  "panturrilha sentado": { en: "seated calf raise", group: "Pernas" },
+  "elevacao de panturrilha sentado": { en: "seated calf raise", group: "Pernas" },
+  "panturrilha maquina": { en: "calf press machine", group: "Pernas" },
+  "panturrilha leg press": { en: "leg press calf raise", group: "Pernas" },
+  "panturrilha no leg press": { en: "leg press calf raise", group: "Pernas" },
+  "panturrilha unilateral": { en: "single leg calf raise", group: "Pernas" },
+  "gemeos": { en: "calf raise", group: "Pernas" },
+  "elevacao de calcanhar": { en: "calf raise", group: "Pernas" },
+  
+  // Core / Abdomen
+  "abdominal": { en: "crunch", group: "Abdômen" },
+  "abdominal reto": { en: "crunch", group: "Abdômen" },
+  "abdominal infra": { en: "reverse crunch", group: "Abdômen" },
+  "abdominal obliquo": { en: "oblique crunch", group: "Abdômen" },
+  "abdominal bicicleta": { en: "bicycle crunch", group: "Abdômen" },
+  "abdominal maquina": { en: "ab crunch machine", group: "Abdômen" },
+  "abdominal supra": { en: "crunch", group: "Abdômen" },
+  "abdominal canivete": { en: "v up", group: "Abdômen" },
+  "abdominal na bola": { en: "stability ball crunch", group: "Abdômen" },
+  "abdominal crunch": { en: "crunch", group: "Abdômen" },
+  "crunch na polia alta": { en: "cable crunch", group: "Abdômen" },
+  "prancha": { en: "plank", group: "Core" },
+  "prancha frontal": { en: "plank", group: "Core" },
+  "prancha lateral": { en: "side plank", group: "Core" },
+  "prancha isometrica": { en: "plank", group: "Core" },
+  "prancha com elevacao": { en: "plank shoulder tap", group: "Core" },
+  "elevacao de pernas": { en: "leg raise", group: "Abdômen" },
+  "elevacao de pernas suspenso": { en: "hanging leg raise", group: "Abdômen" },
+  "leg raise suspenso": { en: "hanging leg raise", group: "Abdômen" },
+  "elevacao de pernas deitado": { en: "lying leg raise", group: "Abdômen" },
+  "russian twist": { en: "russian twist", group: "Abdômen" },
+  "rotacao russa": { en: "russian twist", group: "Abdômen" },
+  "mountain climber": { en: "mountain climber", group: "Core" },
+  "mountain climbers": { en: "mountain climber", group: "Core" },
+  "escalador": { en: "mountain climber", group: "Core" },
+  "roda abdominal": { en: "ab wheel rollout", group: "Abdômen" },
+  "ab wheel": { en: "ab wheel rollout", group: "Abdômen" },
+  "dead bug": { en: "dead bug", group: "Core" },
+  "hollow body": { en: "hollow body hold", group: "Core" },
+  "bird dog": { en: "bird dog", group: "Core" },
+  "crunch": { en: "crunch", group: "Abdômen" },
+  "sit up": { en: "sit up", group: "Abdômen" },
+  
+  // Cardio
+  "esteira": { en: "treadmill", group: "Cardio" },
+  "bicicleta ergometrica": { en: "stationary bike", group: "Cardio" },
+  "eliptico": { en: "elliptical", group: "Cardio" },
+  "transport": { en: "elliptical", group: "Cardio" },
+  "remo": { en: "rowing machine", group: "Cardio" },
+  "remador": { en: "rowing machine", group: "Cardio" },
+  "escada": { en: "stair climber", group: "Cardio" },
+  "corda": { en: "jump rope", group: "Cardio" },
+  "pular corda": { en: "jump rope", group: "Cardio" },
+  "corrida": { en: "running", group: "Cardio" },
+  "caminhada": { en: "walking", group: "Cardio" },
+  "burpee": { en: "burpee", group: "Cardio" },
+  "jumping jack": { en: "jumping jack", group: "Cardio" },
+  "polichinelo": { en: "jumping jack", group: "Cardio" },
+  "box jump": { en: "box jump", group: "Cardio" },
+  "salto caixa": { en: "box jump", group: "Cardio" },
+  "sprint": { en: "sprint", group: "Cardio" },
+  "hiit": { en: "high intensity interval training", group: "Cardio" },
+  
+  // Functional / Olympic
+  "levantamento olimpico": { en: "clean and jerk", group: "Corpo Inteiro" },
+  "arranco": { en: "snatch", group: "Corpo Inteiro" },
+  "clean": { en: "power clean", group: "Corpo Inteiro" },
+  "clean and press": { en: "clean and press", group: "Corpo Inteiro" },
+  "kettlebell swing": { en: "kettlebell swing", group: "Corpo Inteiro" },
+  "swing kettlebell": { en: "kettlebell swing", group: "Corpo Inteiro" },
+  "turkish get up": { en: "turkish get up", group: "Corpo Inteiro" },
+  "thruster": { en: "thruster", group: "Corpo Inteiro" },
+  "wall ball": { en: "wall ball", group: "Corpo Inteiro" },
+  "battle rope": { en: "battle rope", group: "Cardio" },
+  "corda naval": { en: "battle rope", group: "Cardio" },
+  "farmer walk": { en: "farmer walk", group: "Corpo Inteiro" },
+  "caminhada do fazendeiro": { en: "farmer walk", group: "Corpo Inteiro" },
+  "sled push": { en: "sled push", group: "Corpo Inteiro" },
+  "empurrar treno": { en: "sled push", group: "Corpo Inteiro" },
+  "tire flip": { en: "tire flip", group: "Corpo Inteiro" },
+  "virar pneu": { en: "tire flip", group: "Corpo Inteiro" },
+};
 
 const MUSCLE_GROUPS = [
   "Peito",
@@ -118,6 +430,12 @@ export default function AdminExerciseGifs() {
   // Delete confirmation
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Import state
+  const [importing, setImporting] = useState(false);
+  const [scanningProtocols, setScanningProtocols] = useState(false);
+  const [missingExercises, setMissingExercises] = useState<MissingExercise[]>([]);
+  const [showMissingDialog, setShowMissingDialog] = useState(false);
 
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
@@ -259,6 +577,238 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  // Importar exercícios do mapa PT→EN
+  const handleImportFromMap = async () => {
+    setImporting(true);
+    try {
+      // Get existing exercises
+      const { data: existingGifs } = await supabase
+        .from("exercise_gifs")
+        .select("exercise_name_pt");
+      
+      const existingNames = new Set(
+        (existingGifs || []).map((g) => g.exercise_name_pt.toLowerCase())
+      );
+
+      // Filter new exercises
+      const newExercises = Object.entries(PT_TO_EN_MAP)
+        .filter(([pt]) => !existingNames.has(pt.toLowerCase()))
+        .map(([pt, data]) => ({
+          exercise_name_pt: pt.charAt(0).toUpperCase() + pt.slice(1),
+          exercise_name_en: data.en,
+          muscle_group: data.group,
+          status: "pending" as const,
+        }));
+
+      if (newExercises.length === 0) {
+        toast.info("Todos os exercícios já estão cadastrados");
+        setImporting(false);
+        return;
+      }
+
+      // Insert in batches of 50
+      const batchSize = 50;
+      let inserted = 0;
+      
+      for (let i = 0; i < newExercises.length; i += batchSize) {
+        const batch = newExercises.slice(i, i + batchSize);
+        const { error } = await supabase
+          .from("exercise_gifs")
+          .insert(batch);
+        
+        if (error) {
+          console.error("Erro no batch:", error);
+        } else {
+          inserted += batch.length;
+        }
+      }
+
+      toast.success(`${inserted} exercícios importados com sucesso!`);
+      fetchGifs();
+    } catch (error) {
+      console.error("Erro ao importar:", error);
+      toast.error("Erro ao importar exercícios");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Escanear protocolos ativos para encontrar exercícios sem GIF
+  const handleScanProtocols = async () => {
+    setScanningProtocols(true);
+    setMissingExercises([]);
+    
+    try {
+      // Get all active protocols with treino type
+      const { data: protocols, error } = await supabase
+        .from("protocolos")
+        .select(`
+          id,
+          user_id,
+          conteudo,
+          profiles!inner(full_name)
+        `)
+        .eq("tipo", "treino")
+        .eq("ativo", true);
+
+      if (error) throw error;
+
+      // Get all registered exercise names
+      const { data: registeredGifs } = await supabase
+        .from("exercise_gifs")
+        .select("exercise_name_pt, status");
+
+      const registeredNames = new Set(
+        (registeredGifs || [])
+          .filter(g => g.status === "active")
+          .map((g) => g.exercise_name_pt.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))
+      );
+
+      // Extract all exercises from protocols
+      const exerciseMap = new Map<string, { count: number; users: Set<string> }>();
+
+      for (const protocol of protocols || []) {
+        const content = protocol.conteudo as any;
+        const userName = (protocol as any).profiles?.full_name || "Desconhecido";
+        
+        // Navigate the protocol structure to find exercises
+        if (content?.treinos && Array.isArray(content.treinos)) {
+          for (const treino of content.treinos) {
+            if (treino.exercicios && Array.isArray(treino.exercicios)) {
+              for (const ex of treino.exercicios) {
+                const exerciseName = (ex.nome || ex.exercicio || "").trim();
+                if (exerciseName) {
+                  const normalizedName = exerciseName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                  
+                  // Check if exercise has GIF
+                  if (!registeredNames.has(normalizedName)) {
+                    const existing = exerciseMap.get(exerciseName) || { count: 0, users: new Set() };
+                    existing.count++;
+                    existing.users.add(userName);
+                    exerciseMap.set(exerciseName, existing);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Convert to array and sort by frequency
+      const missing: MissingExercise[] = Array.from(exerciseMap.entries())
+        .map(([name, data]) => ({
+          name,
+          protocol_count: data.count,
+          users: Array.from(data.users),
+        }))
+        .sort((a, b) => b.protocol_count - a.protocol_count);
+
+      setMissingExercises(missing);
+      setShowMissingDialog(true);
+
+      if (missing.length === 0) {
+        toast.success("Todos os exercícios dos protocolos ativos têm GIF!");
+      } else {
+        toast.info(`${missing.length} exercícios sem GIF encontrados`);
+      }
+    } catch (error) {
+      console.error("Erro ao escanear protocolos:", error);
+      toast.error("Erro ao escanear protocolos");
+    } finally {
+      setScanningProtocols(false);
+    }
+  };
+
+  // Adicionar exercício faltante ao banco
+  const handleAddMissingExercise = async (exerciseName: string) => {
+    // Try to find in PT_TO_EN_MAP
+    const normalizedName = exerciseName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    let englishName = exerciseName;
+    let muscleGroup = "Corpo Inteiro";
+
+    for (const [pt, data] of Object.entries(PT_TO_EN_MAP)) {
+      const normalizedPt = pt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (normalizedName.includes(normalizedPt) || normalizedPt.includes(normalizedName)) {
+        englishName = data.en;
+        muscleGroup = data.group;
+        break;
+      }
+    }
+
+    try {
+      const { error } = await supabase
+        .from("exercise_gifs")
+        .insert({
+          exercise_name_pt: exerciseName,
+          exercise_name_en: englishName,
+          muscle_group: muscleGroup,
+          status: "missing",
+        });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast.info("Exercício já cadastrado");
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success(`"${exerciseName}" adicionado ao banco`);
+        // Remove from missing list
+        setMissingExercises(prev => prev.filter(e => e.name !== exerciseName));
+        fetchGifs();
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar:", error);
+      toast.error("Erro ao adicionar exercício");
+    }
+  };
+
+  // Adicionar todos os exercícios faltantes
+  const handleAddAllMissing = async () => {
+    if (missingExercises.length === 0) return;
+
+    setImporting(true);
+    try {
+      const toInsert = missingExercises.map(ex => {
+        const normalizedName = ex.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        let englishName = ex.name;
+        let muscleGroup = "Corpo Inteiro";
+
+        for (const [pt, data] of Object.entries(PT_TO_EN_MAP)) {
+          const normalizedPt = pt.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          if (normalizedName.includes(normalizedPt) || normalizedPt.includes(normalizedName)) {
+            englishName = data.en;
+            muscleGroup = data.group;
+            break;
+          }
+        }
+
+        return {
+          exercise_name_pt: ex.name,
+          exercise_name_en: englishName,
+          muscle_group: muscleGroup,
+          status: "missing" as const,
+        };
+      });
+
+      const { error } = await supabase
+        .from("exercise_gifs")
+        .upsert(toInsert, { onConflict: "exercise_name_pt", ignoreDuplicates: true });
+
+      if (error) throw error;
+
+      toast.success(`${toInsert.length} exercícios adicionados ao banco`);
+      setMissingExercises([]);
+      setShowMissingDialog(false);
+      fetchGifs();
+    } catch (error) {
+      console.error("Erro ao adicionar todos:", error);
+      toast.error("Erro ao adicionar exercícios");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -353,7 +903,27 @@ export default function AdminExerciseGifs() {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end mb-6">
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Button
+            variant="outline"
+            onClick={handleImportFromMap}
+            disabled={importing}
+          >
+            {importing ? <LoadingSpinner size="sm" className="mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+            Importar do Mapa PT→EN
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={handleScanProtocols}
+            disabled={scanningProtocols}
+          >
+            {scanningProtocols ? <LoadingSpinner size="sm" className="mr-2" /> : <FileSearch className="h-4 w-4 mr-2" />}
+            Escanear Protocolos
+          </Button>
+
+          <div className="flex-1" />
+          
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => handleOpenDialog()}>
@@ -652,6 +1222,75 @@ export default function AdminExerciseGifs() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Missing Exercises Dialog */}
+        <Dialog open={showMissingDialog} onOpenChange={setShowMissingDialog}>
+          <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                Exercícios Sem GIF ({missingExercises.length})
+              </DialogTitle>
+            </DialogHeader>
+            
+            {missingExercises.length > 0 && (
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleAddAllMissing}
+                  disabled={importing}
+                  size="sm"
+                >
+                  {importing ? <LoadingSpinner size="sm" className="mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                  Adicionar Todos ao Banco
+                </Button>
+              </div>
+            )}
+            
+            <div className="flex-1 overflow-y-auto">
+              {missingExercises.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle className="h-12 w-12 mx-auto mb-2 text-green-500" />
+                  <p>Todos os exercícios dos protocolos ativos têm GIF!</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Exercício</TableHead>
+                      <TableHead className="text-center">Protocolos</TableHead>
+                      <TableHead>Clientes</TableHead>
+                      <TableHead className="text-right">Ação</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {missingExercises.map((ex, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="font-medium">{ex.name}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="secondary">{ex.protocol_count}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground max-w-48 truncate">
+                          {ex.users.slice(0, 3).join(", ")}
+                          {ex.users.length > 3 && ` +${ex.users.length - 3}`}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleAddMissingExercise(ex.name)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Adicionar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
