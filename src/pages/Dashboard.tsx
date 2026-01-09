@@ -7,7 +7,7 @@ import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useAchievements } from "@/hooks/useAchievements";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
-import { Target, Utensils, Brain, BookOpen, MessageCircle, Trophy, ClipboardCheck, CreditCard, Lock } from "lucide-react";
+import { Target, Utensils, Brain, BookOpen, MessageCircle, Trophy, ClipboardCheck, CreditCard, Lock, Camera, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
@@ -119,6 +119,8 @@ export default function Dashboard() {
   const [canDoWeeklyCheckin, setCanDoWeeklyCheckin] = useState(false);
   const [pendingPaymentInfo, setPendingPaymentInfo] = useState<{ planType: string; planName: string; priceId?: string } | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(true);
+  const [needsEvolutionPhotos, setNeedsEvolutionPhotos] = useState(false);
+  const [daysSinceLastProtocol, setDaysSinceLastProtocol] = useState(0);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -156,6 +158,55 @@ export default function Dashboard() {
 
     checkWeeklyCheckin();
   }, [user, showWeeklyCheckin]);
+
+  // Check if user needs to submit evolution photos
+  useEffect(() => {
+    const checkEvolutionPhotosNeeded = async () => {
+      if (!user || !subscribed) return;
+      
+      try {
+        // Get last protocol date
+        const { data: lastProtocol } = await supabase
+          .from("protocolos")
+          .select("created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (!lastProtocol) return; // No protocol yet, no need for evolution photos
+        
+        const protocolDate = new Date(lastProtocol.created_at);
+        const now = new Date();
+        const daysSince = Math.floor((now.getTime() - protocolDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        setDaysSinceLastProtocol(daysSince);
+        
+        // If less than 30 days since last protocol, no need for photos yet
+        if (daysSince < 30) {
+          setNeedsEvolutionPhotos(false);
+          return;
+        }
+        
+        // Check if user submitted evolution photos after last protocol
+        const { data: recentCheckin } = await supabase
+          .from("checkins")
+          .select("id, foto_url")
+          .eq("user_id", user.id)
+          .gt("created_at", lastProtocol.created_at)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        const hasSubmittedPhotos = recentCheckin && recentCheckin.foto_url;
+        setNeedsEvolutionPhotos(!hasSubmittedPhotos);
+      } catch (error) {
+        console.error("Error checking evolution photos:", error);
+      }
+    };
+    
+    checkEvolutionPhotosNeeded();
+  }, [user, subscribed]);
 
   // Check for pending payment status FIRST (before anamnese check)
   useEffect(() => {
@@ -377,6 +428,34 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
+
+        {/* Evolution Photos Alert */}
+        {needsEvolutionPhotos && (
+          <Card className="mb-6 border-amber-500/30 bg-amber-500/10 animate-fade-in">
+            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-full bg-amber-500/20">
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-600 dark:text-amber-400">Envie suas fotos de evolução</p>
+                  <p className="text-sm text-muted-foreground">
+                    Já se passaram {daysSinceLastProtocol} dias desde seu último protocolo. Envie novas fotos para desbloquear a geração de novos protocolos personalizados.
+                  </p>
+                </div>
+              </div>
+              <Button 
+                size="sm" 
+                variant="default"
+                className="gap-2 shrink-0"
+                onClick={() => navigate("/evolucao")}
+              >
+                <Camera className="h-4 w-4" />
+                Enviar Fotos
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Weekly Checkin Prompt */}
         {canDoWeeklyCheckin && (
