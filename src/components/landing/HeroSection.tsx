@@ -49,12 +49,6 @@ export const HeroSection = memo(function HeroSection() {
         </div>
       </div>
 
-      {/* Minimal scroll indicator */}
-      <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-float">
-        <div className="w-5 h-8 rounded-full border border-muted-foreground/20 flex items-start justify-center p-1.5">
-          <div className="w-1 h-2 rounded-full bg-primary/70" />
-        </div>
-      </div>
     </section>
   );
 });
