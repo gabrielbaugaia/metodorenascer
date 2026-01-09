@@ -34,7 +34,7 @@ export const HeroSection = memo(function HeroSection() {
               variant="fire" 
               size="xl" 
               asChild 
-              className="group text-lg md:text-xl px-10 md:px-14 py-6 md:py-7 rounded-xl shadow-2xl"
+              className="group text-lg md:text-xl px-10 md:px-14 py-6 md:py-7 rounded-xl shadow-2xl animate-pulse-glow hover:animate-none"
             >
               <a href="#preco">
                 <span className="relative z-10 tracking-wide font-semibold">QUERO RENASCER</span>

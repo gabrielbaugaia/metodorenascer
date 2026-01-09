@@ -102,6 +102,16 @@ export default {
           from: { backgroundPosition: "200% 0" },
           to: { backgroundPosition: "-200% 0" },
         },
+        "pulse-glow": {
+          "0%, 100%": { 
+            boxShadow: "0 0 20px hsl(16 100% 50% / 0.4), 0 0 40px hsl(16 100% 50% / 0.2)",
+            transform: "scale(1)"
+          },
+          "50%": { 
+            boxShadow: "0 0 30px hsl(16 100% 50% / 0.6), 0 0 60px hsl(16 100% 50% / 0.3)",
+            transform: "scale(1.02)"
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -111,6 +121,7 @@ export default {
         "slide-in-left": "slide-in-left 0.5s ease-out forwards",
         "slide-in-right": "slide-in-right 0.5s ease-out forwards",
         shimmer: "shimmer 3s linear infinite",
+        "pulse-glow": "pulse-glow 2.5s ease-in-out infinite",
       },
       backgroundImage: {
         "gradient-fire": "linear-gradient(135deg, hsl(16 100% 50%), hsl(30 100% 50%))",
