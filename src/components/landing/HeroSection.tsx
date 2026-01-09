@@ -19,10 +19,10 @@ export const HeroSection = memo(function HeroSection() {
 
           {/* Subtitle - Better spacing and size */}
           <p 
-            className="text-muted-foreground text-lg md:text-xl max-w-md mx-auto animate-fade-in leading-relaxed font-light" 
+            className="text-muted-foreground text-lg md:text-xl max-w-lg mx-auto animate-fade-in leading-relaxed font-light" 
             style={{ animationDelay: "0.15s" }}
           >
-            Para quem já tentou de tudo e está cansado de métodos que não funcionam na vida real.
+            Para poucos que estão prontos para deixar a frustração para trás e finalmente se orgulhar do próprio reflexo.
           </p>
 
           {/* CTA Block - Tighter grouping */}
