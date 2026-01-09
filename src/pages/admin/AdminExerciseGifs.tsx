@@ -57,7 +57,9 @@ import {
   Download,
   AlertTriangle,
   FileSearch,
-  FileText
+  FileText,
+  Upload,
+  Zap
 } from "lucide-react";
 import { generateGifCoverageReportPdf } from "@/lib/generateGifCoverageReportPdf";
 
@@ -439,6 +441,9 @@ export default function AdminExerciseGifs() {
   const [missingExercises, setMissingExercises] = useState<MissingExercise[]>([]);
   const [showMissingDialog, setShowMissingDialog] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [activatingAll, setActivatingAll] = useState(false);
+  const [uploadingGif, setUploadingGif] = useState(false);
+  const [selectedExerciseForUpload, setSelectedExerciseForUpload] = useState<ExerciseGif | null>(null);
 
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
@@ -825,6 +830,105 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  // Ativar todos os GIFs que têm URL
+  const handleActivateAll = async () => {
+    const gifsWithUrl = gifs.filter(g => g.gif_url && g.status !== "active");
+    if (gifsWithUrl.length === 0) {
+      toast.info("Não há GIFs pendentes com URL para ativar");
+      return;
+    }
+
+    setActivatingAll(true);
+    try {
+      const { error } = await supabase
+        .from("exercise_gifs")
+        .update({ status: "active", last_checked_at: new Date().toISOString() })
+        .not("gif_url", "is", null)
+        .neq("gif_url", "")
+        .neq("status", "active");
+
+      if (error) throw error;
+      
+      toast.success(`${gifsWithUrl.length} GIFs ativados com sucesso!`);
+      fetchGifs();
+    } catch (error) {
+      console.error("Erro ao ativar GIFs:", error);
+      toast.error("Erro ao ativar GIFs");
+    } finally {
+      setActivatingAll(false);
+    }
+  };
+
+  // Upload de GIF para um exercício
+  const handleGifUpload = async (event: React.ChangeEvent<HTMLInputElement>, exerciseId?: string) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.includes("image/gif") && !file.type.includes("image/")) {
+      toast.error("Por favor, selecione um arquivo de imagem válido");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("O arquivo deve ter no máximo 5MB");
+      return;
+    }
+
+    setUploadingGif(true);
+    try {
+      const targetExercise = exerciseId 
+        ? gifs.find(g => g.id === exerciseId) 
+        : selectedExerciseForUpload;
+      
+      if (!targetExercise) {
+        toast.error("Selecione um exercício primeiro");
+        return;
+      }
+
+      // Generate unique filename
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${targetExercise.exercise_name_en.replace(/\s+/g, "-").toLowerCase()}-${Date.now()}.${fileExt}`;
+      const filePath = `exercises/${fileName}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from("exercise-gifs")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage
+        .from("exercise-gifs")
+        .getPublicUrl(filePath);
+
+      // Update exercise with new GIF URL
+      const { error: updateError } = await supabase
+        .from("exercise_gifs")
+        .update({ 
+          gif_url: publicUrlData.publicUrl, 
+          status: "active",
+          last_checked_at: new Date().toISOString()
+        })
+        .eq("id", targetExercise.id);
+
+      if (updateError) throw updateError;
+
+      toast.success(`GIF carregado para "${targetExercise.exercise_name_pt}"!`);
+      setSelectedExerciseForUpload(null);
+      fetchGifs();
+    } catch (error) {
+      console.error("Erro ao fazer upload:", error);
+      toast.error("Erro ao carregar GIF");
+    } finally {
+      setUploadingGif(false);
+      // Reset input
+      event.target.value = "";
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -1049,6 +1153,16 @@ export default function AdminExerciseGifs() {
             Escanear Protocolos
           </Button>
 
+          <Button
+            variant="outline"
+            onClick={handleActivateAll}
+            disabled={activatingAll || stats.pending === 0}
+            className="border-green-500/50 text-green-600 hover:bg-green-500/10"
+          >
+            {activatingAll ? <LoadingSpinner size="sm" className="mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
+            Ativar Todos com URL ({gifs.filter(g => g.gif_url && g.status !== "active").length})
+          </Button>
+
           <div className="flex-1" />
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -1173,6 +1287,73 @@ export default function AdminExerciseGifs() {
           </Dialog>
         </div>
 
+        {/* Upload Area */}
+        <Card className="mb-6 border-dashed border-2 border-primary/30 bg-primary/5">
+          <CardContent className="py-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <Upload className="h-5 w-5 text-primary" />
+                  Carregar GIF do Computador
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Selecione um exercício e faça upload de uma imagem GIF (máx. 5MB)
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Select 
+                  value={selectedExerciseForUpload?.id || ""} 
+                  onValueChange={(id) => setSelectedExerciseForUpload(gifs.find(g => g.id === id) || null)}
+                >
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Selecione um exercício..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-80">
+                    {gifs
+                      .filter(g => g.status !== "active")
+                      .sort((a, b) => a.exercise_name_pt.localeCompare(b.exercise_name_pt))
+                      .map((gif) => (
+                        <SelectItem key={gif.id} value={gif.id}>
+                          <span className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${gif.status === "pending" ? "bg-yellow-500" : "bg-red-500"}`} />
+                            {gif.exercise_name_pt}
+                          </span>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/gif,image/*"
+                    className="hidden"
+                    onChange={(e) => handleGifUpload(e)}
+                    disabled={!selectedExerciseForUpload || uploadingGif}
+                  />
+                  <Button 
+                    asChild 
+                    disabled={!selectedExerciseForUpload || uploadingGif}
+                  >
+                    <span>
+                      {uploadingGif ? <LoadingSpinner size="sm" className="mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                      Upload
+                    </span>
+                  </Button>
+                </label>
+              </div>
+            </div>
+            {selectedExerciseForUpload && (
+              <div className="mt-4 p-3 rounded-lg bg-muted/50 flex items-center gap-3">
+                <Image className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">{selectedExerciseForUpload.exercise_name_pt}</p>
+                  <p className="text-xs text-muted-foreground">{selectedExerciseForUpload.muscle_group} • {selectedExerciseForUpload.exercise_name_en}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Filters */}
         <Card className="mb-6">
           <CardContent className="py-4">
@@ -1273,6 +1454,27 @@ export default function AdminExerciseGifs() {
                         <TableCell>{getStatusBadge(gif.status)}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
+                            {/* Quick upload button */}
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/gif,image/*"
+                                className="hidden"
+                                onChange={(e) => handleGifUpload(e, gif.id)}
+                                disabled={uploadingGif}
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                asChild
+                                title="Carregar GIF"
+                                className="text-primary hover:text-primary"
+                              >
+                                <span>
+                                  <Upload className="h-4 w-4" />
+                                </span>
+                              </Button>
+                            </label>
                             {gif.gif_url && (
                               <Button
                                 variant="ghost"
