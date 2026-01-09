@@ -717,6 +717,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_logins: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          session_id: string
+          temp_password: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          session_id: string
+          temp_password: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          session_id?: string
+          temp_password?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           created_at: string | null
@@ -1484,6 +1514,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_expired_pending_logins: { Args: never; Returns: undefined }
       get_referrer_name_by_code: {
         Args: { lookup_code: string }
         Returns: string
