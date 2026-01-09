@@ -99,14 +99,16 @@ export default function AdminClientes() {
 
       if (error) throw error;
 
-      // Fetch subscriptions for each client
+      // Fetch subscriptions for each client (including pending_payment)
       const clientsWithSubs = await Promise.all(
         (profiles || []).map(async (profile) => {
           const { data: sub } = await supabase
             .from("subscriptions")
             .select("status, plan_type, current_period_end")
             .eq("user_id", profile.id)
-            .eq("status", "active")
+            .in("status", ["active", "pending_payment"])
+            .order("created_at", { ascending: false })
+            .limit(1)
             .single();
 
           return { ...profile, subscription: sub };
@@ -236,7 +238,14 @@ export default function AdminClientes() {
                   className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card/50"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{client.full_name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium truncate">{client.full_name}</p>
+                      {client.subscription?.status === "pending_payment" && (
+                        <Badge variant="secondary" className="text-[10px] bg-amber-500/20 text-amber-600 border-amber-500/30 shrink-0">
+                          Pgto Pendente
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">{client.email}</p>
                   </div>
                   <DropdownMenu>
@@ -334,11 +343,20 @@ export default function AdminClientes() {
                       </TableCell>
                       <TableCell>{getStatusBadge(client.client_status)}</TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {client.subscription ? (
-                          <Badge variant="outline" className="text-xs">{client.subscription.plan_type}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">Sem plano</span>
-                        )}
+                        <div className="flex flex-col gap-1">
+                          {client.subscription ? (
+                            <>
+                              <Badge variant="outline" className="text-xs w-fit">{client.subscription.plan_type}</Badge>
+                              {client.subscription.status === "pending_payment" && (
+                                <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-600 border-amber-500/30 w-fit">
+                                  Aguardando Pagamento
+                                </Badge>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Sem plano</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-xs">
                         {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
