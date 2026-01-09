@@ -57,7 +57,7 @@ serve(async (req) => {
     }
 
     // Get request body
-    const { full_name, email, whatsapp, plan_type } = await req.json();
+    const { full_name, email, whatsapp, plan_type, requires_payment } = await req.json();
 
     if (!full_name || !email || !plan_type) {
       return createErrorResponse(req, "Nome, email e plano são obrigatórios.", 400);
@@ -93,14 +93,14 @@ serve(async (req) => {
         .eq("id", newUser.user.id);
     }
 
-    // Create subscription based on plan
-    const planConfig: Record<string, { days: number; price: number; name: string }> = {
+    // Plan configuration with Stripe price IDs
+    const planConfig: Record<string, { days: number; price: number; name: string; priceId?: string }> = {
       free: { days: 365, price: 0, name: "Gratuito" },
-      elite_founder: { days: 30, price: 4990, name: "Elite Fundador" },
-      mensal: { days: 30, price: 19700, name: "Mensal" },
-      trimestral: { days: 90, price: 49700, name: "Trimestral" },
-      semestral: { days: 180, price: 69700, name: "Semestral" },
-      anual: { days: 365, price: 99700, name: "Anual" },
+      elite_founder: { days: 30, price: 4990, name: "Elite Fundador", priceId: "price_1ScZqTCuFZvf5xFdZuOBMzpt" },
+      mensal: { days: 30, price: 19700, name: "Mensal", priceId: "price_1ScZrECuFZvf5xFdfS9W8kvY" },
+      trimestral: { days: 90, price: 49700, name: "Trimestral", priceId: "price_1ScZsTCuFZvf5xFdbW8kJeQF" },
+      semestral: { days: 180, price: 69700, name: "Semestral", priceId: "price_1ScZtrCuFZvf5xFd8iXDfbEp" },
+      anual: { days: 365, price: 99700, name: "Anual", priceId: "price_1ScZvCCuFZvf5xFdjrs51JQB" },
     };
 
     const plan = planConfig[plan_type] || planConfig.mensal;
@@ -108,9 +108,14 @@ serve(async (req) => {
     const currentPeriodEnd = new Date();
     currentPeriodEnd.setDate(currentPeriodEnd.getDate() + plan.days);
 
+    // Determine subscription status based on payment requirement
+    // If requires_payment is true and plan is not free, set status to "pending_payment"
+    const shouldRequirePayment = requires_payment && plan_type !== "free";
+    const subscriptionStatus = shouldRequirePayment ? "pending_payment" : "active";
+
     await supabaseAdmin.from("subscriptions").insert({
       user_id: newUser.user.id,
-      status: "active",
+      status: subscriptionStatus,
       plan_type,
       plan_name: plan.name,
       price_cents: plan.price,
@@ -123,11 +128,22 @@ serve(async (req) => {
     const baseUrl = "https://renascerapp.com.br";
     const inviteLink = `${baseUrl}/auth?invited=true&email=${encodeURIComponent(email)}`;
 
+    // Email content varies based on payment requirement
+    const paymentMessage = shouldRequirePayment
+      ? `<p style="color: #FFB800; font-size: 16px; line-height: 1.6; margin-top: 16px;">
+          <strong>⚠️ Importante:</strong> Após fazer login, você precisará completar o pagamento para acessar todas as funcionalidades.
+        </p>`
+      : `<p style="color: #cccccc; font-size: 16px; line-height: 1.6;">
+          Seu plano <strong style="color: #FF4500;">${plan.name}</strong> já está ativo e aguardando você.
+        </p>`;
+
     // Send invitation email
     const emailResult = await resend.emails.send({
       from: "Método Renascer <noreply@renascerapp.com.br>",
       to: [email],
-      subject: "Seu convite para o Método Renascer",
+      subject: shouldRequirePayment 
+        ? "Complete seu pagamento - Método Renascer" 
+        : "Seu convite para o Método Renascer",
       html: `
         <!DOCTYPE html>
         <html>
@@ -148,9 +164,7 @@ serve(async (req) => {
                 Você foi convidado para fazer parte do <strong style="color: #FF4500;">Método Renascer</strong>!
               </p>
               
-              <p style="color: #cccccc; font-size: 16px; line-height: 1.6;">
-                Seu plano <strong style="color: #FF4500;">${plan.name}</strong> já está ativo e aguardando você.
-              </p>
+              ${paymentMessage}
               
               <div style="background-color: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 20px; margin: 24px 0;">
                 <p style="color: #999; margin: 0 0 8px 0; font-size: 14px;">Suas credenciais de acesso:</p>
@@ -160,7 +174,7 @@ serve(async (req) => {
               
               <div style="text-align: center; margin-top: 32px;">
                 <a href="${inviteLink}" style="display: inline-block; background-color: #FF4500; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: bold; font-size: 16px;">
-                  ACESSAR MINHA CONTA
+                  ${shouldRequirePayment ? "ACESSAR E PAGAR" : "ACESSAR MINHA CONTA"}
                 </a>
               </div>
               

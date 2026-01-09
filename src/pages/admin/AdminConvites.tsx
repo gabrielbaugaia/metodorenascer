@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Mail, ArrowLeft, Copy, Check, Link as LinkIcon, Trash2 } from "lucide-react";
+import { Loader2, Mail, ArrowLeft, Copy, Check, Link as LinkIcon, Trash2, CreditCard, Gift } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminConvites() {
@@ -29,6 +30,7 @@ export default function AdminConvites() {
     inviteLink: string;
     email: string;
     password: string;
+    requiresPayment: boolean;
   } | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCreds, setCopiedCreds] = useState(false);
@@ -38,6 +40,7 @@ export default function AdminConvites() {
     email: "",
     whatsapp: "",
     plan_type: "mensal",
+    requires_payment: false, // New: toggle for requiring Stripe payment
   });
 
   const handleDeleteUser = async () => {
@@ -117,6 +120,7 @@ export default function AdminConvites() {
           email: formData.email,
           whatsapp: formData.whatsapp || null,
           plan_type: formData.plan_type,
+          requires_payment: formData.requires_payment,
         },
       });
 
@@ -143,9 +147,14 @@ export default function AdminConvites() {
         inviteLink: data.inviteLink,
         email: data.user.email,
         password: data.user.temporary_password,
+        requiresPayment: formData.requires_payment,
       });
       
-      toast.success("Convite enviado com sucesso!");
+      toast.success(
+        formData.requires_payment 
+          ? "Convite enviado! Cliente precisará pagar para acessar." 
+          : "Convite enviado com acesso liberado!"
+      );
       
       // Reset form
       setFormData({
@@ -153,6 +162,7 @@ export default function AdminConvites() {
         email: "",
         whatsapp: "",
         plan_type: "mensal",
+        requires_payment: false,
       });
       
     } catch (error: any) {
@@ -193,14 +203,25 @@ export default function AdminConvites() {
         </div>
 
         {inviteResult && (
-          <Card className="border-green-500/50 bg-green-500/10">
+          <Card className={inviteResult.requiresPayment ? "border-yellow-500/50 bg-yellow-500/10" : "border-green-500/50 bg-green-500/10"}>
             <CardHeader>
-              <CardTitle className="text-green-400 flex items-center gap-2">
-                <Check className="h-5 w-5" />
-                Convite Enviado!
+              <CardTitle className={`flex items-center gap-2 ${inviteResult.requiresPayment ? "text-yellow-400" : "text-green-400"}`}>
+                {inviteResult.requiresPayment ? (
+                  <>
+                    <CreditCard className="h-5 w-5" />
+                    Convite Enviado - Aguardando Pagamento
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-5 w-5" />
+                    Convite Enviado - Acesso Liberado!
+                  </>
+                )}
               </CardTitle>
               <CardDescription>
-                O email foi enviado e o link está pronto para compartilhar:
+                {inviteResult.requiresPayment 
+                  ? "O cliente receberá o email e precisará completar o pagamento no Stripe para acessar o sistema."
+                  : "O email foi enviado e o link está pronto para compartilhar:"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -300,6 +321,34 @@ export default function AdminConvites() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Toggle for payment requirement */}
+              {formData.plan_type !== "free" && (
+                <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/20">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      {formData.requires_payment ? (
+                        <CreditCard className="h-4 w-4 text-yellow-500" />
+                      ) : (
+                        <Gift className="h-4 w-4 text-green-500" />
+                      )}
+                      <Label htmlFor="requires_payment" className="font-medium cursor-pointer">
+                        {formData.requires_payment ? "Exigir pagamento Stripe" : "Liberar acesso direto"}
+                      </Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {formData.requires_payment 
+                        ? "Cliente só acessa após pagar no Stripe" 
+                        : "Cliente acessa imediatamente (pagamento já recebido por fora)"}
+                    </p>
+                  </div>
+                  <Switch
+                    id="requires_payment"
+                    checked={formData.requires_payment}
+                    onCheckedChange={(checked) => setFormData({ ...formData, requires_payment: checked })}
+                  />
+                </div>
+              )}
 
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button 

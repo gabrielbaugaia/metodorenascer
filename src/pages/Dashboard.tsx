@@ -7,7 +7,7 @@ import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useAchievements } from "@/hooks/useAchievements";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
-import { Target, Utensils, Brain, BookOpen, MessageCircle, Trophy, ClipboardCheck } from "lucide-react";
+import { Target, Utensils, Brain, BookOpen, MessageCircle, Trophy, ClipboardCheck, CreditCard, Lock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
@@ -18,7 +18,7 @@ import { StreakDisplay } from "@/components/gamification/StreakDisplay";
 import { AchievementsGrid } from "@/components/gamification/AchievementsGrid";
 import { WeeklyCheckinModal } from "@/components/checkin/WeeklyCheckinModal";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const DASHBOARD_CARDS = [
   {
@@ -117,6 +117,7 @@ export default function Dashboard() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showWeeklyCheckin, setShowWeeklyCheckin] = useState(false);
   const [canDoWeeklyCheckin, setCanDoWeeklyCheckin] = useState(false);
+  const [pendingPaymentInfo, setPendingPaymentInfo] = useState<{ planType: string; planName: string; priceId?: string } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -155,6 +156,40 @@ export default function Dashboard() {
     checkWeeklyCheckin();
   }, [user, showWeeklyCheckin]);
 
+  // Check for pending payment status
+  useEffect(() => {
+    const checkPendingPayment = async () => {
+      if (!user || isAdmin) return;
+      
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("status, plan_type, plan_name")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (data?.status === "pending_payment") {
+        // Map plan_type to Stripe price ID
+        const priceIdMap: Record<string, string> = {
+          elite_founder: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
+          mensal: "price_1ScZrECuFZvf5xFdfS9W8kvY",
+          trimestral: "price_1ScZsTCuFZvf5xFdbW8kJeQF",
+          semestral: "price_1ScZtrCuFZvf5xFd8iXDfbEp",
+          anual: "price_1ScZvCCuFZvf5xFdjrs51JQB",
+        };
+        
+        setPendingPaymentInfo({
+          planType: data.plan_type || "mensal",
+          planName: data.plan_name || "Plano",
+          priceId: priceIdMap[data.plan_type || "mensal"],
+        });
+      }
+    };
+    
+    checkPendingPayment();
+  }, [user, isAdmin]);
+
   useEffect(() => {
     const checkAnamneseAndGetName = async () => {
       if (!user) return;
@@ -178,7 +213,8 @@ export default function Dashboard() {
         
         // Redirect to anamnese only for subscribed non-admin users with incomplete anamnese
         // Admins bypass anamnese requirement entirely
-        if (!anamneseComplete && subscribed && !isAdmin) {
+        // Don't redirect if pending payment
+        if (!anamneseComplete && subscribed && !isAdmin && !pendingPaymentInfo) {
           navigate("/anamnese");
         }
       } catch (error) {
@@ -191,7 +227,7 @@ export default function Dashboard() {
     if (!subLoading) {
       checkAnamneseAndGetName();
     }
-  }, [user, subscribed, isAdmin, subLoading, navigate]);
+  }, [user, subscribed, isAdmin, subLoading, navigate, pendingPaymentInfo]);
 
   const handleManageSubscription = async () => {
     try {
@@ -221,6 +257,60 @@ export default function Dashboard() {
 
   if (isLoading) {
     return <FullPageLoader />;
+  }
+
+  // Show pending payment screen
+  if (pendingPaymentInfo && !isAdmin) {
+    const handlePayNow = async () => {
+      if (pendingPaymentInfo.priceId) {
+        try {
+          await createCheckout(pendingPaymentInfo.priceId);
+        } catch (error) {
+          toast({
+            title: "Erro",
+            description: "Não foi possível iniciar o pagamento",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+
+    return (
+      <ClientLayout>
+        <div className="container mx-auto max-w-lg py-12">
+          <Card className="border-yellow-500/30 bg-yellow-500/5">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mb-4">
+                <Lock className="w-8 h-8 text-yellow-500" />
+              </div>
+              <CardTitle className="text-2xl">Pagamento Pendente</CardTitle>
+              <CardDescription>
+                Seu acesso está aguardando a confirmação do pagamento
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-muted/30 rounded-lg p-4 text-center">
+                <p className="text-sm text-muted-foreground mb-1">Plano selecionado</p>
+                <p className="text-lg font-semibold text-primary">{pendingPaymentInfo.planName}</p>
+              </div>
+              
+              <p className="text-sm text-muted-foreground text-center">
+                Complete o pagamento para desbloquear todas as funcionalidades do Método Renascer, incluindo treinos, nutrição e suporte com o mentor.
+              </p>
+
+              <Button onClick={handlePayNow} variant="fire" className="w-full" size="lg">
+                <CreditCard className="mr-2 h-5 w-5" />
+                Pagar Agora
+              </Button>
+              
+              <p className="text-xs text-muted-foreground text-center">
+                Pagamento seguro via Stripe. Após a confirmação, seu acesso será liberado automaticamente.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </ClientLayout>
+    );
   }
 
   if (!subscribed && !isAdmin) {

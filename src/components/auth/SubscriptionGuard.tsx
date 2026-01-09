@@ -13,6 +13,8 @@ interface SubscriptionGuardProps {
 interface LocalSubscriptionState {
   hasSubscription: boolean;
   isBlocked: boolean;
+  isPendingPayment: boolean;
+  pendingPlanType?: string;
 }
 
 /**
@@ -41,34 +43,43 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
       try {
         const { data, error } = await supabase
           .from("subscriptions")
-          .select("status, current_period_end, access_blocked")
+          .select("status, current_period_end, access_blocked, plan_type")
           .eq("user_id", user.id)
-          .in("status", ["active", "trialing", "free"])
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
 
         if (error) {
           console.error("Error checking local subscription:", error);
-          setLocalState({ hasSubscription: false, isBlocked: false });
+          setLocalState({ hasSubscription: false, isBlocked: false, isPendingPayment: false });
         } else if (data) {
           // Check if access is blocked (for expired free plans)
           const isBlocked = data.access_blocked === true;
           
+          // Check if pending payment (invited but not paid yet)
+          const isPendingPayment = data.status === "pending_payment";
+          
           if (isBlocked) {
-            setLocalState({ hasSubscription: false, isBlocked: true });
+            setLocalState({ hasSubscription: false, isBlocked: true, isPendingPayment: false });
+          } else if (isPendingPayment) {
+            setLocalState({ 
+              hasSubscription: false, 
+              isBlocked: false, 
+              isPendingPayment: true,
+              pendingPlanType: data.plan_type || undefined
+            });
           } else {
             // Check if subscription is still valid
             const isActive = data.status === "active" || data.status === "trialing" || data.status === "free";
             const notExpired = !data.current_period_end || new Date(data.current_period_end) > new Date();
-            setLocalState({ hasSubscription: isActive && notExpired, isBlocked: false });
+            setLocalState({ hasSubscription: isActive && notExpired, isBlocked: false, isPendingPayment: false });
           }
         } else {
-          setLocalState({ hasSubscription: false, isBlocked: false });
+          setLocalState({ hasSubscription: false, isBlocked: false, isPendingPayment: false });
         }
       } catch (err) {
         console.error("Error checking subscription:", err);
-        setLocalState({ hasSubscription: false, isBlocked: false });
+        setLocalState({ hasSubscription: false, isBlocked: false, isPendingPayment: false });
       } finally {
         setCheckingLocal(false);
       }
@@ -80,6 +91,8 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
   // Derive values from state
   const hasLocalSubscription = localState?.hasSubscription ?? false;
   const isBlocked = localState?.isBlocked ?? false;
+  const isPendingPayment = localState?.isPendingPayment ?? false;
+  const pendingPlanType = localState?.pendingPlanType;
 
   const isLoading = authLoading || subLoading || adminLoading || checkingLocal;
 
@@ -105,7 +118,14 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
       navigate("/acesso-bloqueado");
       return;
     }
-  }, [isLoading, user, isAdmin, isBlocked, navigate]);
+
+    // Redirect to payment if pending payment
+    if (isPendingPayment) {
+      // Navigate to dashboard which will show the payment required message
+      navigate("/dashboard");
+      return;
+    }
+  }, [isLoading, user, isAdmin, isBlocked, isPendingPayment, navigate]);
 
   // Redirect to dashboard (plan selection) if no subscription
   useEffect(() => {
