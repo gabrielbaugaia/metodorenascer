@@ -26,6 +26,7 @@ import {
   Unlock,
   Trash2,
   AlertTriangle,
+  Mail,
 } from "lucide-react";
 import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
@@ -130,6 +131,9 @@ export default function AdminClienteDetalhes() {
       costas: null,
     }
   );
+  const [updateEmailOpen, setUpdateEmailOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [updatingEmail, setUpdatingEmail] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -417,6 +421,41 @@ export default function AdminClienteDetalhes() {
       toast.error(error.message || "Erro ao redefinir senha");
     } finally {
       setResettingPassword(false);
+    }
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!id || !newEmail) {
+      toast.error("Digite o novo email");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      toast.error("Formato de email inválido");
+      return;
+    }
+
+    setUpdatingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-update-email", {
+        body: { userId: id, newEmail },
+      });
+
+      if (error) throw error;
+
+      toast.success("Email atualizado com sucesso!");
+      setUpdateEmailOpen(false);
+      setNewEmail("");
+      
+      if (profile) {
+        setProfile({ ...profile, email: newEmail });
+      }
+    } catch (error: any) {
+      console.error("Error updating email:", error);
+      toast.error(error.message || "Erro ao atualizar email");
+    } finally {
+      setUpdatingEmail(false);
     }
   };
 
@@ -754,6 +793,61 @@ export default function AdminClienteDetalhes() {
                 </Dialog>
                 <p className="text-xs text-muted-foreground mt-1">
                   Cria uma senha provisória para o cliente acessar
+                </p>
+              </div>
+
+              {/* Update Email */}
+              <div>
+                <Label className="mb-2 block">Alterar Email</Label>
+                <Dialog open={updateEmailOpen} onOpenChange={setUpdateEmailOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full" size="sm">
+                      <Mail className="h-4 w-4 mr-2" />
+                      <span className="text-xs sm:text-sm">Alterar Email do Cliente</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Alterar Email do Cliente</DialogTitle>
+                      <DialogDescription>
+                        Email atual: <strong>{profile.email}</strong>
+                        <br />
+                        Digite o novo email para {profile.full_name}.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="newEmail">Novo Email</Label>
+                        <Input
+                          id="newEmail"
+                          type="email"
+                          placeholder="novo@email.com"
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setUpdateEmailOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button 
+                        variant="fire" 
+                        onClick={handleUpdateEmail}
+                        disabled={updatingEmail || !newEmail}
+                      >
+                        {updatingEmail ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Mail className="h-4 w-4 mr-2" />
+                        )}
+                        Atualizar Email
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Altera o email de login do cliente
                 </p>
               </div>
 
