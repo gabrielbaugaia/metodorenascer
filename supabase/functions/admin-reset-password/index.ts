@@ -65,7 +65,22 @@ serve(async (req) => {
 
     if (updateError) {
       console.error("Error updating password:", updateError);
-      return createErrorResponse(req, "Erro ao atualizar senha", 400);
+      
+      // Map known error messages to user-friendly Portuguese messages
+      let userMessage = "Erro ao atualizar senha";
+      const errorMessage = updateError.message.toLowerCase();
+      
+      if (errorMessage.includes("weak") || errorMessage.includes("compromised") || errorMessage.includes("pwned")) {
+        userMessage = "Senha muito fraca ou já foi comprometida em vazamentos de dados. Use uma senha mais forte com letras maiúsculas, minúsculas, números e símbolos (ex: Cliente@2024!).";
+      } else if (errorMessage.includes("same") || errorMessage.includes("different")) {
+        userMessage = "A nova senha não pode ser igual à senha atual.";
+      } else if (errorMessage.includes("short") || errorMessage.includes("length") || errorMessage.includes("at least")) {
+        userMessage = "A senha deve ter pelo menos 6 caracteres.";
+      } else if (errorMessage.includes("common") || errorMessage.includes("simple")) {
+        userMessage = "Senha muito comum. Use uma combinação única de caracteres.";
+      }
+      
+      return createErrorResponse(req, userMessage, 400);
     }
 
     return createSuccessResponse(req, { success: true, message: "Senha atualizada com sucesso" });
