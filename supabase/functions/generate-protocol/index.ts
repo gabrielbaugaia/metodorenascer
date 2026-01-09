@@ -105,19 +105,43 @@ serve(async (req) => {
     const hasRecentProtocol = existingProtocols && existingProtocols.length > 0;
     const isAdjustment = !!adjustments || !!evolutionAdjustments;
     
-    // Monthly limit logic:
-    // - Client: Can generate FIRST protocol only (if no protocol this month)
-    // - Admin: Can always generate/regenerate (bypass limit for adjustments)
-    if (hasRecentProtocol) {
-      if (!isAdmin) {
-        // Client trying to generate a second protocol this month - BLOCKED
-        console.log(`Client ${user.id} already has a ${tipo} protocol from this month. Only admin can regenerate.`);
+    // Monthly limit logic for clients:
+    // - First protocol: Can generate (no previous protocol this month)
+    // - After 30 days: Can ONLY generate if they submitted evolution photos (checkin)
+    // - Admin: Can always generate/regenerate
+    if (hasRecentProtocol && !isAdmin) {
+      // Check if client submitted evolution photos (checkin) after their last protocol
+      const lastProtocolDate = existingProtocols[0].created_at;
+      
+      const { data: recentCheckin, error: checkinError } = await supabaseClient
+        .from("checkins")
+        .select("id, created_at, foto_url")
+        .eq("user_id", targetUserId)
+        .gt("created_at", lastProtocolDate)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (checkinError) {
+        console.error("Error checking recent checkin:", checkinError);
+      }
+      
+      const hasSubmittedEvolutionPhotos = recentCheckin && recentCheckin.foto_url;
+      
+      if (!hasSubmittedEvolutionPhotos) {
+        // Client has protocol this month but hasn't submitted evolution photos - BLOCKED
+        console.log(`Client ${user.id} hasn't submitted evolution photos since last protocol. Only admin can regenerate.`);
         return createErrorResponse(
           req, 
-          `Você já possui um protocolo de ${tipo} gerado este mês. Solicite ajustes ao seu mentor pelo chat de suporte.`, 
+          `Para gerar um novo protocolo, envie suas fotos de evolução na página Evolução. Apenas após o envio das fotos você poderá gerar novos protocolos.`, 
           400
         );
       }
+      
+      console.log(`Client ${user.id} has submitted evolution photos. Allowing new ${tipo} protocol generation.`);
+    }
+    
+    if (hasRecentProtocol && isAdmin) {
       // Admin can regenerate with or without adjustments
       console.log(`Admin regenerating ${tipo} protocol for user ${targetUserId}. Adjustment: ${isAdjustment}`);
     }
