@@ -83,22 +83,84 @@ serve(async (req) => {
         const subscriptionId = session.subscription as string;
         let userId = session.metadata?.user_id;
         
-        if (!userId) {
-          const customer = await stripe.customers.retrieve(customerId);
-          if (!customer.deleted && "email" in customer && customer.email) {
-            const { data } = await supabase
+        // Retrieve customer to get email
+        const customer = await stripe.customers.retrieve(customerId);
+        const customerEmail = !customer.deleted && "email" in customer ? customer.email : null;
+        
+        // If no user_id in metadata or it's "guest", try to find or create user
+        if (!userId || userId === "guest") {
+          if (customerEmail) {
+            // Check if user already exists with this email
+            const { data: existingProfile } = await supabase
               .from("profiles")
               .select("id")
-              .eq("email", customer.email)
+              .eq("email", customerEmail)
               .maybeSingle();
-            userId = data?.id;
+            
+            if (existingProfile) {
+              userId = existingProfile.id;
+              logStep("Found existing user by email", { userId, email: customerEmail });
+            } else {
+              // Guest checkout - create new account automatically
+              logStep("Creating new account for guest", { email: customerEmail });
+              
+              // Generate temporary password
+              const tempPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+              
+              // Create new user account
+              const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+                email: customerEmail,
+                password: tempPassword,
+                email_confirm: true, // Auto-confirm email
+              });
+              
+              if (createError) {
+                logStep("Error creating user", { error: createError.message });
+              } else if (newUser?.user) {
+                userId = newUser.user.id;
+                logStep("User created successfully", { userId });
+                
+                // Update profile with customer info (trigger creates basic profile)
+                const customerName = !customer.deleted && "name" in customer ? customer.name : null;
+                await supabase
+                  .from("profiles")
+                  .update({
+                    email: customerEmail,
+                    full_name: customerName || customerEmail.split("@")[0],
+                  })
+                  .eq("id", userId);
+                
+                // Save pending login for automatic login on CheckoutSuccess
+                const { error: pendingError } = await supabase
+                  .from("pending_logins")
+                  .insert({
+                    session_id: session.id,
+                    user_id: userId,
+                    temp_password: tempPassword,
+                  });
+                
+                if (pendingError) {
+                  logStep("Error saving pending login", { error: pendingError.message });
+                } else {
+                  logStep("Pending login saved for auto-login");
+                }
+              }
+            }
           }
+        } else if (!userId && customerEmail) {
+          // Authenticated checkout but no user_id in metadata - find by email
+          const { data } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("email", customerEmail)
+            .maybeSingle();
+          userId = data?.id;
         }
         
         if (userId) {
           await upsertSubscription(stripe, supabase, subscriptionId, customerId, userId);
         } else {
-          logStep("Could not find user for checkout session");
+          logStep("Could not find or create user for checkout session");
         }
         break;
       }

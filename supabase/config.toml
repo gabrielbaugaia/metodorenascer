@@ -71,3 +71,6 @@ verify_jwt = true
 
 [functions.check-free-expiration]
 verify_jwt = false
+
+[functions.complete-guest-checkout]
+verify_jwt = false
