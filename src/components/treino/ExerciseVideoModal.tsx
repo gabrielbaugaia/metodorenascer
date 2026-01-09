@@ -90,12 +90,16 @@ export function ExerciseVideoModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Loading state */}
+          {/* Loading state with skeleton */}
           {loading && (
-            <div className="relative aspect-square max-h-[400px] rounded-xl overflow-hidden bg-muted flex items-center justify-center">
-              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                <Loader2 className="w-8 h-8 animate-spin" />
-                <span>Carregando demonstração...</span>
+            <div className="space-y-3">
+              <div className="relative aspect-square max-h-[400px] rounded-xl overflow-hidden">
+                <Skeleton className="w-full h-full animate-pulse" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-6 w-24 rounded-full" />
+                <Skeleton className="h-6 w-16 rounded-full" />
               </div>
             </div>
           )}
