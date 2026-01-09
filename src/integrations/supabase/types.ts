@@ -449,6 +449,45 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_gifs: {
+        Row: {
+          api_source: string | null
+          created_at: string
+          exercise_name_en: string
+          exercise_name_pt: string
+          gif_url: string | null
+          id: string
+          last_checked_at: string | null
+          muscle_group: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          api_source?: string | null
+          created_at?: string
+          exercise_name_en: string
+          exercise_name_pt: string
+          gif_url?: string | null
+          id?: string
+          last_checked_at?: string | null
+          muscle_group: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          api_source?: string | null
+          created_at?: string
+          exercise_name_en?: string
+          exercise_name_pt?: string
+          gif_url?: string | null
+          id?: string
+          last_checked_at?: string | null
+          muscle_group?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exercise_videos: {
         Row: {
           created_at: string | null
