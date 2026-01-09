@@ -100,6 +100,18 @@ serve(async (req) => {
             if (existingProfile) {
               userId = existingProfile.id;
               logStep("Found existing user by email", { userId, email: customerEmail });
+              
+              // Check if this user has a pending_payment subscription to update
+              const { data: pendingSub } = await supabase
+                .from("subscriptions")
+                .select("id, status")
+                .eq("user_id", userId)
+                .eq("status", "pending_payment")
+                .maybeSingle();
+              
+              if (pendingSub) {
+                logStep("Found pending_payment subscription, will update to active", { subId: pendingSub.id });
+              }
             } else {
               // Guest checkout - create new account automatically
               logStep("Creating new account for guest", { email: customerEmail });
@@ -158,6 +170,7 @@ serve(async (req) => {
         }
         
         if (userId) {
+          // Upsert will update pending_payment subscription to active
           await upsertSubscription(stripe, supabase, subscriptionId, customerId, userId);
         } else {
           logStep("Could not find or create user for checkout session");
