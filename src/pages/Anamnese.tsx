@@ -121,6 +121,29 @@ export default function Anamnese() {
     }
   }, [user, authLoading, navigate]);
 
+  // Check if user has pending payment - must pay before anamnese
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      if (!user) return;
+      
+      const { data: subscription } = await supabase
+        .from("subscriptions")
+        .select("status")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      // If pending payment, redirect to dashboard to show payment screen
+      if (subscription?.status === "pending_payment") {
+        navigate("/dashboard");
+        return;
+      }
+    };
+    
+    checkPaymentStatus();
+  }, [user, navigate]);
+
   // Check if user already completed anamnese
   useEffect(() => {
     const checkProfile = async () => {
