@@ -55,14 +55,15 @@ export function useSubscription() {
   }, [session?.access_token]);
 
   const createCheckout = useCallback(async (priceId?: string, applyReferralDiscount?: boolean) => {
-    if (!session?.access_token) {
-      throw new Error("User not authenticated");
+    // Allow checkout for both authenticated and guest users
+    const headers: Record<string, string> = {};
+    
+    if (session?.access_token) {
+      headers.Authorization = `Bearer ${session.access_token}`;
     }
 
     const { data, error } = await supabase.functions.invoke("create-checkout", {
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
+      headers,
       body: { 
         price_id: priceId,
         apply_referral_discount: applyReferralDiscount ?? false

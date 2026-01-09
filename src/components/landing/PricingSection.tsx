@@ -92,12 +92,9 @@ export function PricingSection() {
   });
 
   const handleSelectPlan = async (priceId: string) => {
-    if (!user) {
-      toast.info("Faça login para continuar com a assinatura");
-      navigate("/auth");
-      return;
-    }
     try {
+      // Allow checkout for both logged in and guest users
+      // Stripe will collect email for guests
       await createCheckout(priceId);
     } catch (error) {
       console.error("Error creating checkout:", error);

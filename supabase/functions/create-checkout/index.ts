@@ -84,63 +84,80 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
+    // Check if user is authenticated (optional for guest checkout)
+    let user: { id: string; email: string } | null = null;
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
-
-    // Check user's cashback balance
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .select("cashback_balance")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      logStep("Error fetching profile", { error: profileError.message });
+    if (authHeader && authHeader !== "Bearer undefined" && authHeader !== "Bearer null") {
+      const token = authHeader.replace("Bearer ", "");
+      if (token && token !== "undefined" && token !== "null") {
+        const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+        
+        if (!userError && userData.user?.email) {
+          user = { id: userData.user.id, email: userData.user.email };
+          logStep("User authenticated", { userId: user.id, email: user.email });
+        }
+      }
     }
 
-    const cashbackBalance = profileData?.cashback_balance || 0;
-    const hasCashback = cashbackBalance > 0;
-    logStep("Cashback balance checked", { cashbackBalance, hasCashback });
+    // For guest users, proceed without authentication
+    if (!user) {
+      logStep("Guest checkout - no authentication");
+    }
+
+    // Check user's cashback balance (only for authenticated users)
+    let cashbackBalance = 0;
+    let hasCashback = false;
+
+    if (user) {
+      const { data: profileData, error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .select("cashback_balance")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        logStep("Error fetching profile", { error: profileError.message });
+      }
+
+      cashbackBalance = profileData?.cashback_balance || 0;
+      hasCashback = cashbackBalance > 0;
+      logStep("Cashback balance checked", { cashbackBalance, hasCashback });
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Check if customer already exists
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    // Check if customer already exists (only if user is authenticated)
     let customerId: string | undefined;
     
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Existing customer found", { customerId });
+    if (user) {
+      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+      
+      if (customers.data.length > 0) {
+        customerId = customers.data[0].id;
+        logStep("Existing customer found", { customerId });
 
-      // Check for active subscription
-      const subscriptions = await stripe.subscriptions.list({
-        customer: customerId,
-        status: "active",
-        limit: 1,
-      });
+        // Check for active subscription
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customerId,
+          status: "active",
+          limit: 1,
+        });
 
-      if (subscriptions.data.length > 0) {
-        logStep("User already has active subscription");
-        return new Response(
-          JSON.stringify({ error: "Você já possui uma assinatura ativa." }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-        );
+        if (subscriptions.data.length > 0) {
+          logStep("User already has active subscription");
+          return new Response(
+            JSON.stringify({ error: "Você já possui uma assinatura ativa." }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+          );
+        }
       }
     }
 
     // Create or retrieve a 10% discount coupon for referral cashback
     let discountCouponId: string | undefined;
     
-    if (hasCashback && applyReferralDiscount) {
+    if (user && hasCashback && applyReferralDiscount) {
       try {
         // Try to retrieve existing coupon
         const existingCoupon = await stripe.coupons.retrieve("REFERRAL_CASHBACK_10");
@@ -172,11 +189,11 @@ serve(async (req) => {
       }
     }
 
-    const origin = req.headers.get("origin") || "https://lxdosmjenbaugmhyfanx.lovableproject.com";
+    const origin = req.headers.get("origin") || "https://renascerapp.com.br";
     
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+      customer_email: customerId ? undefined : (user?.email || undefined),
       line_items: [
         {
           price: priceId,
@@ -185,9 +202,9 @@ serve(async (req) => {
       ],
       mode: "subscription",
       success_url: `${origin}/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/dashboard`,
+      cancel_url: `${origin}/`,
       metadata: {
-        user_id: user.id,
+        user_id: user?.id || "guest",
         cashback_applied: hasCashback && applyReferralDiscount ? "true" : "false",
       },
     };
