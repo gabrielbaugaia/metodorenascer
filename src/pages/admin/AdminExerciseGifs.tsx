@@ -902,6 +902,102 @@ export default function AdminExerciseGifs() {
           </Card>
         </div>
 
+        {/* Coverage Dashboard by Muscle Group */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5" />
+              Cobertura por Grupo Muscular
+            </CardTitle>
+            <CardDescription>
+              Porcentagem de exercícios com GIF ativo por grupo muscular
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {MUSCLE_GROUPS.map((group) => {
+                const groupGifs = gifs.filter((g) => g.muscle_group === group);
+                const totalGroup = groupGifs.length;
+                const activeGroup = groupGifs.filter((g) => g.status === "active").length;
+                const pendingGroup = groupGifs.filter((g) => g.status === "pending").length;
+                const missingGroup = groupGifs.filter((g) => g.status === "missing").length;
+                const coverage = totalGroup > 0 ? Math.round((activeGroup / totalGroup) * 100) : 0;
+                
+                // Determine color based on coverage
+                let progressColor = "bg-red-500";
+                let textColor = "text-red-600";
+                if (coverage >= 80) {
+                  progressColor = "bg-green-500";
+                  textColor = "text-green-600";
+                } else if (coverage >= 50) {
+                  progressColor = "bg-yellow-500";
+                  textColor = "text-yellow-600";
+                } else if (coverage >= 25) {
+                  progressColor = "bg-orange-500";
+                  textColor = "text-orange-600";
+                }
+
+                return (
+                  <div
+                    key={group}
+                    className="p-4 rounded-lg border bg-card hover:border-primary/50 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setFilterMuscle(group);
+                      setFilterStatus("all");
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm">{group}</span>
+                      <span className={`text-lg font-bold ${textColor}`}>{coverage}%</span>
+                    </div>
+                    
+                    {/* Progress bar */}
+                    <div className="h-2 bg-muted rounded-full overflow-hidden mb-3">
+                      <div
+                        className={`h-full ${progressColor} transition-all duration-500`}
+                        style={{ width: `${coverage}%` }}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-green-500" />
+                          {activeGroup}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                          {pendingGroup}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-red-500" />
+                          {missingGroup}
+                        </span>
+                      </div>
+                      <span className="text-muted-foreground/70">{totalGroup} total</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Legend */}
+            <div className="flex flex-wrap items-center gap-6 mt-4 pt-4 border-t text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span>Ativo (GIF cadastrado)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <span>Pendente (aguardando GIF)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <span>Faltando (sem GIF)</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         {/* Actions */}
         <div className="flex flex-wrap gap-3 mb-6">
           <Button
