@@ -31,6 +31,7 @@ import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminSuporteChats from "./pages/admin/AdminSuporteChats";
 import AdminMensagens from "./pages/admin/AdminMensagens";
 import AdminVideos from "./pages/admin/AdminVideos";
+import AdminExerciseGifs from "./pages/admin/AdminExerciseGifs";
 import MeuPerfil from "./pages/MeuPerfil";
 import Indicacoes from "./pages/Indicacoes";
 import RedefinirSenha from "./pages/RedefinirSenha";
@@ -96,6 +97,7 @@ const App = () => (
             <Route path="/admin/suporte-chats" element={<AdminSuporteChats />} />
             <Route path="/admin/mensagens" element={<AdminMensagens />} />
             <Route path="/admin/videos" element={<AdminVideos />} />
+            <Route path="/admin/gifs" element={<AdminExerciseGifs />} />
             <Route path="/admin/planos-venda" element={<AdminPlanosVenda />} />
             <Route path="/admin/metricas" element={<AdminMetricas />} />
             <Route path="/admin/convites" element={<AdminConvites />} />
