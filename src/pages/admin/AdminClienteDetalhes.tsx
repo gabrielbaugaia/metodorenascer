@@ -27,6 +27,7 @@ import {
   Trash2,
   AlertTriangle,
   Mail,
+  RefreshCw,
 } from "lucide-react";
 import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
@@ -134,6 +135,7 @@ export default function AdminClienteDetalhes() {
   const [updateEmailOpen, setUpdateEmailOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [updatingEmail, setUpdatingEmail] = useState(false);
+  const [syncingStripe, setSyncingStripe] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -459,6 +461,31 @@ export default function AdminClienteDetalhes() {
     }
   };
 
+  const handleSyncStripe = async () => {
+    if (!id) return;
+
+    setSyncingStripe(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-stripe-subscription", {
+        body: { user_id: id },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success(data.message || "Assinatura sincronizada com sucesso!");
+        fetchSubscription();
+      } else {
+        toast.error(data?.message || "Não foi possível sincronizar a assinatura");
+      }
+    } catch (error: any) {
+      console.error("Error syncing Stripe:", error);
+      toast.error(error.message || "Erro ao sincronizar com Stripe");
+    } finally {
+      setSyncingStripe(false);
+    }
+  };
+
   const handleDownloadAnamnesePdf = async () => {
     if (!profile) return;
     
@@ -674,6 +701,27 @@ export default function AdminClienteDetalhes() {
                     </div>
                   </div>
                 )}
+
+                {/* Sync Stripe Button */}
+                <div className="pt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleSyncStripe}
+                    disabled={syncingStripe}
+                    className="w-full"
+                  >
+                    {syncingStripe ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    <span className="text-xs sm:text-sm">Sincronizar Stripe</span>
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Atualiza o status da assinatura diretamente do Stripe
+                  </p>
+                </div>
               </div>
 
               {/* Generate Protocols */}

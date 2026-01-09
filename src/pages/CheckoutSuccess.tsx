@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -15,8 +15,40 @@ export default function CheckoutSuccess() {
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
+  const [checkoutFinalized, setCheckoutFinalized] = useState(false);
 
   const sessionId = searchParams.get("session_id");
+
+  // Finalize checkout directly with Stripe (doesn't depend on webhook)
+  const finalizeCheckout = useCallback(async () => {
+    if (!sessionId || checkoutFinalized) return false;
+
+    try {
+      console.log("[CheckoutSuccess] Finalizing checkout with session:", sessionId);
+      
+      const { data, error: fnError } = await supabase.functions.invoke(
+        "finalize-checkout",
+        { body: { session_id: sessionId } }
+      );
+
+      if (fnError) {
+        console.error("[CheckoutSuccess] Finalize error:", fnError);
+        return false;
+      }
+
+      if (data?.success) {
+        console.log("[CheckoutSuccess] Checkout finalized successfully:", data);
+        setCheckoutFinalized(true);
+        return true;
+      }
+
+      console.log("[CheckoutSuccess] Finalize response:", data);
+      return false;
+    } catch (err) {
+      console.error("[CheckoutSuccess] Finalize error:", err);
+      return false;
+    }
+  }, [sessionId, checkoutFinalized]);
 
   // Handle guest checkout auto-login
   useEffect(() => {
@@ -30,7 +62,7 @@ export default function CheckoutSuccess() {
 
       try {
         // Wait a bit for webhook to process
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         const { data, error: fnError } = await supabase.functions.invoke(
           "complete-guest-checkout",
@@ -39,8 +71,6 @@ export default function CheckoutSuccess() {
 
         if (fnError) {
           console.error("Guest checkout error:", fnError);
-          // Token might not exist yet - webhook might not have processed
-          // Redirect to auth as fallback
           navigate("/auth");
           return;
         }
@@ -48,7 +78,7 @@ export default function CheckoutSuccess() {
         if (data?.error) {
           if (data.error === "not_found") {
             // Webhook might not have processed yet, wait and retry once
-            await new Promise((resolve) => setTimeout(resolve, 3000));
+            await new Promise((resolve) => setTimeout(resolve, 2000));
             const { data: retryData } = await supabase.functions.invoke(
               "complete-guest-checkout",
               { body: { session_id: sessionId } }
@@ -69,7 +99,6 @@ export default function CheckoutSuccess() {
             }
           }
 
-          // Other errors - redirect to auth
           navigate("/auth");
           return;
         }
@@ -95,7 +124,7 @@ export default function CheckoutSuccess() {
     completeGuestCheckout();
   }, [user, sessionId, autoLoginAttempted, authLoading, navigate]);
 
-  // Verify subscription and redirect when user is logged in
+  // Verify subscription and finalize checkout when user is logged in
   useEffect(() => {
     if (authLoading) return;
 
@@ -104,18 +133,30 @@ export default function CheckoutSuccess() {
       return;
     }
 
-    if (user) {
-      const verifyAndRedirect = async () => {
+    if (user && sessionId) {
+      const verifyAndFinalize = async () => {
         setChecking(true);
-        // Wait for webhook to process subscription
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        
+        // First, try to finalize checkout directly (doesn't depend on webhook)
+        await finalizeCheckout();
+        
+        // Then check subscription status
         await checkSubscription();
+        
         setChecking(false);
       };
 
-      verifyAndRedirect();
+      verifyAndFinalize();
+    } else if (user) {
+      // User logged in but no session_id - just check subscription
+      const verify = async () => {
+        setChecking(true);
+        await checkSubscription();
+        setChecking(false);
+      };
+      verify();
     }
-  }, [user, authLoading, sessionId, navigate, checkSubscription]);
+  }, [user, authLoading, sessionId, navigate, checkSubscription, finalizeCheckout]);
 
   // Redirect to anamnese when subscription is confirmed
   useEffect(() => {

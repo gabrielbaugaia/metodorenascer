@@ -120,12 +120,13 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
     }
 
     // Redirect to payment if pending payment
-    if (isPendingPayment) {
+    // BUT: if Stripe says subscribed, don't redirect (local DB might be outdated)
+    if (isPendingPayment && !subscribed) {
       // Navigate to dashboard which will show the payment required message
       navigate("/dashboard");
       return;
     }
-  }, [isLoading, user, isAdmin, isBlocked, isPendingPayment, navigate]);
+  }, [isLoading, user, isAdmin, isBlocked, isPendingPayment, subscribed, navigate]);
 
   // Redirect to dashboard (plan selection) if no subscription
   useEffect(() => {
