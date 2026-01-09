@@ -1,55 +1,6 @@
-import { memo, useState, useEffect } from "react";
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Clock, Users } from "lucide-react";
-
-const UrgencyCounter = memo(function UrgencyCounter() {
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
-  const [spotsLeft] = useState(7);
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const endOfDay = new Date();
-      endOfDay.setHours(23, 59, 59, 999);
-      const diff = endOfDay.getTime() - now.getTime();
-      
-      return {
-        hours: Math.floor(diff / (1000 * 60 * 60)),
-        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((diff % (1000 * 60)) / 1000),
-      };
-    };
-
-    setTimeLeft(calculateTimeLeft());
-    const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const pad = (n: number) => n.toString().padStart(2, '0');
-
-  return (
-    <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6 px-4 py-3 rounded-xl bg-card/50 border border-primary/20 backdrop-blur-sm">
-      <div className="flex items-center gap-2 text-primary">
-        <Users className="w-4 h-4" />
-        <span className="text-sm font-medium">
-          Apenas <span className="font-bold">{spotsLeft} vagas</span> restantes
-        </span>
-      </div>
-      <div className="hidden sm:block w-px h-6 bg-border" />
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Clock className="w-4 h-4" />
-        <span className="text-sm">Oferta expira em:</span>
-        <div className="flex gap-1 font-mono font-bold text-primary">
-          <span className="bg-primary/10 px-1.5 py-0.5 rounded">{pad(timeLeft.hours)}</span>
-          <span>:</span>
-          <span className="bg-primary/10 px-1.5 py-0.5 rounded">{pad(timeLeft.minutes)}</span>
-          <span>:</span>
-          <span className="bg-primary/10 px-1.5 py-0.5 rounded">{pad(timeLeft.seconds)}</span>
-        </div>
-      </div>
-    </div>
-  );
-});
+import { ArrowRight } from "lucide-react";
 
 export const HeroSection = memo(function HeroSection() {
   return (
@@ -76,12 +27,9 @@ export const HeroSection = memo(function HeroSection() {
 
           {/* CTA Block - Tighter grouping */}
           <div 
-            className="animate-fade-in flex flex-col items-center gap-5" 
+            className="animate-fade-in flex flex-col items-center gap-4" 
             style={{ animationDelay: "0.25s" }}
           >
-            {/* Urgency Counter */}
-            <UrgencyCounter />
-
             <Button 
               variant="fire" 
               size="xl" 
