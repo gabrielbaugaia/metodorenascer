@@ -17,12 +17,12 @@ export const HeroSection = memo(function HeroSection() {
             </h1>
           </div>
 
-          {/* Subtitle - Better spacing and size */}
+          {/* Subtitle - Centered with highlight animation */}
           <p 
-            className="text-muted-foreground text-lg md:text-xl max-w-lg mx-auto animate-fade-in leading-relaxed font-light" 
+            className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto animate-fade-in leading-relaxed font-light text-center" 
             style={{ animationDelay: "0.15s" }}
           >
-            Para poucos que estão prontos para deixar a frustração para trás e finalmente se orgulhar do próprio reflexo.
+            Para <span className="text-foreground font-medium animate-pulse">poucos</span> que estão prontos para deixar a frustração para trás e finalmente se orgulhar do próprio reflexo.
           </p>
 
           {/* CTA Block - Tighter grouping */}
