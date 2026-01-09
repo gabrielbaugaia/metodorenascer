@@ -452,38 +452,56 @@ export type Database = {
       exercise_gifs: {
         Row: {
           api_source: string | null
+          body_parts: string[] | null
           created_at: string
+          equipments: string[] | null
+          exercise_db_id: string | null
           exercise_name_en: string
           exercise_name_pt: string
           gif_url: string | null
           id: string
+          instructions: string[] | null
           last_checked_at: string | null
           muscle_group: string
+          secondary_muscles: string[] | null
           status: string
+          target_muscles: string[] | null
           updated_at: string
         }
         Insert: {
           api_source?: string | null
+          body_parts?: string[] | null
           created_at?: string
+          equipments?: string[] | null
+          exercise_db_id?: string | null
           exercise_name_en: string
           exercise_name_pt: string
           gif_url?: string | null
           id?: string
+          instructions?: string[] | null
           last_checked_at?: string | null
           muscle_group: string
+          secondary_muscles?: string[] | null
           status?: string
+          target_muscles?: string[] | null
           updated_at?: string
         }
         Update: {
           api_source?: string | null
+          body_parts?: string[] | null
           created_at?: string
+          equipments?: string[] | null
+          exercise_db_id?: string | null
           exercise_name_en?: string
           exercise_name_pt?: string
           gif_url?: string | null
           id?: string
+          instructions?: string[] | null
           last_checked_at?: string | null
           muscle_group?: string
+          secondary_muscles?: string[] | null
           status?: string
+          target_muscles?: string[] | null
           updated_at?: string
         }
         Relationships: []

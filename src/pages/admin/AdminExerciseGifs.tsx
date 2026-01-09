@@ -59,9 +59,12 @@ import {
   FileSearch,
   FileText,
   Upload,
-  Zap
+  Zap,
+  Database
 } from "lucide-react";
 import { generateGifCoverageReportPdf } from "@/lib/generateGifCoverageReportPdf";
+import exercisesDatabase from "@/data/exercisesDatabase.json";
+import { ExerciseFromDb, getMuscleGroupFromExercise, GIF_BASE_URL } from "@/types/exerciseDatabase";
 
 interface ExerciseGif {
   id: string;
@@ -73,6 +76,12 @@ interface ExerciseGif {
   api_source: string | null;
   last_checked_at: string | null;
   created_at: string;
+  exercise_db_id?: string | null;
+  target_muscles?: string[] | null;
+  secondary_muscles?: string[] | null;
+  body_parts?: string[] | null;
+  equipments?: string[] | null;
+  instructions?: string[] | null;
 }
 
 interface MissingExercise {
@@ -437,6 +446,7 @@ export default function AdminExerciseGifs() {
 
   // Import state
   const [importing, setImporting] = useState(false);
+  const [importingDatabase, setImportingDatabase] = useState(false);
   const [scanningProtocols, setScanningProtocols] = useState(false);
   const [missingExercises, setMissingExercises] = useState<MissingExercise[]>([]);
   const [showMissingDialog, setShowMissingDialog] = useState(false);
@@ -859,6 +869,82 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  // Importar exercícios do arquivo JSON com dados enriquecidos
+  const handleImportFromDatabase = async () => {
+    setImportingDatabase(true);
+    try {
+      // Get existing exercises by exercise_db_id
+      const { data: existingGifs } = await supabase
+        .from("exercise_gifs")
+        .select("exercise_db_id, exercise_name_en");
+      
+      const existingDbIds = new Set(
+        (existingGifs || [])
+          .filter(g => g.exercise_db_id)
+          .map(g => g.exercise_db_id)
+      );
+      
+      const existingNames = new Set(
+        (existingGifs || []).map(g => g.exercise_name_en?.toLowerCase())
+      );
+
+      // Filter new exercises
+      const exercises = exercisesDatabase as ExerciseFromDb[];
+      const newExercises = exercises.filter(ex => 
+        !existingDbIds.has(ex.exerciseId) && 
+        !existingNames.has(ex.name.toLowerCase())
+      );
+
+      if (newExercises.length === 0) {
+        toast.info("Todos os exercícios da base já estão importados");
+        setImportingDatabase(false);
+        return;
+      }
+
+      // Prepare data for insert
+      const toInsert = newExercises.map(ex => ({
+        exercise_name_pt: ex.name.charAt(0).toUpperCase() + ex.name.slice(1), // Capitalize
+        exercise_name_en: ex.name,
+        gif_url: `${GIF_BASE_URL}${ex.gifUrl}`,
+        muscle_group: getMuscleGroupFromExercise(ex),
+        status: "active" as const,
+        api_source: "exercisedb-json",
+        exercise_db_id: ex.exerciseId,
+        target_muscles: ex.targetMuscles,
+        secondary_muscles: ex.secondaryMuscles,
+        body_parts: ex.bodyParts,
+        equipments: ex.equipments,
+        instructions: ex.instructions,
+        last_checked_at: new Date().toISOString(),
+      }));
+
+      // Insert in batches of 50
+      const batchSize = 50;
+      let inserted = 0;
+      
+      for (let i = 0; i < toInsert.length; i += batchSize) {
+        const batch = toInsert.slice(i, i + batchSize);
+        const { error } = await supabase
+          .from("exercise_gifs")
+          .insert(batch);
+        
+        if (error) {
+          console.error("Erro no batch:", error);
+        } else {
+          inserted += batch.length;
+        }
+      }
+
+      toast.success(`${inserted} exercícios importados com GIFs e dados enriquecidos!`);
+      fetchGifs();
+    } catch (error) {
+      console.error("Erro ao importar base:", error);
+      toast.error("Erro ao importar exercícios da base");
+    } finally {
+      setImportingDatabase(false);
+    }
+  };
+
   // Upload de GIF para um exercício
   const handleGifUpload = async (event: React.ChangeEvent<HTMLInputElement>, exerciseId?: string) => {
     const file = event.target.files?.[0];
@@ -1135,6 +1221,16 @@ export default function AdminExerciseGifs() {
         </Card>
         {/* Actions */}
         <div className="flex flex-wrap gap-3 mb-6">
+          <Button
+            variant="outline"
+            onClick={handleImportFromDatabase}
+            disabled={importingDatabase}
+            className="border-primary/50 text-primary hover:bg-primary/10"
+          >
+            {importingDatabase ? <LoadingSpinner size="sm" className="mr-2" /> : <Database className="h-4 w-4 mr-2" />}
+            Importar Base Completa ({(exercisesDatabase as ExerciseFromDb[]).length} exercícios)
+          </Button>
+          
           <Button
             variant="outline"
             onClick={handleImportFromMap}
