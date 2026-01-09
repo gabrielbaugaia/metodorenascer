@@ -71,21 +71,56 @@ serve(async (req) => {
 
     const { tipo, userContext, userId, adjustments, planType, evolutionAdjustments } = await req.json();
 
-    // SECURITY FIX: Verify user can generate for this userId
-    if (userId !== user.id) {
-      // Check if requesting user is admin
-      const { data: roleData } = await supabaseClient
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
+    // Check if requesting user is admin
+    const { data: roleData } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
 
-      if (!roleData) {
-        console.error("Non-admin trying to generate for other user:", user.id, "target:", userId);
-        return createErrorResponse(req, "Acesso negado - não pode gerar protocolo para outro usuário", 403);
-      }
-      console.log("Admin authorized to generate for user:", userId);
+    const isAdmin = !!roleData;
+
+    // SECURITY FIX: Only admins can generate protocols
+    // Clients cannot generate their own protocols anymore
+    if (!isAdmin) {
+      console.error("Non-admin trying to generate protocol:", user.id);
+      return createErrorResponse(req, "Acesso negado - apenas administradores podem gerar protocolos", 403);
+    }
+
+    console.log("Admin authorized to generate protocol for user:", userId);
+
+    // Check monthly limit: max 1 protocol per type per month per user
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    
+    const { data: existingProtocols, error: checkError } = await supabaseClient
+      .from("protocolos")
+      .select("id, created_at")
+      .eq("user_id", userId)
+      .eq("tipo", tipo)
+      .gte("created_at", oneMonthAgo.toISOString())
+      .order("created_at", { ascending: false });
+
+    if (checkError) {
+      console.error("Error checking existing protocols:", checkError);
+    }
+
+    // Allow regeneration only if explicitly requested (adjustments) or no protocol exists this month
+    const hasRecentProtocol = existingProtocols && existingProtocols.length > 0;
+    const isAdjustment = !!adjustments || !!evolutionAdjustments;
+    
+    if (hasRecentProtocol && !isAdjustment) {
+      console.log(`User ${userId} already has a ${tipo} protocol from this month. Regeneration requires adjustments.`);
+      return createErrorResponse(
+        req, 
+        `Cliente já possui um protocolo de ${tipo} gerado este mês. Para ajustes, utilize o campo de observações.`, 
+        400
+      );
+    }
+
+    if (hasRecentProtocol && isAdjustment) {
+      console.log(`Admin regenerating ${tipo} protocol with adjustments for user ${userId}`);
     }
 
     // Format evolution adjustments into a string if provided
