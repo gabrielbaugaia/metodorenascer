@@ -7,7 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Dumbbell, Loader2, RotateCcw, AlertCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Clock, Dumbbell, RotateCcw, AlertCircle } from "lucide-react";
 import { searchExercise, getExerciseGifUrl, ExerciseDbExercise } from "@/services/exerciseDb";
 
 interface Exercise {
