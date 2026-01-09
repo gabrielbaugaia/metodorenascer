@@ -119,8 +119,8 @@ serve(async (req) => {
       stripe_customer_id: `invite_${inviteCode}`,
     });
 
-    // Generate invitation link
-    const baseUrl = "https://metodorenascer.lovable.app";
+    // Generate invitation link - using official domain
+    const baseUrl = "https://renascerapp.com.br";
     const inviteLink = `${baseUrl}/auth?invited=true&email=${encodeURIComponent(email)}`;
 
     // Send invitation email
