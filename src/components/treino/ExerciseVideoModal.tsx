@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,8 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { Clock, Dumbbell, Loader2, RotateCcw } from "lucide-react";
+import { Clock, Dumbbell, Loader2, RotateCcw, AlertCircle } from "lucide-react";
+import { searchExercise, getExerciseGifUrl, ExerciseDbExercise } from "@/services/exerciseDb";
 
 interface Exercise {
   name: string;
@@ -25,162 +25,55 @@ interface ExerciseVideoModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function normalizeUrl(raw: string): string {
-  const trimmed = (raw || "").trim();
-  if (!trimmed) return "";
-
-  if (trimmed.startsWith("//")) return `https:${trimmed}`;
-  if (trimmed.startsWith("www.")) return `https://${trimmed}`;
-  if (trimmed.startsWith("youtube.com") || trimmed.startsWith("youtu.be")) {
-    return `https://${trimmed}`;
-  }
-
-  return trimmed;
-}
-
-function extractYoutubeId(rawUrl: string): string | null {
-  const normalized = normalizeUrl(rawUrl);
-  if (!normalized) return null;
-
-  try {
-    const url = new URL(normalized);
-    const host = url.hostname.replace(/^www\./, "");
-
-    if (host === "youtube.com" || host.endsWith(".youtube.com")) {
-      const v = url.searchParams.get("v");
-      if (v) return v;
-
-      const shortsMatch = url.pathname.match(/^\/shorts\/([^/?#]+)/);
-      if (shortsMatch?.[1]) return shortsMatch[1];
-
-      const embedMatch = url.pathname.match(/^\/embed\/([^/?#]+)/);
-      if (embedMatch?.[1]) return embedMatch[1];
-
-      return null;
-    }
-
-    if (host === "youtu.be") {
-      const id = url.pathname.replace("/", "").split("/")[0];
-      if (id) return id;
-      return null;
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function toYoutubeEmbedUrl(rawUrl: string): string | null {
-  const videoId = extractYoutubeId(rawUrl);
-  if (!videoId) return null;
-  return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0`;
-}
-
-function toYoutubeWatchUrl(rawUrl: string): string | null {
-  const videoId = extractYoutubeId(rawUrl);
-  if (!videoId) return null;
-  return `https://www.youtube.com/watch?v=${videoId}`;
-}
-
-// Normalize for comparison
-function normalizeForSearch(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s]/g, "")
-    .trim();
-}
-
 export function ExerciseVideoModal({
   exercise,
   open,
   onOpenChange,
 }: ExerciseVideoModalProps) {
-  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
-  const [resolving, setResolving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [exerciseData, setExerciseData] = useState<ExerciseDbExercise | null>(null);
+  const [error, setError] = useState(false);
 
-  const currentUrl = resolvedUrl ?? exercise?.videoUrl ?? "";
-  const embedUrl = useMemo(() => toYoutubeEmbedUrl(currentUrl), [currentUrl]);
-
-  // Reset state when modal opens/closes or exercise changes
+  // Reset state and fetch GIF when modal opens or exercise changes
   useEffect(() => {
-    if (!open || !exercise) return;
-    setResolvedUrl(null);
-    setResolving(false);
-  }, [open, exercise?.name]);
+    if (!open || !exercise) {
+      setExerciseData(null);
+      setError(false);
+      return;
+    }
 
-  // Search local database for video
-  useEffect(() => {
-    const resolveFromDatabase = async () => {
-      if (!open || !exercise) return;
+    const fetchExerciseGif = async () => {
+      const name = exercise.name?.trim();
+      if (!name) {
+        setError(true);
+        return;
+      }
 
-      const alreadyValid = Boolean(extractYoutubeId(exercise.videoUrl ?? ""));
-      if (alreadyValid) return;
+      setLoading(true);
+      setError(false);
+      setExerciseData(null);
 
-      setResolving(true);
       try {
-        const name = exercise.name?.trim();
-        if (!name) return;
-
-        // Try exact match first
-        const exactResult = await supabase
-          .from("exercise_videos")
-          .select("video_url")
-          .ilike("exercise_name", name)
-          .limit(1);
-
-        if (exactResult.error) {
-          console.error("Erro ao buscar vídeo:", exactResult.error);
-          return;
+        const result = await searchExercise(name);
+        if (result) {
+          setExerciseData(result);
+        } else {
+          setError(true);
         }
-
-        let videoUrl: string | null = exactResult.data?.[0]?.video_url ?? null;
-
-        // Try partial match if no exact match
-        if (!videoUrl) {
-          const normalizedName = normalizeForSearch(name);
-          const words = normalizedName.split(/\s+/).filter((w) => w.length > 2);
-          
-          // Try with first two keywords
-          if (words.length >= 2) {
-            const searchPattern = words.slice(0, 2).join("%");
-            const partialResult = await supabase
-              .from("exercise_videos")
-              .select("video_url")
-              .ilike("exercise_name", `%${searchPattern}%`)
-              .limit(1);
-
-            if (!partialResult.error) {
-              videoUrl = partialResult.data?.[0]?.video_url ?? null;
-            }
-          }
-          
-          // Try with first keyword only
-          if (!videoUrl && words.length >= 1) {
-            const partialResult = await supabase
-              .from("exercise_videos")
-              .select("video_url")
-              .ilike("exercise_name", `%${words[0]}%`)
-              .limit(1);
-
-            if (!partialResult.error) {
-              videoUrl = partialResult.data?.[0]?.video_url ?? null;
-            }
-          }
-        }
-
-        if (videoUrl) setResolvedUrl(videoUrl);
+      } catch (err) {
+        console.error("Erro ao buscar GIF do exercício:", err);
+        setError(true);
       } finally {
-        setResolving(false);
+        setLoading(false);
       }
     };
 
-    resolveFromDatabase();
-  }, [open, exercise]);
+    fetchExerciseGif();
+  }, [open, exercise?.name]);
 
   if (!exercise) return null;
+
+  const gifUrl = exerciseData ? getExerciseGifUrl(exerciseData) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -197,32 +90,58 @@ export function ExerciseVideoModal({
 
         <div className="space-y-4">
           {/* Loading state */}
-          {resolving && (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Carregando demonstração...
+          {loading && (
+            <div className="relative aspect-square max-h-[400px] rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span>Carregando demonstração...</span>
               </div>
             </div>
           )}
 
-          {/* YouTube Video - Inline (Desktop + Mobile) */}
-          {!resolving && embedUrl && (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
-              <iframe
-                src={embedUrl}
-                title={exercise.name}
-                className="absolute inset-0 w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
+          {/* GIF Animation */}
+          {!loading && gifUrl && (
+            <div className="relative aspect-square max-h-[400px] rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+              <img
+                src={gifUrl}
+                alt={`Demonstração de ${exercise.name}`}
+                className="w-full h-full object-contain"
+                loading="eager"
               />
             </div>
           )}
 
+          {/* Exercise info from API */}
+          {!loading && exerciseData && (
+            <div className="flex flex-wrap gap-2">
+              {exerciseData.bodyPart && (
+                <Badge variant="secondary" className="text-xs">
+                  {exerciseData.bodyPart}
+                </Badge>
+              )}
+              {exerciseData.target && (
+                <Badge variant="secondary" className="text-xs">
+                  {exerciseData.target}
+                </Badge>
+              )}
+              {exerciseData.equipment && (
+                <Badge variant="secondary" className="text-xs">
+                  {exerciseData.equipment}
+                </Badge>
+              )}
+            </div>
+          )}
+
           {/* No media available */}
-          {!resolving && !embedUrl && (
-            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex items-center justify-center">
-              <p className="text-muted-foreground">Demonstração em breve</p>
+          {!loading && error && (
+            <div className="relative aspect-video rounded-xl overflow-hidden bg-muted flex flex-col items-center justify-center gap-2 p-4">
+              <AlertCircle className="w-8 h-8 text-muted-foreground" />
+              <p className="text-muted-foreground text-center">
+                Demonstração em breve
+              </p>
+              <p className="text-xs text-muted-foreground/70 text-center">
+                Execute o movimento com controle e amplitude completa
+              </p>
             </div>
           )}
 
@@ -241,6 +160,18 @@ export function ExerciseVideoModal({
               {exercise.rest} descanso
             </Badge>
           </div>
+
+          {/* API Instructions */}
+          {!loading && exerciseData?.instructions && exerciseData.instructions.length > 0 && (
+            <div className="bg-secondary/50 border border-border rounded-lg p-4">
+              <p className="text-sm font-medium mb-2">Como executar:</p>
+              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                {exerciseData.instructions.slice(0, 4).map((instruction, idx) => (
+                  <li key={idx}>{instruction}</li>
+                ))}
+              </ol>
+            </div>
+          )}
 
           {/* Coach tips (from protocol) */}
           {exercise.tips && (
