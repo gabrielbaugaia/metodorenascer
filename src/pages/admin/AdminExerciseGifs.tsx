@@ -56,8 +56,10 @@ import {
   ExternalLink,
   Download,
   AlertTriangle,
-  FileSearch
+  FileSearch,
+  FileText
 } from "lucide-react";
+import { generateGifCoverageReportPdf } from "@/lib/generateGifCoverageReportPdf";
 
 interface ExerciseGif {
   id: string;
@@ -436,6 +438,7 @@ export default function AdminExerciseGifs() {
   const [scanningProtocols, setScanningProtocols] = useState(false);
   const [missingExercises, setMissingExercises] = useState<MissingExercise[]>([]);
   const [showMissingDialog, setShowMissingDialog] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
@@ -809,6 +812,19 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  const handleExportPdf = async () => {
+    setExportingPdf(true);
+    try {
+      await generateGifCoverageReportPdf(gifs, stats, MUSCLE_GROUPS);
+      toast.success("Relatório PDF exportado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao exportar PDF:", error);
+      toast.error("Erro ao gerar relatório PDF");
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -904,14 +920,29 @@ export default function AdminExerciseGifs() {
 
         {/* Coverage Dashboard by Muscle Group */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RefreshCw className="h-5 w-5" />
-              Cobertura por Grupo Muscular
-            </CardTitle>
-            <CardDescription>
-              Porcentagem de exercícios com GIF ativo por grupo muscular
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <RefreshCw className="h-5 w-5" />
+                Cobertura por Grupo Muscular
+              </CardTitle>
+              <CardDescription>
+                Porcentagem de exercícios com GIF ativo por grupo muscular
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPdf}
+              disabled={exportingPdf || gifs.length === 0}
+            >
+              {exportingPdf ? (
+                <LoadingSpinner size="sm" className="mr-2" />
+              ) : (
+                <FileText className="h-4 w-4 mr-2" />
+              )}
+              Exportar PDF
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
