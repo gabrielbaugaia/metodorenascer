@@ -41,7 +41,11 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: "Server configuration error" }), { status: 500 });
   }
   
-  const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+  const stripe = new Stripe(stripeKey, {
+    apiVersion: "2025-08-27.basil",
+    httpClient: Stripe.createFetchHttpClient(),
+    cryptoProvider: Stripe.createSubtleCryptoProvider(),
+  });
   const supabase: SupabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -61,10 +65,17 @@ serve(async (req) => {
         return new Response("Missing signature", { status: 400 });
       }
       
+      logStep("Verifying signature", {
+        bodyLength: body.length,
+        signatureLength: signature.length,
+      });
+
       try {
-        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+        event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
       } catch (err) {
-        logStep("Signature verification failed", { error: err instanceof Error ? err.message : String(err) });
+        logStep("Signature verification failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
         return new Response("Invalid signature", { status: 400 });
       }
     } else {
