@@ -10,17 +10,21 @@ import { PricingSection } from "@/components/landing/PricingSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/Footer";
+
 const Index = () => {
   useEffect(() => {
     document.title = "Método Renascer: Emagreça 15kg IA + Coach 24h";
+    
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 'Transformação completa com treino personalizado por IA, receitas inteligentes e coach 24h via WhatsApp. Perca 15kg em 90 dias com garantia total.');
     }
   }, []);
-  return <div className="min-h-screen bg-primary-foreground">
+
+  return (
+    <div className="min-h-screen bg-background">
       <Header />
-      <main className="bg-white text-secondary-foreground border-white">
+      <main>
         <HeroSection />
         <ProblemSection />
         <MethodologySection />
@@ -32,6 +36,8 @@ const Index = () => {
         <CTASection />
       </main>
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
