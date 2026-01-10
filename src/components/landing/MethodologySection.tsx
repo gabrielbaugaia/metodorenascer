@@ -25,7 +25,7 @@ export function MethodologySection() {
   } = useScrollAnimation({
     threshold: 0.1
   });
-  return <section ref={ref} id="metodologia" className={`py-20 md:py-28 section-dark transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+  return <section ref={ref} id="metodologia" className="">
       <div className="container mx-auto px-4 opacity-100 bg-accent-foreground">
         {/* Section Header */}
         <div className="text-center mb-14 max-w-3xl mx-auto flex flex-col items-center gap-4">

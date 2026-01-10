@@ -20,7 +20,7 @@ const Index = () => {
   }, []);
   return <div className="min-h-screen bg-primary-foreground">
       <Header />
-      <main className="bg-white">
+      <main className="bg-white text-secondary-foreground border-white">
         <HeroSection />
         <ProblemSection />
         <MethodologySection />
