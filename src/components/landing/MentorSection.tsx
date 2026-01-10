@@ -21,7 +21,7 @@ export const MentorSection = () => {
               Liderado por <span className="text-primary">Gabriel Baú</span>
             </h2>
 
-            <p className="text-foreground text-[1.1rem] md:text-lg leading-relaxed">Eu não sou apenas um treinador online. Sou o estrategista 
+            <p className="text-foreground text-[1.1rem] md:text-lg leading-relaxed text-justify">Eu não sou apenas um treinador online. Sou o estrategista 
 que vai guiar sua jornada de reconstrução.</p>
 
             <p className="text-muted-foreground text-sm md:text-base leading-relaxed text-justify font-light">
