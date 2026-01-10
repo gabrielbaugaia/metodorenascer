@@ -24,7 +24,7 @@ export const MentorSection = () => {
             <p className="text-foreground text-[1.1rem] md:text-lg leading-relaxed">Eu não sou apenas um treinador online. Sou o estrategista 
 que vai guiar sua jornada de reconstrução.</p>
 
-            <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+            <p className="text-muted-foreground text-sm md:text-base leading-relaxed text-justify font-light">
               Criei o Método Renascer porque cansei de ver pessoas com potencial sendo destruídas pelo ciclo do fracasso fitness. Minha missão é clara: usar a ciência do treino e a profundidade do comportamento humano para transformar pessoas comuns em suas melhores versões.
             </p>
 
