@@ -60,7 +60,8 @@ import {
   FileText,
   Upload,
   Zap,
-  Database
+  Database,
+  CloudDownload
 } from "lucide-react";
 import { generateGifCoverageReportPdf } from "@/lib/generateGifCoverageReportPdf";
 import exercisesDatabase from "@/data/exercisesDatabase.json";
@@ -459,6 +460,8 @@ export default function AdminExerciseGifs() {
   const [syncingFromApi, setSyncingFromApi] = useState(false);
   const [syncProgress, setSyncProgress] = useState(0);
   const [apiStatus, setApiStatus] = useState<{ available: boolean; isCustom: boolean } | null>(null);
+  const [syncingToStorage, setSyncingToStorage] = useState(false);
+  const [storageProgress, setStorageProgress] = useState<{ processed: number; total: number; uploaded: number } | null>(null);
 
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
@@ -980,6 +983,53 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  // Sincronizar GIFs para o Supabase Storage via Edge Function
+  const handleSyncToStorage = async () => {
+    setSyncingToStorage(true);
+    setStorageProgress(null);
+    
+    try {
+      const apiUrl = import.meta.env.VITE_EXERCISE_API_URL;
+      
+      if (!apiUrl) {
+        toast.error("Configure VITE_EXERCISE_API_URL com a URL da sua API ExerciseDB");
+        return;
+      }
+
+      toast.info("Iniciando download em lote dos GIFs para o Storage...");
+      
+      const { data: session } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke('sync-exercise-gifs', {
+        body: {
+          apiUrl,
+          batchSize: 10,
+          startOffset: 0,
+          maxExercises: 1500
+        }
+      });
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      const result = response.data;
+      
+      if (result.success) {
+        setStorageProgress(result.progress);
+        toast.success(`Sincronização concluída: ${result.progress.uploaded} GIFs baixados, ${result.progress.failed} falhas`);
+        fetchGifs();
+      } else {
+        throw new Error(result.error || 'Erro desconhecido');
+      }
+    } catch (error: any) {
+      console.error("Erro ao sincronizar para Storage:", error);
+      toast.error(`Erro: ${error.message}`);
+    } finally {
+      setSyncingToStorage(false);
+    }
+  };
+
   // Upload de GIF para um exercício
   const handleGifUpload = async (event: React.ChangeEvent<HTMLInputElement>, exerciseId?: string) => {
     const file = event.target.files?.[0];
@@ -1309,6 +1359,26 @@ export default function AdminExerciseGifs() {
               <>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Sincronizar via API {isUsingCustomApi ? "(Própria)" : "(Pública)"}
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={handleSyncToStorage}
+            disabled={syncingToStorage || !import.meta.env.VITE_EXERCISE_API_URL}
+            className="border-purple-500/50 text-purple-600 hover:bg-purple-500/10"
+            title={!import.meta.env.VITE_EXERCISE_API_URL ? "Configure VITE_EXERCISE_API_URL primeiro" : "Baixar GIFs para Storage local"}
+          >
+            {syncingToStorage ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Baixando GIFs...
+              </>
+            ) : (
+              <>
+                <CloudDownload className="h-4 w-4 mr-2" />
+                Baixar 1500 GIFs p/ Storage
               </>
             )}
           </Button>
