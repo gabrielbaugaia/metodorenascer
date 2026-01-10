@@ -65,6 +65,8 @@ import {
 import { generateGifCoverageReportPdf } from "@/lib/generateGifCoverageReportPdf";
 import exercisesDatabase from "@/data/exercisesDatabase.json";
 import { ExerciseFromDb, getMuscleGroupFromExercise, GIF_BASE_URL } from "@/types/exerciseDatabase";
+import { syncAllExercisesFromApi, checkApiStatus, isUsingCustomApi } from "@/services/exerciseDb";
+import { Progress } from "@/components/ui/progress";
 
 interface ExerciseGif {
   id: string;
@@ -454,6 +456,9 @@ export default function AdminExerciseGifs() {
   const [activatingAll, setActivatingAll] = useState(false);
   const [uploadingGif, setUploadingGif] = useState(false);
   const [selectedExerciseForUpload, setSelectedExerciseForUpload] = useState<ExerciseGif | null>(null);
+  const [syncingFromApi, setSyncingFromApi] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [apiStatus, setApiStatus] = useState<{ available: boolean; isCustom: boolean } | null>(null);
 
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
@@ -945,6 +950,36 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  // Sincronizar todos os exercícios da API (própria ou pública)
+  const handleSyncFromApi = async () => {
+    setSyncingFromApi(true);
+    setSyncProgress(0);
+    
+    try {
+      toast.info("Iniciando sincronização com a API...");
+      
+      const result = await syncAllExercisesFromApi((current, total) => {
+        const progress = Math.round((current / total) * 100);
+        setSyncProgress(progress);
+      });
+      
+      if (result.success > 0) {
+        toast.success(`${result.success} exercícios sincronizados com sucesso!`);
+        fetchGifs();
+      } else if (result.failed > 0) {
+        toast.error(`Falha ao sincronizar ${result.failed} exercícios`);
+      } else {
+        toast.info("Nenhum exercício novo encontrado para sincronizar");
+      }
+    } catch (error) {
+      console.error("Erro ao sincronizar:", error);
+      toast.error("Erro ao sincronizar exercícios da API");
+    } finally {
+      setSyncingFromApi(false);
+      setSyncProgress(0);
+    }
+  };
+
   // Upload de GIF para um exercício
   const handleGifUpload = async (event: React.ChangeEvent<HTMLInputElement>, exerciseId?: string) => {
     const file = event.target.files?.[0];
@@ -1257,6 +1292,25 @@ export default function AdminExerciseGifs() {
           >
             {activatingAll ? <LoadingSpinner size="sm" className="mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
             Ativar Todos com URL ({gifs.filter(g => g.gif_url && g.status !== "active").length})
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={handleSyncFromApi}
+            disabled={syncingFromApi}
+            className="border-blue-500/50 text-blue-600 hover:bg-blue-500/10"
+          >
+            {syncingFromApi ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Sincronizando... {syncProgress}%
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Sincronizar via API {isUsingCustomApi ? "(Própria)" : "(Pública)"}
+              </>
+            )}
           </Button>
 
           <div className="flex-1" />

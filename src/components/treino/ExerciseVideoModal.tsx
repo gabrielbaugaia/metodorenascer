@@ -131,21 +131,36 @@ export function ExerciseVideoModal({
 
           {/* Exercise info from API */}
           {!loading && exerciseData && (
-            <div className="flex flex-wrap gap-2">
-              {exerciseData.bodyPart && (
-                <Badge variant="secondary" className="text-xs capitalize">
-                  {exerciseData.bodyPart}
-                </Badge>
-              )}
-              {exerciseData.target && (
-                <Badge variant="secondary" className="text-xs capitalize">
-                  {exerciseData.target}
-                </Badge>
-              )}
-              {exerciseData.equipment && (
-                <Badge variant="secondary" className="text-xs capitalize">
-                  {exerciseData.equipment}
-                </Badge>
+            <div className="space-y-3">
+              {/* Primary info badges */}
+              <div className="flex flex-wrap gap-2">
+                {exerciseData.bodyPart && (
+                  <Badge variant="secondary" className="text-xs capitalize">
+                    {exerciseData.bodyPart}
+                  </Badge>
+                )}
+                {exerciseData.target && (
+                  <Badge className="text-xs capitalize bg-primary/20 text-primary border-primary/30">
+                    🎯 {exerciseData.target}
+                  </Badge>
+                )}
+                {exerciseData.equipment && (
+                  <Badge variant="outline" className="text-xs capitalize">
+                    🏋️ {exerciseData.equipment}
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Secondary muscles */}
+              {exerciseData.secondaryMuscles && exerciseData.secondaryMuscles.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="text-xs text-muted-foreground">Músculos secundários:</span>
+                  {exerciseData.secondaryMuscles.slice(0, 4).map((muscle, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs capitalize opacity-70">
+                      {muscle}
+                    </Badge>
+                  ))}
+                </div>
               )}
             </div>
           )}

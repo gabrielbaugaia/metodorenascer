@@ -51,5 +51,8 @@ export function getMuscleGroupFromExercise(exercise: ExerciseFromDb): string {
   return BODY_PART_TO_MUSCLE_GROUP[bodyPart] || "Corpo Inteiro";
 }
 
-// GIF base URL (from the exercises database)
-export const GIF_BASE_URL = "https://v2.exercisedb.io/image/";
+// GIF base URL - uses configurable API or default ExerciseDB
+// Import from config for consistency
+export const GIF_BASE_URL = import.meta.env.VITE_EXERCISE_API_URL
+  ? `${import.meta.env.VITE_EXERCISE_API_URL}/image/`
+  : 'https://v2.exercisedb.io/image/';

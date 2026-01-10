@@ -1,7 +1,11 @@
-// ExerciseDB API Service - Free Open Source Exercise Database
-// API: https://www.exercisedb.dev/docs
+// ExerciseDB API Service - Supports self-hosted or public API
+// Configure VITE_EXERCISE_API_URL in environment for your own API
 
-const API_BASE_URL = "https://www.exercisedb.dev/api/v1";
+import { EXERCISE_API_URL, API_ENDPOINTS, GIF_BASE_URL, isUsingCustomApi } from "@/config/exerciseApi";
+import { supabase } from "@/integrations/supabase/client";
+
+// Re-export config values for convenience
+export { isUsingCustomApi, GIF_BASE_URL, EXERCISE_API_URL } from "@/config/exerciseApi";
 
 export interface ExerciseDbExercise {
   id: string;
@@ -363,12 +367,18 @@ export async function searchExercise(exerciseName: string): Promise<ExerciseDbEx
   }
   
   try {
-    // Translate to English for API search
+    // 1. First, try to find in local database (exercise_gifs table)
+    const localResult = await searchLocalDatabase(exerciseName);
+    if (localResult) {
+      exerciseCache.set(cacheKey, localResult);
+      return localResult;
+    }
+
+    // 2. Fallback to external API
     const englishName = translateToEnglish(exerciseName);
-    const searchTerm = encodeURIComponent(englishName.toLowerCase());
     
     const response = await fetch(
-      `${API_BASE_URL}/exercises/search?q=${searchTerm}&limit=5`,
+      API_ENDPOINTS.search(englishName.toLowerCase(), 5),
       {
         headers: {
           "Accept": "application/json",
@@ -385,7 +395,6 @@ export async function searchExercise(exerciseName: string): Promise<ExerciseDbEx
     const data: SearchResponse = await response.json();
     
     if (data.success && data.data.exercises.length > 0) {
-      // Find best match
       const exercise = data.data.exercises[0];
       exerciseCache.set(cacheKey, exercise);
       return exercise;
@@ -395,7 +404,7 @@ export async function searchExercise(exerciseName: string): Promise<ExerciseDbEx
     const words = englishName.split(" ").slice(0, 2).join(" ");
     if (words !== englishName) {
       const fallbackResponse = await fetch(
-        `${API_BASE_URL}/exercises/search?q=${encodeURIComponent(words)}&limit=3`,
+        API_ENDPOINTS.search(words, 3),
         {
           headers: {
             "Accept": "application/json",
@@ -422,6 +431,42 @@ export async function searchExercise(exerciseName: string): Promise<ExerciseDbEx
   }
 }
 
+// Search in local exercise_gifs database first
+async function searchLocalDatabase(exerciseName: string): Promise<ExerciseDbExercise | null> {
+  try {
+    const normalizedName = normalizeExerciseName(exerciseName);
+    
+    // Try exact match first
+    const { data, error } = await supabase
+      .from('exercise_gifs')
+      .select('*')
+      .eq('status', 'active')
+      .or(`exercise_name_pt.ilike.%${exerciseName}%,exercise_name_en.ilike.%${exerciseName}%`)
+      .not('gif_url', 'is', null)
+      .limit(1)
+      .single();
+    
+    if (error || !data) {
+      return null;
+    }
+    
+    // Convert to ExerciseDbExercise format
+    return {
+      id: data.exercise_db_id || data.id,
+      name: data.exercise_name_en,
+      gifUrl: data.gif_url || '',
+      bodyPart: data.body_parts?.[0] || '',
+      target: data.target_muscles?.[0] || '',
+      secondaryMuscles: data.secondary_muscles || [],
+      equipment: data.equipments?.[0] || 'body weight',
+      instructions: data.instructions || [],
+    };
+  } catch (error) {
+    console.warn('Error searching local database:', error);
+    return null;
+  }
+}
+
 // Get GIF URL for an exercise
 export function getExerciseGifUrl(exercise: ExerciseDbExercise): string {
   // The API provides gifUrl directly
@@ -429,8 +474,8 @@ export function getExerciseGifUrl(exercise: ExerciseDbExercise): string {
     return exercise.gifUrl;
   }
   
-  // Fallback to image service if gifUrl not available
-  return `https://www.exercisedb.dev/image/${exercise.id}`;
+  // Fallback to configurable GIF base URL
+  return API_ENDPOINTS.getGifUrl(exercise.id);
 }
 
 // Preload common exercises to cache
@@ -449,4 +494,145 @@ export async function preloadCommonExercises(): Promise<void> {
   await Promise.all(
     commonExercises.map((name) => searchExercise(name))
   );
+}
+
+// Sync all exercises from API to local database
+// Use this with your own ExerciseDB API for 5000+ exercises
+export async function syncAllExercisesFromApi(
+  onProgress?: (current: number, total: number) => void
+): Promise<{ success: number; failed: number }> {
+  const result = { success: 0, failed: 0 };
+  
+  if (!isUsingCustomApi) {
+    console.warn('Sync is only recommended with your own ExerciseDB API');
+  }
+  
+  try {
+    // Fetch exercises in batches
+    let offset = 0;
+    const limit = 100;
+    let hasMore = true;
+    const allExercises: ExerciseDbExercise[] = [];
+    
+    while (hasMore && offset < 5000) {
+      const response = await fetch(
+        API_ENDPOINTS.listAll(offset, limit),
+        {
+          headers: { "Accept": "application/json" },
+        }
+      );
+      
+      if (!response.ok) {
+        console.error('Failed to fetch exercises batch:', response.status);
+        break;
+      }
+      
+      const data = await response.json();
+      const exercises = data.success ? data.data.exercises : data;
+      
+      if (!exercises || exercises.length === 0) {
+        hasMore = false;
+      } else {
+        allExercises.push(...exercises);
+        offset += limit;
+        
+        if (onProgress) {
+          onProgress(allExercises.length, 5000);
+        }
+        
+        // Small delay to avoid rate limiting
+        await new Promise(r => setTimeout(r, 100));
+      }
+    }
+    
+    console.log(`Fetched ${allExercises.length} exercises from API`);
+    
+    // Get existing exercises
+    const { data: existing } = await supabase
+      .from('exercise_gifs')
+      .select('exercise_db_id, exercise_name_en');
+    
+    const existingIds = new Set(
+      (existing || []).filter(e => e.exercise_db_id).map(e => e.exercise_db_id)
+    );
+    
+    // Filter new exercises
+    const newExercises = allExercises.filter(ex => !existingIds.has(ex.id));
+    
+    console.log(`${newExercises.length} new exercises to insert`);
+    
+    // Insert in batches
+    const batchSize = 50;
+    for (let i = 0; i < newExercises.length; i += batchSize) {
+      const batch = newExercises.slice(i, i + batchSize);
+      
+      const toInsert = batch.map(ex => ({
+        exercise_name_pt: ex.name.charAt(0).toUpperCase() + ex.name.slice(1),
+        exercise_name_en: ex.name,
+        gif_url: ex.gifUrl || API_ENDPOINTS.getGifUrl(ex.id),
+        muscle_group: getMuscleGroup(ex.bodyPart, ex.target),
+        status: 'active',
+        api_source: isUsingCustomApi ? 'custom-api' : 'exercisedb-api',
+        exercise_db_id: ex.id,
+        target_muscles: [ex.target],
+        secondary_muscles: ex.secondaryMuscles || [],
+        body_parts: [ex.bodyPart],
+        equipments: [ex.equipment],
+        instructions: ex.instructions || [],
+        last_checked_at: new Date().toISOString(),
+      }));
+      
+      const { error } = await supabase.from('exercise_gifs').insert(toInsert);
+      
+      if (error) {
+        console.error('Batch insert error:', error);
+        result.failed += batch.length;
+      } else {
+        result.success += batch.length;
+      }
+      
+      if (onProgress) {
+        onProgress(i + batch.length, newExercises.length);
+      }
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Sync error:', error);
+    return result;
+  }
+}
+
+// Helper to get muscle group from body part and target
+function getMuscleGroup(bodyPart: string, target: string): string {
+  const bp = bodyPart?.toLowerCase() || '';
+  const t = target?.toLowerCase() || '';
+  
+  if (t.includes('glute')) return 'Glúteos';
+  if (t.includes('quad') || t.includes('hamstring') || bp.includes('leg')) return 'Pernas';
+  if (t.includes('pec') || bp.includes('chest')) return 'Peito';
+  if (t.includes('lat') || t.includes('trap') || bp.includes('back')) return 'Costas';
+  if (t.includes('delt') || bp.includes('shoulder')) return 'Ombros';
+  if (t.includes('bicep')) return 'Bíceps';
+  if (t.includes('tricep')) return 'Tríceps';
+  if (t.includes('ab') || bp.includes('waist')) return 'Abdômen';
+  if (bp.includes('cardio')) return 'Cardio';
+  
+  return 'Corpo Inteiro';
+}
+
+// Check if API is available
+export async function checkApiStatus(): Promise<{ available: boolean; isCustom: boolean }> {
+  try {
+    const response = await fetch(API_ENDPOINTS.search('test', 1), {
+      headers: { "Accept": "application/json" },
+    });
+    
+    return {
+      available: response.ok,
+      isCustom: isUsingCustomApi,
+    };
+  } catch {
+    return { available: false, isCustom: isUsingCustomApi };
+  }
 }
