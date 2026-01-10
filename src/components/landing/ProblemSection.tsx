@@ -22,7 +22,7 @@ export function ProblemSection() {
     threshold: 0.1
   });
   return <section ref={ref} className={`py-20 md:py-28 bg-background transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 border-solid">
         {/* Section Header */}
         <div className="text-center mb-14 max-w-3xl mx-auto flex flex-col items-center gap-4">
           <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-justify md:text-6xl">Para homens e mulheres acima de 30 que estão sedentários ou cansaram de tentar sozinho e não ter resultado.<span className="text-primary">FALHOU</span> com Você
