@@ -16,12 +16,9 @@ export const HeroSection = memo(function HeroSection() {
           </div>
 
           {/* Subtitle - Centered with highlight animation */}
-          <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto animate-fade-in leading-relaxed font-light text-center" style={{
+          <p style={{
           animationDelay: "0.15s"
-        }}>Retome o controle do seu corpo, volte a gostar do que 
-vê no espelho e desenvolva disciplina real, sem pressão 
-e aprendendo a curtir o processo.​ ​
-​<span className="text-foreground font-medium animate-pulse">​</span> ​
+        }} className="text-lg md:text-xl max-w-xl mx-auto animate-fade-in leading-relaxed font-light text-primary-foreground text-justify">Retome o controle do seu corpo, volte a gostar do que  vê no espelho e desenvolva disciplina real, sem pressão  e aprendendo a curtir o processo.​ ​ ​​ ​<span className="text-foreground font-medium animate-pulse">​</span> ​
           </p>
 
           {/* CTA Block - Tighter grouping */}
