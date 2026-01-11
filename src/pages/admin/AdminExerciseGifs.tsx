@@ -469,8 +469,34 @@ export default function AdminExerciseGifs() {
   const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, success: 0, failed: 0 });
   const [isDragging, setIsDragging] = useState(false);
 
+  // Inline editing state
+  const [editingFields, setEditingFields] = useState<Record<string, { field: string; value: string }>>({});
+  const [savingInline, setSavingInline] = useState<string | null>(null);
+
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
+
+  // Helper functions for URL validation
+  const isExternalBrokenUrl = (url: string | null) => {
+    return url?.includes('v2.exercisedb.io') || false;
+  };
+
+  const isValidLocalUrl = (url: string | null) => {
+    return url?.includes('supabase.co/storage') || url?.includes('lxdosmjenbaugmhyfanx') || false;
+  };
+
+  // Check if a GIF is ready to be activated (has valid URL, proper name, and muscle group)
+  const isGifReadyToActivate = (gif: ExerciseGif) => {
+    const hasValidUrl = gif.gif_url && !isExternalBrokenUrl(gif.gif_url);
+    const hasProperName = gif.exercise_name_pt && 
+      !gif.exercise_name_pt.match(/^[a-f0-9-]{10,}$/i) && // Not a random ID
+      gif.exercise_name_pt.length > 2;
+    const hasProperGroup = gif.muscle_group && gif.muscle_group !== "Pendente";
+    return hasValidUrl && hasProperName && hasProperGroup && gif.status !== "active";
+  };
+
+  // Count GIFs ready to activate
+  const readyToActivateCount = gifs.filter(isGifReadyToActivate).length;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -881,6 +907,71 @@ export default function AdminExerciseGifs() {
     } finally {
       setActivatingAll(false);
     }
+  };
+
+  // Ativar apenas GIFs prontos (com URL válida, nome e grupo configurados)
+  const handleActivateReadyGifs = async () => {
+    const readyGifs = gifs.filter(isGifReadyToActivate);
+    if (readyGifs.length === 0) {
+      toast.info("Não há GIFs prontos para ativar");
+      return;
+    }
+
+    setActivatingAll(true);
+    try {
+      const readyIds = readyGifs.map(g => g.id);
+      const { error } = await supabase
+        .from("exercise_gifs")
+        .update({ status: "active", last_checked_at: new Date().toISOString() })
+        .in("id", readyIds);
+
+      if (error) throw error;
+      
+      toast.success(`${readyGifs.length} GIFs ativados com sucesso!`);
+      fetchGifs();
+    } catch (error) {
+      console.error("Erro ao ativar GIFs:", error);
+      toast.error("Erro ao ativar GIFs");
+    } finally {
+      setActivatingAll(false);
+    }
+  };
+
+  // Inline update handler with debounce
+  const handleInlineUpdate = async (gifId: string, field: string, value: string) => {
+    setEditingFields(prev => ({ ...prev, [gifId]: { field, value } }));
+    
+    // Debounce the actual save
+    const timeoutId = setTimeout(async () => {
+      setSavingInline(gifId);
+      try {
+        const { error } = await supabase
+          .from("exercise_gifs")
+          .update({ [field]: value, updated_at: new Date().toISOString() })
+          .eq("id", gifId);
+
+        if (error) throw error;
+        
+        // Update local state
+        setGifs(prev => prev.map(g => 
+          g.id === gifId ? { ...g, [field]: value } : g
+        ));
+        
+        toast.success("Salvo!", { duration: 1500 });
+      } catch (error) {
+        console.error("Erro ao salvar:", error);
+        toast.error("Erro ao salvar");
+      } finally {
+        setSavingInline(null);
+        setEditingFields(prev => {
+          const newState = { ...prev };
+          delete newState[gifId];
+          return newState;
+        });
+      }
+    }, 800);
+
+    return () => clearTimeout(timeoutId);
   };
 
   // Importar exercícios do arquivo JSON com dados enriquecidos
@@ -1340,6 +1431,35 @@ export default function AdminExerciseGifs() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Ativar GIFs Prontos Card */}
+        {readyToActivateCount > 0 && (
+          <Card className="mb-6 border-green-500 bg-green-500/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-green-700">
+                <Zap className="h-5 w-5" />
+                Ativar GIFs Prontos
+              </CardTitle>
+              <CardDescription>
+                {readyToActivateCount} GIF(s) têm imagem válida, nome e grupo muscular configurados
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={handleActivateReadyGifs}
+                disabled={activatingAll || readyToActivateCount === 0}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+              >
+                {activatingAll ? (
+                  <LoadingSpinner size="sm" className="mr-2" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                )}
+                Ativar Todos os {readyToActivateCount} GIFs Prontos
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Coverage Dashboard by Muscle Group */}
         <Card className="mb-6">
@@ -1898,12 +2018,12 @@ export default function AdminExerciseGifs() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-16">GIF</TableHead>
-                    <TableHead>Nome (PT)</TableHead>
-                    <TableHead className="hidden md:table-cell">Nome (EN)</TableHead>
-                    <TableHead>Grupo</TableHead>
+                    <TableHead className="w-28">GIF</TableHead>
+                    <TableHead className="min-w-[200px]">Nome (PT)</TableHead>
+                    <TableHead className="min-w-[200px] hidden md:table-cell">Nome (EN)</TableHead>
+                    <TableHead className="min-w-[140px]">Grupo</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead className="text-right w-28">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1914,85 +2034,150 @@ export default function AdminExerciseGifs() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredGifs.map((gif) => (
-                      <TableRow key={gif.id}>
-                        <TableCell>
-                          {gif.gif_url ? (
-                            <img 
-                              src={gif.gif_url} 
-                              alt={gif.exercise_name_pt}
-                              className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80"
-                              onClick={() => setPreviewGif(gif)}
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = "/placeholder.svg";
-                              }}
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                              <Image className="h-5 w-5 text-muted-foreground" />
+                    filteredGifs.map((gif) => {
+                      const hasBrokenUrl = isExternalBrokenUrl(gif.gif_url);
+                      const isReady = isGifReadyToActivate(gif);
+                      
+                      return (
+                        <TableRow 
+                          key={gif.id} 
+                          className={`${hasBrokenUrl ? 'bg-red-500/5 border-l-2 border-l-red-500' : ''} ${isReady ? 'bg-green-500/5' : ''}`}
+                        >
+                          {/* Larger thumbnail with broken URL indicator */}
+                          <TableCell>
+                            <div className="relative">
+                              {gif.gif_url ? (
+                                <>
+                                  <img 
+                                    src={gif.gif_url} 
+                                    alt={gif.exercise_name_pt}
+                                    className={`w-24 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity ${hasBrokenUrl ? 'border-2 border-red-500' : ''}`}
+                                    onClick={() => setPreviewGif(gif)}
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = "/placeholder.svg";
+                                    }}
+                                  />
+                                  {hasBrokenUrl && (
+                                    <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5" title="URL externa quebrada - precisa re-upload">
+                                      <AlertTriangle className="h-3 w-3" />
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <div className="w-24 h-24 bg-muted rounded flex items-center justify-center">
+                                  <Image className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium">{gif.exercise_name_pt}</TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                          {gif.exercise_name_en}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{gif.muscle_group}</Badge>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(gif.status)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            {/* Quick upload button */}
-                            <label className="cursor-pointer">
-                              <input
-                                type="file"
-                                accept="image/gif,image/*"
-                                className="hidden"
-                                onChange={(e) => handleGifUpload(e, gif.id)}
-                                disabled={uploadingGif}
-                              />
+                          </TableCell>
+                          
+                          {/* Inline editable Nome PT */}
+                          <TableCell>
+                            <Input
+                              value={editingFields[gif.id]?.field === 'exercise_name_pt' 
+                                ? editingFields[gif.id].value 
+                                : gif.exercise_name_pt}
+                              onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_pt', e.target.value)}
+                              className={`h-9 text-sm ${savingInline === gif.id ? 'border-green-500 bg-green-500/10' : ''}`}
+                              placeholder="Nome em português"
+                            />
+                          </TableCell>
+                          
+                          {/* Inline editable Nome EN */}
+                          <TableCell className="hidden md:table-cell">
+                            <Input
+                              value={editingFields[gif.id]?.field === 'exercise_name_en' 
+                                ? editingFields[gif.id].value 
+                                : gif.exercise_name_en}
+                              onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_en', e.target.value)}
+                              className={`h-9 text-sm ${savingInline === gif.id ? 'border-green-500 bg-green-500/10' : ''}`}
+                              placeholder="Nome em inglês"
+                            />
+                          </TableCell>
+                          
+                          {/* Inline editable Muscle Group */}
+                          <TableCell>
+                            <Select
+                              value={gif.muscle_group}
+                              onValueChange={(value) => handleInlineUpdate(gif.id, 'muscle_group', value)}
+                            >
+                              <SelectTrigger className={`h-9 text-sm ${gif.muscle_group === 'Pendente' ? 'border-yellow-500 text-yellow-600' : ''}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Pendente">Pendente</SelectItem>
+                                {MUSCLE_GROUPS.map((group) => (
+                                  <SelectItem key={group} value={group}>
+                                    {group}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          
+                          {/* Status */}
+                          <TableCell>{getStatusBadge(gif.status)}</TableCell>
+                          
+                          {/* Reduced Actions */}
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              {/* Quick upload button */}
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/gif,image/*"
+                                  className="hidden"
+                                  onChange={(e) => handleGifUpload(e, gif.id)}
+                                  disabled={uploadingGif}
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  asChild
+                                  title="Carregar GIF"
+                                  className="text-primary hover:text-primary h-8 w-8"
+                                >
+                                  <span>
+                                    <Upload className="h-4 w-4" />
+                                  </span>
+                                </Button>
+                              </label>
+                              {gif.status !== "active" && gif.gif_url && !hasBrokenUrl && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={async () => {
+                                    try {
+                                      await supabase
+                                        .from("exercise_gifs")
+                                        .update({ status: "active", last_checked_at: new Date().toISOString() })
+                                        .eq("id", gif.id);
+                                      toast.success("GIF ativado!");
+                                      fetchGifs();
+                                    } catch (error) {
+                                      toast.error("Erro ao ativar");
+                                    }
+                                  }}
+                                  title="Ativar GIF"
+                                  className="text-green-600 hover:text-green-700 h-8 w-8"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                asChild
-                                title="Carregar GIF"
-                                className="text-primary hover:text-primary"
+                                onClick={() => setDeleteId(gif.id)}
+                                className="text-destructive hover:text-destructive h-8 w-8"
+                                title="Excluir"
                               >
-                                <span>
-                                  <Upload className="h-4 w-4" />
-                                </span>
+                                <Trash2 className="h-4 w-4" />
                               </Button>
-                            </label>
-                            {gif.gif_url && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => window.open(gif.gif_url!, "_blank")}
-                                title="Abrir GIF"
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleOpenDialog(gif)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteId(gif.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
