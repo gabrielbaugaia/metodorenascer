@@ -463,6 +463,12 @@ export default function AdminExerciseGifs() {
   const [syncingToStorage, setSyncingToStorage] = useState(false);
   const [storageProgress, setStorageProgress] = useState<{ processed: number; total: number; uploaded: number } | null>(null);
 
+  // Batch upload state
+  const [batchFiles, setBatchFiles] = useState<File[]>([]);
+  const [batchUploading, setBatchUploading] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, success: 0, failed: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
 
@@ -1100,6 +1106,148 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  // Batch upload de múltiplos GIFs
+  const handleBatchFilesSelect = (files: FileList | null) => {
+    if (!files) return;
+    
+    const validFiles = Array.from(files).filter(file => {
+      if (!file.type.includes("image/gif") && !file.type.includes("image/")) {
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length > 100) {
+      toast.error("Máximo de 100 arquivos por vez. Selecione menos arquivos.");
+      return;
+    }
+
+    if (validFiles.length === 0) {
+      toast.error("Nenhum arquivo válido selecionado (apenas GIF/imagens até 5MB)");
+      return;
+    }
+
+    setBatchFiles(validFiles);
+    toast.success(`${validFiles.length} arquivo(s) selecionado(s) para upload`);
+  };
+
+  const handleBatchUpload = async () => {
+    if (batchFiles.length === 0) return;
+
+    setBatchUploading(true);
+    setBatchProgress({ current: 0, total: batchFiles.length, success: 0, failed: 0 });
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (let i = 0; i < batchFiles.length; i++) {
+      const file = batchFiles[i];
+      
+      try {
+        // Extract exercise name from filename (without extension)
+        const exerciseName = file.name
+          .replace(/\.[^/.]+$/, "") // Remove extension
+          .replace(/[-_]/g, " ") // Replace dashes and underscores with spaces
+          .trim();
+
+        // Generate unique filename
+        const fileExt = file.name.split(".").pop()?.toLowerCase() || "gif";
+        const safeFileName = exerciseName.replace(/\s+/g, "-").toLowerCase();
+        const filePath = `exercises/${safeFileName}-${Date.now()}-${i}.${fileExt}`;
+
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from("exercise-gifs")
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) {
+          console.error(`Erro ao fazer upload de ${file.name}:`, uploadError);
+          failedCount++;
+        } else {
+          // Get public URL
+          const { data: publicUrlData } = supabase.storage
+            .from("exercise-gifs")
+            .getPublicUrl(filePath);
+
+          // Insert into database
+          const { error: insertError } = await supabase
+            .from("exercise_gifs")
+            .insert({
+              exercise_name_pt: exerciseName.charAt(0).toUpperCase() + exerciseName.slice(1),
+              exercise_name_en: exerciseName.toLowerCase(),
+              gif_url: publicUrlData.publicUrl,
+              muscle_group: "Pendente",
+              status: "pending",
+              api_source: "manual-batch-upload",
+              last_checked_at: new Date().toISOString(),
+            });
+
+          if (insertError) {
+            if (insertError.code === "23505") {
+              // Duplicate - try to update existing
+              await supabase
+                .from("exercise_gifs")
+                .update({
+                  gif_url: publicUrlData.publicUrl,
+                  last_checked_at: new Date().toISOString(),
+                })
+                .ilike("exercise_name_pt", exerciseName);
+            } else {
+              console.error(`Erro ao salvar ${exerciseName}:`, insertError);
+              failedCount++;
+              continue;
+            }
+          }
+          successCount++;
+        }
+      } catch (error) {
+        console.error(`Erro ao processar ${file.name}:`, error);
+        failedCount++;
+      }
+
+      setBatchProgress({
+        current: i + 1,
+        total: batchFiles.length,
+        success: successCount,
+        failed: failedCount,
+      });
+    }
+
+    setBatchUploading(false);
+    setBatchFiles([]);
+    
+    if (successCount > 0) {
+      toast.success(`Upload concluído: ${successCount} sucesso, ${failedCount} falha(s)`);
+      fetchGifs();
+    } else {
+      toast.error(`Nenhum arquivo foi carregado com sucesso`);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleBatchFilesSelect(e.dataTransfer.files);
+  };
+
+  const clearBatchFiles = () => {
+    setBatchFiles([]);
+    setBatchProgress({ current: 0, total: 0, success: 0, failed: 0 });
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -1568,6 +1716,127 @@ export default function AdminExerciseGifs() {
                 <div>
                   <p className="text-sm font-medium">{selectedExerciseForUpload.exercise_name_pt}</p>
                   <p className="text-xs text-muted-foreground">{selectedExerciseForUpload.muscle_group} • {selectedExerciseForUpload.exercise_name_en}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Batch Upload Area */}
+        <Card className={`mb-6 border-dashed border-2 transition-colors ${
+          isDragging 
+            ? "border-green-500 bg-green-500/10" 
+            : "border-muted-foreground/30 bg-muted/20"
+        }`}>
+          <CardContent className="py-6">
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className="text-center"
+            >
+              <div className="flex flex-col items-center gap-4">
+                <div className={`p-4 rounded-full ${isDragging ? "bg-green-500/20" : "bg-muted"}`}>
+                  <CloudDownload className={`h-10 w-10 ${isDragging ? "text-green-500" : "text-muted-foreground"}`} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Upload em Lote de GIFs
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Arraste até 100 arquivos GIF ou clique para selecionar
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    O nome do arquivo será usado como nome do exercício (ex: supino-reto.gif → Supino reto)
+                  </p>
+                </div>
+                
+                <div className="flex gap-3">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/gif,image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleBatchFilesSelect(e.target.files)}
+                      disabled={batchUploading}
+                    />
+                    <Button variant="outline" asChild disabled={batchUploading}>
+                      <span>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Selecionar Arquivos
+                      </span>
+                    </Button>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Selected files preview */}
+            {batchFiles.length > 0 && !batchUploading && (
+              <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="font-medium">{batchFiles.length} arquivo(s) selecionado(s)</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pronto para upload. Grupo muscular: "Pendente" (edite depois)
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={clearBatchFiles}>
+                      Cancelar
+                    </Button>
+                    <Button size="sm" onClick={handleBatchUpload}>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Iniciar Upload
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="max-h-40 overflow-y-auto">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                    {batchFiles.slice(0, 24).map((file, idx) => (
+                      <div key={idx} className="text-xs p-2 bg-background rounded border truncate">
+                        {file.name.replace(/\.[^/.]+$/, "")}
+                      </div>
+                    ))}
+                    {batchFiles.length > 24 && (
+                      <div className="text-xs p-2 bg-muted rounded border text-muted-foreground flex items-center justify-center">
+                        +{batchFiles.length - 24} mais
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Upload progress */}
+            {batchUploading && (
+              <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <LoadingSpinner size="sm" />
+                    <p className="font-medium">Processando uploads...</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {batchProgress.current} de {batchProgress.total}
+                  </p>
+                </div>
+                
+                <Progress 
+                  value={batchProgress.total > 0 ? (batchProgress.current / batchProgress.total) * 100 : 0} 
+                  className="mb-3"
+                />
+                
+                <div className="flex gap-4 text-sm">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    {batchProgress.success} sucesso
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <XCircle className="h-4 w-4 text-red-500" />
+                    {batchProgress.failed} falha(s)
+                  </span>
                 </div>
               </div>
             )}
