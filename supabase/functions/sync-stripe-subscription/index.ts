@@ -12,6 +12,16 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
   console.log(`[SYNC-STRIPE-SUB] ${step}${detailsStr}`);
 };
 
+// Safe timestamp to ISO conversion helper
+const safeTimestampToISO = (timestamp: number | undefined | null, fallback?: number): string => {
+  const ts = timestamp ?? fallback;
+  if (!ts || typeof ts !== 'number' || isNaN(ts)) {
+    return new Date().toISOString();
+  }
+  const date = new Date(ts * 1000);
+  return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+};
+
 // Price ID to plan type mapping
 const PRICE_TO_PLAN: Record<string, { type: string; name: string }> = {
   "price_1ScZqTCuFZvf5xFdZuOBMzpt": { type: "embaixador", name: "ELITE Fundador" },
@@ -195,11 +205,9 @@ serve(async (req) => {
       plan_name: planInfo?.name || "Plano Desconhecido",
       price_cents: priceCents,
       mrr_value: mrrValue,
-      current_period_start: new Date(targetSub.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(targetSub.current_period_end * 1000).toISOString(),
-      started_at: targetSub.start_date 
-        ? new Date(targetSub.start_date * 1000).toISOString() 
-        : new Date().toISOString(),
+      current_period_start: safeTimestampToISO(targetSub.current_period_start),
+      current_period_end: safeTimestampToISO(targetSub.current_period_end),
+      started_at: safeTimestampToISO(targetSub.start_date, targetSub.created),
       access_blocked: false,
       blocked_reason: null,
       updated_at: new Date().toISOString(),
