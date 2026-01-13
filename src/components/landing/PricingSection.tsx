@@ -11,12 +11,12 @@ import { supabase } from "@/integrations/supabase/client";
 const MAX_EMBAIXADOR_MEMBERS = 25;
 const allPlans = [{
   id: "embaixador",
-  name: "Embaixador",
+  name: "Elite Fundador",
   price: "49,90",
   period: "/mês",
   badge: "25 VAGAS",
   priceId: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
-  features: ["Treino personalizado", "Receitas exclusivas", "Fale com Mentor 24h", "Dashboard de progresso", "Análise de fotos", "Preço vitalício"],
+  features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h", "Acesso vitalício ao preço"],
   popular: true,
   promotional: true
 }, {
@@ -25,34 +25,37 @@ const allPlans = [{
   price: "197",
   period: "/mês",
   priceId: "price_1ScZrECuFZvf5xFdfS9W8kvY",
-  features: ["Treino personalizado", "Receitas exclusivas", "Fale com Mentor 24h", "Dashboard de progresso", "Análise de fotos e vídeos"],
+  features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
   popular: false
 }, {
   id: "trimestral",
   name: "Trimestral",
   price: "497",
   period: "/3 meses",
+  monthlyEquivalent: "R$165,67/mês",
   priceId: "price_1ScZsTCuFZvf5xFdbW8kJeQF",
-  savings: "Economize R$94",
-  features: ["Tudo do plano Mensal", "Check-ins semanais", "Ajustes de protocolo", "Consultoria nutricional"],
+  savings: "Economia de 16%",
+  features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
   popular: false
 }, {
   id: "semestral",
   name: "Semestral",
   price: "697",
   period: "/6 meses",
+  monthlyEquivalent: "R$116,17/mês",
   priceId: "price_1ScZtrCuFZvf5xFd8iXDfbEp",
-  savings: "Economize R$485",
-  features: ["Tudo do plano Trimestral", "Plano nutricional avançado", "Suporte prioritário", "Acesso à comunidade"],
+  savings: "Economia de 41%",
+  features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
   popular: false
 }, {
   id: "anual",
   name: "Anual",
   price: "997",
   period: "/ano",
+  monthlyEquivalent: "R$83,08/mês",
   priceId: "price_1ScZvCCuFZvf5xFdjrs51JQB",
-  savings: "Economize R$1.367",
-  features: ["Tudo do plano Semestral", "Mentoria exclusiva", "Acesso à comunidade VIP", "Bônus: E-books exclusivos"],
+  savings: "Economia de 58%",
+  features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
   popular: false
 }];
 export function PricingSection() {
@@ -130,11 +133,15 @@ para os primeiros 25 embaixadores.</p>
               <CardContent className="p-5 flex flex-col h-full">
                 <h3 className="font-display text-xl text-foreground mb-2">{plan.name}</h3>
                 
-                <div className="flex items-baseline gap-1 mb-4">
+                <div className="flex items-baseline gap-1 mb-1">
                   <span className="text-sm text-muted-foreground">R$</span>
                   <span className="font-display text-3xl text-primary">{plan.price}</span>
                   <span className="text-xs text-muted-foreground">{plan.period}</span>
                 </div>
+                {plan.monthlyEquivalent && (
+                  <p className="text-xs text-muted-foreground mb-4">{plan.monthlyEquivalent}</p>
+                )}
+                {!plan.monthlyEquivalent && <div className="mb-4" />}
 
                 <ul className="space-y-2 mb-6 flex-1">
                   {plan.features.map(feature => <li key={feature} className="flex items-start gap-2">
