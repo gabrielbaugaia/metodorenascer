@@ -61,7 +61,9 @@ import {
   Upload,
   Zap,
   Database,
-  CloudDownload
+  CloudDownload,
+  Save,
+  X
 } from "lucide-react";
 import { generateGifCoverageReportPdf } from "@/lib/generateGifCoverageReportPdf";
 import exercisesDatabase from "@/data/exercisesDatabase.json";
@@ -469,17 +471,9 @@ export default function AdminExerciseGifs() {
   const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, success: 0, failed: 0 });
   const [isDragging, setIsDragging] = useState(false);
 
-  // Inline editing state
+  // Inline editing state (draft mode - no auto-save)
   const [editingFields, setEditingFields] = useState<Record<string, { field: string; value: string }>>({});
   const [savingInline, setSavingInline] = useState<string | null>(null);
-  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
-
-  // Cleanup debounce timers on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(debounceTimers.current).forEach(clearTimeout);
-    };
-  }, []);
 
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
@@ -945,81 +939,84 @@ export default function AdminExerciseGifs() {
     }
   };
 
-  // Save inline field immediately (used by Enter key or debounce)
-  const saveInlineField = async (gifId: string, field: string, value: string) => {
+  // Inline update handler - local draft only, no auto-save
+  const handleInlineUpdate = (gifId: string, field: string, value: string) => {
     const timerKey = `${gifId}-${field}`;
+    const gif = gifs.find(g => g.id === gifId);
+    const originalValue = gif ? gif[field as keyof ExerciseGif] : null;
     
-    // Cancel pending timer if exists
-    if (debounceTimers.current[timerKey]) {
-      clearTimeout(debounceTimers.current[timerKey]);
-      delete debounceTimers.current[timerKey];
+    // If value matches original, remove from drafts
+    if (value === originalValue) {
+      setEditingFields(prev => {
+        const newState = { ...prev };
+        delete newState[timerKey];
+        return newState;
+      });
+    } else {
+      // Otherwise, store as draft
+      setEditingFields(prev => ({ 
+        ...prev, 
+        [timerKey]: { field, value } 
+      }));
+    }
+  };
+
+  // Check if a GIF has pending changes
+  const hasPendingChanges = (gifId: string) => {
+    return Object.keys(editingFields).some(key => key.startsWith(`${gifId}-`));
+  };
+
+  // Save all pending changes for a GIF
+  const saveGifChanges = async (gifId: string) => {
+    const pendingFields = Object.entries(editingFields)
+      .filter(([key]) => key.startsWith(`${gifId}-`))
+      .reduce((acc, [key, val]) => {
+        acc[val.field] = val.value;
+        return acc;
+      }, {} as Record<string, string>);
+    
+    if (Object.keys(pendingFields).length === 0) {
+      toast.info("Sem alterações para salvar");
+      return;
     }
     
     setSavingInline(gifId);
     try {
       const { error } = await supabase
         .from("exercise_gifs")
-        .update({ [field]: value, updated_at: new Date().toISOString() })
+        .update({ ...pendingFields, updated_at: new Date().toISOString() })
         .eq("id", gifId);
-
+      
       if (error) throw error;
       
+      // Update local state
       setGifs(prev => prev.map(g => 
-        g.id === gifId ? { ...g, [field]: value } : g
+        g.id === gifId ? { ...g, ...pendingFields } : g
       ));
       
-      toast.success("Salvo!", { duration: 1500 });
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-      toast.error("Erro ao salvar");
-    } finally {
-      setSavingInline(null);
+      // Clear drafts for this GIF
       setEditingFields(prev => {
         const newState = { ...prev };
-        delete newState[timerKey];
+        Object.keys(newState).filter(k => k.startsWith(`${gifId}-`)).forEach(k => delete newState[k]);
         return newState;
       });
+      
+      toast.success("Alterações salvas!");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar alterações");
+    } finally {
+      setSavingInline(null);
     }
   };
 
-  // Inline update handler with proper debounce
-  const handleInlineUpdate = (gifId: string, field: string, value: string) => {
-    const timerKey = `${gifId}-${field}`;
-    
-    // Update local state immediately for responsive UI
-    setEditingFields(prev => ({ 
-      ...prev, 
-      [timerKey]: { field, value } 
-    }));
-    
-    // Cancel previous timer for this specific field
-    if (debounceTimers.current[timerKey]) {
-      clearTimeout(debounceTimers.current[timerKey]);
-    }
-    
-    // Create new timer with 1.5 second delay
-    debounceTimers.current[timerKey] = setTimeout(() => {
-      saveInlineField(gifId, field, value);
-    }, 1500);
-  };
-
-  // Handle Enter key to save immediately
-  const handleInlineKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    gifId: string,
-    field: string
-  ) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const timerKey = `${gifId}-${field}`;
-      const currentValue = editingFields[timerKey]?.value;
-      
-      if (currentValue !== undefined) {
-        saveInlineField(gifId, field, currentValue);
-      }
-      
-      (e.target as HTMLInputElement).blur();
-    }
+  // Cancel pending changes for a GIF
+  const cancelGifChanges = (gifId: string) => {
+    setEditingFields(prev => {
+      const newState = { ...prev };
+      Object.keys(newState).filter(k => k.startsWith(`${gifId}-`)).forEach(k => delete newState[k]);
+      return newState;
+    });
   };
 
   // Importar exercícios do arquivo JSON com dados enriquecidos
@@ -2118,14 +2115,13 @@ export default function AdminExerciseGifs() {
                             </div>
                           </TableCell>
                           
-                          {/* Inline editable Nome PT */}
+                          {/* Inline editable Nome PT - draft mode */}
                           <TableCell>
                             <Input
                               value={editingFields[`${gif.id}-exercise_name_pt`]?.value ?? gif.exercise_name_pt}
                               onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_pt', e.target.value)}
-                              onKeyDown={(e) => handleInlineKeyDown(e, gif.id, 'exercise_name_pt')}
                               className={`h-9 text-sm transition-colors ${
-                                editingFields[`${gif.id}-exercise_name_pt`] && savingInline !== gif.id 
+                                editingFields[`${gif.id}-exercise_name_pt`] 
                                   ? 'border-yellow-400' 
                                   : savingInline === gif.id 
                                     ? 'border-green-500' 
@@ -2135,13 +2131,19 @@ export default function AdminExerciseGifs() {
                             />
                           </TableCell>
                           
-                          {/* Inline editable Muscle Group */}
+                          {/* Inline editable Muscle Group - draft mode */}
                           <TableCell>
                             <Select
-                              value={gif.muscle_group}
+                              value={editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group}
                               onValueChange={(value) => handleInlineUpdate(gif.id, 'muscle_group', value)}
                             >
-                              <SelectTrigger className={`h-9 text-sm ${gif.muscle_group === 'Pendente' ? 'border-yellow-500 text-yellow-600' : ''}`}>
+                              <SelectTrigger className={`h-9 text-sm ${
+                                editingFields[`${gif.id}-muscle_group`] 
+                                  ? 'border-yellow-400' 
+                                  : (editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group) === 'Pendente' 
+                                    ? 'border-yellow-500 text-yellow-600' 
+                                    : ''
+                              }`}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -2158,9 +2160,34 @@ export default function AdminExerciseGifs() {
                           {/* Status */}
                           <TableCell>{getStatusBadge(gif.status)}</TableCell>
                           
-                          {/* Reduced Actions */}
+                          {/* Actions with manual save/cancel */}
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
+                              {/* Save changes button - only shown when there are pending changes */}
+                              {hasPendingChanges(gif.id) && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => saveGifChanges(gif.id)}
+                                    disabled={savingInline === gif.id}
+                                    title="Salvar alterações"
+                                    className="text-green-600 hover:text-green-700 h-8 w-8"
+                                  >
+                                    <Save className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => cancelGifChanges(gif.id)}
+                                    disabled={savingInline === gif.id}
+                                    title="Cancelar alterações"
+                                    className="text-muted-foreground hover:text-foreground h-8 w-8"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
                               {/* Quick upload button */}
                               <label className="cursor-pointer">
                                 <input
@@ -2182,7 +2209,7 @@ export default function AdminExerciseGifs() {
                                   </span>
                                 </Button>
                               </label>
-                              {gif.status !== "active" && gif.gif_url && !hasBrokenUrl && (
+                              {gif.status !== "active" && gif.gif_url && !hasBrokenUrl && !hasPendingChanges(gif.id) && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
