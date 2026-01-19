@@ -74,6 +74,9 @@ import { ExerciseFromDb, getMuscleGroupFromExercise, GIF_BASE_URL } from "@/type
 import { syncAllExercisesFromApi, checkApiStatus, isUsingCustomApi } from "@/services/exerciseDb";
 import { Progress } from "@/components/ui/progress";
 import { ExerciseGifCard } from "@/components/admin/ExerciseGifCard";
+import { BatchActionsCard } from "@/components/admin/BatchActionsCard";
+import { BatchRenameModal } from "@/components/admin/BatchRenameModal";
+import { BrokenUrlsModal } from "@/components/admin/BrokenUrlsModal";
 
 interface ExerciseGif {
   id: string;
@@ -483,6 +486,34 @@ export default function AdminExerciseGifs() {
   // AI suggestion state
   const [suggestingName, setSuggestingName] = useState<string | null>(null);
 
+  // Batch rename state
+  const [batchRenaming, setBatchRenaming] = useState(false);
+  const [batchRenameProgress, setBatchRenameProgress] = useState({ current: 0, total: 0 });
+  const [renameSuggestions, setRenameSuggestions] = useState<Array<{
+    id: string;
+    original: string;
+    suggested: string;
+    gifUrl: string;
+    muscleGroup: string;
+    selected: boolean;
+  }>>([]);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [applyingRenames, setApplyingRenames] = useState(false);
+
+  // Broken URL check state
+  const [checkingUrls, setCheckingUrls] = useState(false);
+  const [checkingUrlsProgress, setCheckingUrlsProgress] = useState({ current: 0, total: 0 });
+  const [brokenUrls, setBrokenUrls] = useState<Array<{
+    id: string;
+    name: string;
+    url: string;
+    muscleGroup: string;
+    status: string;
+    selected: boolean;
+  }>>([]);
+  const [showBrokenUrlsModal, setShowBrokenUrlsModal] = useState(false);
+  const [processingBrokenUrls, setProcessingBrokenUrls] = useState(false);
+
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
 
@@ -494,6 +525,24 @@ export default function AdminExerciseGifs() {
   const isValidLocalUrl = (url: string | null) => {
     return url?.includes('supabase.co/storage') || url?.includes('lxdosmjenbaugmhyfanx') || false;
   };
+
+  // Check if a name needs renaming (random IDs or English names)
+  const needsRename = (name: string) => {
+    // Random ID patterns (e.g., "0JtKWum", "Rbu5UUb", UUID-like)
+    if (name.match(/^[a-zA-Z0-9]{5,10}$/) && !name.includes(' ')) return true;
+    if (name.match(/^[a-f0-9-]{10,}$/i)) return true;
+    // Very short names
+    if (name.length < 4) return true;
+    // English exercise terms
+    if (/\b(dumbbell|barbell|cable|press|curl|row|fly|pulldown|pushdown|crunch|squat|deadlift|lunge|extension|raise|pull|push|bench|incline|decline)\b/i.test(name)) return true;
+    return false;
+  };
+
+  // Count GIFs that need renaming
+  const pendingNamesCount = gifs.filter(g => g.gif_url && needsRename(g.exercise_name_pt)).length;
+  
+  // Count external URLs
+  const externalUrlsCount = gifs.filter(g => isExternalBrokenUrl(g.gif_url)).length;
 
   // Check if a GIF is ready to be activated (has valid URL, proper name, and muscle group)
   const isGifReadyToActivate = (gif: ExerciseGif) => {
@@ -1463,6 +1512,263 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  // Batch rename with AI
+  const handleStartBatchRename = async () => {
+    // Get GIFs that need renaming and have a valid URL
+    const gifsToRename = gifs.filter(g => 
+      g.gif_url && 
+      !isExternalBrokenUrl(g.gif_url) && 
+      needsRename(g.exercise_name_pt)
+    ).slice(0, 50); // Limit to 50 at a time
+    
+    if (gifsToRename.length === 0) {
+      toast.info("Nenhum GIF precisa de renomeação");
+      return;
+    }
+    
+    setBatchRenaming(true);
+    setBatchRenameProgress({ current: 0, total: gifsToRename.length });
+    setRenameSuggestions([]);
+    
+    const suggestions: typeof renameSuggestions = [];
+    
+    for (let i = 0; i < gifsToRename.length; i++) {
+      const gif = gifsToRename[i];
+      
+      try {
+        // Rate limiting - 2 second delay between requests
+        if (i > 0) {
+          await new Promise(r => setTimeout(r, 2000));
+        }
+        
+        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: "Analise esta imagem de exercício físico e responda APENAS com o nome do exercício em português brasileiro. Use letras maiúsculas no início de cada palavra. Exemplos: 'Supino Reto com Barra', 'Elevação Lateral', 'Agachamento Búlgaro'. Sem explicações, apenas o nome."
+                  },
+                  {
+                    type: "image_url",
+                    image_url: { url: gif.gif_url! }
+                  }
+                ]
+              }
+            ]
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const suggestedName = data.choices?.[0]?.message?.content?.trim();
+          
+          if (suggestedName && suggestedName.length > 2) {
+            const cleanName = suggestedName
+              .replace(/^["']|["']$/g, '')
+              .replace(/\.$/, '')
+              .trim();
+            
+            suggestions.push({
+              id: gif.id,
+              original: gif.exercise_name_pt,
+              suggested: cleanName,
+              gifUrl: gif.gif_url!,
+              muscleGroup: gif.muscle_group,
+              selected: true
+            });
+          }
+        } else if (response.status === 429) {
+          toast.error("Limite de requisições atingido. Tente novamente em alguns minutos.");
+          break;
+        } else if (response.status === 402) {
+          toast.error("Créditos de IA esgotados.");
+          break;
+        }
+      } catch (error) {
+        console.error(`Erro ao processar ${gif.exercise_name_pt}:`, error);
+      }
+      
+      setBatchRenameProgress({ current: i + 1, total: gifsToRename.length });
+    }
+    
+    setBatchRenaming(false);
+    
+    if (suggestions.length > 0) {
+      setRenameSuggestions(suggestions);
+      setShowRenameModal(true);
+      toast.success(`${suggestions.length} sugestão(ões) de nome gerada(s)`);
+    } else {
+      toast.info("Nenhuma sugestão foi gerada");
+    }
+  };
+
+  // Toggle selection for rename suggestions
+  const handleToggleRenameSuggestion = (id: string) => {
+    setRenameSuggestions(prev => 
+      prev.map(s => s.id === id ? { ...s, selected: !s.selected } : s)
+    );
+  };
+
+  // Toggle all rename suggestions
+  const handleToggleAllRenameSuggestions = () => {
+    const allSelected = renameSuggestions.every(s => s.selected);
+    setRenameSuggestions(prev => 
+      prev.map(s => ({ ...s, selected: !allSelected }))
+    );
+  };
+
+  // Apply rename suggestions
+  const handleApplyRenameSuggestions = async () => {
+    const selected = renameSuggestions.filter(s => s.selected);
+    if (selected.length === 0) return;
+    
+    setApplyingRenames(true);
+    
+    try {
+      for (const suggestion of selected) {
+        await supabase
+          .from("exercise_gifs")
+          .update({ 
+            exercise_name_pt: suggestion.suggested, 
+            updated_at: new Date().toISOString() 
+          })
+          .eq("id", suggestion.id);
+      }
+      
+      toast.success(`${selected.length} nome(s) atualizado(s) com sucesso!`);
+      setShowRenameModal(false);
+      setRenameSuggestions([]);
+      fetchGifs();
+    } catch (error) {
+      console.error("Erro ao aplicar renomeações:", error);
+      toast.error("Erro ao salvar nomes");
+    } finally {
+      setApplyingRenames(false);
+    }
+  };
+
+  // Check for broken external URLs
+  const handleCheckBrokenUrls = async () => {
+    const externalGifs = gifs.filter(g => isExternalBrokenUrl(g.gif_url));
+    
+    if (externalGifs.length === 0) {
+      toast.info("Nenhuma URL externa encontrada");
+      return;
+    }
+    
+    setCheckingUrls(true);
+    setCheckingUrlsProgress({ current: 0, total: externalGifs.length });
+    
+    const broken: typeof brokenUrls = [];
+    
+    // All exercisedb.io URLs are considered broken since the service is down
+    for (let i = 0; i < externalGifs.length; i++) {
+      const gif = externalGifs[i];
+      
+      broken.push({
+        id: gif.id,
+        name: gif.exercise_name_pt,
+        url: gif.gif_url!,
+        muscleGroup: gif.muscle_group,
+        status: gif.status,
+        selected: true
+      });
+      
+      setCheckingUrlsProgress({ current: i + 1, total: externalGifs.length });
+      
+      // Small delay to show progress
+      if (i % 10 === 0) {
+        await new Promise(r => setTimeout(r, 50));
+      }
+    }
+    
+    setCheckingUrls(false);
+    setBrokenUrls(broken);
+    
+    if (broken.length > 0) {
+      setShowBrokenUrlsModal(true);
+      toast.warning(`${broken.length} URL(s) externa(s) quebrada(s) encontrada(s)`);
+    } else {
+      toast.success("Todas as URLs estão funcionando");
+    }
+  };
+
+  // Toggle selection for broken URLs
+  const handleToggleBrokenUrl = (id: string) => {
+    setBrokenUrls(prev => 
+      prev.map(b => b.id === id ? { ...b, selected: !b.selected } : b)
+    );
+  };
+
+  // Toggle all broken URLs
+  const handleToggleAllBrokenUrls = () => {
+    const allSelected = brokenUrls.every(b => b.selected);
+    setBrokenUrls(prev => 
+      prev.map(b => ({ ...b, selected: !allSelected }))
+    );
+  };
+
+  // Deactivate selected broken URLs
+  const handleDeactivateBrokenUrls = async () => {
+    const selected = brokenUrls.filter(b => b.selected);
+    if (selected.length === 0) return;
+    
+    setProcessingBrokenUrls(true);
+    
+    try {
+      const ids = selected.map(b => b.id);
+      await supabase
+        .from("exercise_gifs")
+        .update({ status: "pending", updated_at: new Date().toISOString() })
+        .in("id", ids);
+      
+      toast.success(`${selected.length} GIF(s) desativado(s)`);
+      setShowBrokenUrlsModal(false);
+      setBrokenUrls([]);
+      fetchGifs();
+    } catch (error) {
+      console.error("Erro ao desativar:", error);
+      toast.error("Erro ao desativar GIFs");
+    } finally {
+      setProcessingBrokenUrls(false);
+    }
+  };
+
+  // Delete selected broken URLs
+  const handleDeleteBrokenUrls = async () => {
+    const selected = brokenUrls.filter(b => b.selected);
+    if (selected.length === 0) return;
+    
+    setProcessingBrokenUrls(true);
+    
+    try {
+      const ids = selected.map(b => b.id);
+      await supabase
+        .from("exercise_gifs")
+        .delete()
+        .in("id", ids);
+      
+      toast.success(`${selected.length} GIF(s) excluído(s)`);
+      setShowBrokenUrlsModal(false);
+      setBrokenUrls([]);
+      fetchGifs();
+    } catch (error) {
+      console.error("Erro ao excluir:", error);
+      toast.error("Erro ao excluir GIFs");
+    } finally {
+      setProcessingBrokenUrls(false);
+    }
+  };
+
   // Handle activation of a single GIF
   const handleActivateGif = async (gif: ExerciseGif) => {
     try {
@@ -1570,8 +1876,26 @@ export default function AdminExerciseGifs() {
           </Card>
         </div>
 
-        {/* Ativar GIFs Prontos Card */}
-        {readyToActivateCount > 0 && (
+        {/* Batch Actions Card with AI */}
+        {(pendingNamesCount > 0 || externalUrlsCount > 0) && (
+          <BatchActionsCard
+            pendingNamesCount={pendingNamesCount}
+            externalUrlsCount={externalUrlsCount}
+            readyToActivateCount={readyToActivateCount}
+            brokenUrlsCount={brokenUrls.length}
+            batchRenaming={batchRenaming}
+            batchRenameProgress={batchRenameProgress}
+            checkingUrls={checkingUrls}
+            checkingUrlsProgress={checkingUrlsProgress}
+            onStartBatchRename={handleStartBatchRename}
+            onCheckBrokenUrls={handleCheckBrokenUrls}
+            onActivateReady={handleActivateReadyGifs}
+            activatingAll={activatingAll}
+          />
+        )}
+
+        {/* Ativar GIFs Prontos Card - only show if no batch actions card or ready to activate */}
+        {readyToActivateCount > 0 && pendingNamesCount === 0 && externalUrlsCount === 0 && (
           <Card className="mb-6 border-green-500 bg-green-500/5">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-green-700">
@@ -2485,6 +2809,29 @@ export default function AdminExerciseGifs() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Batch Rename Modal */}
+        <BatchRenameModal
+          open={showRenameModal}
+          onOpenChange={setShowRenameModal}
+          suggestions={renameSuggestions}
+          onToggleSelection={handleToggleRenameSuggestion}
+          onToggleAll={handleToggleAllRenameSuggestions}
+          onApply={handleApplyRenameSuggestions}
+          isApplying={applyingRenames}
+        />
+
+        {/* Broken URLs Modal */}
+        <BrokenUrlsModal
+          open={showBrokenUrlsModal}
+          onOpenChange={setShowBrokenUrlsModal}
+          brokenUrls={brokenUrls}
+          onToggleSelection={handleToggleBrokenUrl}
+          onToggleAll={handleToggleAllBrokenUrls}
+          onDeactivate={handleDeactivateBrokenUrls}
+          onDelete={handleDeleteBrokenUrls}
+          isProcessing={processingBrokenUrls}
+        />
       </div>
     </div>
   );
