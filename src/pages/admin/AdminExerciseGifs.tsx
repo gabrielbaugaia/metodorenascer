@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -472,6 +472,14 @@ export default function AdminExerciseGifs() {
   // Inline editing state
   const [editingFields, setEditingFields] = useState<Record<string, { field: string; value: string }>>({});
   const [savingInline, setSavingInline] = useState<string | null>(null);
+  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
+
+  // Cleanup debounce timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(debounceTimers.current).forEach(clearTimeout);
+    };
+  }, []);
 
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
@@ -937,12 +945,23 @@ export default function AdminExerciseGifs() {
     }
   };
 
-  // Inline update handler with debounce
-  const handleInlineUpdate = async (gifId: string, field: string, value: string) => {
-    setEditingFields(prev => ({ ...prev, [gifId]: { field, value } }));
+  // Inline update handler with proper debounce
+  const handleInlineUpdate = (gifId: string, field: string, value: string) => {
+    const timerKey = `${gifId}-${field}`;
     
-    // Debounce the actual save
-    const timeoutId = setTimeout(async () => {
+    // Update local state immediately for responsive UI
+    setEditingFields(prev => ({ 
+      ...prev, 
+      [timerKey]: { field, value } 
+    }));
+    
+    // Cancel previous timer for this specific field
+    if (debounceTimers.current[timerKey]) {
+      clearTimeout(debounceTimers.current[timerKey]);
+    }
+    
+    // Create new timer with 1.5 second delay
+    debounceTimers.current[timerKey] = setTimeout(async () => {
       setSavingInline(gifId);
       try {
         const { error } = await supabase
@@ -965,13 +984,12 @@ export default function AdminExerciseGifs() {
         setSavingInline(null);
         setEditingFields(prev => {
           const newState = { ...prev };
-          delete newState[gifId];
+          delete newState[timerKey];
           return newState;
         });
+        delete debounceTimers.current[timerKey];
       }
-    }, 800);
-
-    return () => clearTimeout(timeoutId);
+    }, 1500);
   };
 
   // Importar exercícios do arquivo JSON com dados enriquecidos
@@ -2074,11 +2092,15 @@ export default function AdminExerciseGifs() {
                           {/* Inline editable Nome PT */}
                           <TableCell>
                             <Input
-                              value={editingFields[gif.id]?.field === 'exercise_name_pt' 
-                                ? editingFields[gif.id].value 
-                                : gif.exercise_name_pt}
+                              value={editingFields[`${gif.id}-exercise_name_pt`]?.value ?? gif.exercise_name_pt}
                               onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_pt', e.target.value)}
-                              className={`h-9 text-sm ${savingInline === gif.id ? 'border-green-500 bg-green-500/10' : ''}`}
+                              className={`h-9 text-sm transition-colors ${
+                                editingFields[`${gif.id}-exercise_name_pt`] && savingInline !== gif.id 
+                                  ? 'border-yellow-400 bg-yellow-50' 
+                                  : savingInline === gif.id 
+                                    ? 'border-green-500 bg-green-500/10' 
+                                    : ''
+                              }`}
                               placeholder="Nome em português"
                             />
                           </TableCell>
@@ -2086,11 +2108,15 @@ export default function AdminExerciseGifs() {
                           {/* Inline editable Nome EN */}
                           <TableCell className="hidden md:table-cell">
                             <Input
-                              value={editingFields[gif.id]?.field === 'exercise_name_en' 
-                                ? editingFields[gif.id].value 
-                                : gif.exercise_name_en}
+                              value={editingFields[`${gif.id}-exercise_name_en`]?.value ?? gif.exercise_name_en}
                               onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_en', e.target.value)}
-                              className={`h-9 text-sm ${savingInline === gif.id ? 'border-green-500 bg-green-500/10' : ''}`}
+                              className={`h-9 text-sm transition-colors ${
+                                editingFields[`${gif.id}-exercise_name_en`] && savingInline !== gif.id 
+                                  ? 'border-yellow-400 bg-yellow-50' 
+                                  : savingInline === gif.id 
+                                    ? 'border-green-500 bg-green-500/10' 
+                                    : ''
+                              }`}
                               placeholder="Nome em inglês"
                             />
                           </TableCell>
