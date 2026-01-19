@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,13 +64,16 @@ import {
   Database,
   CloudDownload,
   Save,
-  X
+  X,
+  Wand2,
+  Expand
 } from "lucide-react";
 import { generateGifCoverageReportPdf } from "@/lib/generateGifCoverageReportPdf";
 import exercisesDatabase from "@/data/exercisesDatabase.json";
 import { ExerciseFromDb, getMuscleGroupFromExercise, GIF_BASE_URL } from "@/types/exerciseDatabase";
 import { syncAllExercisesFromApi, checkApiStatus, isUsingCustomApi } from "@/services/exerciseDb";
 import { Progress } from "@/components/ui/progress";
+import { ExerciseGifCard } from "@/components/admin/ExerciseGifCard";
 
 interface ExerciseGif {
   id: string;
@@ -423,6 +427,7 @@ export default function AdminExerciseGifs() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const [gifs, setGifs] = useState<ExerciseGif[]>([]);
   const [loading, setLoading] = useState(true);
@@ -474,6 +479,9 @@ export default function AdminExerciseGifs() {
   // Inline editing state (draft mode - no auto-save)
   const [editingFields, setEditingFields] = useState<Record<string, { field: string; value: string }>>({});
   const [savingInline, setSavingInline] = useState<string | null>(null);
+  
+  // AI suggestion state
+  const [suggestingName, setSuggestingName] = useState<string | null>(null);
 
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
@@ -1384,6 +1392,91 @@ export default function AdminExerciseGifs() {
     setBatchProgress({ current: 0, total: 0, success: 0, failed: 0 });
   };
 
+  // Suggest exercise name using AI (Lovable AI Gateway)
+  const suggestNameWithAI = async (gifId: string, gifUrl: string) => {
+    if (!gifUrl) {
+      toast.error("GIF não encontrado para análise");
+      return;
+    }
+    
+    setSuggestingName(gifId);
+    try {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "Analise esta imagem de exercício físico e responda APENAS com o nome do exercício em português brasileiro. Use letras maiúsculas no início de cada palavra. Exemplos: 'Supino Reto com Barra', 'Elevação Lateral', 'Agachamento Búlgaro'. Sem explicações, apenas o nome."
+                },
+                {
+                  type: "image_url",
+                  image_url: { url: gifUrl }
+                }
+              ]
+            }
+          ]
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("AI Gateway error:", response.status, errorText);
+        if (response.status === 429) {
+          toast.error("Limite de requisições excedido. Aguarde um momento.");
+        } else if (response.status === 402) {
+          toast.error("Créditos de IA esgotados. Adicione créditos ao workspace.");
+        } else {
+          toast.error("Erro ao conectar com a IA");
+        }
+        return;
+      }
+      
+      const data = await response.json();
+      const suggestedName = data.choices?.[0]?.message?.content?.trim();
+      
+      if (suggestedName && suggestedName.length > 2) {
+        // Clean up the response (remove quotes, extra punctuation)
+        const cleanName = suggestedName
+          .replace(/^["']|["']$/g, '') // Remove surrounding quotes
+          .replace(/\.$/, '') // Remove trailing period
+          .trim();
+        
+        handleInlineUpdate(gifId, 'exercise_name_pt', cleanName);
+        toast.success(`Sugestão: "${cleanName}"`);
+      } else {
+        toast.error("IA não conseguiu identificar o exercício");
+      }
+    } catch (error) {
+      console.error("Erro ao sugerir nome:", error);
+      toast.error("Erro ao conectar com a IA");
+    } finally {
+      setSuggestingName(null);
+    }
+  };
+
+  // Handle activation of a single GIF
+  const handleActivateGif = async (gif: ExerciseGif) => {
+    try {
+      await supabase
+        .from("exercise_gifs")
+        .update({ status: "active", last_checked_at: new Date().toISOString() })
+        .eq("id", gif.id);
+      toast.success("GIF ativado!");
+      fetchGifs();
+    } catch (error) {
+      toast.error("Erro ao ativar");
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -2051,7 +2144,7 @@ export default function AdminExerciseGifs() {
           </CardContent>
         </Card>
 
-        {/* Table */}
+        {/* Exercise List - Responsive */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">
@@ -2059,33 +2152,59 @@ export default function AdminExerciseGifs() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-28">GIF</TableHead>
-                    <TableHead className="min-w-[200px]">Nome (PT)</TableHead>
-                    <TableHead className="min-w-[140px]">Grupo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right w-28">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredGifs.length === 0 ? (
+            {filteredGifs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum exercício encontrado
+              </div>
+            ) : isMobile ? (
+              /* Mobile: Card Layout */
+              <div className="space-y-3">
+                {filteredGifs.map((gif) => (
+                  <ExerciseGifCard
+                    key={gif.id}
+                    gif={gif}
+                    muscleGroups={MUSCLE_GROUPS}
+                    editingFields={editingFields}
+                    savingInline={savingInline}
+                    uploadingGif={uploadingGif}
+                    suggestingName={suggestingName}
+                    onInlineUpdate={handleInlineUpdate}
+                    onSaveChanges={saveGifChanges}
+                    onCancelChanges={cancelGifChanges}
+                    onUpload={handleGifUpload}
+                    onActivate={handleActivateGif}
+                    onDelete={setDeleteId}
+                    onPreview={setPreviewGif}
+                    onSuggestName={suggestNameWithAI}
+                    hasPendingChanges={hasPendingChanges}
+                    isExternalBrokenUrl={isExternalBrokenUrl}
+                    isGifReadyToActivate={isGifReadyToActivate}
+                    getStatusBadge={getStatusBadge}
+                  />
+                ))}
+              </div>
+            ) : (
+              /* Desktop: Table Layout */
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        Nenhum exercício encontrado
-                      </TableCell>
+                      <TableHead className="w-28">GIF</TableHead>
+                      <TableHead className="min-w-[200px]">Nome (PT)</TableHead>
+                      <TableHead className="min-w-[140px]">Grupo</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right w-36">Ações</TableHead>
                     </TableRow>
-                  ) : (
-                    filteredGifs.map((gif) => {
+                  </TableHeader>
+                  <TableBody>
+                    {filteredGifs.map((gif) => {
                       const hasBrokenUrl = isExternalBrokenUrl(gif.gif_url);
                       const isReady = isGifReadyToActivate(gif);
                       
                       return (
                         <TableRow 
                           key={gif.id} 
-                          className={`${hasBrokenUrl ? 'bg-red-500/5 border-l-2 border-l-red-500' : ''} ${isReady ? 'bg-green-500/5' : ''}`}
+                          className={`${hasBrokenUrl ? 'bg-destructive/5 border-l-2 border-l-destructive' : ''} ${isReady ? 'bg-green-500/5' : ''}`}
                         >
                           {/* Larger thumbnail with broken URL indicator */}
                           <TableCell>
@@ -2095,14 +2214,14 @@ export default function AdminExerciseGifs() {
                                   <img 
                                     src={gif.gif_url} 
                                     alt={gif.exercise_name_pt}
-                                    className={`w-24 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity ${hasBrokenUrl ? 'border-2 border-red-500' : ''}`}
+                                    className={`w-24 h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity ${hasBrokenUrl ? 'border-2 border-destructive' : ''}`}
                                     onClick={() => setPreviewGif(gif)}
                                     onError={(e) => {
                                       (e.target as HTMLImageElement).src = "/placeholder.svg";
                                     }}
                                   />
                                   {hasBrokenUrl && (
-                                    <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5" title="URL externa quebrada - precisa re-upload">
+                                    <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5" title="URL externa quebrada - precisa re-upload">
                                       <AlertTriangle className="h-3 w-3" />
                                     </div>
                                   )}
@@ -2117,18 +2236,34 @@ export default function AdminExerciseGifs() {
                           
                           {/* Inline editable Nome PT - draft mode */}
                           <TableCell>
-                            <Input
-                              value={editingFields[`${gif.id}-exercise_name_pt`]?.value ?? gif.exercise_name_pt}
-                              onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_pt', e.target.value)}
-                              className={`h-9 text-sm transition-colors ${
-                                editingFields[`${gif.id}-exercise_name_pt`] 
-                                  ? 'border-yellow-400' 
-                                  : savingInline === gif.id 
-                                    ? 'border-green-500' 
-                                    : ''
-                              }`}
-                              placeholder="Nome em português"
-                            />
+                            <div className="flex gap-2">
+                              <Input
+                                value={editingFields[`${gif.id}-exercise_name_pt`]?.value ?? gif.exercise_name_pt}
+                                onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_pt', e.target.value)}
+                                className={`h-9 text-sm transition-colors flex-1 ${
+                                  editingFields[`${gif.id}-exercise_name_pt`] 
+                                    ? 'border-yellow-400' 
+                                    : savingInline === gif.id 
+                                      ? 'border-green-500' 
+                                      : ''
+                                }`}
+                                placeholder="Nome em português"
+                              />
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9 flex-shrink-0"
+                                onClick={() => gif.gif_url && suggestNameWithAI(gif.id, gif.gif_url)}
+                                disabled={suggestingName === gif.id || !gif.gif_url}
+                                title="Sugerir nome com IA"
+                              >
+                                {suggestingName === gif.id ? (
+                                  <LoadingSpinner size="sm" />
+                                ) : (
+                                  <Wand2 className="h-4 w-4 text-primary" />
+                                )}
+                              </Button>
+                            </div>
                           </TableCell>
                           
                           {/* Inline editable Muscle Group - draft mode */}
@@ -2213,18 +2348,7 @@ export default function AdminExerciseGifs() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={async () => {
-                                    try {
-                                      await supabase
-                                        .from("exercise_gifs")
-                                        .update({ status: "active", last_checked_at: new Date().toISOString() })
-                                        .eq("id", gif.id);
-                                      toast.success("GIF ativado!");
-                                      fetchGifs();
-                                    } catch (error) {
-                                      toast.error("Erro ao ativar");
-                                    }
-                                  }}
+                                  onClick={() => handleActivateGif(gif)}
                                   title="Ativar GIF"
                                   className="text-green-600 hover:text-green-700 h-8 w-8"
                                 >
@@ -2244,11 +2368,11 @@ export default function AdminExerciseGifs() {
                           </TableCell>
                         </TableRow>
                       );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
 
