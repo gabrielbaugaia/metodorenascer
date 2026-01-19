@@ -196,16 +196,7 @@ export default function Anamnese() {
       return;
     }
 
-    // Validate required photos - ALL 3 photos are mandatory
-    const missingPhotos: string[] = [];
-    if (!formData.foto_frente_url) missingPhotos.push('Foto de Frente');
-    if (!formData.foto_lado_url) missingPhotos.push('Foto de Lado');
-    if (!formData.foto_costas_url) missingPhotos.push('Foto de Costas');
-    
-    if (missingPhotos.length > 0) {
-      toast.error(`Fotos obrigatórias: ${missingPhotos.join(', ')}. Envie as 3 fotos para continuar.`);
-      return;
-    }
+    // Photos are now optional - removed mandatory validation
 
     setLoading(true);
     
