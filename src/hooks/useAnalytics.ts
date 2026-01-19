@@ -14,16 +14,22 @@ export function useAnalytics() {
   const { user } = useAuth();
   const hasTrackedAppOpen = useRef(false);
 
-  // Track event to Supabase
+  // Track event to Supabase (only for authenticated users due to RLS)
   const trackEvent = useCallback(
     async (
       eventName: string,
       pageName?: string,
       metadata?: EventMetadata
     ) => {
+      // Skip tracking for anonymous users - RLS requires auth.uid() IS NOT NULL
+      if (!user?.id) {
+        console.debug("Analytics: skipping event for anonymous user", eventName);
+        return;
+      }
+      
       try {
         await supabase.from("events").insert({
-          user_id: user?.id || null,
+          user_id: user.id,
           event_name: eventName,
           page_name: pageName || currentPage,
           metadata: metadata || {},

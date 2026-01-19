@@ -86,3 +86,6 @@ verify_jwt = true
 
 [functions.sync-exercise-gifs]
 verify_jwt = false
+
+[functions.suggest-exercise-name]
+verify_jwt = false
