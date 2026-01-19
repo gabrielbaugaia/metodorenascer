@@ -945,6 +945,43 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  // Save inline field immediately (used by Enter key or debounce)
+  const saveInlineField = async (gifId: string, field: string, value: string) => {
+    const timerKey = `${gifId}-${field}`;
+    
+    // Cancel pending timer if exists
+    if (debounceTimers.current[timerKey]) {
+      clearTimeout(debounceTimers.current[timerKey]);
+      delete debounceTimers.current[timerKey];
+    }
+    
+    setSavingInline(gifId);
+    try {
+      const { error } = await supabase
+        .from("exercise_gifs")
+        .update({ [field]: value, updated_at: new Date().toISOString() })
+        .eq("id", gifId);
+
+      if (error) throw error;
+      
+      setGifs(prev => prev.map(g => 
+        g.id === gifId ? { ...g, [field]: value } : g
+      ));
+      
+      toast.success("Salvo!", { duration: 1500 });
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar");
+    } finally {
+      setSavingInline(null);
+      setEditingFields(prev => {
+        const newState = { ...prev };
+        delete newState[timerKey];
+        return newState;
+      });
+    }
+  };
+
   // Inline update handler with proper debounce
   const handleInlineUpdate = (gifId: string, field: string, value: string) => {
     const timerKey = `${gifId}-${field}`;
@@ -961,35 +998,28 @@ export default function AdminExerciseGifs() {
     }
     
     // Create new timer with 1.5 second delay
-    debounceTimers.current[timerKey] = setTimeout(async () => {
-      setSavingInline(gifId);
-      try {
-        const { error } = await supabase
-          .from("exercise_gifs")
-          .update({ [field]: value, updated_at: new Date().toISOString() })
-          .eq("id", gifId);
-
-        if (error) throw error;
-        
-        // Update local state
-        setGifs(prev => prev.map(g => 
-          g.id === gifId ? { ...g, [field]: value } : g
-        ));
-        
-        toast.success("Salvo!", { duration: 1500 });
-      } catch (error) {
-        console.error("Erro ao salvar:", error);
-        toast.error("Erro ao salvar");
-      } finally {
-        setSavingInline(null);
-        setEditingFields(prev => {
-          const newState = { ...prev };
-          delete newState[timerKey];
-          return newState;
-        });
-        delete debounceTimers.current[timerKey];
-      }
+    debounceTimers.current[timerKey] = setTimeout(() => {
+      saveInlineField(gifId, field, value);
     }, 1500);
+  };
+
+  // Handle Enter key to save immediately
+  const handleInlineKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    gifId: string,
+    field: string
+  ) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const timerKey = `${gifId}-${field}`;
+      const currentValue = editingFields[timerKey]?.value;
+      
+      if (currentValue !== undefined) {
+        saveInlineField(gifId, field, currentValue);
+      }
+      
+      (e.target as HTMLInputElement).blur();
+    }
   };
 
   // Importar exercícios do arquivo JSON com dados enriquecidos
@@ -2094,6 +2124,7 @@ export default function AdminExerciseGifs() {
                             <Input
                               value={editingFields[`${gif.id}-exercise_name_pt`]?.value ?? gif.exercise_name_pt}
                               onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_pt', e.target.value)}
+                              onKeyDown={(e) => handleInlineKeyDown(e, gif.id, 'exercise_name_pt')}
                               className={`h-9 text-sm transition-colors ${
                                 editingFields[`${gif.id}-exercise_name_pt`] && savingInline !== gif.id 
                                   ? 'border-yellow-400 bg-yellow-50' 
@@ -2110,6 +2141,7 @@ export default function AdminExerciseGifs() {
                             <Input
                               value={editingFields[`${gif.id}-exercise_name_en`]?.value ?? gif.exercise_name_en}
                               onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_en', e.target.value)}
+                              onKeyDown={(e) => handleInlineKeyDown(e, gif.id, 'exercise_name_en')}
                               className={`h-9 text-sm transition-colors ${
                                 editingFields[`${gif.id}-exercise_name_en`] && savingInline !== gif.id 
                                   ? 'border-yellow-400 bg-yellow-50' 
