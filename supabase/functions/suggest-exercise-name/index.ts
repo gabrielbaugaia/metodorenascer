@@ -31,6 +31,40 @@ serve(async (req) => {
 
     console.log("Processing image for AI analysis:", gifUrl.substring(0, 100));
 
+    // Download the image and convert to base64 to avoid MIME type issues with GIFs
+    let imageDataUrl: string;
+    try {
+      const imageResponse = await fetch(gifUrl);
+      if (!imageResponse.ok) {
+        console.error("Failed to fetch image:", imageResponse.status);
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch image from URL" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      const arrayBuffer = await imageResponse.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      // Convert to base64
+      let binary = '';
+      for (let i = 0; i < uint8Array.length; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+      }
+      const base64 = btoa(binary);
+      
+      // Use image/jpeg as the MIME type for better compatibility
+      // The AI will still be able to analyze the first frame of GIFs
+      imageDataUrl = `data:image/jpeg;base64,${base64}`;
+      console.log("Image converted to base64, size:", base64.length);
+    } catch (fetchError) {
+      console.error("Error fetching/converting image:", fetchError);
+      return new Response(
+        JSON.stringify({ error: "Failed to process image" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -49,7 +83,7 @@ serve(async (req) => {
               },
               {
                 type: "image_url",
-                image_url: { url: gifUrl }
+                image_url: { url: imageDataUrl }
               }
             ]
           }
