@@ -102,11 +102,10 @@ export function PhotoUploadSection({
     <Card className="border-primary/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          Fotos Corporais <span className="text-destructive">*</span>
+          Fotos Corporais <span className="text-muted-foreground text-sm font-normal">(opcional)</span>
         </CardTitle>
         <CardDescription>
-          <span className="text-destructive font-medium">Obrigatório:</span> Envie as 3 fotos abaixo para liberar acesso às suas prescrições personalizadas.
-          As fotos são essenciais para análise postural e acompanhamento de evolução.
+          <span className="text-primary font-medium">Recomendado:</span> Envie as 3 fotos para receber uma análise corporal personalizada e acompanhar sua evolução visual.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -116,7 +115,7 @@ export function PhotoUploadSection({
         <div className="grid grid-cols-3 gap-4">
           <PhotoUploadBox
             type="frente"
-            label="Frente *"
+            label="Frente"
             preview={photoPreview.frente}
             isUploading={uploadingPhoto === "frente"}
             isValidating={validatingPhoto === "frente"}
@@ -125,7 +124,7 @@ export function PhotoUploadSection({
           />
           <PhotoUploadBox
             type="lado"
-            label="Lado *"
+            label="Lado"
             preview={photoPreview.lado}
             isUploading={uploadingPhoto === "lado"}
             isValidating={validatingPhoto === "lado"}
@@ -134,7 +133,7 @@ export function PhotoUploadSection({
           />
           <PhotoUploadBox
             type="costas"
-            label="Costas *"
+            label="Costas"
             preview={photoPreview.costas}
             isUploading={uploadingPhoto === "costas"}
             isValidating={validatingPhoto === "costas"}
