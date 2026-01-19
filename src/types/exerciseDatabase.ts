@@ -13,9 +13,9 @@ export interface ExerciseFromDb {
 
 // Mapping from API body parts to Portuguese muscle groups
 export const BODY_PART_TO_MUSCLE_GROUP: Record<string, string> = {
-  // Lower body
-  "lower legs": "Pernas",
-  "upper legs": "Pernas",
+  // Lower body - more specific
+  "lower legs": "Panturrilha",
+  "upper legs": "Quadríceps",
   
   // Upper body
   "chest": "Peito",
@@ -27,25 +27,34 @@ export const BODY_PART_TO_MUSCLE_GROUP: Record<string, string> = {
   // Core
   "waist": "Abdômen",
   
-  // Glutes
+  // Other
   "cardio": "Cardio",
-  "neck": "Ombros",
+  "neck": "Trapézios",
 };
 
 // Get muscle group from target muscles and body parts
 export function getMuscleGroupFromExercise(exercise: ExerciseFromDb): string {
   const targetMuscle = exercise.targetMuscles[0]?.toLowerCase() || "";
   const bodyPart = exercise.bodyParts[0]?.toLowerCase() || "";
+  const exerciseName = exercise.name?.toLowerCase() || "";
   
-  // Check target muscles first
+  // Check target muscles first - more specific leg groups
   if (targetMuscle.includes("glute")) return "Glúteos";
-  if (targetMuscle.includes("quad") || targetMuscle.includes("hamstring") || targetMuscle.includes("calv")) return "Pernas";
+  if (targetMuscle.includes("quad")) return "Quadríceps";
+  if (targetMuscle.includes("hamstring")) return "Posterior de Coxa";
+  if (targetMuscle.includes("calv") || targetMuscle.includes("gastrocnemius") || targetMuscle.includes("soleus")) return "Panturrilha";
+  if (targetMuscle.includes("trap")) return "Trapézios";
+  
+  // Upper body
   if (targetMuscle.includes("pectoral")) return "Peito";
-  if (targetMuscle.includes("lat") || targetMuscle.includes("back") || targetMuscle.includes("trap") || targetMuscle.includes("rhomboid")) return "Costas";
+  if (targetMuscle.includes("lat") || targetMuscle.includes("back") || targetMuscle.includes("rhomboid")) return "Costas";
   if (targetMuscle.includes("delt") || targetMuscle.includes("rotator")) return "Ombros";
   if (targetMuscle.includes("bicep") || targetMuscle.includes("forearm") || targetMuscle.includes("brachial")) return "Bíceps";
   if (targetMuscle.includes("tricep")) return "Tríceps";
   if (targetMuscle.includes("ab") || targetMuscle.includes("oblique") || targetMuscle.includes("spine") || targetMuscle.includes("erector")) return "Abdômen";
+  
+  // Check exercise name for stretching/mobility
+  if (exerciseName.includes("stretch") || exerciseName.includes("yoga") || exerciseName.includes("mobility")) return "Alongamento";
   
   // Fallback to body part mapping
   return BODY_PART_TO_MUSCLE_GROUP[bodyPart] || "Corpo Inteiro";

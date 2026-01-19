@@ -77,6 +77,7 @@ import { ExerciseGifCard } from "@/components/admin/ExerciseGifCard";
 import { BatchActionsCard } from "@/components/admin/BatchActionsCard";
 import { BatchRenameModal } from "@/components/admin/BatchRenameModal";
 import { BrokenUrlsModal } from "@/components/admin/BrokenUrlsModal";
+import { MuscleGroupModal } from "@/components/admin/MuscleGroupModal";
 
 interface ExerciseGif {
   id: string;
@@ -161,10 +162,10 @@ const PT_TO_EN_MAP: Record<string, { en: string; group: string }> = {
   "remada com barra": { en: "barbell row", group: "Costas" },
   "remada com halter": { en: "dumbbell row", group: "Costas" },
   "levantamento terra": { en: "deadlift", group: "Costas" },
-  "levantamento terra romeno": { en: "romanian deadlift", group: "Pernas" },
-  "terra romeno": { en: "romanian deadlift", group: "Pernas" },
-  "stiff": { en: "stiff leg deadlift", group: "Pernas" },
-  "stiff com halteres": { en: "dumbbell stiff leg deadlift", group: "Pernas" },
+  "levantamento terra romeno": { en: "romanian deadlift", group: "Posterior de Coxa" },
+  "terra romeno": { en: "romanian deadlift", group: "Posterior de Coxa" },
+  "stiff": { en: "stiff leg deadlift", group: "Posterior de Coxa" },
+  "stiff com halteres": { en: "dumbbell stiff leg deadlift", group: "Posterior de Coxa" },
   "barra fixa": { en: "pull up", group: "Costas" },
   "barra fixa supinada": { en: "chin up", group: "Costas" },
   "barra fixa pronada": { en: "pull up", group: "Costas" },
@@ -173,8 +174,8 @@ const PT_TO_EN_MAP: Record<string, { en: string; group: string }> = {
   "pullover costas": { en: "dumbbell pullover", group: "Costas" },
   "hiperextensao": { en: "back extension", group: "Costas" },
   "extensao lombar": { en: "back extension", group: "Costas" },
-  "good morning": { en: "good morning", group: "Costas" },
-  "bom dia": { en: "good morning", group: "Costas" },
+  "good morning": { en: "good morning", group: "Posterior de Coxa" },
+  "bom dia": { en: "good morning", group: "Posterior de Coxa" },
   "superman": { en: "superman exercise", group: "Costas" },
   "face pull costas": { en: "face pull", group: "Ombros" },
   
@@ -197,11 +198,11 @@ const PT_TO_EN_MAP: Record<string, { en: string; group: string }> = {
   "fly inverso": { en: "reverse fly", group: "Ombros" },
   "face pull": { en: "face pull", group: "Ombros" },
   "face pull na polia": { en: "cable face pull", group: "Ombros" },
-  "encolhimento": { en: "shrug", group: "Ombros" },
-  "encolhimento halteres": { en: "dumbbell shrug", group: "Ombros" },
-  "encolhimento com halteres": { en: "dumbbell shrug", group: "Ombros" },
-  "encolhimento barra": { en: "barbell shrug", group: "Ombros" },
-  "encolhimento com barra": { en: "barbell shrug", group: "Ombros" },
+  "encolhimento": { en: "shrug", group: "Trapézios" },
+  "encolhimento halteres": { en: "dumbbell shrug", group: "Trapézios" },
+  "encolhimento com halteres": { en: "dumbbell shrug", group: "Trapézios" },
+  "encolhimento barra": { en: "barbell shrug", group: "Trapézios" },
+  "encolhimento com barra": { en: "barbell shrug", group: "Trapézios" },
   "remada alta ombros": { en: "upright row", group: "Ombros" },
   "ombro posterior": { en: "rear delt fly", group: "Ombros" },
   "deltoides posterior": { en: "rear delt fly", group: "Ombros" },
@@ -253,47 +254,47 @@ const PT_TO_EN_MAP: Record<string, { en: string; group: string }> = {
   "hand grip": { en: "grip strengthener", group: "Bíceps" },
   
   // Legs - Quadriceps / Pernas - Quadríceps
-  "agachamento": { en: "squat", group: "Pernas" },
-  "agachamento livre": { en: "barbell squat", group: "Pernas" },
-  "agachamento barra": { en: "barbell squat", group: "Pernas" },
-  "agachamento com barra": { en: "barbell squat", group: "Pernas" },
-  "agachamento goblet": { en: "goblet squat", group: "Pernas" },
-  "agachamento hack": { en: "hack squat", group: "Pernas" },
-  "agachamento smith": { en: "smith machine squat", group: "Pernas" },
-  "agachamento frontal": { en: "front squat", group: "Pernas" },
-  "agachamento frontal barra": { en: "barbell front squat", group: "Pernas" },
-  "agachamento bulgaro": { en: "bulgarian split squat", group: "Pernas" },
-  "agachamento sumo": { en: "sumo squat", group: "Pernas" },
-  "agachamento sumo largo": { en: "wide stance sumo squat", group: "Pernas" },
-  "agachamento unilateral": { en: "single leg squat", group: "Pernas" },
-  "agachamento sissy": { en: "sissy squat", group: "Pernas" },
-  "sissy squat": { en: "sissy squat", group: "Pernas" },
-  "leg press": { en: "leg press", group: "Pernas" },
-  "leg press 45": { en: "leg press", group: "Pernas" },
-  "leg press horizontal": { en: "horizontal leg press", group: "Pernas" },
-  "cadeira extensora": { en: "leg extension", group: "Pernas" },
-  "extensora": { en: "leg extension", group: "Pernas" },
-  "extensao de pernas": { en: "leg extension", group: "Pernas" },
-  "afundo": { en: "lunge", group: "Pernas" },
-  "afundo frontal": { en: "forward lunge", group: "Pernas" },
-  "afundo reverso": { en: "reverse lunge", group: "Pernas" },
-  "afundo lateral": { en: "side lunge", group: "Pernas" },
-  "passada": { en: "walking lunge", group: "Pernas" },
-  "passada caminhando": { en: "walking lunge", group: "Pernas" },
-  "avanco": { en: "lunge", group: "Pernas" },
-  "pistol squat": { en: "pistol squat", group: "Pernas" },
+  "agachamento": { en: "squat", group: "Quadríceps" },
+  "agachamento livre": { en: "barbell squat", group: "Quadríceps" },
+  "agachamento barra": { en: "barbell squat", group: "Quadríceps" },
+  "agachamento com barra": { en: "barbell squat", group: "Quadríceps" },
+  "agachamento goblet": { en: "goblet squat", group: "Quadríceps" },
+  "agachamento hack": { en: "hack squat", group: "Quadríceps" },
+  "agachamento smith": { en: "smith machine squat", group: "Quadríceps" },
+  "agachamento frontal": { en: "front squat", group: "Quadríceps" },
+  "agachamento frontal barra": { en: "barbell front squat", group: "Quadríceps" },
+  "agachamento bulgaro": { en: "bulgarian split squat", group: "Quadríceps" },
+  "agachamento sumo": { en: "sumo squat", group: "Quadríceps" },
+  "agachamento sumo largo": { en: "wide stance sumo squat", group: "Quadríceps" },
+  "agachamento unilateral": { en: "single leg squat", group: "Quadríceps" },
+  "agachamento sissy": { en: "sissy squat", group: "Quadríceps" },
+  "sissy squat": { en: "sissy squat", group: "Quadríceps" },
+  "leg press": { en: "leg press", group: "Quadríceps" },
+  "leg press 45": { en: "leg press", group: "Quadríceps" },
+  "leg press horizontal": { en: "horizontal leg press", group: "Quadríceps" },
+  "cadeira extensora": { en: "leg extension", group: "Quadríceps" },
+  "extensora": { en: "leg extension", group: "Quadríceps" },
+  "extensao de pernas": { en: "leg extension", group: "Quadríceps" },
+  "afundo": { en: "lunge", group: "Quadríceps" },
+  "afundo frontal": { en: "forward lunge", group: "Quadríceps" },
+  "afundo reverso": { en: "reverse lunge", group: "Quadríceps" },
+  "afundo lateral": { en: "side lunge", group: "Quadríceps" },
+  "passada": { en: "walking lunge", group: "Quadríceps" },
+  "passada caminhando": { en: "walking lunge", group: "Quadríceps" },
+  "avanco": { en: "lunge", group: "Quadríceps" },
+  "pistol squat": { en: "pistol squat", group: "Quadríceps" },
   
-  // Legs - Hamstrings / Pernas - Posterior
-  "mesa flexora": { en: "leg curl", group: "Pernas" },
-  "flexora deitada": { en: "lying leg curl", group: "Pernas" },
-  "flexora sentada": { en: "seated leg curl", group: "Pernas" },
-  "flexora em pe": { en: "standing leg curl", group: "Pernas" },
-  "cadeira flexora": { en: "seated leg curl", group: "Pernas" },
-  "stiff pernas": { en: "stiff leg deadlift", group: "Pernas" },
-  "stiff unilateral": { en: "single leg romanian deadlift", group: "Pernas" },
-  "terra romeno unilateral": { en: "single leg romanian deadlift", group: "Pernas" },
+  // Legs - Hamstrings / Posterior de Coxa
+  "mesa flexora": { en: "leg curl", group: "Posterior de Coxa" },
+  "flexora deitada": { en: "lying leg curl", group: "Posterior de Coxa" },
+  "flexora sentada": { en: "seated leg curl", group: "Posterior de Coxa" },
+  "flexora em pe": { en: "standing leg curl", group: "Posterior de Coxa" },
+  "cadeira flexora": { en: "seated leg curl", group: "Posterior de Coxa" },
+  "stiff pernas": { en: "stiff leg deadlift", group: "Posterior de Coxa" },
+  "stiff unilateral": { en: "single leg romanian deadlift", group: "Posterior de Coxa" },
+  "terra romeno unilateral": { en: "single leg romanian deadlift", group: "Posterior de Coxa" },
   
-  // Legs - Glutes / Pernas - Glúteos
+  // Legs - Glutes / Glúteos
   "elevacao pelvica": { en: "hip thrust", group: "Glúteos" },
   "elevacao pelica": { en: "hip thrust", group: "Glúteos" },
   "hip thrust": { en: "hip thrust", group: "Glúteos" },
@@ -310,26 +311,26 @@ const PT_TO_EN_MAP: Record<string, { en: string; group: string }> = {
   "abdutora maquina": { en: "hip abduction machine", group: "Glúteos" },
   "abducao de quadril": { en: "hip abduction", group: "Glúteos" },
   "abducao de quadril deitado": { en: "lying hip abduction", group: "Glúteos" },
-  "adutora": { en: "hip adduction", group: "Pernas" },
-  "adutora maquina": { en: "hip adduction machine", group: "Pernas" },
-  "aducao com elastico": { en: "resistance band hip adduction", group: "Pernas" },
-  "aducao na maquina": { en: "hip adduction machine", group: "Pernas" },
+  "adutora": { en: "hip adduction", group: "Quadríceps" },
+  "adutora maquina": { en: "hip adduction machine", group: "Quadríceps" },
+  "aducao com elastico": { en: "resistance band hip adduction", group: "Quadríceps" },
+  "aducao na maquina": { en: "hip adduction machine", group: "Quadríceps" },
   "agachamento gluteo": { en: "glute squat", group: "Glúteos" },
   "cadeira abdutora": { en: "hip abduction machine", group: "Glúteos" },
-  "cadeira adutora": { en: "hip adduction machine", group: "Pernas" },
+  "cadeira adutora": { en: "hip adduction machine", group: "Quadríceps" },
   
-  // Legs - Calves / Pernas - Panturrilha
-  "panturrilha": { en: "calf raise", group: "Pernas" },
-  "panturrilha em pe": { en: "standing calf raise", group: "Pernas" },
-  "elevacao de panturrilha em pe": { en: "standing calf raise", group: "Pernas" },
-  "panturrilha sentado": { en: "seated calf raise", group: "Pernas" },
-  "elevacao de panturrilha sentado": { en: "seated calf raise", group: "Pernas" },
-  "panturrilha maquina": { en: "calf press machine", group: "Pernas" },
-  "panturrilha leg press": { en: "leg press calf raise", group: "Pernas" },
-  "panturrilha no leg press": { en: "leg press calf raise", group: "Pernas" },
-  "panturrilha unilateral": { en: "single leg calf raise", group: "Pernas" },
-  "gemeos": { en: "calf raise", group: "Pernas" },
-  "elevacao de calcanhar": { en: "calf raise", group: "Pernas" },
+  // Legs - Calves / Panturrilha
+  "panturrilha": { en: "calf raise", group: "Panturrilha" },
+  "panturrilha em pe": { en: "standing calf raise", group: "Panturrilha" },
+  "elevacao de panturrilha em pe": { en: "standing calf raise", group: "Panturrilha" },
+  "panturrilha sentado": { en: "seated calf raise", group: "Panturrilha" },
+  "elevacao de panturrilha sentado": { en: "seated calf raise", group: "Panturrilha" },
+  "panturrilha maquina": { en: "calf press machine", group: "Panturrilha" },
+  "panturrilha leg press": { en: "leg press calf raise", group: "Panturrilha" },
+  "panturrilha no leg press": { en: "leg press calf raise", group: "Panturrilha" },
+  "panturrilha unilateral": { en: "single leg calf raise", group: "Panturrilha" },
+  "gemeos": { en: "calf raise", group: "Panturrilha" },
+  "elevacao de calcanhar": { en: "calf raise", group: "Panturrilha" },
   
   // Core / Abdomen
   "abdominal": { en: "crunch", group: "Abdômen" },
@@ -408,14 +409,18 @@ const PT_TO_EN_MAP: Record<string, { en: string; group: string }> = {
 const MUSCLE_GROUPS = [
   "Peito",
   "Costas",
+  "Trapézios",
   "Ombros",
   "Bíceps",
   "Tríceps",
-  "Pernas",
+  "Quadríceps",
+  "Posterior de Coxa",
+  "Panturrilha",
   "Glúteos",
   "Abdômen",
   "Core",
   "Cardio",
+  "Alongamento",
   "Corpo Inteiro",
   "Mobilidade"
 ];
@@ -513,6 +518,10 @@ export default function AdminExerciseGifs() {
   }>>([]);
   const [showBrokenUrlsModal, setShowBrokenUrlsModal] = useState(false);
   const [processingBrokenUrls, setProcessingBrokenUrls] = useState(false);
+
+  // Muscle Group Modal state
+  const [selectedGroupForView, setSelectedGroupForView] = useState<string | null>(null);
+  const [showGroupModal, setShowGroupModal] = useState(false);
 
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
@@ -1978,8 +1987,8 @@ export default function AdminExerciseGifs() {
                     key={group}
                     className="p-4 rounded-lg border bg-card hover:border-primary/50 transition-colors cursor-pointer"
                     onClick={() => {
-                      setFilterMuscle(group);
-                      setFilterStatus("all");
+                      setSelectedGroupForView(group);
+                      setShowGroupModal(true);
                     }}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -2832,6 +2841,23 @@ export default function AdminExerciseGifs() {
           onDelete={handleDeleteBrokenUrls}
           isProcessing={processingBrokenUrls}
         />
+
+        {/* Muscle Group Modal */}
+        {selectedGroupForView && (
+          <MuscleGroupModal
+            group={selectedGroupForView}
+            gifs={gifs}
+            open={showGroupModal}
+            onClose={() => {
+              setShowGroupModal(false);
+              setSelectedGroupForView(null);
+            }}
+            onFilterList={(group, status) => {
+              setFilterMuscle(group);
+              if (status) setFilterStatus(status);
+            }}
+          />
+        )}
       </div>
     </div>
   );
