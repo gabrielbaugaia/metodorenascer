@@ -1450,7 +1450,7 @@ export default function AdminExerciseGifs() {
     setBatchProgress({ current: 0, total: 0, success: 0, failed: 0 });
   };
 
-  // Suggest exercise name using AI (Lovable AI Gateway)
+  // Suggest exercise name using AI (via Edge Function)
   const suggestNameWithAI = async (gifId: string, gifUrl: string) => {
     if (!gifUrl) {
       toast.error("GIF não encontrado para análise");
@@ -1459,57 +1459,32 @@ export default function AdminExerciseGifs() {
     
     setSuggestingName(gifId);
     try {
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: "Analise esta imagem de exercício físico e responda APENAS com o nome do exercício em português brasileiro. Use letras maiúsculas no início de cada palavra. Exemplos: 'Supino Reto com Barra', 'Elevação Lateral', 'Agachamento Búlgaro'. Sem explicações, apenas o nome."
-                },
-                {
-                  type: "image_url",
-                  image_url: { url: gifUrl }
-                }
-              ]
-            }
-          ]
-        })
+      const { data, error } = await supabase.functions.invoke("suggest-exercise-name", {
+        body: { gifUrl }
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("AI Gateway error:", response.status, errorText);
-        if (response.status === 429) {
+      if (error) {
+        console.error("Edge function error:", error);
+        toast.error("Erro ao conectar com a IA");
+        return;
+      }
+      
+      if (data?.error) {
+        if (data.error.includes("Rate limit")) {
           toast.error("Limite de requisições excedido. Aguarde um momento.");
-        } else if (response.status === 402) {
+        } else if (data.error.includes("credits")) {
           toast.error("Créditos de IA esgotados. Adicione créditos ao workspace.");
         } else {
-          toast.error("Erro ao conectar com a IA");
+          toast.error(data.error);
         }
         return;
       }
       
-      const data = await response.json();
-      const suggestedName = data.choices?.[0]?.message?.content?.trim();
+      const suggestedName = data?.suggestedName;
       
       if (suggestedName && suggestedName.length > 2) {
-        // Clean up the response (remove quotes, extra punctuation)
-        const cleanName = suggestedName
-          .replace(/^["']|["']$/g, '') // Remove surrounding quotes
-          .replace(/\.$/, '') // Remove trailing period
-          .trim();
-        
-        handleInlineUpdate(gifId, 'exercise_name_pt', cleanName);
-        toast.success(`Sugestão: "${cleanName}"`);
+        handleInlineUpdate(gifId, 'exercise_name_pt', suggestedName);
+        toast.success(`Sugestão: "${suggestedName}"`);
       } else {
         toast.error("IA não conseguiu identificar o exercício");
       }
@@ -1521,7 +1496,7 @@ export default function AdminExerciseGifs() {
     }
   };
 
-  // Batch rename with AI
+  // Batch rename with AI (via Edge Function)
   const handleStartBatchRename = async () => {
     // Get GIFs that need renaming and have a valid URL
     const gifsToRename = gifs.filter(g => 
@@ -1540,9 +1515,12 @@ export default function AdminExerciseGifs() {
     setRenameSuggestions([]);
     
     const suggestions: typeof renameSuggestions = [];
+    let rateLimitHit = false;
     
     for (let i = 0; i < gifsToRename.length; i++) {
       const gif = gifsToRename[i];
+      
+      if (rateLimitHit) break;
       
       try {
         // Rate limiting - 2 second delay between requests
@@ -1550,57 +1528,39 @@ export default function AdminExerciseGifs() {
           await new Promise(r => setTimeout(r, 2000));
         }
         
-        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: "Analise esta imagem de exercício físico e responda APENAS com o nome do exercício em português brasileiro. Use letras maiúsculas no início de cada palavra. Exemplos: 'Supino Reto com Barra', 'Elevação Lateral', 'Agachamento Búlgaro'. Sem explicações, apenas o nome."
-                  },
-                  {
-                    type: "image_url",
-                    image_url: { url: gif.gif_url! }
-                  }
-                ]
-              }
-            ]
-          })
+        const { data, error } = await supabase.functions.invoke("suggest-exercise-name", {
+          body: { gifUrl: gif.gif_url }
         });
         
-        if (response.ok) {
-          const data = await response.json();
-          const suggestedName = data.choices?.[0]?.message?.content?.trim();
-          
-          if (suggestedName && suggestedName.length > 2) {
-            const cleanName = suggestedName
-              .replace(/^["']|["']$/g, '')
-              .replace(/\.$/, '')
-              .trim();
-            
-            suggestions.push({
-              id: gif.id,
-              original: gif.exercise_name_pt,
-              suggested: cleanName,
-              gifUrl: gif.gif_url!,
-              muscleGroup: gif.muscle_group,
-              selected: true
-            });
+        if (error) {
+          console.error(`Edge function error for ${gif.exercise_name_pt}:`, error);
+          continue;
+        }
+        
+        if (data?.error) {
+          if (data.error.includes("Rate limit")) {
+            toast.error("Limite de requisições atingido. Tente novamente em alguns minutos.");
+            rateLimitHit = true;
+            break;
+          } else if (data.error.includes("credits")) {
+            toast.error("Créditos de IA esgotados.");
+            rateLimitHit = true;
+            break;
           }
-        } else if (response.status === 429) {
-          toast.error("Limite de requisições atingido. Tente novamente em alguns minutos.");
-          break;
-        } else if (response.status === 402) {
-          toast.error("Créditos de IA esgotados.");
-          break;
+          continue;
+        }
+        
+        const suggestedName = data?.suggestedName;
+        
+        if (suggestedName && suggestedName.length > 2) {
+          suggestions.push({
+            id: gif.id,
+            original: gif.exercise_name_pt,
+            suggested: suggestedName,
+            gifUrl: gif.gif_url!,
+            muscleGroup: gif.muscle_group,
+            selected: true
+          });
         }
       } catch (error) {
         console.error(`Erro ao processar ${gif.exercise_name_pt}:`, error);
@@ -1615,7 +1575,7 @@ export default function AdminExerciseGifs() {
       setRenameSuggestions(suggestions);
       setShowRenameModal(true);
       toast.success(`${suggestions.length} sugestão(ões) de nome gerada(s)`);
-    } else {
+    } else if (!rateLimitHit) {
       toast.info("Nenhuma sugestão foi gerada");
     }
   };
