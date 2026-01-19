@@ -2068,7 +2068,6 @@ export default function AdminExerciseGifs() {
                   <TableRow>
                     <TableHead className="w-28">GIF</TableHead>
                     <TableHead className="min-w-[200px]">Nome (PT)</TableHead>
-                    <TableHead className="min-w-[200px] hidden md:table-cell">Nome (EN)</TableHead>
                     <TableHead className="min-w-[140px]">Grupo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right w-28">Ações</TableHead>
@@ -2077,7 +2076,7 @@ export default function AdminExerciseGifs() {
                 <TableBody>
                   {filteredGifs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         Nenhum exercício encontrado
                       </TableCell>
                     </TableRow>
@@ -2127,29 +2126,12 @@ export default function AdminExerciseGifs() {
                               onKeyDown={(e) => handleInlineKeyDown(e, gif.id, 'exercise_name_pt')}
                               className={`h-9 text-sm transition-colors ${
                                 editingFields[`${gif.id}-exercise_name_pt`] && savingInline !== gif.id 
-                                  ? 'border-yellow-400 bg-yellow-50' 
+                                  ? 'border-yellow-400' 
                                   : savingInline === gif.id 
-                                    ? 'border-green-500 bg-green-500/10' 
+                                    ? 'border-green-500' 
                                     : ''
                               }`}
                               placeholder="Nome em português"
-                            />
-                          </TableCell>
-                          
-                          {/* Inline editable Nome EN */}
-                          <TableCell className="hidden md:table-cell">
-                            <Input
-                              value={editingFields[`${gif.id}-exercise_name_en`]?.value ?? gif.exercise_name_en}
-                              onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_en', e.target.value)}
-                              onKeyDown={(e) => handleInlineKeyDown(e, gif.id, 'exercise_name_en')}
-                              className={`h-9 text-sm transition-colors ${
-                                editingFields[`${gif.id}-exercise_name_en`] && savingInline !== gif.id 
-                                  ? 'border-yellow-400 bg-yellow-50' 
-                                  : savingInline === gif.id 
-                                    ? 'border-green-500 bg-green-500/10' 
-                                    : ''
-                              }`}
-                              placeholder="Nome em inglês"
                             />
                           </TableCell>
                           
