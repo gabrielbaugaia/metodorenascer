@@ -81,15 +81,42 @@ serve(async (req) => {
       throw new Error("Erro ao buscar GIFs");
     }
 
-    // Create lookup map
-    const gifMap: Record<string, string> = {};
+    // Normalize function to strip common variations
+    const normalizeExerciseName = (name: string): string => {
+      return name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove accents
+        .replace(/\s+/g, " ")
+        .trim()
+        // Remove common prepositions and articles
+        .replace(/\b(com|na|no|de|do|da|em|para|ao|aos|as|os|a|o|e|um|uma)\b/g, "")
+        // Remove parentheses content like "(cada lado)" or "(45-60s)"
+        .replace(/\([^)]*\)/g, "")
+        // Remove common suffixes/variations
+        .replace(/maquina|máquina/g, "")
+        .replace(/barra|halteres?|halter|cabo|corda|polia/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    };
+
+    // Create lookup maps: exact and normalized
+    const gifMapExact: Record<string, string> = {};
+    const gifMapNormalized: Record<string, { name: string; url: string }> = {};
+    
     (gifs || []).forEach((g: ExerciseGif) => {
       if (g.exercise_name_pt && g.gif_url) {
-        gifMap[g.exercise_name_pt.toLowerCase()] = g.gif_url;
+        const lower = g.exercise_name_pt.toLowerCase().trim();
+        const normalized = normalizeExerciseName(g.exercise_name_pt);
+        
+        gifMapExact[lower] = g.gif_url;
+        if (normalized && !gifMapNormalized[normalized]) {
+          gifMapNormalized[normalized] = { name: g.exercise_name_pt, url: g.gif_url };
+        }
       }
     });
 
-    console.log(`Loaded ${Object.keys(gifMap).length} GIFs for matching`);
+    console.log(`Loaded ${Object.keys(gifMapExact).length} GIFs for matching (${Object.keys(gifMapNormalized).length} normalized)`);
 
     // Fetch all active training protocols
     const { data: protocols, error: protocolsError } = await supabaseClient
@@ -117,27 +144,39 @@ serve(async (req) => {
       const updateExercises = (exercises: Exercise[]) => {
         exercises.forEach((ex) => {
           if (ex.nome) {
-            const nomeNormalizado = ex.nome.toLowerCase().trim();
+            const nomeExato = ex.nome.toLowerCase().trim();
+            const nomeNormalizado = normalizeExerciseName(ex.nome);
+            
+            // Skip if already has a Supabase storage URL (already updated)
+            if (ex.video_url?.includes("supabase.co/storage")) {
+              return;
+            }
+            
+            let matchedUrl: string | null = null;
             
             // Try exact match first
-            if (gifMap[nomeNormalizado]) {
-              if (ex.video_url !== gifMap[nomeNormalizado]) {
-                ex.video_url = gifMap[nomeNormalizado];
-                exercisesUpdated++;
-                protocolModified = true;
-              }
-            } else {
-              // Try partial match
-              for (const [exerciseName, url] of Object.entries(gifMap)) {
-                if (nomeNormalizado.includes(exerciseName) || exerciseName.includes(nomeNormalizado)) {
-                  if (ex.video_url !== url) {
-                    ex.video_url = url;
-                    exercisesUpdated++;
-                    protocolModified = true;
-                  }
+            if (gifMapExact[nomeExato]) {
+              matchedUrl = gifMapExact[nomeExato];
+            }
+            // Try normalized match
+            else if (gifMapNormalized[nomeNormalizado]) {
+              matchedUrl = gifMapNormalized[nomeNormalizado].url;
+            }
+            // Try partial match on normalized names
+            else {
+              for (const [normalizedKey, data] of Object.entries(gifMapNormalized)) {
+                // Check if core exercise name is contained
+                if (nomeNormalizado.includes(normalizedKey) || normalizedKey.includes(nomeNormalizado)) {
+                  matchedUrl = data.url;
                   break;
                 }
               }
+            }
+            
+            if (matchedUrl && ex.video_url !== matchedUrl) {
+              ex.video_url = matchedUrl;
+              exercisesUpdated++;
+              protocolModified = true;
             }
           }
         });
@@ -189,7 +228,7 @@ serve(async (req) => {
       protocolsUpdated: updatedCount,
       exercisesEnriched: totalExercisesUpdated,
       totalProtocols: protocols?.length || 0,
-      availableGifs: Object.keys(gifMap).length,
+      availableGifs: Object.keys(gifMapExact).length,
     });
   } catch (error) {
     console.error("Update protocol GIFs error:", error);
