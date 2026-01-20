@@ -45,6 +45,8 @@ import {
   Loader2,
   Brain,
   ArrowLeft,
+  RefreshCw,
+  Image,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -125,6 +127,7 @@ export default function AdminPlanos() {
     open: false,
     protocol: null,
   });
+  const [updatingGifs, setUpdatingGifs] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -321,6 +324,25 @@ export default function AdminPlanos() {
     }
   };
 
+  const handleUpdateAllGifs = async () => {
+    setUpdatingGifs(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("update-protocol-gifs");
+
+      if (error) throw error;
+      
+      toast.success(
+        `GIFs atualizados! ${data.protocolsUpdated} protocolos, ${data.exercisesEnriched} exercícios.`
+      );
+      fetchProtocols();
+    } catch (error: any) {
+      console.error("Error updating GIFs:", error);
+      toast.error(error.message || "Erro ao atualizar GIFs dos protocolos");
+    } finally {
+      setUpdatingGifs(false);
+    }
+  };
+
   const filteredProtocols = protocols.filter(
     (p) =>
       p.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -478,14 +500,29 @@ export default function AdminPlanos() {
                 <CardTitle>Protocolos</CardTitle>
                 <CardDescription>{filteredProtocols.length} protocolos encontrados</CardDescription>
               </div>
-              <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por título ou cliente..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleUpdateAllGifs}
+                  disabled={updatingGifs}
+                  className="gap-2"
+                >
+                  {updatingGifs ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Image className="h-4 w-4" />
+                  )}
+                  Atualizar GIFs
+                </Button>
+                <div className="relative w-full md:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por título ou cliente..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
             </div>
           </CardHeader>
