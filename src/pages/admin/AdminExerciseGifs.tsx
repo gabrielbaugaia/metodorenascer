@@ -66,7 +66,8 @@ import {
   Save,
   X,
   Wand2,
-  Expand
+  Expand,
+  Globe
 } from "lucide-react";
 import { generateGifCoverageReportPdf } from "@/lib/generateGifCoverageReportPdf";
 import exercisesDatabase from "@/data/exercisesDatabase.json";
@@ -522,6 +523,11 @@ export default function AdminExerciseGifs() {
   // Muscle Group Modal state
   const [selectedGroupForView, setSelectedGroupForView] = useState<string | null>(null);
   const [showGroupModal, setShowGroupModal] = useState(false);
+
+  // Online search state
+  const [searchingOnline, setSearchingOnline] = useState<string | null>(null);
+  const [batchSearchingOnline, setBatchSearchingOnline] = useState(false);
+  const [batchSearchProgress, setBatchSearchProgress] = useState({ current: 0, total: 0, found: 0, failed: 0 });
 
   // Stats
   const [stats, setStats] = useState({ active: 0, pending: 0, missing: 0, total: 0 });
@@ -1752,6 +1758,123 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  // Search for GIF online using Firecrawl + AI validation
+  const handleSearchOnlineGif = async (gif: ExerciseGif) => {
+    setSearchingOnline(gif.id);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("search-exercise-gif", {
+        body: {
+          exerciseNamePt: gif.exercise_name_pt,
+          exerciseNameEn: gif.exercise_name_en,
+          exerciseId: gif.id,
+          muscleGroup: gif.muscle_group,
+        }
+      });
+      
+      if (error) {
+        console.error("Edge function error:", error);
+        toast.error("Erro ao conectar com o serviço de busca");
+        return;
+      }
+      
+      if (data?.error) {
+        if (data.error.includes("Firecrawl")) {
+          toast.error("Configure o conector Firecrawl nas configurações");
+        } else if (data.error.includes("No GIFs found")) {
+          toast.info(`Nenhum GIF encontrado para "${gif.exercise_name_pt}"`);
+        } else if (data.error.includes("AI validation")) {
+          toast.warning("GIF encontrado mas não passou na validação da IA");
+        } else {
+          toast.error(data.error);
+        }
+        return;
+      }
+      
+      if (data?.success) {
+        toast.success(`GIF encontrado e salvo para "${gif.exercise_name_pt}"!`);
+        fetchGifs();
+      }
+    } catch (error) {
+      console.error("Erro ao buscar GIF online:", error);
+      toast.error("Erro ao buscar GIF online");
+    } finally {
+      setSearchingOnline(null);
+    }
+  };
+
+  // Batch search for GIFs online
+  const handleBatchSearchOnline = async () => {
+    // Get GIFs that need searching (pending without URL)
+    const gifsToSearch = gifs.filter(g => 
+      !g.gif_url && 
+      g.status === "pending" &&
+      g.exercise_name_pt
+    ).slice(0, 20); // Limit to 20 at a time
+    
+    if (gifsToSearch.length === 0) {
+      toast.info("Nenhum exercício pendente sem GIF para buscar");
+      return;
+    }
+    
+    setBatchSearchingOnline(true);
+    setBatchSearchProgress({ current: 0, total: gifsToSearch.length, found: 0, failed: 0 });
+    
+    let foundCount = 0;
+    let failedCount = 0;
+    
+    for (let i = 0; i < gifsToSearch.length; i++) {
+      const gif = gifsToSearch[i];
+      
+      try {
+        // Rate limiting - 3 second delay between requests
+        if (i > 0) {
+          await new Promise(r => setTimeout(r, 3000));
+        }
+        
+        const { data, error } = await supabase.functions.invoke("search-exercise-gif", {
+          body: {
+            exerciseNamePt: gif.exercise_name_pt,
+            exerciseNameEn: gif.exercise_name_en,
+            exerciseId: gif.id,
+            muscleGroup: gif.muscle_group,
+          }
+        });
+        
+        if (error) {
+          console.error(`Error for ${gif.exercise_name_pt}:`, error);
+          failedCount++;
+        } else if (data?.success) {
+          foundCount++;
+        } else {
+          failedCount++;
+        }
+      } catch (error) {
+        console.error(`Error processing ${gif.exercise_name_pt}:`, error);
+        failedCount++;
+      }
+      
+      setBatchSearchProgress({ 
+        current: i + 1, 
+        total: gifsToSearch.length, 
+        found: foundCount, 
+        failed: failedCount 
+      });
+    }
+    
+    setBatchSearchingOnline(false);
+    
+    if (foundCount > 0) {
+      toast.success(`Busca concluída: ${foundCount} GIF(s) encontrado(s), ${failedCount} falha(s)`);
+      fetchGifs();
+    } else {
+      toast.warning("Nenhum GIF foi encontrado nesta busca");
+    }
+  };
+
+  // Count pending without URL
+  const pendingWithoutUrlCount = gifs.filter(g => !g.gif_url && g.status === "pending").length;
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -2078,6 +2201,26 @@ export default function AdminExerciseGifs() {
               <>
                 <CloudDownload className="h-4 w-4 mr-2" />
                 Baixar 1500 GIFs p/ Storage
+              </>
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={handleBatchSearchOnline}
+            disabled={batchSearchingOnline || pendingWithoutUrlCount === 0}
+            className="border-emerald-500/50 text-emerald-600 hover:bg-emerald-500/10"
+            title="Buscar GIFs na internet para exercícios pendentes"
+          >
+            {batchSearchingOnline ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Buscando... {batchSearchProgress.current}/{batchSearchProgress.total}
+              </>
+            ) : (
+              <>
+                <Globe className="h-4 w-4 mr-2" />
+                Buscar GIFs Online ({pendingWithoutUrlCount})
               </>
             )}
           </Button>
@@ -2461,6 +2604,7 @@ export default function AdminExerciseGifs() {
                     savingInline={savingInline}
                     uploadingGif={uploadingGif}
                     suggestingName={suggestingName}
+                    searchingOnline={searchingOnline}
                     onInlineUpdate={handleInlineUpdate}
                     onSaveChanges={saveGifChanges}
                     onCancelChanges={cancelGifChanges}
@@ -2469,6 +2613,7 @@ export default function AdminExerciseGifs() {
                     onDelete={setDeleteId}
                     onPreview={setPreviewGif}
                     onSuggestName={suggestNameWithAI}
+                    onSearchOnline={handleSearchOnlineGif}
                     hasPendingChanges={hasPendingChanges}
                     isExternalBrokenUrl={isExternalBrokenUrl}
                     isGifReadyToActivate={isGifReadyToActivate}

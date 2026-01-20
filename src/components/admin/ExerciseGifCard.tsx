@@ -20,7 +20,8 @@ import {
   Image,
   AlertTriangle,
   Wand2,
-  Expand
+  Expand,
+  Globe
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,6 +44,7 @@ interface ExerciseGifCardProps {
   savingInline: string | null;
   uploadingGif: boolean;
   suggestingName: string | null;
+  searchingOnline: string | null;
   onInlineUpdate: (id: string, field: string, value: string) => void;
   onSaveChanges: (id: string) => void;
   onCancelChanges: (id: string) => void;
@@ -51,6 +53,7 @@ interface ExerciseGifCardProps {
   onDelete: (id: string) => void;
   onPreview: (gif: ExerciseGif) => void;
   onSuggestName: (gifId: string, gifUrl: string) => void;
+  onSearchOnline: (gif: ExerciseGif) => void;
   hasPendingChanges: (id: string) => boolean;
   isExternalBrokenUrl: (url: string | null) => boolean;
   isGifReadyToActivate: (gif: ExerciseGif) => boolean;
@@ -64,6 +67,7 @@ export function ExerciseGifCard({
   savingInline,
   uploadingGif,
   suggestingName,
+  searchingOnline,
   onInlineUpdate,
   onSaveChanges,
   onCancelChanges,
@@ -72,6 +76,7 @@ export function ExerciseGifCard({
   onDelete,
   onPreview,
   onSuggestName,
+  onSearchOnline,
   hasPendingChanges,
   isExternalBrokenUrl,
   isGifReadyToActivate,
@@ -220,6 +225,24 @@ export function ExerciseGifCard({
                   </span>
                 </Button>
               </label>
+
+              {/* Search Online button - only show if no GIF */}
+              {!gif.gif_url && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-emerald-600"
+                  onClick={() => onSearchOnline(gif)}
+                  disabled={searchingOnline === gif.id}
+                  title="Buscar GIF na internet"
+                >
+                  {searchingOnline === gif.id ? (
+                    <LoadingSpinner size="sm" />
+                  ) : (
+                    <Globe className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
 
               {/* Activate button */}
               {gif.status !== "active" && gif.gif_url && !hasBrokenUrl && !hasChanges && (
