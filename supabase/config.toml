@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.suggest-exercise-name]
 verify_jwt = false
+
+[functions.search-exercise-gif]
+verify_jwt = true
