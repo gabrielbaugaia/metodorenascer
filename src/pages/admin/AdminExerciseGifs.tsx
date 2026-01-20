@@ -79,6 +79,7 @@ import { BatchActionsCard } from "@/components/admin/BatchActionsCard";
 import { BatchRenameModal } from "@/components/admin/BatchRenameModal";
 import { BrokenUrlsModal } from "@/components/admin/BrokenUrlsModal";
 import { MuscleGroupModal } from "@/components/admin/MuscleGroupModal";
+import { GifSearchQueueCard } from "@/components/admin/GifSearchQueueCard";
 
 interface ExerciseGif {
   id: string;
@@ -1967,6 +1968,15 @@ export default function AdminExerciseGifs() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Async Queue Card for background processing */}
+        {pendingWithoutUrlCount > 0 && (
+          <GifSearchQueueCard
+            pendingGifsCount={pendingWithoutUrlCount}
+            pendingGifIds={gifs.filter(g => !g.gif_url && g.status === "pending").map(g => g.id)}
+            onQueueUpdated={fetchGifs}
+          />
+        )}
 
         {/* Batch Actions Card with AI */}
         {(pendingNamesCount > 0 || externalUrlsCount > 0) && (
