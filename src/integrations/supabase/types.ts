@@ -536,6 +536,59 @@ export type Database = {
         }
         Relationships: []
       }
+      gif_search_queue: {
+        Row: {
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          exercise_gif_id: string
+          exercise_name_en: string
+          exercise_name_pt: string
+          id: string
+          max_attempts: number
+          result_gif_url: string | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          exercise_gif_id: string
+          exercise_name_en: string
+          exercise_name_pt: string
+          id?: string
+          max_attempts?: number
+          result_gif_url?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          exercise_gif_id?: string
+          exercise_name_en?: string
+          exercise_name_pt?: string
+          id?: string
+          max_attempts?: number
+          result_gif_url?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gif_search_queue_exercise_gif_id_fkey"
+            columns: ["exercise_gif_id"]
+            isOneToOne: false
+            referencedRelation: "exercise_gifs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_connections: {
         Row: {
           access_token: string | null

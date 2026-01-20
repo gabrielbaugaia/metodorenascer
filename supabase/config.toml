@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.search-exercise-gif]
 verify_jwt = true
+
+[functions.process-gif-queue]
+verify_jwt = true
