@@ -3,14 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { MuscleGroupMultiSelect } from "./MuscleGroupMultiSelect";
 import { 
   Save, 
   X, 
@@ -23,7 +18,6 @@ import {
   Expand,
   Globe
 } from "lucide-react";
-import { toast } from "sonner";
 
 interface ExerciseGif {
   id: string;
@@ -40,12 +34,14 @@ interface ExerciseGif {
 interface ExerciseGifCardProps {
   gif: ExerciseGif;
   muscleGroups: string[];
-  editingFields: Record<string, { field: string; value: string }>;
+  editingFields: Record<string, { field: string; value: string | string[] }>;
   savingInline: string | null;
   uploadingGif: boolean;
   suggestingName: string | null;
   searchingOnline: string | null;
-  onInlineUpdate: (id: string, field: string, value: string) => void;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
+  onInlineUpdate: (id: string, field: string, value: string | string[]) => void;
   onSaveChanges: (id: string) => void;
   onCancelChanges: (id: string) => void;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>, id?: string) => void;
@@ -68,6 +64,8 @@ export function ExerciseGifCard({
   uploadingGif,
   suggestingName,
   searchingOnline,
+  selected,
+  onToggleSelect,
   onInlineUpdate,
   onSaveChanges,
   onCancelChanges,
@@ -86,40 +84,53 @@ export function ExerciseGifCard({
   const isReady = isGifReadyToActivate(gif);
   const hasChanges = hasPendingChanges(gif.id);
 
+  // Get current muscle groups (from editing or from gif)
+  const currentGroups = (editingFields[`${gif.id}-muscle_group`]?.value as string[] | undefined) ?? gif.muscle_group ?? [];
+
   return (
     <Card 
-      className={`p-4 ${hasBrokenUrl ? 'border-destructive/50 bg-destructive/5' : ''} ${isReady ? 'border-green-500/50 bg-green-500/5' : ''}`}
+      className={`p-4 ${hasBrokenUrl ? 'border-destructive/50 bg-destructive/5' : ''} ${isReady ? 'border-primary/30 bg-primary/5' : ''} ${selected ? 'ring-2 ring-primary' : ''}`}
     >
       <div className="flex gap-4">
-        {/* GIF Preview - Large and Tappable */}
-        <div 
-          className="relative flex-shrink-0 cursor-pointer"
-          onClick={() => gif.gif_url && onPreview(gif)}
-        >
-          {gif.gif_url ? (
-            <>
-              <img 
-                src={gif.gif_url} 
-                alt={gif.exercise_name_pt}
-                className={`w-20 h-20 object-cover rounded-lg ${hasBrokenUrl ? 'border-2 border-destructive' : 'border border-border'}`}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/placeholder.svg";
-                }}
-              />
-              {hasBrokenUrl && (
-                <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
-                  <AlertTriangle className="h-3 w-3" />
-                </div>
-              )}
-              <div className="absolute bottom-1 right-1 bg-background/80 rounded p-0.5">
-                <Expand className="h-3 w-3 text-muted-foreground" />
-              </div>
-            </>
-          ) : (
-            <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center border border-dashed border-muted-foreground/30">
-              <Image className="h-6 w-6 text-muted-foreground" />
-            </div>
+        {/* Batch Select Checkbox + GIF Preview */}
+        <div className="flex flex-col items-center gap-2">
+          {onToggleSelect && (
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => onToggleSelect(gif.id)}
+              className="mt-1"
+              aria-label="Selecionar para edição em lote"
+            />
           )}
+          <div 
+            className="relative flex-shrink-0 cursor-pointer"
+            onClick={() => gif.gif_url && onPreview(gif)}
+          >
+            {gif.gif_url ? (
+              <>
+                <img 
+                  src={gif.gif_url} 
+                  alt={gif.exercise_name_pt}
+                  className={`w-20 h-20 object-cover rounded-lg ${hasBrokenUrl ? 'border-2 border-destructive' : 'border border-border'}`}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/placeholder.svg";
+                  }}
+                />
+                {hasBrokenUrl && (
+                  <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                    <AlertTriangle className="h-3 w-3" />
+                  </div>
+                )}
+                <div className="absolute bottom-1 right-1 bg-background/80 rounded p-0.5">
+                  <Expand className="h-3 w-3 text-muted-foreground" />
+                </div>
+              </>
+            ) : (
+              <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center border border-dashed border-muted-foreground/30">
+                <Image className="h-6 w-6 text-muted-foreground" />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Content */}
@@ -127,11 +138,11 @@ export function ExerciseGifCard({
           {/* Name Input + AI Suggest Button */}
           <div className="flex gap-2">
             <Input
-              value={editingFields[`${gif.id}-exercise_name_pt`]?.value ?? gif.exercise_name_pt}
+              value={(editingFields[`${gif.id}-exercise_name_pt`]?.value as string) ?? gif.exercise_name_pt}
               onChange={(e) => onInlineUpdate(gif.id, 'exercise_name_pt', e.target.value)}
               className={`h-9 text-sm flex-1 ${
                 editingFields[`${gif.id}-exercise_name_pt`] 
-                  ? 'border-yellow-400' 
+                  ? 'border-primary' 
                   : ''
               }`}
               placeholder="Nome do exercício"
@@ -152,29 +163,20 @@ export function ExerciseGifCard({
             </Button>
           </div>
 
-          {/* Muscle Group Select */}
-          <Select
-            value={editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group[0] ?? ""}
-            onValueChange={(value) => onInlineUpdate(gif.id, 'muscle_group', value)}
-          >
-            <SelectTrigger className={`h-9 text-sm ${
+          {/* Muscle Group Multi-Select */}
+          <MuscleGroupMultiSelect
+            value={currentGroups}
+            onChange={(groups) => onInlineUpdate(gif.id, 'muscle_group', groups)}
+            muscleGroups={muscleGroups}
+            className={`h-9 text-sm w-full ${
               editingFields[`${gif.id}-muscle_group`] 
-                ? 'border-yellow-400' 
-                : (editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group[0]) === 'Pendente' 
-                  ? 'border-yellow-500' 
+                ? 'border-primary' 
+                : currentGroups.length === 0 || currentGroups.includes("Pendente")
+                  ? 'border-destructive/50' 
                   : ''
-            }`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Pendente">Pendente</SelectItem>
-              {muscleGroups.map((group) => (
-                <SelectItem key={group} value={group}>
-                  {group}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            }`}
+            compact
+          />
 
           {/* Status + Actions Row */}
           <div className="flex items-center justify-between gap-2">
@@ -187,7 +189,7 @@ export function ExerciseGifCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-green-600"
+                    className="h-8 w-8 text-primary"
                     onClick={() => onSaveChanges(gif.id)}
                     disabled={savingInline === gif.id}
                   >
@@ -231,7 +233,7 @@ export function ExerciseGifCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-emerald-600"
+                  className="h-8 w-8 text-primary"
                   onClick={() => onSearchOnline(gif)}
                   disabled={searchingOnline === gif.id}
                   title="Buscar GIF na internet"
@@ -249,7 +251,7 @@ export function ExerciseGifCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-green-600"
+                  className="h-8 w-8 text-primary"
                   onClick={() => onActivate(gif)}
                 >
                   <CheckCircle className="h-4 w-4" />

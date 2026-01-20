@@ -71,15 +71,17 @@ import {
 } from "lucide-react";
 import { generateGifCoverageReportPdf } from "@/lib/generateGifCoverageReportPdf";
 import exercisesDatabase from "@/data/exercisesDatabase.json";
-import { ExerciseFromDb, getMuscleGroupFromExercise, GIF_BASE_URL } from "@/types/exerciseDatabase";
+import { ExerciseFromDb, getMuscleGroupsFromExercise, GIF_BASE_URL } from "@/types/exerciseDatabase";
 import { syncAllExercisesFromApi, checkApiStatus, isUsingCustomApi } from "@/services/exerciseDb";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ExerciseGifCard } from "@/components/admin/ExerciseGifCard";
 import { BatchActionsCard } from "@/components/admin/BatchActionsCard";
 import { BatchRenameModal } from "@/components/admin/BatchRenameModal";
 import { BrokenUrlsModal } from "@/components/admin/BrokenUrlsModal";
 import { MuscleGroupModal } from "@/components/admin/MuscleGroupModal";
 import { GifSearchQueueCard } from "@/components/admin/GifSearchQueueCard";
+import { BatchMuscleGroupEditor } from "@/components/admin/BatchMuscleGroupEditor";
 
 interface ExerciseGif {
   id: string;
@@ -493,8 +495,11 @@ export default function AdminExerciseGifs() {
   const [isDragging, setIsDragging] = useState(false);
 
   // Inline editing state (draft mode - no auto-save)
-  const [editingFields, setEditingFields] = useState<Record<string, { field: string; value: string }>>({});
+  const [editingFields, setEditingFields] = useState<Record<string, { field: string; value: string | string[] }>>({});
   const [savingInline, setSavingInline] = useState<string | null>(null);
+  
+  // Batch selection state
+  const [selectedGifIds, setSelectedGifIds] = useState<Set<string>>(new Set());
   
   // AI suggestion state
   const [suggestingName, setSuggestingName] = useState<string | null>(null);
@@ -1019,13 +1024,18 @@ export default function AdminExerciseGifs() {
   };
 
   // Inline update handler - local draft only, no auto-save
-  const handleInlineUpdate = (gifId: string, field: string, value: string) => {
+  const handleInlineUpdate = (gifId: string, field: string, value: string | string[]) => {
     const timerKey = `${gifId}-${field}`;
     const gif = gifs.find(g => g.id === gifId);
     const originalValue = gif ? gif[field as keyof ExerciseGif] : null;
     
+    // Compare arrays or strings
+    const valuesEqual = Array.isArray(value) && Array.isArray(originalValue)
+      ? JSON.stringify(value) === JSON.stringify(originalValue)
+      : value === originalValue;
+    
     // If value matches original, remove from drafts
-    if (value === originalValue) {
+    if (valuesEqual) {
       setEditingFields(prev => {
         const newState = { ...prev };
         delete newState[timerKey];
@@ -1040,6 +1050,27 @@ export default function AdminExerciseGifs() {
     }
   };
 
+  // Batch selection handlers
+  const handleToggleSelect = (id: string) => {
+    setSelectedGifIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllFiltered = () => {
+    setSelectedGifIds(new Set(filteredGifs.map(g => g.id)));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedGifIds(new Set());
+  };
+
   // Check if a GIF has pending changes
   const hasPendingChanges = (gifId: string) => {
     return Object.keys(editingFields).some(key => key.startsWith(`${gifId}-`));
@@ -1050,11 +1081,11 @@ export default function AdminExerciseGifs() {
     const pendingFields = Object.entries(editingFields)
       .filter(([key]) => key.startsWith(`${gifId}-`))
       .reduce((acc, [key, val]) => {
-        // Convert muscle_group to array for database
+        // muscle_group is already an array from multi-select, keep as-is
         if (val.field === 'muscle_group') {
-          acc[val.field] = [val.value];
+          acc[val.field] = Array.isArray(val.value) ? val.value : [val.value];
         } else {
-          acc[val.field] = val.value;
+          acc[val.field] = val.value as string;
         }
         return acc;
       }, {} as Record<string, string | string[]>);
@@ -1148,7 +1179,7 @@ export default function AdminExerciseGifs() {
         exercise_name_pt: ex.name.charAt(0).toUpperCase() + ex.name.slice(1), // Capitalize
         exercise_name_en: ex.name,
         gif_url: `${GIF_BASE_URL}${ex.gifUrl}`,
-        muscle_group: [getMuscleGroupFromExercise(ex)],
+        muscle_group: getMuscleGroupsFromExercise(ex),
         status: "active" as const,
         api_source: "exercisedb-json",
         exercise_db_id: ex.exerciseId,
@@ -2732,30 +2763,35 @@ export default function AdminExerciseGifs() {
                             </div>
                           </TableCell>
                           
-                          {/* Inline editable Muscle Group - draft mode */}
+                          {/* Inline editable Muscle Group - multi-select */}
                           <TableCell>
-                            <Select
-                              value={editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group[0] ?? ""}
-                              onValueChange={(value) => handleInlineUpdate(gif.id, 'muscle_group', value)}
-                            >
-                              <SelectTrigger className={`h-9 text-sm ${
-                                editingFields[`${gif.id}-muscle_group`] 
-                                  ? 'border-yellow-400' 
-                                  : (editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group[0]) === 'Pendente' 
-                                    ? 'border-yellow-500 text-yellow-600' 
-                                    : ''
-                              }`}>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Pendente">Pendente</SelectItem>
-                                {MUSCLE_GROUPS.map((group) => (
-                                  <SelectItem key={group} value={group}>
-                                    {group}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            {(() => {
+                              const currentGroups = (editingFields[`${gif.id}-muscle_group`]?.value as string[] | undefined) ?? gif.muscle_group ?? [];
+                              return (
+                                <Select
+                                  value={Array.isArray(currentGroups) ? currentGroups[0] ?? "" : currentGroups}
+                                  onValueChange={(value) => handleInlineUpdate(gif.id, 'muscle_group', [value])}
+                                >
+                                  <SelectTrigger className={`h-9 text-sm ${
+                                    editingFields[`${gif.id}-muscle_group`] 
+                                      ? 'border-primary' 
+                                      : currentGroups.length === 0 || currentGroups.includes("Pendente")
+                                        ? 'border-destructive/50' 
+                                        : ''
+                                  }`}>
+                                    <SelectValue placeholder="Grupo" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Pendente">Pendente</SelectItem>
+                                    {MUSCLE_GROUPS.map((group) => (
+                                      <SelectItem key={group} value={group}>
+                                        {group}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              );
+                            })()}
                           </TableCell>
                           
                           {/* Status */}
