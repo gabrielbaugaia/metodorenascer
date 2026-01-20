@@ -86,7 +86,7 @@ interface ExerciseGif {
   exercise_name_pt: string;
   exercise_name_en: string;
   gif_url: string | null;
-  muscle_group: string;
+  muscle_group: string[];
   status: "active" | "pending" | "missing";
   api_source: string | null;
   last_checked_at: string | null;
@@ -409,16 +409,22 @@ const PT_TO_EN_MAP: Record<string, { en: string; group: string }> = {
 };
 
 const MUSCLE_GROUPS = [
+  // Membros Superiores
   "Peito",
   "Costas",
   "Trapézios",
   "Ombros",
   "Bíceps",
   "Tríceps",
+  "Antebraço",
+  // Membros Inferiores
+  "Perna",
   "Quadríceps",
   "Posterior de Coxa",
   "Panturrilha",
   "Glúteos",
+  "Adutores",
+  // Core e Outros
   "Abdômen",
   "Core",
   "Cardio",
@@ -452,7 +458,7 @@ export default function AdminExerciseGifs() {
     exercise_name_pt: "",
     exercise_name_en: "",
     gif_url: "",
-    muscle_group: "",
+    muscle_group: [] as string[],
     status: "pending" as "active" | "pending" | "missing",
   });
   
@@ -566,7 +572,7 @@ export default function AdminExerciseGifs() {
     const hasProperName = gif.exercise_name_pt && 
       !gif.exercise_name_pt.match(/^[a-f0-9-]{10,}$/i) && // Not a random ID
       gif.exercise_name_pt.length > 2;
-    const hasProperGroup = gif.muscle_group && gif.muscle_group !== "Pendente";
+    const hasProperGroup = gif.muscle_group && gif.muscle_group.length > 0 && !gif.muscle_group.includes("Pendente");
     return hasValidUrl && hasProperName && hasProperGroup && gif.status !== "active";
   };
 
@@ -624,7 +630,7 @@ export default function AdminExerciseGifs() {
         exercise_name_pt: gif.exercise_name_pt,
         exercise_name_en: gif.exercise_name_en,
         gif_url: gif.gif_url || "",
-        muscle_group: gif.muscle_group,
+        muscle_group: gif.muscle_group || [],
         status: gif.status,
       });
     } else {
@@ -633,7 +639,7 @@ export default function AdminExerciseGifs() {
         exercise_name_pt: "",
         exercise_name_en: "",
         gif_url: "",
-        muscle_group: "",
+        muscle_group: [],
         status: "pending",
       });
     }
@@ -641,7 +647,7 @@ export default function AdminExerciseGifs() {
   };
 
   const handleSave = async () => {
-    if (!formData.exercise_name_pt.trim() || !formData.exercise_name_en.trim() || !formData.muscle_group) {
+    if (!formData.exercise_name_pt.trim() || !formData.exercise_name_en.trim() || formData.muscle_group.length === 0) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
@@ -729,7 +735,7 @@ export default function AdminExerciseGifs() {
         .map(([pt, data]) => ({
           exercise_name_pt: pt.charAt(0).toUpperCase() + pt.slice(1),
           exercise_name_en: data.en,
-          muscle_group: data.group,
+          muscle_group: [data.group],
           status: "pending" as const,
         }));
 
@@ -874,7 +880,7 @@ export default function AdminExerciseGifs() {
         .insert({
           exercise_name_pt: exerciseName,
           exercise_name_en: englishName,
-          muscle_group: muscleGroup,
+          muscle_group: [muscleGroup],
           status: "missing",
         });
 
@@ -919,7 +925,7 @@ export default function AdminExerciseGifs() {
         return {
           exercise_name_pt: ex.name,
           exercise_name_en: englishName,
-          muscle_group: muscleGroup,
+          muscle_group: [muscleGroup],
           status: "missing" as const,
         };
       });
@@ -1129,7 +1135,7 @@ export default function AdminExerciseGifs() {
         exercise_name_pt: ex.name.charAt(0).toUpperCase() + ex.name.slice(1), // Capitalize
         exercise_name_en: ex.name,
         gif_url: `${GIF_BASE_URL}${ex.gifUrl}`,
-        muscle_group: getMuscleGroupFromExercise(ex),
+        muscle_group: [getMuscleGroupFromExercise(ex)],
         status: "active" as const,
         api_source: "exercisedb-json",
         exercise_db_id: ex.exerciseId,
@@ -1381,14 +1387,13 @@ export default function AdminExerciseGifs() {
             .from("exercise-gifs")
             .getPublicUrl(filePath);
 
-          // Insert into database
           const { error: insertError } = await supabase
             .from("exercise_gifs")
             .insert({
               exercise_name_pt: exerciseName.charAt(0).toUpperCase() + exerciseName.slice(1),
               exercise_name_en: exerciseName.toLowerCase(),
               gif_url: publicUrlData.publicUrl,
-              muscle_group: "Pendente",
+              muscle_group: ["Pendente"],
               status: "pending",
               api_source: "manual-batch-upload",
               last_checked_at: new Date().toISOString(),
@@ -1565,7 +1570,7 @@ export default function AdminExerciseGifs() {
             original: gif.exercise_name_pt,
             suggested: suggestedName,
             gifUrl: gif.gif_url!,
-            muscleGroup: gif.muscle_group,
+            muscleGroup: gif.muscle_group.join(", "),
             selected: true
           });
         }
@@ -1654,7 +1659,7 @@ export default function AdminExerciseGifs() {
         id: gif.id,
         name: gif.exercise_name_pt,
         url: gif.gif_url!,
-        muscleGroup: gif.muscle_group,
+        muscleGroup: gif.muscle_group.join(", "),
         status: gif.status,
         selected: true
       });
@@ -1893,8 +1898,8 @@ export default function AdminExerciseGifs() {
     const matchesSearch = 
       gif.exercise_name_pt.toLowerCase().includes(searchTerm.toLowerCase()) ||
       gif.exercise_name_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      gif.muscle_group.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesMuscle = filterMuscle === "all" || gif.muscle_group === filterMuscle;
+      gif.muscle_group.some(g => g.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesMuscle = filterMuscle === "all" || gif.muscle_group.includes(filterMuscle);
     const matchesStatus = filterStatus === "all" || gif.status === filterStatus;
     return matchesSearch && matchesMuscle && matchesStatus;
   });
@@ -2054,7 +2059,7 @@ export default function AdminExerciseGifs() {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {MUSCLE_GROUPS.map((group) => {
-                const groupGifs = gifs.filter((g) => g.muscle_group === group);
+                const groupGifs = gifs.filter((g) => g.muscle_group.includes(group));
                 const totalGroup = groupGifs.length;
                 const activeGroup = groupGifs.filter((g) => g.status === "active").length;
                 const pendingGroup = groupGifs.filter((g) => g.status === "pending").length;
@@ -2305,8 +2310,8 @@ export default function AdminExerciseGifs() {
                   <div className="space-y-2">
                     <Label htmlFor="muscle_group">Grupo Muscular *</Label>
                     <Select
-                      value={formData.muscle_group}
-                      onValueChange={(value) => setFormData({ ...formData, muscle_group: value })}
+                      value={formData.muscle_group[0] || ""}
+                      onValueChange={(value) => setFormData({ ...formData, muscle_group: [value] })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
@@ -2717,13 +2722,13 @@ export default function AdminExerciseGifs() {
                           {/* Inline editable Muscle Group - draft mode */}
                           <TableCell>
                             <Select
-                              value={editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group}
+                              value={editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group[0] ?? ""}
                               onValueChange={(value) => handleInlineUpdate(gif.id, 'muscle_group', value)}
                             >
                               <SelectTrigger className={`h-9 text-sm ${
                                 editingFields[`${gif.id}-muscle_group`] 
                                   ? 'border-yellow-400' 
-                                  : (editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group) === 'Pendente' 
+                                  : (editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group[0]) === 'Pendente' 
                                     ? 'border-yellow-500 text-yellow-600' 
                                     : ''
                               }`}>

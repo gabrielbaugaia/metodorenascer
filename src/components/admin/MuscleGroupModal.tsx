@@ -23,7 +23,7 @@ interface ExerciseGif {
   exercise_name_pt: string;
   exercise_name_en: string;
   gif_url: string | null;
-  muscle_group: string;
+  muscle_group: string[];
   status: "active" | "pending" | "missing";
 }
 
@@ -46,7 +46,7 @@ export function MuscleGroupModal({
   const [expandedGif, setExpandedGif] = useState<string | null>(null);
 
   const groupGifs = useMemo(() => {
-    return gifs.filter((g) => g.muscle_group === group);
+    return gifs.filter((g) => g.muscle_group.includes(group));
   }, [gifs, group]);
 
   const activeGifs = useMemo(() => groupGifs.filter((g) => g.status === "active"), [groupGifs]);

@@ -23,7 +23,7 @@ interface ExerciseGif {
   id: string;
   exercise_name_pt: string;
   gif_url: string | null;
-  muscle_group: string | null;
+  muscle_group: string[] | null;
 }
 
 interface GifPickerModalProps {
@@ -35,22 +35,28 @@ interface GifPickerModalProps {
 
 const MUSCLE_GROUPS = [
   "Todos",
+  // Membros Superiores
   "Peito",
   "Costas",
+  "Trapézios",
   "Ombros",
   "Bíceps",
   "Tríceps",
+  "Antebraço",
+  // Membros Inferiores
+  "Perna",
   "Quadríceps",
   "Posterior de Coxa",
-  "Glúteos",
   "Panturrilha",
+  "Glúteos",
+  "Adutores",
+  // Core e Outros
   "Abdômen",
   "Core",
-  "Corpo Inteiro",
   "Cardio",
   "Alongamento",
+  "Corpo Inteiro",
   "Mobilidade",
-  "Trapézios",
 ];
 
 const ITEMS_PER_PAGE = 20;
@@ -92,7 +98,7 @@ export function GifPickerModal({
       }
 
       if (muscleGroup !== "Todos") {
-        query = query.eq("muscle_group", muscleGroup);
+        query = query.contains("muscle_group", [muscleGroup]);
       }
 
       query = query
@@ -223,9 +229,9 @@ export function GifPickerModal({
                   <span className="text-xs text-center font-medium line-clamp-2 group-hover:text-primary transition-colors">
                     {gif.exercise_name_pt}
                   </span>
-                  {gif.muscle_group && (
+                  {gif.muscle_group && gif.muscle_group.length > 0 && (
                     <span className="text-[10px] text-muted-foreground mt-1">
-                      {gif.muscle_group}
+                      {gif.muscle_group.join(", ")}
                     </span>
                   )}
                 </button>

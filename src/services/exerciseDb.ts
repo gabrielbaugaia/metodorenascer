@@ -570,7 +570,7 @@ export async function syncAllExercisesFromApi(
         exercise_name_pt: ex.name.charAt(0).toUpperCase() + ex.name.slice(1),
         exercise_name_en: ex.name,
         gif_url: ex.gifUrl || API_ENDPOINTS.getGifUrl(ex.id),
-        muscle_group: getMuscleGroup(ex.bodyPart, ex.target),
+        muscle_group: [getMuscleGroup(ex.bodyPart, ex.target)],
         status: 'active',
         api_source: isUsingCustomApi ? 'custom-api' : 'exercisedb-api',
         exercise_db_id: ex.id,
