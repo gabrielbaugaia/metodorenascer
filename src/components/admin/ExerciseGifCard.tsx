@@ -30,7 +30,7 @@ interface ExerciseGif {
   exercise_name_pt: string;
   exercise_name_en: string;
   gif_url: string | null;
-  muscle_group: string;
+  muscle_group: string[];
   status: "active" | "pending" | "missing";
   api_source: string | null;
   last_checked_at: string | null;
@@ -154,13 +154,13 @@ export function ExerciseGifCard({
 
           {/* Muscle Group Select */}
           <Select
-            value={editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group}
+            value={editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group[0] ?? ""}
             onValueChange={(value) => onInlineUpdate(gif.id, 'muscle_group', value)}
           >
             <SelectTrigger className={`h-9 text-sm ${
               editingFields[`${gif.id}-muscle_group`] 
                 ? 'border-yellow-400' 
-                : (editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group) === 'Pendente' 
+                : (editingFields[`${gif.id}-muscle_group`]?.value ?? gif.muscle_group[0]) === 'Pendente' 
                   ? 'border-yellow-500' 
                   : ''
             }`}>

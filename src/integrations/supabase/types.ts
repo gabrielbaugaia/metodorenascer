@@ -462,7 +462,7 @@ export type Database = {
           id: string
           instructions: string[] | null
           last_checked_at: string | null
-          muscle_group: string
+          muscle_group: string[]
           secondary_muscles: string[] | null
           status: string
           target_muscles: string[] | null
@@ -480,7 +480,7 @@ export type Database = {
           id?: string
           instructions?: string[] | null
           last_checked_at?: string | null
-          muscle_group: string
+          muscle_group: string[]
           secondary_muscles?: string[] | null
           status?: string
           target_muscles?: string[] | null
@@ -498,7 +498,7 @@ export type Database = {
           id?: string
           instructions?: string[] | null
           last_checked_at?: string | null
-          muscle_group?: string
+          muscle_group?: string[]
           secondary_muscles?: string[] | null
           status?: string
           target_muscles?: string[] | null

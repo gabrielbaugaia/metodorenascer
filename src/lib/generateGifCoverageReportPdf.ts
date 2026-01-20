@@ -7,7 +7,7 @@ interface ExerciseGif {
   exercise_name_pt: string;
   exercise_name_en: string;
   gif_url: string | null;
-  muscle_group: string;
+  muscle_group: string[];
   status: "active" | "pending" | "missing";
 }
 
@@ -40,7 +40,7 @@ export async function generateGifCoverageReportPdf(
 
   // Calculate stats per muscle group
   const groupStats: MuscleGroupStats[] = muscleGroups.map((group) => {
-    const groupGifs = gifs.filter((g) => g.muscle_group === group);
+    const groupGifs = gifs.filter((g) => g.muscle_group.includes(group));
     const total = groupGifs.length;
     const active = groupGifs.filter((g) => g.status === "active").length;
     const pending = groupGifs.filter((g) => g.status === "pending").length;
@@ -337,10 +337,12 @@ export async function generateGifCoverageReportPdf(
     // Group by muscle group
     const groupedMissing: Record<string, ExerciseGif[]> = {};
     missingExercises.forEach((ex) => {
-      if (!groupedMissing[ex.muscle_group]) {
-        groupedMissing[ex.muscle_group] = [];
+      // Use first muscle group for grouping
+      const primaryGroup = ex.muscle_group[0] || "Outros";
+      if (!groupedMissing[primaryGroup]) {
+        groupedMissing[primaryGroup] = [];
       }
-      groupedMissing[ex.muscle_group].push(ex);
+      groupedMissing[primaryGroup].push(ex);
     });
 
     Object.entries(groupedMissing).forEach(([group, exercises]) => {
