@@ -1050,9 +1050,14 @@ export default function AdminExerciseGifs() {
     const pendingFields = Object.entries(editingFields)
       .filter(([key]) => key.startsWith(`${gifId}-`))
       .reduce((acc, [key, val]) => {
-        acc[val.field] = val.value;
+        // Convert muscle_group to array for database
+        if (val.field === 'muscle_group') {
+          acc[val.field] = [val.value];
+        } else {
+          acc[val.field] = val.value;
+        }
         return acc;
-      }, {} as Record<string, string>);
+      }, {} as Record<string, string | string[]>);
     
     if (Object.keys(pendingFields).length === 0) {
       toast.info("Sem alterações para salvar");
@@ -1068,10 +1073,18 @@ export default function AdminExerciseGifs() {
       
       if (error) throw error;
       
-      // Update local state
-      setGifs(prev => prev.map(g => 
-        g.id === gifId ? { ...g, ...pendingFields } : g
-      ));
+      // Update local state - ensure muscle_group stays as array
+      setGifs(prev => prev.map(g => {
+        if (g.id === gifId) {
+          const updates = { ...pendingFields };
+          // Ensure muscle_group is array in local state
+          if (typeof updates.muscle_group === 'string') {
+            updates.muscle_group = [updates.muscle_group];
+          }
+          return { ...g, ...updates } as ExerciseGif;
+        }
+        return g;
+      }));
       
       // Clear drafts for this GIF
       setEditingFields(prev => {
