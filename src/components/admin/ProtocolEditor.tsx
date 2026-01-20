@@ -16,7 +16,10 @@ import {
   MessageSquare,
   RefreshCw,
   Loader2,
-  Sparkles
+  Sparkles,
+  Image,
+  Youtube,
+  Link2Off
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -254,13 +257,59 @@ export function ProtocolEditor({
                           
                           <div>
                             <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Video className="h-3 w-3" /> URL do Vídeo
+                              <Video className="h-3 w-3" /> URL do Vídeo/GIF
+                              {exercise.video_url && (
+                                <>
+                                  {exercise.video_url.includes("supabase.co/storage") && (
+                                    <Badge variant="outline" className="ml-2 text-[10px] text-green-600 border-green-600/50">
+                                      <Image className="h-2.5 w-2.5 mr-1" />
+                                      GIF
+                                    </Badge>
+                                  )}
+                                  {(exercise.video_url.includes("youtube.com") || exercise.video_url.includes("youtu.be")) && (
+                                    <Badge variant="outline" className="ml-2 text-[10px] text-red-600 border-red-600/50">
+                                      <Youtube className="h-2.5 w-2.5 mr-1" />
+                                      YouTube
+                                    </Badge>
+                                  )}
+                                  {exercise.video_url && !exercise.video_url.includes("supabase.co") && !exercise.video_url.includes("youtube") && !exercise.video_url.includes("youtu.be") && (
+                                    <Badge variant="outline" className="ml-2 text-[10px] text-muted-foreground">
+                                      <Link2Off className="h-2.5 w-2.5 mr-1" />
+                                      Outro
+                                    </Badge>
+                                  )}
+                                </>
+                              )}
                             </Label>
-                            <Input
-                              value={exercise.video_url || ""}
-                              onChange={(e) => updateExercise(weekIndex, dayIndex, exerciseIndex, "video_url", e.target.value)}
-                              placeholder="https://youtube.com/..."
-                            />
+                            <div className="flex gap-2">
+                              <Input
+                                value={exercise.video_url || ""}
+                                onChange={(e) => updateExercise(weekIndex, dayIndex, exerciseIndex, "video_url", e.target.value)}
+                                placeholder="Cole URL do YouTube ou GIF aqui..."
+                                className="flex-1"
+                              />
+                              {exercise.video_url && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                                  onClick={() => updateExercise(weekIndex, dayIndex, exerciseIndex, "video_url", "")}
+                                  title="Limpar URL"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                            {exercise.video_url && exercise.video_url.includes("supabase.co/storage") && (
+                              <a 
+                                href={exercise.video_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline mt-1 inline-block"
+                              >
+                                Ver GIF ↗
+                              </a>
+                            )}
                           </div>
                           
                           <div className="md:col-span-2">

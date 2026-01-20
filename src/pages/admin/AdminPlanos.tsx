@@ -45,8 +45,7 @@ import {
   Loader2,
   Brain,
   ArrowLeft,
-  RefreshCw,
-  Image,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -127,7 +126,8 @@ export default function AdminPlanos() {
     open: false,
     protocol: null,
   });
-  const [updatingGifs, setUpdatingGifs] = useState(false);
+  const [cleaningYouTube, setCleaningYouTube] = useState(false);
+  const [cleanYouTubeDialog, setCleanYouTubeDialog] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -324,22 +324,21 @@ export default function AdminPlanos() {
     }
   };
 
-  const handleUpdateAllGifs = async () => {
-    setUpdatingGifs(true);
+  const handleCleanYouTubeUrls = async () => {
+    setCleaningYouTube(true);
+    setCleanYouTubeDialog(false);
     try {
-      const { data, error } = await supabase.functions.invoke("update-protocol-gifs");
+      const { data, error } = await supabase.functions.invoke("clean-youtube-urls");
 
       if (error) throw error;
       
-      toast.success(
-        `GIFs atualizados! ${data.protocolsUpdated} protocolos, ${data.exercisesEnriched} exercícios.`
-      );
+      toast.success(data.message || "URLs do YouTube removidas com sucesso!");
       fetchProtocols();
     } catch (error: any) {
-      console.error("Error updating GIFs:", error);
-      toast.error(error.message || "Erro ao atualizar GIFs dos protocolos");
+      console.error("Error cleaning YouTube URLs:", error);
+      toast.error(error.message || "Erro ao limpar URLs do YouTube");
     } finally {
-      setUpdatingGifs(false);
+      setCleaningYouTube(false);
     }
   };
 
@@ -503,16 +502,16 @@ export default function AdminPlanos() {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <Button
                   variant="outline"
-                  onClick={handleUpdateAllGifs}
-                  disabled={updatingGifs}
-                  className="gap-2"
+                  onClick={() => setCleanYouTubeDialog(true)}
+                  disabled={cleaningYouTube}
+                  className="gap-2 border-amber-500/50 text-amber-600 hover:bg-amber-500/10"
                 >
-                  {updatingGifs ? (
+                  {cleaningYouTube ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Image className="h-4 w-4" />
+                    <AlertTriangle className="h-4 w-4" />
                   )}
-                  Atualizar GIFs
+                  Limpar YouTube
                 </Button>
                 <div className="relative w-full md:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -605,6 +604,33 @@ export default function AdminPlanos() {
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Clean YouTube Dialog */}
+        <AlertDialog open={cleanYouTubeDialog} onOpenChange={setCleanYouTubeDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                Limpar URLs do YouTube
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação irá remover TODAS as URLs do YouTube de todos os protocolos de treino ativos. 
+                Os exercícios ficarão sem vídeo até que você adicione manualmente um GIF ou novo link.
+                <br /><br />
+                <strong>Esta ação não pode ser desfeita.</strong>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleCleanYouTubeUrls} 
+                className="bg-amber-600 text-white hover:bg-amber-700"
+              >
+                Limpar YouTube
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Delete Protocol Dialog */}
         <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
