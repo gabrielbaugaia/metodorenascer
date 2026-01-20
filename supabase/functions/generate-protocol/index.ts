@@ -214,22 +214,27 @@ serve(async (req) => {
     let systemPrompt = "";
     let userPrompt = "";
 
-    // P1 FIX: Buscar lista de exercícios ANTES de gerar o prompt
-    // para que a IA use nomes padronizados
+    // P1 FIX: Buscar lista de exercícios da tabela exercise_gifs
+    // para que a IA use nomes padronizados e tenha os GIFs corretos
     let exerciseVideos: Record<string, string> = {};
     let exerciseNames: string[] = [];
     
     if (tipo === "treino") {
-      const { data: videos } = await supabaseClient
-        .from("exercise_videos")
-        .select("exercise_name, video_url");
+      // CORREÇÃO: Buscar de exercise_gifs (406 ativos) ao invés de exercise_videos (vazia)
+      const { data: gifs } = await supabaseClient
+        .from("exercise_gifs")
+        .select("exercise_name_pt, gif_url")
+        .eq('status', 'active')
+        .not('gif_url', 'is', null);
       
-      if (videos) {
-        videos.forEach((v: { exercise_name: string; video_url: string }) => {
-          exerciseVideos[v.exercise_name.toLowerCase()] = v.video_url;
-          exerciseNames.push(v.exercise_name);
+      if (gifs) {
+        gifs.forEach((g: { exercise_name_pt: string; gif_url: string }) => {
+          if (g.exercise_name_pt && g.gif_url) {
+            exerciseVideos[g.exercise_name_pt.toLowerCase()] = g.gif_url;
+            exerciseNames.push(g.exercise_name_pt);
+          }
         });
-        console.log(`Loaded ${videos.length} exercise videos from database`);
+        console.log(`Loaded ${gifs.length} exercise GIFs from database`);
       }
     }
 
@@ -327,8 +332,9 @@ serve(async (req) => {
     
     console.log(`Schema validation passed for ${tipo}`);
 
-    // Enriquecer exercícios com URLs de vídeo do banco de dados
+    // Enriquecer exercícios com URLs de GIF do banco de dados
     if (tipo === "treino" && protocolData.semanas && Object.keys(exerciseVideos).length > 0) {
+      let enrichedCount = 0;
       protocolData.semanas.forEach((semana: any) => {
         if (semana.dias) {
           semana.dias.forEach((dia: any) => {
@@ -337,12 +343,16 @@ serve(async (req) => {
                 if (ex.nome && !ex.video_url) {
                   const nomeNormalizado = ex.nome.toLowerCase().trim();
                   
+                  // Busca exata primeiro
                   if (exerciseVideos[nomeNormalizado]) {
                     ex.video_url = exerciseVideos[nomeNormalizado];
+                    enrichedCount++;
                   } else {
+                    // Busca parcial
                     for (const [exerciseName, url] of Object.entries(exerciseVideos)) {
                       if (nomeNormalizado.includes(exerciseName) || exerciseName.includes(nomeNormalizado)) {
                         ex.video_url = url;
+                        enrichedCount++;
                         break;
                       }
                     }
@@ -353,7 +363,7 @@ serve(async (req) => {
           });
         }
       });
-      console.log("Exercise videos enriched from database");
+      console.log(`Exercise GIFs enriched: ${enrichedCount} exercises matched`);
     }
 
     // Adicionar metadados de controle de ciclos

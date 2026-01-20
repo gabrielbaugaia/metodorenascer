@@ -95,3 +95,6 @@ verify_jwt = true
 
 [functions.process-gif-queue]
 verify_jwt = true
+
+[functions.update-protocol-gifs]
+verify_jwt = true
