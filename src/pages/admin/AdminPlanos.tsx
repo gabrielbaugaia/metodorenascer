@@ -46,8 +46,10 @@ import {
   Brain,
   ArrowLeft,
   AlertTriangle,
+  Power,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ProtocolEditor } from "@/components/admin/ProtocolEditor";
@@ -128,6 +130,7 @@ export default function AdminPlanos() {
   });
   const [cleaningYouTube, setCleaningYouTube] = useState(false);
   const [cleanYouTubeDialog, setCleanYouTubeDialog] = useState(false);
+  const [togglingProtocol, setTogglingProtocol] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -342,6 +345,32 @@ export default function AdminPlanos() {
     }
   };
 
+  const handleToggleActive = async (protocolId: string, currentStatus: boolean) => {
+    setTogglingProtocol(protocolId);
+    try {
+      const { error } = await supabase
+        .from("protocolos")
+        .update({ ativo: !currentStatus, updated_at: new Date().toISOString() })
+        .eq("id", protocolId);
+
+      if (error) throw error;
+      
+      // Update local state
+      setProtocols(protocols.map(p => 
+        p.id === protocolId 
+          ? { ...p, ativo: !currentStatus }
+          : p
+      ));
+      
+      toast.success(`Protocolo ${!currentStatus ? "ativado" : "desativado"} com sucesso!`);
+    } catch (error) {
+      console.error("Error toggling protocol:", error);
+      toast.error("Erro ao alterar status do protocolo");
+    } finally {
+      setTogglingProtocol(null);
+    }
+  };
+
   const filteredProtocols = protocols.filter(
     (p) =>
       p.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -372,9 +401,17 @@ export default function AdminPlanos() {
         <p className="font-medium text-sm truncate">{protocol.profile?.full_name || "—"}</p>
         <p className="text-xs text-muted-foreground truncate">{protocol.titulo}</p>
         <div className="flex items-center gap-2 mt-1">
-          <Badge variant={protocol.ativo ? "default" : "secondary"} className="text-[10px]">
-            {protocol.ativo ? "Ativo" : "Inativo"}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <Switch
+              checked={protocol.ativo}
+              disabled={togglingProtocol === protocol.id}
+              onCheckedChange={() => handleToggleActive(protocol.id, protocol.ativo)}
+              className="scale-75"
+            />
+            <span className={`text-[10px] font-medium ${protocol.ativo ? "text-primary" : "text-muted-foreground"}`}>
+              {protocol.ativo ? "Ativo" : "Inativo"}
+            </span>
+          </div>
           <span className="text-[10px] text-muted-foreground">
             {format(new Date(protocol.data_geracao), "dd/MM", { locale: ptBR })}
           </span>
@@ -433,9 +470,16 @@ export default function AdminPlanos() {
                 </TableCell>
                 <TableCell className="max-w-[150px] truncate">{protocol.titulo}</TableCell>
                 <TableCell>
-                  <Badge variant={protocol.ativo ? "default" : "secondary"}>
-                    {protocol.ativo ? "Ativo" : "Inativo"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={protocol.ativo}
+                      disabled={togglingProtocol === protocol.id}
+                      onCheckedChange={() => handleToggleActive(protocol.id, protocol.ativo)}
+                    />
+                    <span className={`text-xs ${protocol.ativo ? "text-primary font-medium" : "text-muted-foreground"}`}>
+                      {protocol.ativo ? "Ativo" : "Inativo"}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-sm">
                   {format(new Date(protocol.data_geracao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
