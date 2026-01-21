@@ -29,6 +29,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MuscleGroupMultiSelect } from "./MuscleGroupMultiSelect";
+import { GifPickerModal } from "./GifPickerModal";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -42,7 +43,8 @@ import {
   Pencil,
   Trash2,
   Save,
-  Check
+  Check,
+  RefreshCw
 } from "lucide-react";
 
 interface ExerciseGif {
@@ -80,6 +82,7 @@ export function MuscleGroupModal({
   const [editGroups, setEditGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [changingGifFor, setChangingGifFor] = useState<ExerciseGif | null>(null);
 
   const groupGifs = useMemo(() => {
     return gifs.filter((g) => g.muscle_group.includes(group));
@@ -143,6 +146,33 @@ export function MuscleGroupModal({
       toast.error("Erro ao excluir exercício");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleSwapGif = async (gifUrl: string, exerciseName: string) => {
+    if (!changingGifFor) return;
+    
+    setSaving(changingGifFor.id);
+    try {
+      const { error } = await supabase
+        .from("exercise_gifs")
+        .update({
+          gif_url: gifUrl,
+          status: "active",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", changingGifFor.id);
+
+      if (error) throw error;
+
+      toast.success("GIF trocado com sucesso!");
+      setChangingGifFor(null);
+      onRefresh?.();
+    } catch (error) {
+      console.error("Erro ao trocar GIF:", error);
+      toast.error("Erro ao trocar GIF");
+    } finally {
+      setSaving(null);
     }
   };
 
@@ -210,30 +240,37 @@ export function MuscleGroupModal({
                       e.currentTarget.src = "/placeholder.svg";
                     }}
                   />
-                  {/* Action buttons overlay */}
+                  {/* Action buttons overlay - always visible on mobile */}
                   {!isEditing && (
-                    <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-1 right-1 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => setExpandedGif(gif.id)}
-                        className="p-1.5 bg-black/60 rounded-full hover:bg-black/80"
+                        className="p-2 bg-black/70 rounded-full hover:bg-black/90 touch-manipulation"
                         title="Expandir"
                       >
-                        <Expand className="h-3 w-3 text-white" />
+                        <Expand className="h-4 w-4 text-white" />
                       </button>
                       <button
                         onClick={() => startEditing(gif)}
-                        className="p-1.5 bg-black/60 rounded-full hover:bg-black/80"
+                        className="p-2 bg-black/70 rounded-full hover:bg-black/90 touch-manipulation"
                         title="Editar"
                       >
-                        <Pencil className="h-3 w-3 text-white" />
+                        <Pencil className="h-4 w-4 text-white" />
+                      </button>
+                      <button
+                        onClick={() => setChangingGifFor(gif)}
+                        className="p-2 bg-primary/80 rounded-full hover:bg-primary touch-manipulation"
+                        title="Trocar GIF"
+                      >
+                        <RefreshCw className="h-4 w-4 text-white" />
                       </button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <button
-                            className="p-1.5 bg-destructive/80 rounded-full hover:bg-destructive"
+                            className="p-2 bg-destructive/80 rounded-full hover:bg-destructive touch-manipulation"
                             title="Excluir"
                           >
-                            <Trash2 className="h-3 w-3 text-white" />
+                            <Trash2 className="h-4 w-4 text-white" />
                           </button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -260,7 +297,7 @@ export function MuscleGroupModal({
                   {canActivate && !isEditing && (
                     <button
                       onClick={() => handleActivate(gif)}
-                      className="absolute bottom-1 right-1 p-1.5 bg-green-600/80 rounded-full hover:bg-green-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute bottom-1 right-1 p-2 bg-green-600/80 rounded-full hover:bg-green-600 touch-manipulation"
                       title="Ativar"
                       disabled={isSaving}
                     >
@@ -355,7 +392,7 @@ export function MuscleGroupModal({
           </TabsTrigger>
         </TabsList>
 
-        <ScrollArea className="flex-1 h-[50vh] pr-4">
+        <ScrollArea className="flex-1 min-h-0 h-full pr-4">
           <TabsContent value="active" className="mt-0 data-[state=inactive]:hidden">
             <GifGrid items={activeGifs} emptyMessage="Nenhum GIF ativo neste grupo" />
           </TabsContent>
@@ -405,20 +442,28 @@ export function MuscleGroupModal({
           </DialogContent>
         </Dialog>
       )}
+
+      {/* GIF Picker Modal for swapping */}
+      <GifPickerModal
+        open={!!changingGifFor}
+        onOpenChange={(open) => !open && setChangingGifFor(null)}
+        initialSearchTerm={changingGifFor?.exercise_name_pt || ""}
+        onSelect={handleSwapGif}
+      />
     </div>
   );
 
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onClose}>
-        <DrawerContent className="max-h-[90vh]">
-          <DrawerHeader className="pb-2">
+        <DrawerContent className="h-[90vh] flex flex-col">
+          <DrawerHeader className="pb-2 flex-shrink-0">
             <DrawerTitle className="flex items-center gap-2">
               {group}
               <Badge variant="outline">{groupGifs.length} exercícios</Badge>
             </DrawerTitle>
           </DrawerHeader>
-          <div className="px-4 pb-4 flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden px-4 pb-4 min-h-0">
             {content}
           </div>
         </DrawerContent>
