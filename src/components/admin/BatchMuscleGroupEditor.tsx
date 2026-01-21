@@ -6,11 +6,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { MuscleGroupMultiSelect } from "./MuscleGroupMultiSelect";
 import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { 
   CheckSquare, 
   Square, 
   XSquare, 
   Save,
-  Dumbbell
+  Dumbbell,
+  Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +50,7 @@ export function BatchMuscleGroupEditor({
 }: BatchMuscleGroupEditorProps) {
   const [batchGroups, setBatchGroups] = useState<string[]>([]);
   const [applying, setApplying] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
 
   const selectedCount = selectedIds.size;
@@ -86,6 +99,52 @@ export function BatchMuscleGroupEditor({
       toast.error("Erro ao aplicar grupos");
     } finally {
       setApplying(false);
+      setProgress({ current: 0, total: 0 });
+    }
+  };
+
+  const handleDeleteBatch = async () => {
+    if (!hasSelection) {
+      toast.error("Selecione exercícios para excluir");
+      return;
+    }
+
+    setDeleting(true);
+    setProgress({ current: 0, total: selectedCount });
+
+    try {
+      const idsArray = Array.from(selectedIds);
+      const chunkSize = 50;
+      let processed = 0;
+      let totalDeleted = 0;
+
+      for (let i = 0; i < idsArray.length; i += chunkSize) {
+        const chunk = idsArray.slice(i, i + chunkSize);
+        
+        const { error, count } = await supabase
+          .from("exercise_gifs")
+          .delete()
+          .in("id", chunk);
+
+        if (error) {
+          console.error("Erro ao deletar chunk:", error);
+        } else {
+          totalDeleted += chunk.length;
+        }
+
+        processed += chunk.length;
+        setProgress({ current: processed, total: selectedCount });
+      }
+
+      toast.success(`${totalDeleted} exercício(s) excluído(s) com sucesso!`);
+      onClearSelection();
+      setBatchGroups([]);
+      onComplete();
+    } catch (error) {
+      console.error("Erro ao excluir em lote:", error);
+      toast.error("Erro ao excluir exercícios");
+    } finally {
+      setDeleting(false);
       setProgress({ current: 0, total: 0 });
     }
   };
@@ -164,6 +223,47 @@ export function BatchMuscleGroupEditor({
               </>
             )}
           </Button>
+          
+          {/* Delete Batch Button with Confirmation */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                disabled={!hasSelection || deleting}
+                className="gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <LoadingSpinner size="sm" />
+                    {progress.current}/{progress.total}
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Excluir ({selectedCount})
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir {selectedCount} exercício(s)?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação não pode ser desfeita. Os exercícios selecionados serão 
+                  permanentemente removidos do catálogo de GIFs.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDeleteBatch}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Excluir permanentemente
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         {/* Selected groups preview */}
