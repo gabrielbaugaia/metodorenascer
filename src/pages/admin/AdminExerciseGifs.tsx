@@ -2639,6 +2639,20 @@ export default function AdminExerciseGifs() {
           </CardContent>
         </Card>
 
+        {/* Batch Muscle Group Editor - shown when items are selected */}
+        <div className="mb-6">
+          <BatchMuscleGroupEditor
+            selectedIds={selectedGifIds}
+            muscleGroups={MUSCLE_GROUPS}
+            onSelectionChange={setSelectedGifIds}
+            onComplete={fetchGifs}
+            totalCount={gifs.length}
+            filteredCount={filteredGifs.length}
+            onSelectAll={handleSelectAllFiltered}
+            onClearSelection={handleClearSelection}
+          />
+        </div>
+
         {/* Exercise List - Responsive */}
         <Card>
           <CardHeader>
@@ -2664,6 +2678,8 @@ export default function AdminExerciseGifs() {
                     uploadingGif={uploadingGif}
                     suggestingName={suggestingName}
                     searchingOnline={searchingOnline}
+                    selected={selectedGifIds.has(gif.id)}
+                    onToggleSelect={handleToggleSelect}
                     onInlineUpdate={handleInlineUpdate}
                     onSaveChanges={saveGifChanges}
                     onCancelChanges={cancelGifChanges}
@@ -2686,6 +2702,19 @@ export default function AdminExerciseGifs() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={filteredGifs.length > 0 && filteredGifs.every(g => selectedGifIds.has(g.id))}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              handleSelectAllFiltered();
+                            } else {
+                              handleClearSelection();
+                            }
+                          }}
+                          aria-label="Selecionar todos"
+                        />
+                      </TableHead>
                       <TableHead className="w-28">GIF</TableHead>
                       <TableHead className="min-w-[200px]">Nome (PT)</TableHead>
                       <TableHead className="min-w-[140px]">Grupo</TableHead>
@@ -2697,12 +2726,22 @@ export default function AdminExerciseGifs() {
                     {filteredGifs.map((gif) => {
                       const hasBrokenUrl = isExternalBrokenUrl(gif.gif_url);
                       const isReady = isGifReadyToActivate(gif);
+                      const isSelected = selectedGifIds.has(gif.id);
                       
                       return (
                         <TableRow 
                           key={gif.id} 
-                          className={`${hasBrokenUrl ? 'bg-destructive/5 border-l-2 border-l-destructive' : ''} ${isReady ? 'bg-green-500/5' : ''}`}
+                          className={`${hasBrokenUrl ? 'bg-destructive/5 border-l-2 border-l-destructive' : ''} ${isReady ? 'bg-primary/5' : ''} ${isSelected ? 'bg-primary/10' : ''}`}
                         >
+                          {/* Selection Checkbox */}
+                          <TableCell>
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => handleToggleSelect(gif.id)}
+                              aria-label="Selecionar para edição em lote"
+                            />
+                          </TableCell>
+                          
                           {/* Larger thumbnail with broken URL indicator */}
                           <TableCell>
                             <div className="relative">
