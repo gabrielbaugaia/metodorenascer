@@ -3064,6 +3064,8 @@ export default function AdminExerciseGifs() {
               setFilterMuscle(group);
               if (status) setFilterStatus(status);
             }}
+            onRefresh={fetchGifs}
+            muscleGroups={MUSCLE_GROUPS}
           />
         )}
       </div>
