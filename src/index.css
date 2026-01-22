@@ -151,22 +151,8 @@
     @apply opacity-100;
   }
 
-  /* Removed glow-text effect for cleaner appearance */
-  .glow-text {
-    /* No text-shadow for cleaner look */
-  }
-
   .section-dark {
     background: var(--gradient-dark);
-  }
-
-  /* Removed pulse-glow and float animations to prevent visual flickering */
-  .animate-pulse-glow {
-    /* Disabled - was causing flickering */
-  }
-
-  .animate-float {
-    /* Disabled - was causing flickering */
   }
 
   .animate-slide-up {
