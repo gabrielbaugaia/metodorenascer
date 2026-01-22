@@ -366,8 +366,8 @@ export function MuscleGroupModal({
   };
 
   const content = (
-    <div className="flex flex-col h-full">
-      <Tabs defaultValue="active" className="flex-1 flex flex-col min-h-0">
+    <div className="flex flex-col h-full overflow-hidden">
+      <Tabs defaultValue="active" className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <TabsList className="grid w-full grid-cols-3 mb-4 flex-shrink-0">
           <TabsTrigger value="active" className="flex items-center gap-1">
             <CheckCircle className="h-3 w-3" />
@@ -392,17 +392,19 @@ export function MuscleGroupModal({
           </TabsTrigger>
         </TabsList>
 
-        <ScrollArea className="flex-1 min-h-0 h-full pr-4">
-          <TabsContent value="active" className="mt-0 data-[state=inactive]:hidden">
-            <GifGrid items={activeGifs} emptyMessage="Nenhum GIF ativo neste grupo" />
-          </TabsContent>
-          <TabsContent value="pending" className="mt-0 data-[state=inactive]:hidden">
-            <GifGrid items={pendingGifs} emptyMessage="Nenhum GIF pendente neste grupo" />
-          </TabsContent>
-          <TabsContent value="missing" className="mt-0 data-[state=inactive]:hidden">
-            <GifGrid items={missingGifs} emptyMessage="Nenhum GIF faltando neste grupo" />
-          </TabsContent>
-        </ScrollArea>
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full pr-4">
+            <TabsContent value="active" className="mt-0 data-[state=inactive]:hidden">
+              <GifGrid items={activeGifs} emptyMessage="Nenhum GIF ativo neste grupo" />
+            </TabsContent>
+            <TabsContent value="pending" className="mt-0 data-[state=inactive]:hidden">
+              <GifGrid items={pendingGifs} emptyMessage="Nenhum GIF pendente neste grupo" />
+            </TabsContent>
+            <TabsContent value="missing" className="mt-0 data-[state=inactive]:hidden">
+              <GifGrid items={missingGifs} emptyMessage="Nenhum GIF faltando neste grupo" />
+            </TabsContent>
+          </ScrollArea>
+        </div>
       </Tabs>
 
       <div className="flex flex-col sm:flex-row gap-2 mt-4 pt-4 border-t flex-shrink-0">
@@ -473,14 +475,14 @@ export function MuscleGroupModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl h-[85vh] !grid grid-rows-[auto_1fr] overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             GIFs de {group}
             <Badge variant="outline">{groupGifs.length} exercícios</Badge>
           </DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-hidden min-h-0">
+        <div className="overflow-hidden min-h-0">
           {content}
         </div>
       </DialogContent>
