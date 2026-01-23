@@ -36,6 +36,16 @@ export function getTreinoSystemPrompt(durationWeeks: number, weeksPerCycle: numb
 - Exercícios PERMITIDOS: agachamento, remada, supino, puxada, desenvolvimento, flexões, pranchas, afundos, leg press, terra romeno, rosca, tríceps, elevação lateral, abdominal, prancha
 - Exercícios PROIBIDOS: movimentos de circo, instáveis, complexos ou que exijam muita coordenação
 - Periodização em ciclos de 4 semanas com progressão leve a moderada
+
+### REGRAS POR GÊNERO ###
+HOMENS:
+- NÃO prescrever exercícios específicos de glúteo como: Glute Bridge, Hip Thrust, Extensão de Quadril, Elevação Pélvica, Kickback
+- Se necessário trabalhar glúteos indiretamente, usar APENAS: Agachamento, Afundo, Leg Press, Stiff, Terra Romeno
+- Cadeira Abdutora pode ser prescrita se necessário para trabalho de adutores/abdutores
+
+MULHERES:
+- Pode incluir exercícios específicos de glúteo conforme objetivo
+- Hip Thrust, Glute Bridge, Elevação Pélvica, Kickback são permitidos
 ${exerciseList}
 ### CLASSIFICAÇÃO POR NÍVEL ###
 INICIANTE (nunca treinou ou parado há +6 meses):
@@ -161,5 +171,8 @@ ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
 5. Use APENAS exercícios simples e seguros do Método Renascer
 6. Considere lesões, restrições e disponibilidade
 7. Gere as primeiras ${weeksPerCycle} semanas detalhadas (próximas liberadas após feedback)
-8. Inclua progressão semanal clara (aumento de reps, séries ou carga)`;
+8. Inclua progressão semanal clara (aumento de reps, séries ou carga)
+9. VERIFIQUE o campo "sexo" do cliente:
+   - Se HOMEM (masculino): NÃO prescreva Glute Bridge, Hip Thrust, Extensão de Quadril, Elevação Pélvica - use Agachamento, Afundo, Leg Press, Stiff para trabalho indireto de glúteos
+   - Se MULHER (feminino): pode incluir exercícios específicos de glúteo conforme objetivo`;
 }
