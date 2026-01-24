@@ -332,37 +332,74 @@ serve(async (req) => {
     
     console.log(`Schema validation passed for ${tipo}`);
 
+    // Função auxiliar para normalizar nomes de exercícios para matching
+    const normalizeExerciseName = (name: string): string => {
+      return name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+        .replace(/\b(com|na|no|de|do|da|em|para|ao|os|as|um|uma|uns|umas)\b/g, "") // Remove preposições/artigos
+        .replace(/\(.*?\)/g, "") // Remove conteúdo entre parênteses
+        .replace(/\s+/g, " ")
+        .trim();
+    };
+
     // Enriquecer exercícios com URLs de GIF do banco de dados
-    if (tipo === "treino" && protocolData.semanas && Object.keys(exerciseVideos).length > 0) {
+    // Suporte para novo formato (treinos com letras) e formato legado (semanas)
+    if (tipo === "treino" && Object.keys(exerciseVideos).length > 0) {
       let enrichedCount = 0;
-      protocolData.semanas.forEach((semana: any) => {
-        if (semana.dias) {
-          semana.dias.forEach((dia: any) => {
-            if (dia.exercicios) {
-              dia.exercicios.forEach((ex: any) => {
-                if (ex.nome && !ex.video_url) {
-                  const nomeNormalizado = ex.nome.toLowerCase().trim();
-                  
-                  // Busca exata primeiro
-                  if (exerciseVideos[nomeNormalizado]) {
-                    ex.video_url = exerciseVideos[nomeNormalizado];
-                    enrichedCount++;
-                  } else {
-                    // Busca parcial
-                    for (const [exerciseName, url] of Object.entries(exerciseVideos)) {
-                      if (nomeNormalizado.includes(exerciseName) || exerciseName.includes(nomeNormalizado)) {
-                        ex.video_url = url;
-                        enrichedCount++;
-                        break;
-                      }
-                    }
-                  }
+      
+      // Criar mapa normalizado para matching flexível
+      const normalizedExerciseMap: Record<string, string> = {};
+      for (const [name, url] of Object.entries(exerciseVideos)) {
+        normalizedExerciseMap[normalizeExerciseName(name)] = url;
+      }
+
+      const enrichExercises = (exercicios: any[]) => {
+        exercicios.forEach((ex: any) => {
+          if (ex.nome && !ex.video_url) {
+            const nomeNormalizado = normalizeExerciseName(ex.nome);
+            
+            // Busca exata normalizada primeiro
+            if (normalizedExerciseMap[nomeNormalizado]) {
+              ex.video_url = normalizedExerciseMap[nomeNormalizado];
+              enrichedCount++;
+            } else {
+              // Busca parcial normalizada
+              for (const [exerciseName, url] of Object.entries(normalizedExerciseMap)) {
+                if (nomeNormalizado.includes(exerciseName) || exerciseName.includes(nomeNormalizado)) {
+                  ex.video_url = url;
+                  enrichedCount++;
+                  break;
                 }
-              });
+              }
             }
-          });
-        }
-      });
+          }
+        });
+      };
+
+      // Novo formato: treinos com letras (A, B, C, D)
+      if (protocolData.treinos && Array.isArray(protocolData.treinos)) {
+        protocolData.treinos.forEach((treino: any) => {
+          if (treino.exercicios) {
+            enrichExercises(treino.exercicios);
+          }
+        });
+      }
+
+      // Formato legado: semanas com dias
+      if (protocolData.semanas && Array.isArray(protocolData.semanas)) {
+        protocolData.semanas.forEach((semana: any) => {
+          if (semana.dias) {
+            semana.dias.forEach((dia: any) => {
+              if (dia.exercicios) {
+                enrichExercises(dia.exercicios);
+              }
+            });
+          }
+        });
+      }
+
       console.log(`Exercise GIFs enriched: ${enrichedCount} exercises matched`);
     }
 

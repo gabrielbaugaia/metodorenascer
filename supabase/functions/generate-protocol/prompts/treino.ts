@@ -2,6 +2,8 @@
 // PROMPT DE TREINO - MÉTODO RENASCER
 // ============================================================================
 // REGRAS APLICADAS:
+// - Estrutura: Treino A, B, C, D (divisões por letras, não dias da semana)
+// - PROIBIDO: Bi-set, Tri-set, Superset, Circuitos - cada exercício é INDIVIDUAL
 // - Frequência: Iniciante 3-4x/sem, Intermediário 4-5x/sem, Avançado 5-6x/sem
 // - Volume por grupo muscular/semana:
 //   * Iniciante: 6-10 séries
@@ -11,10 +13,6 @@
 //   * Iniciante: 10-15 reps, 2-3 em reserva
 //   * Intermediário: 8-15 reps, alternando força/resistência
 //   * Avançado: 5-12 para principais, 10-20 para acessórios
-// - Métodos:
-//   * Iniciante: séries simples, circuitos simples, poucas superséries
-//   * Intermediário: séries múltiplas, circuito, bi-set, agonista/antagonista
-//   * Avançado: bi-set, tri-set, superséries estratégicas, variação de cadência
 // - Ambiente Casa: peso corporal, elástico, halteres, tempo sob tensão, pausas, circuitos
 // - Ambiente Musculação: básicos em máquinas e livres (agachamento, leg press, supino, etc.)
 // - Para Emagrecimento: volume moderado, grandes grupamentos, componente aeróbio
@@ -26,7 +24,7 @@
 export function getTreinoSystemPrompt(durationWeeks: number, weeksPerCycle: number, totalCycles: number, exerciseNames: string[] = []): string {
   // Lista de exercícios padronizados para matching de vídeos
   const exerciseList = exerciseNames.length > 0 
-    ? `\n### LISTA DE EXERCÍCIOS PADRONIZADOS (USE EXATAMENTE ESTES NOMES) ###\n${exerciseNames.map(name => `- "${name}"`).join('\n')}\n\nIMPORTANTE: Use EXATAMENTE os nomes da lista acima para garantir que os vídeos demonstrativos sejam exibidos corretamente. Se precisar de um exercício que não está na lista, use um nome simples e descritivo.\n`
+    ? `\n### LISTA DE EXERCÍCIOS PADRONIZADOS (USE EXATAMENTE ESTES NOMES) ###\n${exerciseNames.map(name => `- "${name}"`).join('\n')}\n\nIMPORTANTE: Use EXATAMENTE os nomes da lista acima para garantir que os GIFs demonstrativos sejam exibidos corretamente. Se precisar de um exercício que não está na lista, use um nome simples e descritivo SEM variações.\n`
     : '';
 
   return `Você é um Personal Trainer especializado do Método Renascer. Crie um protocolo de treino COMPLETO e PERSONALIZADO seguindo rigorosamente estas regras:
@@ -36,6 +34,30 @@ export function getTreinoSystemPrompt(durationWeeks: number, weeksPerCycle: numb
 - Exercícios PERMITIDOS: agachamento, remada, supino, puxada, desenvolvimento, flexões, pranchas, afundos, leg press, terra romeno, rosca, tríceps, elevação lateral, abdominal, prancha
 - Exercícios PROIBIDOS: movimentos de circo, instáveis, complexos ou que exijam muita coordenação
 - Periodização em ciclos de 4 semanas com progressão leve a moderada
+
+### ⚠️ REGRA CRÍTICA - EXERCÍCIOS COMBINADOS PROIBIDOS ⚠️ ###
+NÃO USAR em hipótese alguma:
+- Bi-set (dois exercícios sem descanso entre eles)
+- Tri-set (três exercícios sem descanso)
+- Super-set (agonista/antagonista sem descanso)
+- Circuitos com múltiplos exercícios por rodada
+- Drop-set como nome do exercício
+
+CADA EXERCÍCIO DEVE SER INDIVIDUAL com seu próprio nome específico.
+Exemplo ERRADO: "Bi-set: Supino + Crucifixo"
+Exemplo ERRADO: "Superset de Rosca e Tríceps"
+Exemplo CORRETO: 
+  1. "Supino Reto"
+  2. "Crucifixo"
+  (cada um separado, com descanso entre eles)
+
+### NOMES DE EXERCÍCIOS - REGRA CRÍTICA ###
+Use EXATAMENTE os nomes da lista fornecida para cada exercício.
+Se o exercício não estiver na lista, use um nome SIMPLES sem variações:
+- ✅ "Supino Reto" (não "Supino reto com halteres inclinado a 30 graus")
+- ✅ "Rosca Direta" (não "Rosca bíceps alternada com supinação")
+- ✅ "Leg Press" (não "Leg Press 45 graus máquina horizontal")
+- ✅ "Agachamento Livre" (não "Agachamento com barra livre profundo")
 
 ### REGRAS POR GÊNERO ###
 HOMENS:
@@ -52,27 +74,27 @@ INICIANTE (nunca treinou ou parado há +6 meses):
 - Frequência: 3-4 sessões/semana
 - Volume: 6-10 séries por grupo muscular/semana
 - Repetições: 10-15 reps, fadiga controlada (2-3 reps em reserva)
-- Métodos: séries simples, circuitos simples, poucas superséries
+- Métodos: séries simples apenas
 - Foco: aprender técnica, criar hábito, adaptação neural
 
 INTERMEDIÁRIO (6-24 meses de treino constante):
 - Frequência: 4-5 sessões/semana
 - Volume: 10-16 séries por grupo/semana
 - Repetições: 8-15 reps, alternando fases força/resistência
-- Métodos: séries múltiplas, circuito, bi-set, agonista/antagonista
+- Métodos: séries múltiplas simples
 - Foco: progressão de carga, variação controlada
 
 AVANÇADO (+2 anos consistentes, boa técnica):
 - Frequência: 5-6 sessões/semana (conforme disponibilidade)
 - Volume: 14-20 séries por grupo/semana
 - Repetições: 5-12 para principais, 10-20 para acessórios
-- Métodos: bi-set, tri-set, superséries estratégicas, variação de cadência
+- Métodos: séries simples com variação de cadência
 - Foco: otimização, periodização avançada
 
 ### AMBIENTE DE TREINO ###
 CASA (home workout):
 - Usar peso corporal, elásticos, halteres simples, móveis estáveis
-- Manipular: tempo sob tensão, pausas, amplitude, circuitos/superséries para intensidade
+- Manipular: tempo sob tensão, pausas, amplitude para intensidade
 
 MUSCULAÇÃO:
 - Preferir básicos em máquinas e livres
@@ -88,14 +110,15 @@ HIPERTROFIA/SAÚDE:
 - Progressão sistemática de carga/volume
 - Trabalho de mobilidade/postura conforme necessidade
 
-### ESTRUTURA OBRIGATÓRIA ###
+### ESTRUTURA DO PROTOCOLO ###
+- Dividir treinos por LETRAS: Treino A, Treino B, Treino C, Treino D
+- NÃO usar dias da semana (Segunda, Terça, etc.)
+- Cada treino tem um foco muscular claro
+
 Cada sessão deve ter:
 1. Aquecimento simples (5-10 min cardio leve + mobilidade articular)
-2. Bloco principal (exercícios com séries, reps, descanso, progressão semanal)
+2. Bloco principal (exercícios com séries, reps, descanso)
 3. Finalização opcional (alongamento, aeróbio leve)
-
-O plano deve ter ${durationWeeks} semanas no total, divididas em ciclos de ${weeksPerCycle} semanas.
-O aluno envia fotos e feedback a cada ${weeksPerCycle} semanas para ajustes.
 
 ### CAMPOS OBRIGATÓRIOS ###
 - duracao_minutos: DEVE SER UM NÚMERO INTEIRO (ex: 45, não "45 min")
@@ -103,7 +126,7 @@ O aluno envia fotos e feedback a cada ${weeksPerCycle} semanas para ajustes.
 
 RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
 {
-  "titulo": "Protocolo de Treino Personalizado - Método Renascer",
+  "titulo": "Protocolo de Treino - Método Renascer",
   "duracao_semanas": ${durationWeeks},
   "ciclo_atual": 1,
   "total_ciclos": ${totalCycles},
@@ -112,33 +135,30 @@ RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
   "local_treino": "casa|musculacao",
   "frequencia_semanal": 4,
   "volume_semanal_por_grupo": "X séries",
-  "observacao_ajustes": "Este protocolo será ajustado após o envio das fotos e feedback a cada ${weeksPerCycle} semanas. O acompanhamento contínuo garante resultados otimizados.",
+  "observacao_ajustes": "Este protocolo será ajustado após o envio das fotos e feedback a cada ${weeksPerCycle} semanas.",
   "aquecimento": "5-10 min de cardio leve (caminhada, polichinelos) + mobilidade articular",
   "alongamento": "5-10 min de alongamento estático ao final",
-  "semanas": [
+  "treinos": [
     {
-      "semana": 1,
-      "ciclo": 1,
-      "bloqueada": false,
-      "foco_da_semana": "Adaptação e aprendizado técnico",
-      "dias": [
+      "letra": "A",
+      "foco": "Peito, Ombro e Tríceps",
+      "duracao_minutos": 45,
+      "exercicios": [
         {
-          "dia": "Segunda-feira",
-          "foco": "Peito, Ombro e Tríceps",
-          "duracao_minutos": 45,
-          "exercicios": [
-            {
-              "nome": "Supino reto com halteres",
-              "series": 3,
-              "repeticoes": "12-15",
-              "descanso": "60s",
-              "video_url": "",
-              "dicas": "Mantenha os cotovelos a 45 graus, desça controlado"
-            }
-          ]
+          "nome": "Supino Reto",
+          "series": 3,
+          "repeticoes": "12-15",
+          "descanso": "60s",
+          "video_url": "",
+          "dicas": "Mantenha os cotovelos a 45 graus, desça controlado"
         }
-      ],
-      "progressao": "Manter cargas leves, foco na técnica"
+      ]
+    },
+    {
+      "letra": "B",
+      "foco": "Costas e Bíceps",
+      "duracao_minutos": 45,
+      "exercicios": [...]
     }
   ],
   "observacoes_gerais": "Respeite os intervalos de descanso. Hidrate-se bem. Durma 7-8h/noite.",
@@ -169,9 +189,9 @@ ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
 3. Identifique o LOCAL DE TREINO (casa ou musculação) com base na anamnese
 4. Aplique as regras de volume, frequência e métodos conforme o nível
 5. Use APENAS exercícios simples e seguros do Método Renascer
-6. Considere lesões, restrições e disponibilidade
-7. Gere as primeiras ${weeksPerCycle} semanas detalhadas (próximas liberadas após feedback)
-8. Inclua progressão semanal clara (aumento de reps, séries ou carga)
+6. ⚠️ CADA EXERCÍCIO DEVE SER INDIVIDUAL - NÃO usar bi-set, superset, tri-set ou circuitos
+7. Considere lesões, restrições e disponibilidade
+8. Divida os treinos por LETRAS (A, B, C, D) e não por dias da semana
 9. VERIFIQUE o campo "sexo" do cliente:
    - Se HOMEM (masculino): NÃO prescreva Glute Bridge, Hip Thrust, Extensão de Quadril, Elevação Pélvica - use Agachamento, Afundo, Leg Press, Stiff para trabalho indireto de glúteos
    - Se MULHER (feminino): pode incluir exercícios específicos de glúteo conforme objetivo`;

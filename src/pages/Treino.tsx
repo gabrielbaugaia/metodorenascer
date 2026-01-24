@@ -94,14 +94,32 @@ const {
   const workouts = useMemo<Workout[]>(() => {
     if (!protocol?.conteudo) return [];
 
-    // If protocol already has treinos array, use it directly
-    if (Array.isArray((protocol.conteudo as any).treinos)) {
-      return (protocol.conteudo as any).treinos as Workout[];
+    const conteudo: any = protocol.conteudo;
+
+    // Novo formato: treinos com letras (A, B, C, D) - PREFERIDO
+    if (Array.isArray(conteudo.treinos) && conteudo.treinos.length > 0) {
+      return conteudo.treinos.map((treino: any): Workout => ({
+        day: `Treino ${treino.letra || treino.nome || ""}`, // "Treino A", "Treino B"
+        focus: treino.foco || treino.nome || "",
+        duration: String(treino.duracao_minutos || 45),
+        calories: treino.calorias_estimadas || 0,
+        completed: false,
+        exercises: (treino.exercicios || []).map(
+          (ex: any): Exercise => ({
+            name: ex.nome,
+            sets: ex.series,
+            reps: ex.repeticoes,
+            rest: ex.descanso,
+            videoUrl: ex.video_url,
+            tips: ex.dicas,
+            completed: false,
+          }),
+        ),
+      }));
     }
 
-    const conteudo: any = protocol.conteudo;
+    // Formato legado: semanas com dias
     const semanas = conteudo.semanas;
-
     if (!Array.isArray(semanas) || semanas.length === 0) return [];
 
     const currentWeekNumber = conteudo.semana_atual || semanas[0].semana;
@@ -113,7 +131,7 @@ const {
     return currentWeek.dias.map((dia: any): Workout => ({
       day: dia.dia,
       focus: dia.foco,
-      duration: dia.duracao || "--",
+      duration: String(dia.duracao_minutos || dia.duracao || 45),
       calories: dia.calorias || 0,
       completed: false,
       exercises: (dia.exercicios || []).map(
