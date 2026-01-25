@@ -280,6 +280,7 @@ export default function Anamnese() {
       const planType = subscription?.plan_type || "mensal";
       
       // Prepare user context for protocol generation
+      // CRITICAL: Include routine fields for deterministic meal scheduling
       const userContext = {
         age,
         weight: parseFloat(formData.weight),
@@ -294,6 +295,14 @@ export default function Anamnese() {
         sleepQuality: formData.qualidade_sono,
         stressLevel: formData.nivel_estresse,
         observations: formData.observacoes_adicionais,
+        // Routine fields for meal scheduling (REQUIRED for nutrition protocol)
+        horario_treino: formData.horario_treino || "18:00",
+        horario_acorda: formData.horario_acorda || "06:00",
+        horario_dorme: formData.horario_dorme || "22:00",
+        refeicoes_por_dia: formData.refeicoes_por_dia || "5",
+        // Additional health context for personalized nutrition
+        condicoes_saude: formData.condicoes_saude,
+        toma_medicamentos: formData.toma_medicamentos,
       };
       
       // Generate all 3 protocols in parallel
