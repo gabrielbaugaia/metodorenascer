@@ -1,4 +1,4 @@
-// Force deploy v2
+// Force deploy v3 - Error Boundary + Diet Fix
 import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,6 +10,7 @@ import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { SubscriptionGuard } from "@/components/auth/SubscriptionGuard";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Critical routes loaded immediately
 import Index from "./pages/Index";
@@ -66,13 +67,14 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AnalyticsProvider>
-          <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* ROTAS PÚBLICAS */}
+        <ErrorBoundary>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AnalyticsProvider>
+            <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* ROTAS PÚBLICAS */}
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/entrar" element={<Auth />} />
@@ -117,13 +119,14 @@ const App = () => (
             <Route path="/admin/convites" element={<AdminConvites />} />
             <Route path="/admin/leads" element={<AdminLeads />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
-            <Route path="/admin/blog/:id" element={<AdminBlogEditor />} />
+              <Route path="/admin/blog/:id" element={<AdminBlogEditor />} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </Suspense>
-          </AnalyticsProvider>
-        </BrowserRouter>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            </Suspense>
+            </AnalyticsProvider>
+          </BrowserRouter>
+        </ErrorBoundary>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

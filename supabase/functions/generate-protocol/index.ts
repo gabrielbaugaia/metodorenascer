@@ -71,6 +71,38 @@ serve(async (req) => {
 
     const { tipo, userContext, userId, adjustments, planType, evolutionAdjustments } = await req.json();
 
+    // ==== LOGGING DE ROTINA PARA DEBUG ====
+    console.log(`[generate-protocol] User routine context for ${tipo}:`, {
+      horario_acorda: userContext?.horario_acorda || "NOT PROVIDED",
+      horario_treino: userContext?.horario_treino || "NOT PROVIDED",
+      horario_dorme: userContext?.horario_dorme || "NOT PROVIDED",
+      refeicoes_por_dia: userContext?.refeicoes_por_dia || "NOT PROVIDED"
+    });
+
+    // ==== VALIDAÇÃO E DEFAULTS PARA CAMPOS DE ROTINA ====
+    if (tipo === "nutricao") {
+      const requiredRoutineFields = ["horario_treino", "horario_acorda", "horario_dorme"];
+      const missingFields = requiredRoutineFields.filter(
+        field => !userContext?.[field] || userContext[field] === ""
+      );
+      
+      if (missingFields.length > 0) {
+        console.warn(`[generate-protocol] Missing routine fields for nutrition: ${missingFields.join(", ")}. Using defaults.`);
+        // Apply defaults to prevent AI hallucination
+        userContext.horario_acorda = userContext?.horario_acorda || "06:00";
+        userContext.horario_treino = userContext?.horario_treino || "18:00";
+        userContext.horario_dorme = userContext?.horario_dorme || "22:00";
+        userContext.refeicoes_por_dia = userContext?.refeicoes_por_dia || "5";
+      }
+      
+      console.log(`[generate-protocol] Final routine for nutrition generation:`, {
+        horario_acorda: userContext.horario_acorda,
+        horario_treino: userContext.horario_treino,
+        horario_dorme: userContext.horario_dorme,
+        refeicoes_por_dia: userContext.refeicoes_por_dia
+      });
+    }
+
     // Check if requesting user is admin
     const { data: roleData } = await supabaseClient
       .from("user_roles")

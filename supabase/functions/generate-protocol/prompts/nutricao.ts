@@ -12,7 +12,120 @@
 // - Intermediário: mais detalhes de macros, ajustes semanais
 // - Avançado: distribuição precisa, estratégias de refeição livre, ajustes finos
 // - Saída: número de refeições, exemplos de combinações, quantidades, substituições
+// - HORÁRIOS são calculados deterministicamente pela função buildMealSchedule
 // ============================================================================
+
+// ============================================================================
+// MOTOR DETERMINÍSTICO DE HORÁRIOS - SEM IA INVENTAR HORÁRIOS
+// ============================================================================
+
+interface MealSlot {
+  nome: string;
+  horario: string;
+  tipo: string;
+}
+
+/**
+ * Calcula horários das refeições baseado na rotina do cliente.
+ * Esta função é DETERMINÍSTICA - os mesmos inputs sempre geram os mesmos outputs.
+ * A IA NÃO deve alterar esses horários, apenas preencher o conteúdo.
+ */
+export function buildMealSchedule(
+  horario_acorda: string,
+  horario_treino: string,
+  horario_dorme: string,
+  refeicoes_por_dia: number = 5
+): MealSlot[] {
+  // Parse HH:mm para minutos desde meia-noite
+  const parseTime = (time: string): number => {
+    if (!time || !time.includes(":")) return 0;
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + (m || 0);
+  };
+  
+  // Formatar minutos para HH:mm
+  const formatTime = (minutes: number): string => {
+    // Handle overflow past midnight
+    const normalizedMinutes = ((minutes % 1440) + 1440) % 1440;
+    const h = Math.floor(normalizedMinutes / 60);
+    const m = normalizedMinutes % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  };
+  
+  // Defaults se não fornecidos
+  const acordar = parseTime(horario_acorda) || 6 * 60;  // 06:00
+  const treino = parseTime(horario_treino) || 18 * 60;  // 18:00
+  const dormir = parseTime(horario_dorme) || 22 * 60;   // 22:00
+  
+  console.log(`[buildMealSchedule] Input - acordar: ${formatTime(acordar)}, treino: ${formatTime(treino)}, dormir: ${formatTime(dormir)}, refeicoes: ${refeicoes_por_dia}`);
+  
+  const refeicoes: MealSlot[] = [];
+  
+  // 1. Primeira refeição: 30 min após acordar
+  const primeiraRefeicao = acordar + 30;
+  refeicoes.push({
+    nome: "Café da Manhã",
+    horario: formatTime(primeiraRefeicao),
+    tipo: "primeira_refeicao"
+  });
+  
+  // 2. Pré-treino: 90 min ANTES do treino
+  const preTreino = treino - 90;
+  refeicoes.push({
+    nome: "Refeição Pré-Treino",
+    horario: formatTime(preTreino),
+    tipo: "pre_treino"
+  });
+  
+  // 3. Pós-treino: 60 min APÓS treino (considerando 1h de duração)
+  const posTreino = treino + 90;
+  refeicoes.push({
+    nome: "Refeição Pós-Treino",
+    horario: formatTime(posTreino),
+    tipo: "pos_treino"
+  });
+  
+  // 4. Última refeição (ceia): 60 min antes de dormir
+  const ultimaRefeicao = dormir - 60;
+  refeicoes.push({
+    nome: "Ceia",
+    horario: formatTime(ultimaRefeicao),
+    tipo: "ultima_refeicao"
+  });
+  
+  // 5. Se precisar de mais refeições, adicionar lanches intermediários
+  if (refeicoes_por_dia >= 5) {
+    // Calcular ponto médio entre café e pré-treino
+    const meioManha = Math.round((primeiraRefeicao + preTreino) / 2);
+    // Só adicionar se houver espaço (mínimo 2h de diferença)
+    if (preTreino - primeiraRefeicao >= 180) {
+      refeicoes.push({
+        nome: "Lanche da Manhã",
+        horario: formatTime(meioManha),
+        tipo: "lanche"
+      });
+    }
+  }
+  
+  if (refeicoes_por_dia >= 6) {
+    // Calcular ponto médio entre pós-treino e ceia
+    const meioCeia = Math.round((posTreino + ultimaRefeicao) / 2);
+    if (ultimaRefeicao - posTreino >= 180) {
+      refeicoes.push({
+        nome: "Lanche da Tarde",
+        horario: formatTime(meioCeia),
+        tipo: "lanche"
+      });
+    }
+  }
+  
+  // Ordenar por horário
+  refeicoes.sort((a, b) => parseTime(a.horario) - parseTime(b.horario));
+  
+  console.log(`[buildMealSchedule] Generated ${refeicoes.length} meals:`, refeicoes.map(r => `${r.nome}: ${r.horario}`).join(", "));
+  
+  return refeicoes;
+}
 
 export function getNutricaoSystemPrompt(durationWeeks: number, weeksPerCycle: number): string {
   return `Você é um Nutricionista Esportivo do Método Renascer. Crie um plano alimentar COMPLETO e PERSONALIZADO seguindo rigorosamente estas regras:
@@ -54,7 +167,7 @@ AVANÇADO:
 - Periodização nutricional conforme fase do treino
 
 ### ESTRUTURA OBRIGATÓRIA DO PLANO ###
-1. Refeições com horários sugeridos
+1. Refeições com horários FIXOS (fornecidos abaixo - NÃO ALTERAR)
 2. Exemplos práticos de alimentos e porções
 3. Quantidades em medidas caseiras E gramas
 4. Instruções claras de substituição (ex: trocar arroz por batata, frango por peixe)
@@ -131,6 +244,16 @@ export function getNutricaoUserPrompt(
   weeksPerCycle: number,
   adjustments?: string
 ): string {
+  // Calcular schedule determinístico baseado na rotina do cliente
+  const schedule = buildMealSchedule(
+    (userContext.horario_acorda as string) || "06:00",
+    (userContext.horario_treino as string) || "18:00",
+    (userContext.horario_dorme as string) || "22:00",
+    parseInt((userContext.refeicoes_por_dia as string) || "5", 10)
+  );
+  
+  const scheduleText = schedule.map(r => `- ${r.nome}: ${r.horario} (${r.tipo})`).join("\n");
+  
   return `Crie um plano nutricional PERSONALIZADO para este cliente do Método Renascer:
 
 ### DADOS DO CLIENTE ###
@@ -138,6 +261,13 @@ ${JSON.stringify(userContext, null, 2)}
 
 ### PLANO ###
 Tipo: ${planType || 'mensal'} (${durationWeeks} semanas)
+
+### HORÁRIOS FIXOS DAS REFEIÇÕES (NÃO ALTERAR) ###
+${scheduleText}
+
+⚠️ CRÍTICO: USE EXATAMENTE ESTES HORÁRIOS LISTADOS ACIMA.
+Cada refeição no JSON deve ter o "horario" exatamente igual ao listado.
+NÃO invente outros horários. Apenas defina O QUE COMER em cada horário.
 
 ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
 
@@ -150,14 +280,8 @@ ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
 6. Use linguagem simples e prática
 7. Inclua opções de substituição em todas as refeições
 8. Foque em alimentos acessíveis e práticos para o dia a dia brasileiro
-
-### CRÍTICO - HORÁRIOS DAS REFEIÇÕES ###
-- ANALISE o campo "horario_treino" do cliente para posicionar as refeições
-- REFEIÇÃO PRÉ-TREINO: OBRIGATORIAMENTE 1h30-2h ANTES do horário de treino
-- REFEIÇÃO PÓS-TREINO: OBRIGATORIAMENTE dentro de 1h APÓS o término do treino (considere ~1h de duração)
-- Se o cliente treina às 15:30, o pré-treino deve ser ~14:00 e o pós-treino ~17:00
-- Ajuste TODAS as outras refeições em função do horário de treino e rotina (horario_acorda, horario_dorme)
-- Se não houver horário de treino especificado, use 18:00 como padrão
+9. A refeição PRÉ-TREINO deve ter carboidratos de fácil digestão + proteína moderada
+10. A refeição PÓS-TREINO deve ter proteína de rápida absorção + carboidratos para reposição
 
 ### CRÍTICO - PERSONALIZAÇÃO BASEADA NA ANAMNESE ###
 - ANALISE o campo "restricoes_alimentares" para EVITAR completamente alimentos que o cliente não pode/não gosta de comer
