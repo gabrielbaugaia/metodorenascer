@@ -44,14 +44,18 @@ interface Protocol {
 }
 
 export default function Treino() {
+  console.log("[Treino] Component mounted");
   const navigate = useNavigate();
   const { user } = useAuth();
+  console.log("[Treino] User:", user?.id);
   const [protocol, setProtocol] = useState<Protocol | null>(null);
   
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
-const { 
+  
+  console.log("[Treino] Initializing workout tracking");
+  const { 
     getTotalCount, 
     getTotalCalories, 
     getWeeklyCount, 
@@ -59,13 +63,18 @@ const {
     completeWorkout,
     getCurrentStreak 
   } = useWorkoutTracking();
+  console.log("[Treino] Workout tracking initialized");
 
   const currentStreak = getCurrentStreak();
+  console.log("[Treino] Current streak:", currentStreak);
+  
   useEffect(() => {
+    console.log("[Treino] fetchProtocol useEffect triggered");
     const fetchProtocol = async () => {
       if (!user) return;
       
       try {
+        console.log("[Treino] Fetching protocol for user:", user.id);
         const { data, error } = await supabase
           .from("protocolos")
           .select("id, conteudo")
@@ -79,11 +88,15 @@ const {
         if (error) {
           console.error("Error fetching protocol:", error);
         } else if (data) {
+          console.log("[Treino] Protocol fetched successfully:", data);
           setProtocol(data as Protocol);
+        } else {
+          console.log("[Treino] No protocol found for user");
         }
       } catch (err) {
         console.error("Error:", err);
       } finally {
+        console.log("[Treino] Setting loading to false");
         setLoading(false);
       }
     };
@@ -154,6 +167,7 @@ const {
   const totalCount = getTotalCount();
 
   const handleCompleteWorkout = async (workout: Workout) => {
+    console.log("[Treino] Completing workout:", workout.focus);
     const success = await completeWorkout(
       workout.focus,
       workout.exercises.length,
@@ -165,6 +179,7 @@ const {
     }
   };
   if (loading) {
+    console.log("[Treino] Rendering loading state");
     return (
       <ClientLayout>
         <SuccessAnimation 
@@ -181,6 +196,7 @@ const {
     );
   }
 
+  console.log("[Treino] Rendering main content, workouts count:", workouts.length);
   return (
     <ClientLayout>
       <SuccessAnimation 
