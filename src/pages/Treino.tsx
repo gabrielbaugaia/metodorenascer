@@ -117,7 +117,7 @@ export default function Treino() {
         duration: String(treino.duracao_minutos || 45),
         calories: treino.calorias_estimadas || 0,
         completed: false,
-        exercises: (treino.exercicios || []).map(
+        exercises: Array.isArray(treino.exercicios) ? treino.exercicios.map(
           (ex: any): Exercise => ({
             name: ex.nome,
             sets: ex.series,
@@ -127,7 +127,7 @@ export default function Treino() {
             tips: ex.dicas,
             completed: false,
           }),
-        ),
+        ) : [],
       }));
     }
 
@@ -147,7 +147,7 @@ export default function Treino() {
       duration: String(dia.duracao_minutos || dia.duracao || 45),
       calories: dia.calorias || 0,
       completed: false,
-      exercises: (dia.exercicios || []).map(
+      exercises: Array.isArray(dia.exercicios) ? dia.exercicios.map(
         (ex: any): Exercise => ({
           name: ex.nome,
           sets: ex.series,
@@ -157,7 +157,7 @@ export default function Treino() {
           tips: ex.dicas,
           completed: false,
         }),
-      ),
+      ) : [],
     }));
   }, [protocol]);
 
