@@ -17,6 +17,16 @@ interface ExerciseTableProps {
 }
 
 export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps) {
+  const safeExercises = exercises || [];
+
+  if (safeExercises.length === 0) {
+    return (
+      <div className="py-4 text-center">
+        <p className="text-muted-foreground text-sm">Nenhum exercício disponível</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       {/* Header - hidden on mobile, shown on larger screens */}
@@ -29,7 +39,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
       </div>
 
       {/* Exercise rows */}
-      {exercises.map((exercise, index) => (
+      {safeExercises.map((exercise, index) => (
         <div
           key={exercise.name}
           className={cn(

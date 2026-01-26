@@ -54,8 +54,11 @@ export function WorkoutCard({
     setModalOpen(true);
   };
 
-  const completedCount = exercises.filter((e) => e.completed).length;
-  const progressPercent = (completedCount / exercises.length) * 100;
+  const safeExercises = exercises || [];
+  const completedCount = safeExercises.filter((e) => e.completed).length;
+  const progressPercent = safeExercises.length > 0 
+    ? (completedCount / safeExercises.length) * 100 
+    : 0;
 
   return (
     <>
@@ -120,7 +123,7 @@ export function WorkoutCard({
                       completed && "bg-primary/20 text-primary border-primary/30"
                     )}
                   >
-                    {exercises.length} exercícios
+                    {safeExercises.length} exercícios
                   </Badge>
                   <ChevronDown
                     className={cn(
@@ -137,7 +140,7 @@ export function WorkoutCard({
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
                     <span>Progresso</span>
                     <span>
-                      {completedCount}/{exercises.length}
+                      {completedCount}/{safeExercises.length}
                     </span>
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
