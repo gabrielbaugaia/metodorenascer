@@ -1,0 +1,2 @@
+# Netlify/Vercel SPA redirect - all routes go to index.html
+/*    /index.html   200
