@@ -61,7 +61,7 @@ export function useWorkoutTracking() {
         .from("user_streaks")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (!existing) {
         // Create new streak record
