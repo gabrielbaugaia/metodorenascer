@@ -1,143 +1,70 @@
 
+# Plano: Resolver Cache e Garantir Sincronização do Deploy
 
-# Levantamento Final: Padronização do Domínio metodo.renascerapp.com.br
+## Problema Identificado
 
-## Resumo Executivo
+O site publicado em `metodo.renascerapp.com.br` não reflete as alterações feitas no projeto devido a:
 
-O projeto está atualmente usando múltiplos domínios em diferentes partes do código, causando inconsistências e potenciais erros de CORS, redirecionamento e integração. Este plano consolida **todas** as alterações necessárias para padronizar o domínio oficial `metodo.renascerapp.com.br`.
-
----
-
-## Inventário de URLs Encontradas
-
-| Local | URL Atual | URL Correta |
-|-------|-----------|-------------|
-| CORS (cors.ts) | ✅ Já inclui metodo.renascerapp.com.br | OK |
-| create-checkout (fallback) | `https://renascerapp.com.br` | `https://metodo.renascerapp.com.br` |
-| customer-portal (fallback) | `https://lxdosmjenbaugmhyfanx.lovableproject.com` | `https://metodo.renascerapp.com.br` |
-| send-password-reset (redirectTo) | `https://metodorenascer.lovable.app/redefinir-senha` | `https://metodo.renascerapp.com.br/redefinir-senha` |
-| send-invitation (baseUrl) | `https://renascerapp.com.br` | `https://metodo.renascerapp.com.br` |
-| index.html (canonical) | `https://www.renascerapp.com.br/` | `https://metodo.renascerapp.com.br/` |
+1. **Service Worker desatualizado**: O `CACHE_NAME` ainda está como `'renascer-cache-v1'` quando deveria ser `'renascer-cache-v2'` para forçar limpeza de cache
+2. **Cache do navegador**: Usuários com cache antigo continuam vendo versão antiga
 
 ---
 
-## Alterações Necessárias
+## Solução
 
-### 1. Edge Functions (Backend)
+### 1. Atualizar versão do Service Worker
 
-#### 1.1 `supabase/functions/create-checkout/index.ts`
-**Linha 192** - Atualizar fallback origin:
+**Arquivo**: `public/sw.js`
+
 ```typescript
 // DE:
-const origin = req.headers.get("origin") || "https://renascerapp.com.br";
+const CACHE_NAME = 'renascer-cache-v1';
 
 // PARA:
-const origin = req.headers.get("origin") || "https://metodo.renascerapp.com.br";
+const CACHE_NAME = 'renascer-cache-v3';
 ```
 
-#### 1.2 `supabase/functions/customer-portal/index.ts`
-**Linha 52** - Atualizar fallback origin:
-```typescript
-// DE:
-const origin = req.headers.get("origin") || "https://lxdosmjenbaugmhyfanx.lovableproject.com";
-
-// PARA:
-const origin = req.headers.get("origin") || "https://metodo.renascerapp.com.br";
-```
-
-#### 1.3 `supabase/functions/send-password-reset/index.ts`
-**Linha 107** - Atualizar redirectTo:
-```typescript
-// DE:
-redirectTo: 'https://metodorenascer.lovable.app/redefinir-senha',
-
-// PARA:
-redirectTo: 'https://metodo.renascerapp.com.br/redefinir-senha',
-```
-
-#### 1.4 `supabase/functions/send-invitation/index.ts`
-**Linha 128** - Atualizar baseUrl:
-```typescript
-// DE:
-const baseUrl = "https://renascerapp.com.br";
-
-// PARA:
-const baseUrl = "https://metodo.renascerapp.com.br";
-```
+Incrementar para `v3` (não `v2` como estava na memória) para garantir que TODOS os caches antigos sejam limpos.
 
 ---
 
-### 2. Frontend (SEO e Meta Tags)
+### 2. Adicionar meta tag para controle de cache
 
-#### 2.1 `index.html`
-**Linha 32** - Atualizar canonical:
+**Arquivo**: `index.html`
+
+Adicionar no `<head>`:
 ```html
-<!-- DE: -->
-<link rel="canonical" href="https://www.renascerapp.com.br/" />
-
-<!-- PARA: -->
-<link rel="canonical" href="https://metodo.renascerapp.com.br/" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 ```
 
----
-
-### 3. Configurações Externas (Não são arquivos do projeto)
-
-Estas configurações precisam ser feitas manualmente nos dashboards externos:
-
-#### 3.1 Stripe Dashboard
-- **Webhook URL**: Já está correto apontando para `https://lxdosmjenbaugmhyfanx.supabase.co/functions/v1/stripe-webhook`
-- **Verificar**: Os URLs de success/cancel usam o header `origin` da request, então funcionarão automaticamente após as alterações acima
-
-#### 3.2 Supabase Auth (Dashboard)
-O Supabase Auth precisa ter o domínio `metodo.renascerapp.com.br` na lista de **Redirect URLs** permitidos. Isso garante que:
-- Links de recuperação de senha funcionem
-- OAuth (se usado) redirecione corretamente
-- Tokens de confirmação de email funcionem
-
-**Ação necessária**: Acessar Cloud > Auth Settings e verificar/adicionar:
-- `https://metodo.renascerapp.com.br/**`
-- `https://metodo.renascerapp.com.br/redefinir-senha`
-- `https://metodo.renascerapp.com.br/auth`
+Isso instrui navegadores a não cachear o HTML principal, garantindo que sempre busquem a versão mais recente.
 
 ---
 
-## Resumo das Alterações por Arquivo
+## Resumo das Alterações
 
-| Arquivo | Tipo | Linhas Afetadas |
-|---------|------|-----------------|
-| `supabase/functions/create-checkout/index.ts` | Modificação | 192 |
-| `supabase/functions/customer-portal/index.ts` | Modificação | 52 |
-| `supabase/functions/send-password-reset/index.ts` | Modificação | 107 |
-| `supabase/functions/send-invitation/index.ts` | Modificação | 128 |
-| `index.html` | Modificação | 32 |
+| Arquivo | Alteração |
+|---------|-----------|
+| `public/sw.js` | Atualizar `CACHE_NAME` para `'renascer-cache-v3'` |
+| `index.html` | Adicionar meta tags de controle de cache |
 
 ---
 
-## Verificação Pós-Implementação
+## Fluxo de Deploy
 
-### Checklist de Testes:
-1. **Checkout Stripe**: Testar compra guest e logado - verificar redirecionamento para `/checkout-success`
-2. **Portal do Cliente**: Testar botão "Gerenciar Assinatura" - deve abrir Stripe e retornar para `/dashboard`
-3. **Recuperação de Senha**: Testar "Esqueci minha senha" - link no email deve apontar para `metodo.renascerapp.com.br/redefinir-senha`
-4. **Convites**: Enviar convite pelo admin - link deve apontar para `metodo.renascerapp.com.br/auth`
-5. **SEO**: Verificar se o canonical está correto na página inicial
-
----
-
-## O que JÁ está Correto
-
-- **CORS (`cors.ts`)**: Já inclui `metodo.renascerapp.com.br` e `www.metodo.renascerapp.com.br`
-- **Emails (Resend)**: Todos partem de `noreply@renascerapp.com.br` ✅
-- **Blog/BlogPost**: Usam `window.location.origin` dinamicamente ✅
-- **Frontend (supabase client)**: Usa variáveis de ambiente, não URLs hardcoded ✅
+Após aprovar este plano:
+1. As alterações serão aplicadas ao código
+2. Você deve clicar em **"Publish"** no editor (botão no canto superior direito)
+3. Aguardar alguns segundos para o deploy completar
+4. Acessar `metodo.renascerapp.com.br` e fazer **Ctrl+Shift+R** (hard refresh) para forçar nova versão
 
 ---
 
-## Impacto das Alterações
+## Resultado Esperado
 
-- **Zero downtime**: Alterações são retrocompatíveis
-- **CORS**: Já configurado para aceitar o novo domínio
-- **Emails**: Continuarão funcionando (apenas links dentro dos emails mudam)
-- **Stripe**: Continuará funcionando (usa header origin dinamicamente)
-
+- O Service Worker com nova versão (`v3`) irá automaticamente limpar caches antigos (`v1` e `v2`)
+- Novos usuários receberão a versão atualizada imediatamente
+- Usuários existentes receberão a atualização na próxima visita quando o SW ativar
+- Meta tags previnem cache excessivo do HTML principal
