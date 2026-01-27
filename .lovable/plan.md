@@ -1,324 +1,403 @@
 
-# Plano de Correções e Melhorias - Método Renascer
+# Plano de Implementação - Itens Restantes
 
-## Diagnóstico Completo
+## Visão Geral
+Vou implementar os 4 itens restantes do plano aprovado:
 
-Analisei todos os 9 pontos solicitados e identifiquei as causas raízes dos problemas:
-
----
-
-## 1. BUG CRÍTICO - DOWNLOAD DE PDF (ADMIN)
-
-### Problema Identificado
-O erro de download de PDF da cliente Larissa acontece porque o arquivo `generateAnamnesePdf.ts` tenta fazer `fetch()` de URLs assinadas do bucket `body-photos`, mas:
-1. As URLs assinadas podem expirar durante a geração do PDF
-2. Erros de CORS ou timeout não são tratados adequadamente
-3. A função não loga qual cliente está causando o erro
-
-### Solução
-Modificar `src/lib/generateAnamnesePdf.ts`:
-- Adicionar try/catch robusto em torno de cada carregamento de imagem
-- Gerar URLs assinadas fresh no momento da geração
-- Adicionar logs detalhados para debug
-- Aumentar o tempo de expiração das URLs assinadas para 1 hora
-- Tratar graciosamente erros de imagem (continuar gerando PDF sem as fotos falhas)
-
-**Arquivo**: `src/lib/generateAnamnesePdf.ts`
+1. **Filtros Avançados em AdminClientes** - UI para filtrar por plano, datas, sexo e objetivo
+2. **Gestão de Conversas (Suporte)** - Limpeza individual, em massa e automática
+3. **Mensagens Automáticas** - Controle de min_days_since_signup e cooldown
+4. **Validação de Horários da Dieta** - Bloquear horários incoerentes
 
 ---
 
-## 2. PLANO GRATUITO - DURAÇÃO SELECIONÁVEL
+## 1. Filtros Avançados em AdminClientes
 
-### Problema Identificado
-Atualmente, o plano gratuito tem duração fixa. O admin não pode escolher a duração ao enviar convite.
+### Arquivos a modificar:
+- `src/pages/admin/AdminClientes.tsx`
 
-### Solução
-Modificar `src/pages/admin/AdminConvites.tsx`:
-- Adicionar campo de seleção de duração que aparece quando plano = "free"
-- Opções: 7, 14, 21, 30, 60, 90, 120, 180, 365 dias
-- Enviar duração selecionada para a Edge Function `send-invitation`
+### Implementação:
 
-Modificar `supabase/functions/send-invitation/index.ts`:
-- Receber novo parâmetro `free_duration_days`
-- Usar essa duração para calcular `invitation_expires_at`
-- Atualizar o planConfig para aceitar duração dinâmica
+**Adicionar Estados para Filtros:**
+```typescript
+const [filters, setFilters] = useState({
+  planType: "all",
+  startDateFrom: null as Date | null,
+  startDateTo: null as Date | null,
+  endDateFrom: null as Date | null,
+  endDateTo: null as Date | null,
+  sex: "all",
+  goal: "all"
+});
+const [showFilters, setShowFilters] = useState(false);
+```
 
-Modificar `supabase/functions/admin-create-user/index.ts`:
-- Mesma lógica para criação manual de clientes
-
-**Arquivos**:
-- `src/pages/admin/AdminConvites.tsx`
-- `src/pages/admin/AdminCriarCliente.tsx`
-- `supabase/functions/send-invitation/index.ts`
-- `supabase/functions/admin-create-user/index.ts`
-
----
-
-## 3. LISTA DE CLIENTES - FILTROS AVANÇADOS
-
-### Problema Identificado
-A lista de clientes só tem busca por nome/email. Faltam filtros por tipo de plano, datas, sexo e objetivo.
-
-### Solução
-Modificar `src/pages/admin/AdminClientes.tsx`:
-- Adicionar painel de filtros colapsável acima da tabela
-- Filtros implementados:
+**Painel de Filtros Colapsável:**
+- Botão "Filtros" com ícone de filtro que expande/contrai
+- Grid responsivo com os filtros:
   - **Tipo de Plano**: Select com ELITE FUNDADOR, GRATUITO, MENSAL, TRIMESTRAL, SEMESTRAL, ANUAL
-  - **Data de Entrada**: DatePicker com range (de/até)
-  - **Data de Término**: DatePicker com range (de/até)
+  - **Data de Entrada**: Dois DatePickers (de/até)
+  - **Data de Término**: Dois DatePickers (de/até)
   - **Sexo**: Select com Masculino/Feminino/Todos
-  - **Objetivo Principal**: Select com Emagrecimento/Hipertrofia/Condicionamento/Todos
-- Filtros são combináveis (AND lógico)
-- Botão "Limpar Filtros" para resetar
+  - **Objetivo**: Select com Emagrecimento/Hipertrofia/Condicionamento/Todos
+- Botão "Limpar Filtros" para resetar todos
 
-**Arquivo**: `src/pages/admin/AdminClientes.tsx`
+**Lógica de Filtragem:**
+```typescript
+const filteredClients = clients.filter((client) => {
+  // Busca por nome/email
+  const matchesSearch = client.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email?.toLowerCase().includes(searchTerm.toLowerCase());
+  
+  // Filtro por plano
+  const matchesPlan = filters.planType === "all" || 
+    client.subscription?.plan_type === filters.planType;
+  
+  // Filtro por data de entrada
+  const createdAt = new Date(client.created_at);
+  const matchesStartDate = (!filters.startDateFrom || createdAt >= filters.startDateFrom) &&
+    (!filters.startDateTo || createdAt <= filters.startDateTo);
+  
+  // Filtro por data de término
+  const endDate = client.subscription?.current_period_end 
+    ? new Date(client.subscription.current_period_end) 
+    : null;
+  const matchesEndDate = (!filters.endDateFrom || (endDate && endDate >= filters.endDateFrom)) &&
+    (!filters.endDateTo || (endDate && endDate <= filters.endDateTo));
+  
+  // Filtro por sexo (buscar do profile)
+  const matchesSex = filters.sex === "all" || client.sexo === filters.sex;
+  
+  // Filtro por objetivo (buscar do profile)
+  const matchesGoal = filters.goal === "all" || 
+    client.objetivo_principal?.toLowerCase().includes(filters.goal.toLowerCase());
+  
+  return matchesSearch && matchesPlan && matchesStartDate && matchesEndDate && matchesSex && matchesGoal;
+});
+```
 
----
-
-## 4. BUG - PROTOCOLOS E FOTOS (CLIENTE VINICIUS)
-
-### Problema Identificado - DESCOBERTA CRÍTICA
-As fotos do Vinicius são arquivos **.DNG** (formato RAW de câmera):
-- `frente-1769486740768.dng`
-- `lado-1769486743876.dng`
-- `costas-1769486752289.dng`
-
-Arquivos DNG **não são suportados pelos navegadores** (nem Chrome nem qualquer outro). Isso causa:
-1. Erros 406 ao tentar carregar
-2. Imagens aparecem quebradas no PC
-3. No celular pode funcionar se o app de galeria fizer conversão automática
-
-A mensagem "Estrutura do protocolo não reconhecida" indica que o frontend não consegue renderizar o conteúdo porque o carregamento das dependências falha.
-
-### Solução
-**Parte A - Validação no Upload**:
-Modificar `src/components/anamnese/PhotoUploadSection.tsx`:
-- Restringir tipos aceitos para JPEG/PNG/WEBP apenas
-- Exibir erro claro se o usuário tentar enviar DNG, HEIC ou outros formatos não suportados
-- Adicionar accept="image/jpeg,image/png,image/webp" no input
-
-**Parte B - Tratamento de Erro na Exibição**:
-Modificar componentes que exibem fotos:
-- `src/pages/admin/AdminClienteDetalhes.tsx`
-- `src/pages/admin/AdminPlanos.tsx`
-- Adicionar fallback quando URL da foto retorna erro
-- Exibir mensagem "Formato não suportado" ou placeholder
-
-**Parte C - Correção Manual**:
-Para o Vinicius especificamente, o admin precisará:
-1. Solicitar ao cliente que reenvie as fotos em formato JPG/PNG
-2. OU converter manualmente os arquivos DNG para JPG e fazer upload via bucket
-
-**Arquivos**:
-- `src/components/anamnese/PhotoUploadSection.tsx`
-- `src/pages/admin/AdminClienteDetalhes.tsx`
-- `src/components/admin/ClientAnamneseCard.tsx`
+**Atualizar Query para Buscar Campos Adicionais:**
+```typescript
+const { data: profiles, error } = await supabase
+  .from("profiles")
+  .select("*, sexo, objetivo_principal")
+  .order("created_at", { ascending: false });
+```
 
 ---
 
-## 5. PRESCRIÇÃO DE DIETA - REGRA OBRIGATÓRIA
+## 2. Gestão de Conversas (Suporte)
 
-### Status Atual
-O código já implementa o motor determinístico `buildMealSchedule` em `supabase/functions/generate-protocol/prompts/nutricao.ts`. Os horários são calculados baseados em:
-- `horario_acorda` -> Primeira refeição em acordar + 30min
-- `horario_treino` -> Pré-treino em treino - 90min, Pós-treino em treino + 90min
-- `horario_dorme` -> Última refeição em dormir - 60min
-
-### Problema Identificado
-A validação não está bloqueando horários incoerentes. O prompt avisa a IA para não alterar, mas não há validação no backend.
-
-### Solução
-Modificar `supabase/functions/generate-protocol/index.ts`:
-- Adicionar validação antes de gerar o protocolo de nutrição
-- Verificar que `horario_acorda` < primeira refeição < pré-treino < treino < pós-treino < última refeição < `horario_dorme`
-- Retornar erro se houver incoerência (ex: acordar 04:00 mas primeira refeição 07:00)
-- Logar os horários calculados para debug
-
-Modificar `src/pages/Anamnese.tsx`:
-- Validar horários no frontend antes de salvar
-- Exibir erro se horários forem incoerentes
-
-**Arquivos**:
-- `supabase/functions/generate-protocol/index.ts`
-- `src/pages/Anamnese.tsx`
-
----
-
-## 6. SUPORTE - GESTÃO DE CONVERSAS (ADMIN)
-
-### Problema Identificado
-O admin pode editar/deletar mensagens individuais, mas não pode:
-1. Limpar conversa inteira de um cliente
-2. Limpar todas as conversas de uma vez
-3. Auto-limpeza de conversas antigas
-
-### Solução
-Modificar `src/pages/admin/AdminSuporteChats.tsx`:
-- Adicionar botão "Limpar Conversa" no dialog de visualização de chat
-- Adicionar botão "Limpar Todas" no cabeçalho da lista
-- Ambos com confirmação via AlertDialog
-
-Criar Edge Function `supabase/functions/cleanup-old-conversations/index.ts`:
-- Deletar mensagens de conversas com mais de 5 dias
-- Pode ser agendado via pg_cron ou chamado manualmente
-
-Adicionar cron job para limpeza automática:
-- Executar diariamente às 03:00
-- Chamar a Edge Function de limpeza
-
-**Arquivos**:
+### Arquivos a modificar:
 - `src/pages/admin/AdminSuporteChats.tsx`
-- `supabase/functions/cleanup-old-conversations/index.ts` (novo)
+- Novo: `supabase/functions/cleanup-old-conversations/index.ts`
+
+### Implementação no Frontend:
+
+**Adicionar Estados:**
+```typescript
+const [clearingAll, setClearingAll] = useState(false);
+const [clearingSingle, setClearingSingle] = useState(false);
+const [confirmClearAll, setConfirmClearAll] = useState(false);
+const [confirmClearSingle, setConfirmClearSingle] = useState(false);
+```
+
+**Botão "Limpar Todas" no Header:**
+- No cabeçalho da lista de conversas, adicionar botão com ícone de lixeira
+- Abre AlertDialog de confirmação
+- Chama função que deleta todas as conversas
+
+**Botão "Limpar Conversa" no Dialog de Chat:**
+- No dialog que mostra o chat individual, adicionar botão "Limpar Conversa"
+- Abre AlertDialog de confirmação
+- Deleta apenas a conversa selecionada
+
+**Funções de Limpeza:**
+```typescript
+const handleClearAllConversations = async () => {
+  setClearingAll(true);
+  try {
+    const { error } = await supabase
+      .from("conversas")
+      .delete()
+      .eq("tipo", "suporte");
+    
+    if (error) throw error;
+    toast.success("Todas as conversas foram limpas");
+    fetchConversas();
+  } catch (error) {
+    toast.error("Erro ao limpar conversas");
+  } finally {
+    setClearingAll(false);
+    setConfirmClearAll(false);
+  }
+};
+
+const handleClearSingleConversation = async () => {
+  if (!selectedConversa) return;
+  setClearingSingle(true);
+  try {
+    const { error } = await supabase
+      .from("conversas")
+      .update({ mensagens: [] })
+      .eq("id", selectedConversa.id);
+    
+    if (error) throw error;
+    toast.success("Conversa limpa com sucesso");
+    setSelectedConversa(null);
+    fetchConversas();
+  } catch (error) {
+    toast.error("Erro ao limpar conversa");
+  } finally {
+    setClearingSingle(false);
+    setConfirmClearSingle(false);
+  }
+};
+```
+
+### Edge Function para Limpeza Automática:
+
+**Arquivo:** `supabase/functions/cleanup-old-conversations/index.ts`
+
+```typescript
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Deletar conversas com mais de 5 dias
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+
+    const { data, error } = await supabase
+      .from("conversas")
+      .delete()
+      .lt("updated_at", fiveDaysAgo.toISOString())
+      .select("id");
+
+    if (error) throw error;
+
+    console.log(`Deleted ${data?.length || 0} old conversations`);
+
+    return new Response(
+      JSON.stringify({ deleted: data?.length || 0 }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Cleanup error:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+```
 
 ---
 
-## 7. MENSAGENS AUTOMÁTICAS - CONTROLE TOTAL
+## 3. Mensagens Automáticas - Controle Aprimorado
 
-### Problema Identificado
-O sistema de mensagens automáticas em `process-automated-messages` tem falhas:
-1. Não verifica se o cliente acabou de entrar (pode mandar mensagem de inatividade no primeiro dia)
-2. Mensagens continuam sendo enviadas mesmo quando desativadas (possível race condition)
-3. Falta controle granular de quando enviar
-
-### Solução
-Modificar `supabase/functions/process-automated-messages/index.ts`:
-- Adicionar verificação de `created_at` do profile
-- Se `created_at` < 3 dias, não enviar mensagens de inatividade
-- Se `created_at` < 30 dias, não enviar solicitação de fotos
-- Verificar `is_active = true` em tempo real antes de cada envio
-- Adicionar logs detalhados de por que cada mensagem foi/não foi enviada
-
-Modificar tabela `automated_messages`:
-- Adicionar coluna `min_days_since_signup` (mínimo de dias desde cadastro para enviar)
-- Adicionar coluna `cooldown_days` (dias entre envios para mesmo usuário)
-
-Modificar UI em `src/components/admin/AdminMensagens.tsx`:
-- Adicionar campos para configurar os novos parâmetros
-
-**Arquivos**:
+### Arquivos a modificar:
 - `supabase/functions/process-automated-messages/index.ts`
 - Migration SQL para novas colunas
-- UI de configuração (se existir)
 
----
-
-## 8. CRM - PADRONIZAÇÃO DE PLANOS (REGRA DE NEGÓCIO)
-
-### Problema Identificado - DESCOBERTA CRÍTICA
-A query no banco mostrou duplicidade grave:
-
-| plan_type | plan_name | count |
-|-----------|-----------|-------|
-| free | Gratuito | 15 |
-| embaixador | Elite Fundador | 1 |
-| embaixador | NULL | 1 |
-| free | ELITE - Fundador | 1 |
-| free | NULL | 1 |
-
-Problemas:
-1. `plan_type = "embaixador"` no Stripe mas `plan_type = "elite_founder"` no código de convites
-2. Múltiplos nomes: "Elite Fundador", "ELITE Fundador", "ELITE - Fundador"
-3. Múltiplos nomes para gratuito: "free", "Gratuito", "Free"
-4. Um registro tem `plan_type = "free"` com `plan_name = "ELITE - Fundador"` (erro grave)
-
-### Solução
-
-**Parte A - Padronização no Código**:
-Criar arquivo centralizado `src/lib/planConstants.ts`:
-```typescript
-export const PLAN_TYPES = {
-  ELITE_FUNDADOR: "elite_fundador",
-  GRATUITO: "gratuito",
-  MENSAL: "mensal",
-  TRIMESTRAL: "trimestral",
-  SEMESTRAL: "semestral",
-  ANUAL: "anual"
-} as const;
-
-export const PLAN_NAMES = {
-  elite_fundador: "ELITE FUNDADOR",
-  gratuito: "GRATUITO",
-  mensal: "MENSAL",
-  trimestral: "TRIMESTRAL",
-  semestral: "SEMESTRAL",
-  anual: "ANUAL"
-} as const;
-```
-
-Atualizar todos os arquivos que usam plan_type:
-- `supabase/functions/_shared/priceMappings.ts`: Mudar `embaixador` para `elite_fundador`
-- `supabase/functions/check-subscription/index.ts`: Usar mapeamento centralizado
-- `supabase/functions/stripe-webhook/index.ts`: Usar mapeamento centralizado
-- `supabase/functions/sync-stripe-subscription/index.ts`: Usar mapeamento centralizado
-- `supabase/functions/finalize-checkout/index.ts`: Usar mapeamento centralizado
-- `src/pages/admin/AdminConvites.tsx`: Usar constantes
-- `src/pages/admin/AdminCriarCliente.tsx`: Usar constantes
-- `src/components/landing/PricingSection.tsx`: Mudar de `embaixador` para `elite_fundador`
-- `src/pages/Assinatura.tsx`: Mudar de `embaixador` para `elite_fundador`
-
-**Parte B - Migração de Dados Existentes (SQL)**:
+### Migration SQL:
 ```sql
--- Padronizar plan_type
-UPDATE subscriptions SET plan_type = 'elite_fundador' WHERE plan_type = 'embaixador';
-UPDATE subscriptions SET plan_type = 'gratuito' WHERE plan_type = 'free';
-
--- Padronizar plan_name
-UPDATE subscriptions SET plan_name = 'ELITE FUNDADOR' WHERE plan_type = 'elite_fundador';
-UPDATE subscriptions SET plan_name = 'GRATUITO' WHERE plan_type = 'gratuito';
-UPDATE subscriptions SET plan_name = 'MENSAL' WHERE plan_type = 'mensal';
-UPDATE subscriptions SET plan_name = 'TRIMESTRAL' WHERE plan_type = 'trimestral';
-UPDATE subscriptions SET plan_name = 'SEMESTRAL' WHERE plan_type = 'semestral';
-UPDATE subscriptions SET plan_name = 'ANUAL' WHERE plan_type = 'anual';
-
--- Corrigir o registro com erro (plan_type=free mas plan_name=ELITE - Fundador)
-UPDATE subscriptions 
-SET plan_type = 'elite_fundador', plan_name = 'ELITE FUNDADOR' 
-WHERE plan_name = 'ELITE - Fundador';
+ALTER TABLE automated_messages 
+ADD COLUMN IF NOT EXISTS min_days_since_signup integer DEFAULT 0,
+ADD COLUMN IF NOT EXISTS cooldown_days integer DEFAULT 0;
 ```
 
-**Arquivos principais**:
-- `src/lib/planConstants.ts` (novo)
-- `supabase/functions/_shared/priceMappings.ts`
-- `supabase/functions/send-invitation/index.ts`
-- `supabase/functions/admin-create-user/index.ts`
-- `src/pages/admin/AdminConvites.tsx`
-- `src/pages/admin/AdminCriarCliente.tsx`
-- Migration SQL para padronização de dados
+### Modificações na Edge Function:
+
+**Adicionar verificações antes de enviar:**
+
+```typescript
+// Verificar min_days_since_signup
+const daysSinceSignup = Math.floor(
+  (Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24)
+);
+
+if (message.min_days_since_signup && daysSinceSignup < message.min_days_since_signup) {
+  console.log(`Skipping ${profile.email}: only ${daysSinceSignup} days since signup, needs ${message.min_days_since_signup}`);
+  continue;
+}
+
+// Verificar cooldown (última vez que essa mensagem foi enviada para esse usuário)
+if (message.cooldown_days && message.cooldown_days > 0) {
+  const { data: lastSend } = await supabase
+    .from("message_sends")
+    .select("sent_at")
+    .eq("message_id", message.id)
+    .eq("user_id", profile.id)
+    .order("sent_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  
+  if (lastSend) {
+    const daysSinceLastSend = Math.floor(
+      (Date.now() - new Date(lastSend.sent_at).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    
+    if (daysSinceLastSend < message.cooldown_days) {
+      console.log(`Skipping ${profile.email}: cooldown active (${daysSinceLastSend}/${message.cooldown_days} days)`);
+      continue;
+    }
+  }
+}
+
+// Re-verificar is_active antes de enviar (evitar race condition)
+const { data: currentMessage } = await supabase
+  .from("automated_messages")
+  .select("is_active")
+  .eq("id", message.id)
+  .single();
+
+if (!currentMessage?.is_active) {
+  console.log(`Message ${message.id} was deactivated before send`);
+  continue;
+}
+```
+
+**Regras específicas hardcoded:**
+- Mensagem de inatividade (3 dias): `min_days_since_signup >= 3`
+- Solicitação de fotos (30 dias): `min_days_since_signup >= 30`
 
 ---
 
-## Resumo de Arquivos a Modificar
+## 4. Validação de Horários da Dieta
 
-| Área | Arquivos | Tipo de Alteração |
-|------|----------|-------------------|
-| PDF Download | `src/lib/generateAnamnesePdf.ts` | Correção de tratamento de erro |
-| Plano Gratuito | `AdminConvites.tsx`, `AdminCriarCliente.tsx`, `send-invitation/index.ts` | Nova funcionalidade |
-| Filtros Clientes | `AdminClientes.tsx` | Nova funcionalidade |
-| Fotos | `PhotoUploadSection.tsx`, `AdminClienteDetalhes.tsx` | Validação e fallback |
-| Dieta Horários | `generate-protocol/index.ts`, `Anamnese.tsx` | Validação |
-| Suporte Chats | `AdminSuporteChats.tsx`, nova Edge Function | Nova funcionalidade |
-| Mensagens Auto | `process-automated-messages/index.ts`, migration | Correção de lógica |
-| Planos CRM | Múltiplos arquivos, novo `planConstants.ts`, migration SQL | Padronização |
+### Arquivos a modificar:
+- `src/pages/Anamnese.tsx`
+- `supabase/functions/generate-protocol/index.ts`
+
+### Validação no Frontend (Anamnese.tsx):
+
+Adicionar antes do submit:
+```typescript
+// Validar horários da rotina
+const validateSchedule = () => {
+  const { horario_acorda, horario_treino, horario_dorme } = formData;
+  
+  if (!horario_acorda || !horario_treino || !horario_dorme) {
+    return true; // Se não preencheu, usa defaults
+  }
+  
+  const toMinutes = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + m;
+  };
+  
+  const acordaMin = toMinutes(horario_acorda);
+  const treinoMin = toMinutes(horario_treino);
+  const dormeMin = toMinutes(horario_dorme);
+  
+  // Verificar sequência lógica
+  // Acordar < Treino < Dormir (considerando possível treino de madrugada)
+  if (acordaMin >= dormeMin) {
+    toast.error("Horário de acordar deve ser antes do horário de dormir");
+    return false;
+  }
+  
+  // Verificar que há tempo mínimo entre acordar e primeira refeição (30min)
+  // e entre treino e acordar (pelo menos 2h para café + digestão)
+  if (treinoMin - acordaMin < 120 && treinoMin > acordaMin) {
+    // Treina logo após acordar - ok, mas avisar
+    console.log("Treino muito próximo de acordar - ajustar refeições");
+  }
+  
+  return true;
+};
+
+// No handleSubmit, antes de enviar:
+if (!validateSchedule()) {
+  return;
+}
+```
+
+### Validação no Backend (generate-protocol/index.ts):
+
+Adicionar após os logs de rotina:
+```typescript
+// Validar coerência dos horários
+if (tipo === "nutricao") {
+  const toMinutes = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + (m || 0);
+  };
+  
+  const acordaMin = toMinutes(userContext.horario_acorda);
+  const treinoMin = toMinutes(userContext.horario_treino);
+  const dormeMin = toMinutes(userContext.horario_dorme);
+  
+  console.log(`[generate-protocol] Schedule validation:`, {
+    acordaMin, treinoMin, dormeMin,
+    primeiraRefeicao: acordaMin + 30,
+    preTreino: treinoMin - 90,
+    posTreino: treinoMin + 90,
+    ultimaRefeicao: dormeMin - 60
+  });
+  
+  // Verificar que primeira refeição não é antes de acordar
+  if (acordaMin + 30 > treinoMin - 90) {
+    console.warn("[generate-protocol] Warning: Breakfast may overlap with pre-workout");
+  }
+  
+  // Verificar que há pelo menos 2h entre acordar e dormir
+  if (dormeMin - acordaMin < 720) { // 12 horas mínimo
+    console.warn("[generate-protocol] Warning: Very short waking window");
+  }
+}
+```
 
 ---
 
-## Ordem de Implementação Recomendada
+## Resumo das Alterações
 
-1. **Padronização de Planos (Item 8)** - Base para os demais
-2. **Bug de Fotos (Item 4)** - Impacto imediato em clientes
-3. **Bug de PDF (Item 1)** - Funcionalidade admin crítica
-4. **Plano Gratuito Duração (Item 2)** - Melhoria operacional
-5. **Filtros de Clientes (Item 3)** - Melhoria operacional
-6. **Gestão de Conversas (Item 6)** - Melhoria operacional
-7. **Mensagens Automáticas (Item 7)** - Correção de comportamento
-8. **Validação de Dieta (Item 5)** - Já parcialmente implementado
+| Item | Arquivos | Tipo |
+|------|----------|------|
+| Filtros AdminClientes | `AdminClientes.tsx` | Modificação |
+| Gestão Conversas | `AdminSuporteChats.tsx` | Modificação |
+| Limpeza Automática | `cleanup-old-conversations/index.ts` | Novo arquivo |
+| Mensagens Automáticas | `process-automated-messages/index.ts` | Modificação |
+| Colunas Mensagens | Migration SQL | Novo |
+| Validação Horários | `Anamnese.tsx`, `generate-protocol/index.ts` | Modificação |
 
 ---
 
-## Notas Técnicas Importantes
+## Dependências e Imports Necessários
 
-1. **Sobre o problema de cache**: O plano anterior para atualizar o Service Worker (`renascer-cache-v2`) ainda é válido e deve ser aplicado junto com estas correções para garantir que os clientes recebam o código atualizado.
+**AdminClientes.tsx:**
+- Adicionar: `Filter, X, Calendar` de lucide-react
+- Adicionar: `Calendar` de @/components/ui/calendar
+- Adicionar: `Popover, PopoverContent, PopoverTrigger` de @/components/ui/popover
+- Usar constantes de `@/lib/planConstants`
 
-2. **Sobre arquivos DNG**: Não há como converter DNG no frontend. O cliente Vinicius precisará reenviar as fotos em formato suportado (JPG/PNG).
+**AdminSuporteChats.tsx:**
+- Adicionar: `Trash2` de lucide-react (já importado)
+- AlertDialog já está importado
 
-3. **Sobre a constraint UNIQUE**: A migration que adicionou `subscriptions_user_id_key UNIQUE (user_id)` já foi aplicada - isso permite que o upsert funcione corretamente.
+---
+
+## Ordem de Implementação
+
+1. **Migration SQL** - Adicionar colunas min_days_since_signup e cooldown_days
+2. **AdminClientes.tsx** - Filtros avançados
+3. **AdminSuporteChats.tsx** - Botões de limpeza
+4. **cleanup-old-conversations** - Nova Edge Function
+5. **process-automated-messages** - Lógica de min_days e cooldown
+6. **Anamnese.tsx + generate-protocol** - Validação de horários
