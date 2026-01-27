@@ -1,70 +1,143 @@
 
-# Plano: Resolver Cache e Garantir Sincronização do Deploy
+# Plano: Corrigir Perda de Foco ao Digitar nos Campos de Exercício
 
 ## Problema Identificado
 
-O site publicado em `metodo.renascerapp.com.br` não reflete as alterações feitas no projeto devido a:
+Ao digitar uma letra nos campos de exercício (nome, séries, repetições, etc.), o input **perde o foco** e a tela **sobe sozinha**. Isso acontece porque:
 
-1. **Service Worker desatualizado**: O `CACHE_NAME` ainda está como `'renascer-cache-v1'` quando deveria ser `'renascer-cache-v2'` para forçar limpeza de cache
-2. **Cache do navegador**: Usuários com cache antigo continuam vendo versão antiga
+1. O componente `ExerciseCard` está **definido dentro** do `ProtocolEditor`
+2. A cada digitação, o estado `content` é atualizado
+3. O React re-renderiza e recria `ExerciseCard` como um **novo componente**
+4. O input é desmontado e remontado, perdendo o foco
 
 ---
 
 ## Solução
 
-### 1. Atualizar versão do Service Worker
-
-**Arquivo**: `public/sw.js`
-
-```typescript
-// DE:
-const CACHE_NAME = 'renascer-cache-v1';
-
-// PARA:
-const CACHE_NAME = 'renascer-cache-v3';
-```
-
-Incrementar para `v3` (não `v2` como estava na memória) para garantir que TODOS os caches antigos sejam limpos.
+**Mover o componente `ExerciseCard` para FORA da função principal**, definindo-o antes do `ProtocolEditor`. Isso garante que o React mantenha a mesma referência do componente entre renders.
 
 ---
 
-### 2. Adicionar meta tag para controle de cache
+## Alterações Necessárias
 
-**Arquivo**: `index.html`
+### Arquivo: `src/components/admin/ProtocolEditor.tsx`
 
-Adicionar no `<head>`:
-```html
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
+#### 1. Mover `ExerciseCard` para fora do componente principal
+
+**DE** (linhas 275-428 - dentro de `ProtocolEditor`):
+```typescript
+export function ProtocolEditor(...) {
+  // ...estados...
+
+  // Componente de exercício reutilizável
+  const ExerciseCard = ({ ... }) => (
+    <div>...</div>
+  );
+
+  return (...);
+}
 ```
 
-Isso instrui navegadores a não cachear o HTML principal, garantindo que sempre busquem a versão mais recente.
+**PARA** (antes de `ProtocolEditor`):
+```typescript
+// Componente de exercício reutilizável - FORA do componente principal
+interface ExerciseCardProps {
+  exercise: Exercise;
+  exerciseIndex: number;
+  onUpdate: (field: keyof Exercise, value: any) => void;
+  onRemove: () => void;
+  onOpenGifPicker: () => void;
+  onPreviewGif: (url: string | null) => void;
+  isGifUrl: (url: string) => boolean;
+}
+
+const ExerciseCard = ({ 
+  exercise, 
+  exerciseIndex, 
+  onUpdate, 
+  onRemove, 
+  onOpenGifPicker,
+  onPreviewGif,
+  isGifUrl
+}: ExerciseCardProps) => (
+  <div className="bg-background rounded-lg p-4 space-y-3">
+    {/* ... mesmo conteúdo ... */}
+  </div>
+);
+
+export function ProtocolEditor(...) {
+  // ...
+}
+```
+
+#### 2. Atualizar chamadas do `ExerciseCard`
+
+Passar as funções auxiliares como props:
+```typescript
+<ExerciseCard
+  key={`exercise-${treinoIndex}-${exerciseIndex}`}
+  exercise={exercise}
+  exerciseIndex={exerciseIndex}
+  onUpdate={(field, value) => updateExerciseNew(treinoIndex, exerciseIndex, field, value)}
+  onRemove={() => removeExerciseNew(treinoIndex, exerciseIndex)}
+  onOpenGifPicker={() => openGifPickerNew(treinoIndex, exerciseIndex)}
+  onPreviewGif={setPreviewGif}
+  isGifUrl={isGifUrl}
+/>
+```
+
+#### 3. Adicionar key única estável
+
+Usar uma key mais descritiva para garantir que o React identifique corretamente cada exercício:
+```typescript
+// Formato novo
+key={`exercise-${treinoIndex}-${exerciseIndex}`}
+
+// Formato legado
+key={`exercise-${weekIndex}-${dayIndex}-${exerciseIndex}`}
+```
 
 ---
 
 ## Resumo das Alterações
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `public/sw.js` | Atualizar `CACHE_NAME` para `'renascer-cache-v3'` |
-| `index.html` | Adicionar meta tags de controle de cache |
+| Arquivo | Tipo | Descrição |
+|---------|------|-----------|
+| `src/components/admin/ProtocolEditor.tsx` | Refatoração | Mover `ExerciseCard` para fora do componente principal |
 
 ---
 
-## Fluxo de Deploy
+## Detalhes Técnicos
 
-Após aprovar este plano:
-1. As alterações serão aplicadas ao código
-2. Você deve clicar em **"Publish"** no editor (botão no canto superior direito)
-3. Aguardar alguns segundos para o deploy completar
-4. Acessar `metodo.renascerapp.com.br` e fazer **Ctrl+Shift+R** (hard refresh) para forçar nova versão
+### Por que isso funciona
+
+Quando um componente é definido **dentro** de outro componente:
+```typescript
+function Parent() {
+  const Child = () => <div>...</div>; // Nova referência a cada render!
+  return <Child />;
+}
+```
+
+O React trata cada render como um **componente diferente**, desmontando e remontando o DOM.
+
+Quando definido **fora**:
+```typescript
+const Child = () => <div>...</div>; // Mesma referência sempre!
+
+function Parent() {
+  return <Child />;
+}
+```
+
+O React reconhece como o **mesmo componente** e apenas atualiza as props, mantendo foco e scroll.
 
 ---
 
 ## Resultado Esperado
 
-- O Service Worker com nova versão (`v3`) irá automaticamente limpar caches antigos (`v1` e `v2`)
-- Novos usuários receberão a versão atualizada imediatamente
-- Usuários existentes receberão a atualização na próxima visita quando o SW ativar
-- Meta tags previnem cache excessivo do HTML principal
+Após a correção:
+- Digitar nos campos de exercício mantém o foco
+- A tela não sobe sozinha durante a edição
+- Navegação entre campos funciona normalmente (Tab)
+- Performance melhorada (menos remounts)
