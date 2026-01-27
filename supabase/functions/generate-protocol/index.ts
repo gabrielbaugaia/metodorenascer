@@ -147,7 +147,13 @@ serve(async (req) => {
     const isAdmin = !!roleData;
 
     // Determine target user: admin can generate for any user, client only for themselves
+    // NOTE: `userId` comes from request body (admin passes the client id). Clients usually won't pass it.
     const targetUserId = isAdmin ? userId : user.id;
+
+    if (!targetUserId) {
+      console.error("[generate-protocol] Missing targetUserId", { isAdmin, userIdFromBody: userId, authUserId: user.id });
+      return createErrorResponse(req, "Usuário alvo não informado", 400);
+    }
 
     console.log(`User ${user.id} (admin: ${isAdmin}) requesting protocol for user: ${targetUserId}`);
 
@@ -318,7 +324,7 @@ serve(async (req) => {
       throw new Error("Tipo de protocolo inválido");
     }
 
-    console.log(`Generating ${tipo} protocol for user ${userId}, plan: ${planType}, weeks: ${durationWeeks}`);
+    console.log(`Generating ${tipo} protocol for user ${targetUserId}, plan: ${planType}, weeks: ${durationWeeks}`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -482,7 +488,8 @@ serve(async (req) => {
     const { data: savedProtocol, error: saveError } = await supabaseClient
       .from("protocolos")
       .insert({
-        user_id: userId,
+        // CRITICAL: always persist for the resolved target user
+        user_id: targetUserId,
         tipo: tipo,
         titulo: protocolData.titulo || `Protocolo de ${tipo}`,
         conteudo: protocolData,
@@ -496,7 +503,7 @@ serve(async (req) => {
       throw new Error("Erro ao salvar protocolo");
     }
 
-    console.log(`Protocol ${tipo} generated and saved successfully for user ${userId}`);
+    console.log(`Protocol ${tipo} generated and saved successfully for user ${targetUserId}`);
 
     return new Response(JSON.stringify({ 
       success: true, 
