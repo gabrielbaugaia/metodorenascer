@@ -1,171 +1,143 @@
 
-# Plano de Correção: Protocolo de Treino Não Reconhecido
 
-## Diagnóstico
+# Levantamento Final: Padronização do Domínio metodo.renascerapp.com.br
 
-### Problema Identificado
-O erro **"Estrutura do protocolo não reconhecida"** ocorre porque existe incompatibilidade entre:
+## Resumo Executivo
 
-1. **Formato Novo (gerado atualmente)**: Usa estrutura com `treinos` e `letra` (A, B, C, D)
-   ```json
-   {
-     "titulo": "Protocolo de Treino",
-     "treinos": [
-       { "letra": "A", "foco": "Peito e Tríceps", "exercicios": [...] }
-     ]
-   }
-   ```
-
-2. **Formato Legado (esperado pelo editor)**: Usa estrutura com `semanas` e `dias`
-   ```json
-   {
-     "semanas": [
-       { "dias": [{ "dia": "Segunda", "exercicios": [...] }] }
-     ]
-   }
-   ```
-
-### Arquivos Afetados
-- **Página do Cliente (`Treino.tsx`)**: ✅ Já suporta ambos os formatos
-- **Editor do Admin (`ProtocolEditor.tsx`)**: ❌ Só suporta formato legado
+O projeto está atualmente usando múltiplos domínios em diferentes partes do código, causando inconsistências e potenciais erros de CORS, redirecionamento e integração. Este plano consolida **todas** as alterações necessárias para padronizar o domínio oficial `metodo.renascerapp.com.br`.
 
 ---
 
-## Solução
+## Inventário de URLs Encontradas
 
-Atualizar o `ProtocolEditor.tsx` para suportar ambos os formatos, similar ao que já foi feito no `Treino.tsx`.
+| Local | URL Atual | URL Correta |
+|-------|-----------|-------------|
+| CORS (cors.ts) | ✅ Já inclui metodo.renascerapp.com.br | OK |
+| create-checkout (fallback) | `https://renascerapp.com.br` | `https://metodo.renascerapp.com.br` |
+| customer-portal (fallback) | `https://lxdosmjenbaugmhyfanx.lovableproject.com` | `https://metodo.renascerapp.com.br` |
+| send-password-reset (redirectTo) | `https://metodorenascer.lovable.app/redefinir-senha` | `https://metodo.renascerapp.com.br/redefinir-senha` |
+| send-invitation (baseUrl) | `https://renascerapp.com.br` | `https://metodo.renascerapp.com.br` |
+| index.html (canonical) | `https://www.renascerapp.com.br/` | `https://metodo.renascerapp.com.br/` |
 
-### Modificações Necessárias
+---
 
-**Arquivo**: `src/components/admin/ProtocolEditor.tsx`
+## Alterações Necessárias
 
-#### 1. Atualizar interfaces para suportar formato novo
+### 1. Edge Functions (Backend)
 
-Adicionar interface para o novo formato:
-```typescript
-interface TrainingLetter {
-  letra: string;
-  foco: string;
-  duracao_minutos?: number;
-  exercicios: Exercise[];
-}
-
-interface TrainingContentNew {
-  nivel: string;
-  titulo: string;
-  treinos: TrainingLetter[];
-}
-
-interface TrainingContentLegacy {
-  nivel: string;
-  titulo: string;
-  semanas: TrainingWeek[];
-}
-
-type TrainingContent = TrainingContentNew | TrainingContentLegacy;
-```
-
-#### 2. Modificar a verificação de estrutura válida
-
-Trocar (linha 165):
+#### 1.1 `supabase/functions/create-checkout/index.ts`
+**Linha 192** - Atualizar fallback origin:
 ```typescript
 // DE:
-if (!content?.semanas) {
-  return <div>Estrutura do protocolo não reconhecida</div>;
-}
+const origin = req.headers.get("origin") || "https://renascerapp.com.br";
 
 // PARA:
-const hasNewFormat = Array.isArray((content as any)?.treinos);
-const hasLegacyFormat = Array.isArray((content as any)?.semanas);
-
-if (!hasNewFormat && !hasLegacyFormat) {
-  return <div>Estrutura do protocolo não reconhecida</div>;
-}
+const origin = req.headers.get("origin") || "https://metodo.renascerapp.com.br";
 ```
 
-#### 3. Criar funções de atualização para ambos formatos
-
-Para o novo formato (`treinos`):
+#### 1.2 `supabase/functions/customer-portal/index.ts`
+**Linha 52** - Atualizar fallback origin:
 ```typescript
-const updateExerciseNew = (treinoIndex: number, exerciseIndex: number, field: keyof Exercise, value: any) => {
-  const newContent = { ...content } as TrainingContentNew;
-  if (newContent.treinos?.[treinoIndex]?.exercicios?.[exerciseIndex]) {
-    newContent.treinos[treinoIndex].exercicios[exerciseIndex] = {
-      ...newContent.treinos[treinoIndex].exercicios[exerciseIndex],
-      [field]: value
-    };
-    setContent(newContent);
-  }
-};
+// DE:
+const origin = req.headers.get("origin") || "https://lxdosmjenbaugmhyfanx.lovableproject.com";
+
+// PARA:
+const origin = req.headers.get("origin") || "https://metodo.renascerapp.com.br";
 ```
 
-#### 4. Renderizar o formato correto baseado na estrutura
-
+#### 1.3 `supabase/functions/send-password-reset/index.ts`
+**Linha 107** - Atualizar redirectTo:
 ```typescript
-{hasNewFormat ? (
-  // Renderiza formato novo: Treino A, B, C, D
-  <Accordion type="multiple">
-    {(content as TrainingContentNew).treinos.map((treino, treinoIndex) => (
-      <AccordionItem key={treinoIndex} value={`treino-${treinoIndex}`}>
-        <AccordionTrigger>
-          Treino {treino.letra} - {treino.foco}
-        </AccordionTrigger>
-        <AccordionContent>
-          {treino.exercicios?.map((exercise, exerciseIndex) => (
-            // Campos de edição do exercício
-          ))}
-        </AccordionContent>
-      </AccordionItem>
-    ))}
-  </Accordion>
-) : (
-  // Renderiza formato legado: Semanas > Dias
-  <Accordion type="multiple">
-    {(content as TrainingContentLegacy).semanas.map((week, weekIndex) => (
-      // Código atual permanece
-    ))}
-  </Accordion>
-)}
+// DE:
+redirectTo: 'https://metodorenascer.lovable.app/redefinir-senha',
+
+// PARA:
+redirectTo: 'https://metodo.renascerapp.com.br/redefinir-senha',
+```
+
+#### 1.4 `supabase/functions/send-invitation/index.ts`
+**Linha 128** - Atualizar baseUrl:
+```typescript
+// DE:
+const baseUrl = "https://renascerapp.com.br";
+
+// PARA:
+const baseUrl = "https://metodo.renascerapp.com.br";
 ```
 
 ---
 
-## Resumo das Alterações
+### 2. Frontend (SEO e Meta Tags)
 
-| Arquivo | Tipo | Descrição |
-|---------|------|-----------|
-| `src/components/admin/ProtocolEditor.tsx` | Modificação | Adicionar suporte ao formato novo com `treinos` + `letra` |
+#### 2.1 `index.html`
+**Linha 32** - Atualizar canonical:
+```html
+<!-- DE: -->
+<link rel="canonical" href="https://www.renascerapp.com.br/" />
 
----
-
-## Detalhes Técnicos
-
-### Funções a Atualizar
-
-1. **`updateExercise`**: Precisa detectar o formato e atualizar o caminho correto
-2. **`addExercise`**: Precisa funcionar para ambos formatos
-3. **`removeExercise`**: Precisa funcionar para ambos formatos
-4. **`openGifPicker`**: Precisa passar índices corretos para cada formato
-
-### Lógica de Detecção de Formato
-
-```typescript
-const isNewFormat = (content: any): content is TrainingContentNew => {
-  return Array.isArray(content?.treinos) && content.treinos.length > 0;
-};
-
-const isLegacyFormat = (content: any): content is TrainingContentLegacy => {
-  return Array.isArray(content?.semanas) && content.semanas.length > 0;
-};
+<!-- PARA: -->
+<link rel="canonical" href="https://metodo.renascerapp.com.br/" />
 ```
 
 ---
 
-## Resultado Esperado
+### 3. Configurações Externas (Não são arquivos do projeto)
 
-Após a correção:
-- ✅ Admin poderá visualizar e editar protocolos no formato novo (`treinos`)
-- ✅ Protocolos legados continuarão funcionando (`semanas`)
-- ✅ Cliente continuará vendo o treino normalmente (já funciona)
-- ✅ Botões de adicionar/remover exercício funcionarão em ambos formatos
-- ✅ Busca e vinculação de GIFs funcionará em ambos formatos
+Estas configurações precisam ser feitas manualmente nos dashboards externos:
+
+#### 3.1 Stripe Dashboard
+- **Webhook URL**: Já está correto apontando para `https://lxdosmjenbaugmhyfanx.supabase.co/functions/v1/stripe-webhook`
+- **Verificar**: Os URLs de success/cancel usam o header `origin` da request, então funcionarão automaticamente após as alterações acima
+
+#### 3.2 Supabase Auth (Dashboard)
+O Supabase Auth precisa ter o domínio `metodo.renascerapp.com.br` na lista de **Redirect URLs** permitidos. Isso garante que:
+- Links de recuperação de senha funcionem
+- OAuth (se usado) redirecione corretamente
+- Tokens de confirmação de email funcionem
+
+**Ação necessária**: Acessar Cloud > Auth Settings e verificar/adicionar:
+- `https://metodo.renascerapp.com.br/**`
+- `https://metodo.renascerapp.com.br/redefinir-senha`
+- `https://metodo.renascerapp.com.br/auth`
+
+---
+
+## Resumo das Alterações por Arquivo
+
+| Arquivo | Tipo | Linhas Afetadas |
+|---------|------|-----------------|
+| `supabase/functions/create-checkout/index.ts` | Modificação | 192 |
+| `supabase/functions/customer-portal/index.ts` | Modificação | 52 |
+| `supabase/functions/send-password-reset/index.ts` | Modificação | 107 |
+| `supabase/functions/send-invitation/index.ts` | Modificação | 128 |
+| `index.html` | Modificação | 32 |
+
+---
+
+## Verificação Pós-Implementação
+
+### Checklist de Testes:
+1. **Checkout Stripe**: Testar compra guest e logado - verificar redirecionamento para `/checkout-success`
+2. **Portal do Cliente**: Testar botão "Gerenciar Assinatura" - deve abrir Stripe e retornar para `/dashboard`
+3. **Recuperação de Senha**: Testar "Esqueci minha senha" - link no email deve apontar para `metodo.renascerapp.com.br/redefinir-senha`
+4. **Convites**: Enviar convite pelo admin - link deve apontar para `metodo.renascerapp.com.br/auth`
+5. **SEO**: Verificar se o canonical está correto na página inicial
+
+---
+
+## O que JÁ está Correto
+
+- **CORS (`cors.ts`)**: Já inclui `metodo.renascerapp.com.br` e `www.metodo.renascerapp.com.br`
+- **Emails (Resend)**: Todos partem de `noreply@renascerapp.com.br` ✅
+- **Blog/BlogPost**: Usam `window.location.origin` dinamicamente ✅
+- **Frontend (supabase client)**: Usa variáveis de ambiente, não URLs hardcoded ✅
+
+---
+
+## Impacto das Alterações
+
+- **Zero downtime**: Alterações são retrocompatíveis
+- **CORS**: Já configurado para aceitar o novo domínio
+- **Emails**: Continuarão funcionando (apenas links dentro dos emails mudam)
+- **Stripe**: Continuará funcionando (usa header origin dinamicamente)
+
