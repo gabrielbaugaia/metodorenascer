@@ -96,12 +96,14 @@ export type Database = {
       }
       automated_messages: {
         Row: {
+          cooldown_days: number | null
           created_at: string
           id: string
           is_active: boolean | null
           is_custom: boolean | null
           message_content: string
           message_title: string
+          min_days_since_signup: number | null
           schedule_recurring: string | null
           schedule_type: string | null
           scheduled_at: string | null
@@ -110,12 +112,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cooldown_days?: number | null
           created_at?: string
           id?: string
           is_active?: boolean | null
           is_custom?: boolean | null
           message_content: string
           message_title: string
+          min_days_since_signup?: number | null
           schedule_recurring?: string | null
           schedule_type?: string | null
           scheduled_at?: string | null
@@ -124,12 +128,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cooldown_days?: number | null
           created_at?: string
           id?: string
           is_active?: boolean | null
           is_custom?: boolean | null
           message_content?: string
           message_title?: string
+          min_days_since_signup?: number | null
           schedule_recurring?: string | null
           schedule_type?: string | null
           scheduled_at?: string | null

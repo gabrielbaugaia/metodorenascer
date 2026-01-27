@@ -48,7 +48,8 @@ import {
   Clock,
   Pencil,
   Trash2,
-  MoreVertical
+  MoreVertical,
+  Eraser
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -92,6 +93,12 @@ export default function AdminSuporteChats() {
   const [sending, setSending] = useState(false);
   const [editingMessage, setEditingMessage] = useState<{ index: number; content: string } | null>(null);
   const [deletingMessageIndex, setDeletingMessageIndex] = useState<number | null>(null);
+  
+  // Estados para limpeza de conversas
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [confirmClearSingle, setConfirmClearSingle] = useState(false);
+  const [clearingAll, setClearingAll] = useState(false);
+  const [clearingSingle, setClearingSingle] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -279,6 +286,59 @@ export default function AdminSuporteChats() {
     }
   };
 
+  // Limpar todas as conversas
+  const handleClearAllConversations = async () => {
+    setClearingAll(true);
+    try {
+      const { error } = await supabase
+        .from("conversas")
+        .delete()
+        .eq("tipo", "suporte");
+
+      if (error) throw error;
+
+      toast.success("Todas as conversas de suporte foram limpas");
+      fetchConversas();
+    } catch (error) {
+      console.error("Error clearing all conversations:", error);
+      toast.error("Erro ao limpar conversas");
+    } finally {
+      setClearingAll(false);
+      setConfirmClearAll(false);
+    }
+  };
+
+  // Limpar conversa individual (zerar mensagens)
+  const handleClearSingleConversation = async () => {
+    if (!selectedConversa) return;
+
+    setClearingSingle(true);
+    try {
+      const { error } = await supabase
+        .from("conversas")
+        .update({ 
+          mensagens: [] as unknown as Json,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", selectedConversa.id);
+
+      if (error) throw error;
+
+      toast.success("Conversa limpa com sucesso");
+      setSelectedConversa({
+        ...selectedConversa,
+        mensagens: []
+      });
+      fetchConversas();
+    } catch (error) {
+      console.error("Error clearing conversation:", error);
+      toast.error("Erro ao limpar conversa");
+    } finally {
+      setClearingSingle(false);
+      setConfirmClearSingle(false);
+    }
+  };
+
   const getLastMessage = (mensagens: Conversa['mensagens']) => {
     if (!Array.isArray(mensagens) || mensagens.length === 0) {
       return "Sem mensagens";
@@ -322,6 +382,17 @@ export default function AdminSuporteChats() {
               <MessageCircle className="h-3 w-3" />
               {conversas.length} conversas
             </Badge>
+            {conversas.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setConfirmClearAll(true)}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Limpar Todas
+              </Button>
+            )}
           </div>
         </div>
 
@@ -430,7 +501,7 @@ export default function AdminSuporteChats() {
                         <Badge variant="secondary">{getMessageCount(conversa.mensagens)}</Badge>
                       </TableCell>
                       <TableCell>
-                        {formatDistanceToNow(new Date(conversa.updated_at), { 
+                        {conversa.updated_at && formatDistanceToNow(new Date(conversa.updated_at), { 
                           addSuffix: true, 
                           locale: ptBR 
                         })}
@@ -464,12 +535,27 @@ export default function AdminSuporteChats() {
         <Dialog open={!!selectedConversa} onOpenChange={(open) => !open && setSelectedConversa(null)}>
           <DialogContent className="max-w-2xl max-h-[80vh]">
             <DialogHeader>
-              <DialogTitle>
-                Chat com {selectedConversa?.profile?.full_name || "Cliente"}
-              </DialogTitle>
-              <DialogDescription>
-                {selectedConversa?.profile?.email} • {selectedConversa?.tipo || "suporte"}
-              </DialogDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle>
+                    Chat com {selectedConversa?.profile?.full_name || "Cliente"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {selectedConversa?.profile?.email} • {selectedConversa?.tipo || "suporte"}
+                  </DialogDescription>
+                </div>
+                {selectedConversa && getMessageCount(selectedConversa.mensagens) > 0 && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setConfirmClearSingle(true)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Eraser className="h-4 w-4 mr-2" />
+                    Limpar
+                  </Button>
+                )}
+              </div>
             </DialogHeader>
             
             <ScrollArea className="h-[400px] pr-4">
@@ -596,7 +682,7 @@ export default function AdminSuporteChats() {
           </DialogContent>
         </Dialog>
 
-        {/* Delete Confirmation */}
+        {/* Delete Message Confirmation */}
         <AlertDialog open={deletingMessageIndex !== null} onOpenChange={(open) => !open && setDeletingMessageIndex(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -610,6 +696,52 @@ export default function AdminSuporteChats() {
               <AlertDialogAction onClick={handleDeleteMessage} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Clear All Conversations Confirmation */}
+        <AlertDialog open={confirmClearAll} onOpenChange={setConfirmClearAll}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Limpar todas as conversas?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita. Todas as {conversas.length} conversas de suporte serão excluídas permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={clearingAll}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleClearAllConversations} 
+                disabled={clearingAll}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {clearingAll ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Excluir Todas
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Clear Single Conversation Confirmation */}
+        <AlertDialog open={confirmClearSingle} onOpenChange={setConfirmClearSingle}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Limpar esta conversa?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Todas as mensagens desta conversa com {selectedConversa?.profile?.full_name || "o cliente"} serão removidas. O histórico ficará vazio, mas a conversa continuará existindo.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={clearingSingle}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleClearSingleConversation} 
+                disabled={clearingSingle}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {clearingSingle ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Limpar Mensagens
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
