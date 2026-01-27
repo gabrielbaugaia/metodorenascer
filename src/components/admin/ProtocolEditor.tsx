@@ -107,6 +107,171 @@ const isLegacyFormat = (content: any): content is TrainingContentLegacy => {
   return Array.isArray(content?.semanas) && content.semanas.length > 0;
 };
 
+// Helper function - defined outside component
+const isGifUrl = (url: string) => {
+  return url?.includes("supabase.co/storage") || url?.endsWith(".gif");
+};
+
+// ExerciseCard component - OUTSIDE of ProtocolEditor to prevent remounts
+interface ExerciseCardProps {
+  exercise: Exercise;
+  exerciseIndex: number;
+  onUpdate: (field: keyof Exercise, value: any) => void;
+  onRemove: () => void;
+  onOpenGifPicker: () => void;
+  onPreviewGif: (url: string | null) => void;
+}
+
+const ExerciseCard = ({ 
+  exercise, 
+  exerciseIndex, 
+  onUpdate, 
+  onRemove, 
+  onOpenGifPicker,
+  onPreviewGif
+}: ExerciseCardProps) => (
+  <div className="bg-background rounded-lg p-4 space-y-3">
+    <div className="flex items-center justify-between">
+      <Label className="font-medium">Exercício {exerciseIndex + 1}</Label>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onRemove}
+        className="text-destructive hover:text-destructive"
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+    
+    {/* Layout with GIF preview */}
+    <div className="flex flex-col md:flex-row gap-4">
+      {/* GIF Preview */}
+      <div className="flex-shrink-0">
+        {exercise.video_url && isGifUrl(exercise.video_url) ? (
+          <button
+            type="button"
+            onClick={() => onPreviewGif(exercise.video_url || null)}
+            className="relative w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-muted border-2 border-border hover:border-primary transition-colors group"
+          >
+            <img
+              src={exercise.video_url}
+              alt={exercise.nome}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Search className="h-5 w-5 text-white" />
+            </div>
+          </button>
+        ) : (
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg bg-muted border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground">
+            <ImageOff className="h-6 w-6 mb-1" />
+            <span className="text-[10px]">Sem GIF</span>
+          </div>
+        )}
+      </div>
+
+      {/* Form fields */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="md:col-span-2">
+          <Label className="text-xs text-muted-foreground">Nome</Label>
+          <Input
+            value={exercise.nome}
+            onChange={(e) => onUpdate("nome", e.target.value)}
+          />
+        </div>
+        
+        <div>
+          <Label className="text-xs text-muted-foreground">Séries</Label>
+          <Input
+            type="number"
+            value={exercise.series}
+            onChange={(e) => onUpdate("series", parseInt(e.target.value))}
+          />
+        </div>
+        
+        <div>
+          <Label className="text-xs text-muted-foreground">Repetições</Label>
+          <Input
+            value={exercise.repeticoes}
+            onChange={(e) => onUpdate("repeticoes", e.target.value)}
+          />
+        </div>
+        
+        <div>
+          <Label className="text-xs text-muted-foreground">Descanso</Label>
+          <Input
+            value={exercise.descanso}
+            onChange={(e) => onUpdate("descanso", e.target.value)}
+          />
+        </div>
+        
+        <div>
+          <Label className="text-xs text-muted-foreground flex items-center gap-1">
+            <Video className="h-3 w-3" /> Mídia
+            {exercise.video_url && (
+              <>
+                {exercise.video_url.includes("supabase.co/storage") && (
+                  <Badge variant="outline" className="ml-2 text-[10px] border-primary/50 text-primary">
+                    <Image className="h-2.5 w-2.5 mr-1" />
+                    GIF
+                  </Badge>
+                )}
+                {(exercise.video_url.includes("youtube.com") || exercise.video_url.includes("youtu.be")) && (
+                  <Badge variant="outline" className="ml-2 text-[10px] border-destructive/50 text-destructive">
+                    <Youtube className="h-2.5 w-2.5 mr-1" />
+                    YouTube
+                  </Badge>
+                )}
+                {exercise.video_url && !exercise.video_url.includes("supabase.co") && !exercise.video_url.includes("youtube") && !exercise.video_url.includes("youtu.be") && (
+                  <Badge variant="outline" className="ml-2 text-[10px] text-muted-foreground">
+                    <Link2Off className="h-2.5 w-2.5 mr-1" />
+                    Outro
+                  </Badge>
+                )}
+              </>
+            )}
+          </Label>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onOpenGifPicker}
+              className="flex-1"
+            >
+              <Search className="h-3.5 w-3.5 mr-1.5" />
+              Buscar GIF
+            </Button>
+            {exercise.video_url && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 text-muted-foreground hover:text-destructive h-9 w-9"
+                onClick={() => onUpdate("video_url", "")}
+                title="Limpar mídia"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        <div className="md:col-span-2">
+          <Label className="text-xs text-muted-foreground flex items-center gap-1">
+            <MessageSquare className="h-3 w-3" /> Observações/Dicas
+          </Label>
+          <Textarea
+            value={exercise.dicas || ""}
+            onChange={(e) => onUpdate("dicas", e.target.value)}
+            placeholder="Dicas de execução, observações importantes..."
+            rows={2}
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export function ProtocolEditor({ 
   protocol, 
   onSave, 
@@ -244,10 +409,6 @@ export function ProtocolEditor({
     setSelectedExercise(null);
   };
 
-  const isGifUrl = (url: string) => {
-    return url?.includes("supabase.co/storage") || url?.endsWith(".gif");
-  };
-
   const getInitialSearchTerm = () => {
     if (!selectedExercise) return "";
     
@@ -270,162 +431,6 @@ export function ProtocolEditor({
       </div>
     );
   }
-
-  // Componente de exercício reutilizável
-  const ExerciseCard = ({ 
-    exercise, 
-    exerciseIndex, 
-    onUpdate, 
-    onRemove, 
-    onOpenGifPicker 
-  }: { 
-    exercise: Exercise; 
-    exerciseIndex: number; 
-    onUpdate: (field: keyof Exercise, value: any) => void;
-    onRemove: () => void;
-    onOpenGifPicker: () => void;
-  }) => (
-    <div className="bg-background rounded-lg p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <Label className="font-medium">Exercício {exerciseIndex + 1}</Label>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onRemove}
-          className="text-destructive hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      {/* Layout with GIF preview */}
-      <div className="flex flex-col md:flex-row gap-4">
-        {/* GIF Preview */}
-        <div className="flex-shrink-0">
-          {exercise.video_url && isGifUrl(exercise.video_url) ? (
-            <button
-              type="button"
-              onClick={() => setPreviewGif(exercise.video_url || null)}
-              className="relative w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-muted border-2 border-border hover:border-primary transition-colors group"
-            >
-              <img
-                src={exercise.video_url}
-                alt={exercise.nome}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Search className="h-5 w-5 text-white" />
-              </div>
-            </button>
-          ) : (
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg bg-muted border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground">
-              <ImageOff className="h-6 w-6 mb-1" />
-              <span className="text-[10px]">Sem GIF</span>
-            </div>
-          )}
-        </div>
-
-        {/* Form fields */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="md:col-span-2">
-            <Label className="text-xs text-muted-foreground">Nome</Label>
-            <Input
-              value={exercise.nome}
-              onChange={(e) => onUpdate("nome", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label className="text-xs text-muted-foreground">Séries</Label>
-            <Input
-              type="number"
-              value={exercise.series}
-              onChange={(e) => onUpdate("series", parseInt(e.target.value))}
-            />
-          </div>
-          
-          <div>
-            <Label className="text-xs text-muted-foreground">Repetições</Label>
-            <Input
-              value={exercise.repeticoes}
-              onChange={(e) => onUpdate("repeticoes", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label className="text-xs text-muted-foreground">Descanso</Label>
-            <Input
-              value={exercise.descanso}
-              onChange={(e) => onUpdate("descanso", e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-              <Video className="h-3 w-3" /> Mídia
-              {exercise.video_url && (
-                <>
-                  {exercise.video_url.includes("supabase.co/storage") && (
-                    <Badge variant="outline" className="ml-2 text-[10px] border-primary/50 text-primary">
-                      <Image className="h-2.5 w-2.5 mr-1" />
-                      GIF
-                    </Badge>
-                  )}
-                  {(exercise.video_url.includes("youtube.com") || exercise.video_url.includes("youtu.be")) && (
-                    <Badge variant="outline" className="ml-2 text-[10px] border-destructive/50 text-destructive">
-                      <Youtube className="h-2.5 w-2.5 mr-1" />
-                      YouTube
-                    </Badge>
-                  )}
-                  {exercise.video_url && !exercise.video_url.includes("supabase.co") && !exercise.video_url.includes("youtube") && !exercise.video_url.includes("youtu.be") && (
-                    <Badge variant="outline" className="ml-2 text-[10px] text-muted-foreground">
-                      <Link2Off className="h-2.5 w-2.5 mr-1" />
-                      Outro
-                    </Badge>
-                  )}
-                </>
-              )}
-            </Label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onOpenGifPicker}
-                className="flex-1"
-              >
-                <Search className="h-3.5 w-3.5 mr-1.5" />
-                Buscar GIF
-              </Button>
-              {exercise.video_url && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 text-muted-foreground hover:text-destructive h-9 w-9"
-                  onClick={() => onUpdate("video_url", "")}
-                  title="Limpar mídia"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          <div className="md:col-span-2">
-            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-              <MessageSquare className="h-3 w-3" /> Observações/Dicas
-            </Label>
-            <Textarea
-              value={exercise.dicas || ""}
-              onChange={(e) => onUpdate("dicas", e.target.value)}
-              placeholder="Dicas de execução, observações importantes..."
-              rows={2}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-6 max-w-full overflow-hidden">
@@ -506,12 +511,13 @@ export function ProtocolEditor({
               <AccordionContent className="space-y-4 pt-2">
                 {treino.exercicios?.map((exercise, exerciseIndex) => (
                   <ExerciseCard
-                    key={exerciseIndex}
+                    key={`exercise-${treinoIndex}-${exerciseIndex}`}
                     exercise={exercise}
                     exerciseIndex={exerciseIndex}
                     onUpdate={(field, value) => updateExerciseNew(treinoIndex, exerciseIndex, field, value)}
                     onRemove={() => removeExerciseNew(treinoIndex, exerciseIndex)}
                     onOpenGifPicker={() => openGifPickerNew(treinoIndex, exerciseIndex)}
+                    onPreviewGif={setPreviewGif}
                   />
                 ))}
                 
@@ -550,12 +556,13 @@ export function ProtocolEditor({
                     <CardContent className="space-y-4">
                       {day.exercicios?.map((exercise, exerciseIndex) => (
                         <ExerciseCard
-                          key={exerciseIndex}
+                          key={`exercise-${weekIndex}-${dayIndex}-${exerciseIndex}`}
                           exercise={exercise}
                           exerciseIndex={exerciseIndex}
                           onUpdate={(field, value) => updateExerciseLegacy(weekIndex, dayIndex, exerciseIndex, field, value)}
                           onRemove={() => removeExerciseLegacy(weekIndex, dayIndex, exerciseIndex)}
                           onOpenGifPicker={() => openGifPickerLegacy(weekIndex, dayIndex, exerciseIndex)}
+                          onPreviewGif={setPreviewGif}
                         />
                       ))}
                       
