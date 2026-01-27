@@ -1,74 +1,93 @@
 
-# Plano: Correção do Bug de Acesso aos Protocolos de Clientes
+# Plano: Correção do PDF de Treino + Configuração de Domínio Lovable
 
-## Diagnóstico do Problema
+## Parte 1: Correção do PDF (Código)
 
-Os clientes **Vinicius** e **bau@gabrielbau.com.br** não conseguem acessar seus protocolos de treino porque:
+### Problema Identificado
+O arquivo `src/lib/generateProtocolPdf.ts` está mapeando campos errados:
 
-1. **A Edge Function `check-subscription` não reconhece o status "free"**: A query busca apenas por `status = "active"`, mas assinaturas gratuitas podem ter `status = "free"` ou `plan_type = "gratuito"`.
+| Linha | Código Atual | Campo no Banco |
+|-------|--------------|----------------|
+| 180 | `treino.day` | `treino.letra` |
+| 180 | `treino.focus` | `treino.foco` |
+| 202 | `treino.exercises` | `treino.exercicios` |
+| 215 | `ex.name` (prioridade) | `ex.nome` |
+| 216 | `ex.sets` (prioridade) | `ex.series` |
+| 217 | `ex.reps` (prioridade) | `ex.repeticoes` |
+| 218 | `ex.rest` (prioridade) | `ex.descanso` |
+| 219 | `ex.tips` (prioridade) | `ex.dicas` |
 
-2. **A lógica de validação local está incompleta**: Mesmo encontrando a assinatura no banco local, a função não trata corretamente os planos gratuitos/free.
+### Correções Necessárias
 
-3. **O fluxo está indo ao Stripe desnecessariamente**: Para planos gratuitos, não deveria consultar o Stripe, pois não há cliente real.
+**Linha 180** - Título do treino:
+```javascript
+// De:
+`${treino.day} - ${treino.focus}${treino.duration ? ` (${treino.duration} min)` : ''}`
 
-## Dados Confirmados no Banco
-
-| Cliente | Status | Plan Type | Stripe ID |
-|---------|--------|-----------|-----------|
-| bau@gabrielbau.com.br | active | gratuito | invite_... |
-| vinicius.hs@outlook.com | active | embaixador | cus_Trkk... |
-
-Os dois têm assinaturas válidas e ativas, mas a Edge Function está retornando `subscribed: false`.
-
-## Plano de Correção
-
-### 1. Corrigir a Edge Function `check-subscription`
-
-Atualizar a query de assinatura local para incluir todos os status válidos:
-
-```text
-Alterar a linha que busca status = "active" para:
-.in("status", ["active", "free"])
+// Para:
+`Treino ${treino.letra || treino.day || '?'} - ${treino.foco || treino.focus || ''}${treino.duration ? ` (${treino.duration} min)` : ''}`
 ```
 
-E adicionar verificação para planos gratuitos não irem ao Stripe:
+**Linha 202** - Array de exercícios:
+```javascript
+// De:
+const exercises = treino.exercises || [];
 
-```text
-Se plan_type = "gratuito" ou status = "free":
-  - Retornar subscribed: true imediatamente
-  - Não consultar Stripe
+// Para:
+const exercises = treino.exercicios || treino.exercises || [];
 ```
 
-### 2. Arquivos a Modificar
+**Linhas 214-219** - Campos dos exercícios (inverter prioridade):
+```javascript
+const rowData = [
+  (ex.nome || ex.name)?.substring(0, 25) || "-",        // nome primeiro
+  String(ex.series || ex.sets || "-"),                   // series primeiro
+  String(ex.repeticoes || ex.reps || "-"),               // repeticoes primeiro
+  ex.descanso || ex.rest || "-",                         // descanso primeiro
+  (ex.dicas || ex.tips)?.substring(0, 20) || "-"         // dicas primeiro
+];
+```
 
-**`supabase/functions/check-subscription/index.ts`**
-- Alterar query na linha ~60-66 para incluir status "free"
-- Adicionar lógica para skip Stripe em planos gratuitos
-- Melhorar logs para debug
+---
 
-### 3. Também Atualizar `SubscriptionGuard.tsx`
+## Parte 2: Configuração do Domínio para Lovable
 
-Garantir que a verificação local também considere status "free":
-- Linha ~72-75: adicionar "free" na verificação de status ativo
+### Passo a Passo para Apontar o DNS
 
-### 4. Deploy e Teste
+**1. Acesse o painel de DNS** do seu registrador (onde você registrou `renascerapp.com.br`)
 
-Após as correções:
-1. Deploy automático da Edge Function
-2. Testar com as contas dos clientes afetados
-3. Confirmar que o protocolo de treino aparece
+**2. Configure os registros para o subdomínio `metodo`:**
 
-## Benefícios
+| Tipo | Nome | Valor |
+|------|------|-------|
+| **A** | metodo | 185.158.133.1 |
+| **A** | www.metodo | 185.158.133.1 |
 
-- Clientes com planos gratuitos terão acesso correto
-- Menos chamadas desnecessárias ao Stripe (performance)
-- Logs melhorados para debug futuro
+> Ou se preferir CNAME (alguns registradores não permitem CNAME na raiz):
+> - **CNAME** | metodo | metodorenascer.lovable.app
 
-## Resumo Técnico
+**3. Adicione o domínio no Lovable:**
+- Vá em **Settings → Domains** no seu projeto
+- Clique em **Connect Domain**
+- Digite: `metodo.renascerapp.com.br`
+- Siga as instruções (ele mostrará um registro TXT para verificação)
 
-O bug ocorre porque a Edge Function `check-subscription` não está tratando corretamente os planos gratuitos criados pelo admin. A query só busca `status = "active"` e depois vai ao Stripe, que obviamente não encontra nenhum cliente para emails de planos gratuitos, retornando `subscribed: false` e bloqueando o acesso.
+**4. Aguarde a propagação DNS** (geralmente minutos, máximo 72h)
 
-A solução é:
-1. Incluir status "free" na query local
-2. Para planos gratuitos, retornar imediatamente sem consultar Stripe
-3. Atualizar o SubscriptionGuard no frontend para consistência
+**5. O SSL será provisionado automaticamente** pela Lovable
+
+---
+
+## Arquivos a Modificar
+
+| Arquivo | Alterações |
+|---------|------------|
+| `src/lib/generateProtocolPdf.ts` | Linhas 180, 202, 214-219 - Corrigir mapeamento de campos |
+
+---
+
+## Resultado Esperado
+
+Após implementação:
+- **PDF**: Mostrará "Treino A - Peito e Tríceps" com todos exercícios corretamente
+- **Domínio**: `metodo.renascerapp.com.br` abrirá o app diretamente da Lovable, sem servidor intermediário
