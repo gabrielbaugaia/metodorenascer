@@ -1,143 +1,144 @@
 
-# Plano: Corrigir Perda de Foco ao Digitar nos Campos de Exercício
+# Plano: Corrigir Download de Anamnese e Campos Faltantes no Admin
 
-## Problema Identificado
+## Problemas Identificados
 
-Ao digitar uma letra nos campos de exercício (nome, séries, repetições, etc.), o input **perde o foco** e a tela **sobe sozinha**. Isso acontece porque:
+### 1. Erro TIFF no PDF
+O erro "addImage does not support files of type 'TIFF'" indica que uma foto foi enviada em formato TIFF, que nao e suportado pelo jsPDF.
 
-1. O componente `ExerciseCard` está **definido dentro** do `ProtocolEditor`
-2. A cada digitação, o estado `content` é atualizado
-3. O React re-renderiza e recria `ExerciseCard` como um **novo componente**
-4. O input é desmontado e remontado, perdendo o foco
+**Solucao**: Detectar e ignorar fotos em formato incompativel, exibindo mensagem amigavel no PDF.
 
----
-
-## Solução
-
-**Mover o componente `ExerciseCard` para FORA da função principal**, definindo-o antes do `ProtocolEditor`. Isso garante que o React mantenha a mesma referência do componente entre renders.
-
----
-
-## Alterações Necessárias
-
-### Arquivo: `src/components/admin/ProtocolEditor.tsx`
-
-#### 1. Mover `ExerciseCard` para fora do componente principal
-
-**DE** (linhas 275-428 - dentro de `ProtocolEditor`):
-```typescript
-export function ProtocolEditor(...) {
-  // ...estados...
-
-  // Componente de exercício reutilizável
-  const ExerciseCard = ({ ... }) => (
-    <div>...</div>
-  );
-
-  return (...);
-}
-```
-
-**PARA** (antes de `ProtocolEditor`):
-```typescript
-// Componente de exercício reutilizável - FORA do componente principal
-interface ExerciseCardProps {
-  exercise: Exercise;
-  exerciseIndex: number;
-  onUpdate: (field: keyof Exercise, value: any) => void;
-  onRemove: () => void;
-  onOpenGifPicker: () => void;
-  onPreviewGif: (url: string | null) => void;
-  isGifUrl: (url: string) => boolean;
-}
-
-const ExerciseCard = ({ 
-  exercise, 
-  exerciseIndex, 
-  onUpdate, 
-  onRemove, 
-  onOpenGifPicker,
-  onPreviewGif,
-  isGifUrl
-}: ExerciseCardProps) => (
-  <div className="bg-background rounded-lg p-4 space-y-3">
-    {/* ... mesmo conteúdo ... */}
-  </div>
-);
-
-export function ProtocolEditor(...) {
-  // ...
-}
-```
-
-#### 2. Atualizar chamadas do `ExerciseCard`
-
-Passar as funções auxiliares como props:
-```typescript
-<ExerciseCard
-  key={`exercise-${treinoIndex}-${exerciseIndex}`}
-  exercise={exercise}
-  exerciseIndex={exerciseIndex}
-  onUpdate={(field, value) => updateExerciseNew(treinoIndex, exerciseIndex, field, value)}
-  onRemove={() => removeExerciseNew(treinoIndex, exerciseIndex)}
-  onOpenGifPicker={() => openGifPickerNew(treinoIndex, exerciseIndex)}
-  onPreviewGif={setPreviewGif}
-  isGifUrl={isGifUrl}
-/>
-```
-
-#### 3. Adicionar key única estável
-
-Usar uma key mais descritiva para garantir que o React identifique corretamente cada exercício:
-```typescript
-// Formato novo
-key={`exercise-${treinoIndex}-${exerciseIndex}`}
-
-// Formato legado
-key={`exercise-${weekIndex}-${dayIndex}-${exerciseIndex}`}
-```
+### 2. Campos de Horario Faltando
+Os campos `horario_treino`, `horario_acorda` e `horario_dorme`:
+- Existem no banco de dados
+- Sao preenchidos na anamnese do cliente
+- NAO aparecem no painel admin
+- NAO sao incluidos no PDF
 
 ---
 
-## Resumo das Alterações
+## Arquivos a Modificar
 
-| Arquivo | Tipo | Descrição |
+| Arquivo | Alteracoes |
+|---------|-----------|
+| `src/pages/admin/AdminClienteDetalhes.tsx` | Adicionar campos de horario na interface Profile e na UI |
+| `src/lib/generateAnamnesePdf.ts` | Adicionar campos de horario e tratar erro TIFF |
+
+---
+
+## Alteracoes Detalhadas
+
+### 1. AdminClienteDetalhes.tsx
+
+#### 1.1 Adicionar campos na interface Profile (linha 87)
+
+```typescript
+interface Profile {
+  // ... campos existentes ...
+  data_nascimento: string | null;
+  // NOVOS CAMPOS:
+  horario_treino: string | null;
+  horario_acorda: string | null;
+  horario_dorme: string | null;
+}
+```
+
+#### 1.2 Adicionar secao "Rotina" no formulario (apos "Objetivo e Treino", antes de "Saude")
+
+Nova Card com os campos:
+- Horario de Treino (input type="time")
+- Horario que Acorda (input type="time")
+- Horario que Dorme (input type="time")
+
+#### 1.3 Incluir campos no handleSave (linha 504-543)
+
+Adicionar `horario_treino`, `horario_acorda`, `horario_dorme` no update do Supabase.
+
+---
+
+### 2. generateAnamnesePdf.ts
+
+#### 2.1 Adicionar campos de horario na interface Profile
+
+```typescript
+interface Profile {
+  // ... campos existentes ...
+  horario_treino?: string | null;
+  horario_acorda?: string | null;
+  horario_dorme?: string | null;
+}
+```
+
+#### 2.2 Adicionar secao "Rotina" no PDF (apos "Historico de Treino")
+
+```typescript
+addSectionTitle("Rotina");
+addField("Horario de Treino", profile.horario_treino);
+addField("Horario que Acorda", profile.horario_acorda);
+addField("Horario que Dorme", profile.horario_dorme);
+```
+
+#### 2.3 Tratar erro TIFF no loadImage
+
+Modificar a funcao `loadImage` para detectar e rejeitar formatos nao suportados antes de tentar adicionar a imagem:
+
+```typescript
+const loadImage = async (url: string): Promise<string | null> => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    
+    const contentType = response.headers.get("content-type") || "";
+    
+    // Rejeitar formatos nao suportados pelo jsPDF
+    if (contentType.includes("tiff") || contentType.includes("image/tiff")) {
+      console.warn("[PDF] Formato TIFF nao suportado, ignorando foto");
+      return null;
+    }
+    
+    const blob = await response.blob();
+    // ... resto da logica
+  } catch (error) {
+    return null;
+  }
+};
+```
+
+---
+
+## Resumo das Alteracoes
+
+| Arquivo | Tipo | Descricao |
 |---------|------|-----------|
-| `src/components/admin/ProtocolEditor.tsx` | Refatoração | Mover `ExerciseCard` para fora do componente principal |
+| `AdminClienteDetalhes.tsx` | Interface + UI + Save | Adicionar 3 campos de horario |
+| `generateAnamnesePdf.ts` | Interface + Secao + Tratamento TIFF | Adicionar rotina e corrigir erro |
 
 ---
 
-## Detalhes Técnicos
+## Campos da Anamnese - Validacao de Obrigatoriedade
 
-### Por que isso funciona
+Os seguintes campos sao **obrigatorios** na anamnese (ja validados em `Anamnese.tsx`):
+- Data de nascimento
+- Peso
+- Altura
+- Objetivo principal
+- Historico de treino (ja treinou antes)
+- Dias disponiveis
+- Nivel de condicionamento
+- Horario de treino
 
-Quando um componente é definido **dentro** de outro componente:
-```typescript
-function Parent() {
-  const Child = () => <div>...</div>; // Nova referência a cada render!
-  return <Child />;
-}
-```
+Os seguintes campos sao **opcionais**:
+- Fotos corporais (frente, lado, costas)
+- Observacoes adicionais
 
-O React trata cada render como um **componente diferente**, desmontando e remontando o DOM.
-
-Quando definido **fora**:
-```typescript
-const Child = () => <div>...</div>; // Mesma referência sempre!
-
-function Parent() {
-  return <Child />;
-}
-```
-
-O React reconhece como o **mesmo componente** e apenas atualiza as props, mantendo foco e scroll.
+Esta validacao ja esta correta no codigo atual.
 
 ---
 
 ## Resultado Esperado
 
-Após a correção:
-- Digitar nos campos de exercício mantém o foco
-- A tela não sobe sozinha durante a edição
-- Navegação entre campos funciona normalmente (Tab)
-- Performance melhorada (menos remounts)
+Apos implementacao:
+1. O admin vera os campos de horario (treino, acorda, dorme) na pagina de detalhes do cliente
+2. O PDF da anamnese incluira a secao "Rotina" com os horarios
+3. Fotos em formato TIFF serao ignoradas no PDF com mensagem amigavel
+4. O PDF sera gerado mesmo quando houver fotos incompativeis
