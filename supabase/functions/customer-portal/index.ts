@@ -49,7 +49,7 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Customer found", { customerId });
 
-    const origin = req.headers.get("origin") || "https://lxdosmjenbaugmhyfanx.lovableproject.com";
+    const origin = req.headers.get("origin") || "https://metodo.renascerapp.com.br";
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,

@@ -125,7 +125,7 @@ serve(async (req) => {
     });
 
     // Generate invitation link - using official domain
-    const baseUrl = "https://renascerapp.com.br";
+    const baseUrl = "https://metodo.renascerapp.com.br";
     const inviteLink = `${baseUrl}/auth?invited=true&email=${encodeURIComponent(email)}`;
 
     // Email content varies based on payment requirement
