@@ -1,5 +1,5 @@
 // Service Worker para Push Notifications e Cache
-const CACHE_NAME = 'renascer-cache-v1';
+const CACHE_NAME = 'renascer-cache-v3';
 const STATIC_ASSETS = [
   '/',
   '/favicon.ico'
