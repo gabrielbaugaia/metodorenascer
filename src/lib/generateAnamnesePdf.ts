@@ -39,6 +39,9 @@ interface Profile {
   observacoes_adicionais: string | null;
   created_at: string | null;
   updated_at?: string | null;
+  horario_treino?: string | null;
+  horario_acorda?: string | null;
+  horario_dorme?: string | null;
 }
 
 interface SignedPhotos {
@@ -246,6 +249,12 @@ export async function generateAnamnesePdf(
   addField("Pratica Aeróbica", profile.pratica_aerobica);
   addField("Sobe escada sem cansar", profile.escada_sem_cansar);
 
+  // Rotina
+  addSectionTitle("Rotina");
+  addField("Horário de Treino", profile.horario_treino);
+  addField("Horário que Acorda", profile.horario_acorda);
+  addField("Horário que Dorme", profile.horario_dorme);
+
   // Saúde
   addSectionTitle("Saúde");
   addTextBlock("Condições de Saúde", profile.condicoes_saude);
@@ -323,6 +332,13 @@ export async function generateAnamnesePdf(
         
         if (!response.ok) {
           console.warn(`[PDF] HTTP error loading photo: ${response.status}`);
+          return null;
+        }
+
+        // Check for unsupported formats (TIFF)
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("tiff") || contentType.includes("image/tiff")) {
+          console.warn(`[PDF] Formato TIFF não suportado, ignorando foto`);
           return null;
         }
         

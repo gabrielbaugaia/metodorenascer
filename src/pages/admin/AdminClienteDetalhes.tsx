@@ -85,6 +85,9 @@ interface Profile {
   client_status: "active" | "paused" | "blocked" | "canceled" | null;
   created_at: string | null;
   data_nascimento: string | null;
+  horario_treino: string | null;
+  horario_acorda: string | null;
+  horario_dorme: string | null;
 }
 
 interface Subscription {
@@ -539,6 +542,9 @@ export default function AdminClienteDetalhes() {
           fuma: profile.fuma,
           observacoes_adicionais: profile.observacoes_adicionais,
           client_status: profile.client_status,
+          horario_treino: profile.horario_treino,
+          horario_acorda: profile.horario_acorda,
+          horario_dorme: profile.horario_dorme,
         })
         .eq("id", id);
 
@@ -1239,6 +1245,39 @@ export default function AdminClienteDetalhes() {
                 />
                 <span className="text-sm">{profile.pratica_aerobica ? "Sim" : "Não"}</span>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Rotina */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Rotina</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div>
+              <Label>Horário de Treino</Label>
+              <Input 
+                type="time"
+                value={profile.horario_treino || ""} 
+                onChange={(e) => updateField("horario_treino", e.target.value)} 
+              />
+            </div>
+            <div>
+              <Label>Horário que Acorda</Label>
+              <Input 
+                type="time"
+                value={profile.horario_acorda || ""} 
+                onChange={(e) => updateField("horario_acorda", e.target.value)} 
+              />
+            </div>
+            <div>
+              <Label>Horário que Dorme</Label>
+              <Input 
+                type="time"
+                value={profile.horario_dorme || ""} 
+                onChange={(e) => updateField("horario_dorme", e.target.value)} 
+              />
             </div>
           </CardContent>
         </Card>
