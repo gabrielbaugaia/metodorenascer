@@ -1,93 +1,107 @@
 
-# Plano: Correção do PDF de Treino + Configuração de Domínio Lovable
 
-## Parte 1: Correção do PDF (Código)
+# Plano de Correção: Página de Treino Não Abrindo no Domínio Customizado
 
-### Problema Identificado
-O arquivo `src/lib/generateProtocolPdf.ts` está mapeando campos errados:
+## Diagnóstico
 
-| Linha | Código Atual | Campo no Banco |
-|-------|--------------|----------------|
-| 180 | `treino.day` | `treino.letra` |
-| 180 | `treino.focus` | `treino.foco` |
-| 202 | `treino.exercises` | `treino.exercicios` |
-| 215 | `ex.name` (prioridade) | `ex.nome` |
-| 216 | `ex.sets` (prioridade) | `ex.series` |
-| 217 | `ex.reps` (prioridade) | `ex.repeticoes` |
-| 218 | `ex.rest` (prioridade) | `ex.descanso` |
-| 219 | `ex.tips` (prioridade) | `ex.dicas` |
+Analisei os erros do console na página `/treino` do domínio `metodo.renascerapp.com.br`:
 
-### Correções Necessárias
+### Erros Identificados
 
-**Linha 180** - Título do treino:
-```javascript
-// De:
-`${treino.day} - ${treino.focus}${treino.duration ? ` (${treino.duration} min)` : ''}`
+1. **Erro 406 (Not Acceptable)** - Uma requisição ao Supabase está retornando status 406
+2. **TypeError: Cannot read properties of undefined (reading 'filter')** - Ocorrendo múltiplas vezes em código minificado
 
-// Para:
-`Treino ${treino.letra || treino.day || '?'} - ${treino.foco || treino.focus || ''}${treino.duration ? ` (${treino.duration} min)` : ''}`
-```
+### Causa Raiz
 
-**Linha 202** - Array de exercícios:
-```javascript
-// De:
-const exercises = treino.exercises || [];
+O problema está no hook `useWorkoutTracking.ts`. Quando o `completions` retorna `undefined` (antes do fetch completar ou em caso de erro), os métodos `getWeeklyCount()` e `getMonthlyCount()` tentam chamar `.filter()` em `undefined`.
 
-// Para:
-const exercises = treino.exercicios || treino.exercises || [];
-```
+Locais específicos do problema:
+- **Linha 276**: `completions.filter((c) => ...)` - sem verificação de null/undefined
+- **Linha 283**: `completions.filter((c) => ...)` - sem verificação de null/undefined
 
-**Linhas 214-219** - Campos dos exercícios (inverter prioridade):
-```javascript
-const rowData = [
-  (ex.nome || ex.name)?.substring(0, 25) || "-",        // nome primeiro
-  String(ex.series || ex.sets || "-"),                   // series primeiro
-  String(ex.repeticoes || ex.reps || "-"),               // repeticoes primeiro
-  ex.descanso || ex.rest || "-",                         // descanso primeiro
-  (ex.dicas || ex.tips)?.substring(0, 20) || "-"         // dicas primeiro
-];
-```
+O componente `Treino.tsx` chama `getWeeklyCount()` na linha 166, que dispara o erro quando `completions` ainda está carregando.
 
 ---
 
-## Parte 2: Configuração do Domínio para Lovable
+## Plano de Implementação
 
-### Passo a Passo para Apontar o DNS
+### Etapa 1: Corrigir `useWorkoutTracking.ts`
 
-**1. Acesse o painel de DNS** do seu registrador (onde você registrou `renascerapp.com.br`)
+Adicionar verificações defensivas para evitar `.filter()` em `undefined`:
 
-**2. Configure os registros para o subdomínio `metodo`:**
+```typescript
+// Linha 272-277: getWeeklyCount
+const getWeeklyCount = () => {
+  if (!completions || !Array.isArray(completions)) return 0;
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  return completions.filter((c) => new Date(c.workout_date) >= oneWeekAgo).length;
+};
 
-| Tipo | Nome | Valor |
-|------|------|-------|
-| **A** | metodo | 185.158.133.1 |
-| **A** | www.metodo | 185.158.133.1 |
+// Linha 279-284: getMonthlyCount  
+const getMonthlyCount = () => {
+  if (!completions || !Array.isArray(completions)) return 0;
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  return completions.filter((c) => new Date(c.workout_date) >= oneMonthAgo).length;
+};
 
-> Ou se preferir CNAME (alguns registradores não permitem CNAME na raiz):
-> - **CNAME** | metodo | metodorenascer.lovable.app
+// Linha 286: getTotalCount
+const getTotalCount = () => completions?.length ?? 0;
 
-**3. Adicione o domínio no Lovable:**
-- Vá em **Settings → Domains** no seu projeto
-- Clique em **Connect Domain**
-- Digite: `metodo.renascerapp.com.br`
-- Siga as instruções (ele mostrará um registro TXT para verificação)
+// Linha 288-290: getTotalCalories
+const getTotalCalories = () => {
+  if (!completions || !Array.isArray(completions)) return 0;
+  return completions.reduce((acc, c) => acc + (c.calories_burned || 0), 0);
+};
 
-**4. Aguarde a propagação DNS** (geralmente minutos, máximo 72h)
+// Linha 293: getCurrentStreak
+const getCurrentStreak = useCallback(() => {
+  if (!completions || completions.length === 0) return 0;
+  // ... resto do código
+}, [completions]);
+```
 
-**5. O SSL será provisionado automaticamente** pela Lovable
+### Etapa 2: Melhorar Tratamento de Erro no `fetchCompletions`
+
+Garantir que `completions` sempre seja um array válido, mesmo em caso de erro:
+
+```typescript
+const fetchCompletions = useCallback(async () => {
+  if (!user) {
+    setCompletions([]);  // Sempre array vazio, nunca undefined
+    setLoading(false);
+    return;
+  }
+  // ... resto do código
+}, [user]);
+```
+
+### Etapa 3: Adicionar Verificação Defensiva em `Treino.tsx`
+
+Garantir que o componente não tente renderizar dados enquanto ainda está carregando:
+
+```typescript
+// Já existe verificação de loading, mas podemos melhorar
+const weeklyCount = loading ? 0 : getWeeklyCount();
+const totalCount = loading ? 0 : getTotalCount();
+```
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Alterações |
-|---------|------------|
-| `src/lib/generateProtocolPdf.ts` | Linhas 180, 202, 214-219 - Corrigir mapeamento de campos |
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/hooks/useWorkoutTracking.ts` | Adicionar verificações `Array.isArray()` e `?.` em todos os métodos que usam `completions` |
+| `src/pages/Treino.tsx` | Verificação adicional de loading antes de chamar funções do hook |
 
 ---
 
-## Resultado Esperado
+## Benefícios
 
-Após implementação:
-- **PDF**: Mostrará "Treino A - Peito e Tríceps" com todos exercícios corretamente
-- **Domínio**: `metodo.renascerapp.com.br` abrirá o app diretamente da Lovable, sem servidor intermediário
+1. **Elimina crash da página** - A página não vai mais quebrar com erro de "filter undefined"
+2. **Experiência de usuário suave** - Mostra 0 enquanto carrega, depois atualiza com dados reais
+3. **Compatibilidade** - Funciona em todos os domínios (lovable.app e customizados)
+4. **Robustez** - Segue o padrão de programação defensiva já estabelecido no projeto
+
