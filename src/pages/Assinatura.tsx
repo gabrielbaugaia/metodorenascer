@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { MAX_ELITE_FUNDADOR_MEMBERS, PLAN_TYPES } from "@/lib/planConstants";
 
 interface Subscription {
   id: string;
@@ -38,8 +39,8 @@ interface Profile {
 
 const plans = [
   {
-    id: "embaixador",
-    name: "ELITE Fundador",
+    id: PLAN_TYPES.ELITE_FUNDADOR,
+    name: "ELITE FUNDADOR",
     price: 4990,
     priceDisplay: "R$ 49,90",
     period: "/mês",
@@ -49,8 +50,8 @@ const plans = [
     color: "primary"
   },
   {
-    id: "mensal",
-    name: "Mensal",
+    id: PLAN_TYPES.MENSAL,
+    name: "MENSAL",
     price: 19700,
     priceDisplay: "R$ 197,00",
     period: "/mês",
@@ -60,8 +61,8 @@ const plans = [
     color: "muted"
   },
   {
-    id: "trimestral",
-    name: "Trimestral",
+    id: PLAN_TYPES.TRIMESTRAL,
+    name: "TRIMESTRAL",
     price: 49700,
     priceDisplay: "R$ 497,00",
     period: "/3 meses",
@@ -71,8 +72,8 @@ const plans = [
     color: "primary"
   },
   {
-    id: "semestral",
-    name: "Semestral",
+    id: PLAN_TYPES.SEMESTRAL,
+    name: "SEMESTRAL",
     price: 69700,
     priceDisplay: "R$ 697,00",
     period: "/6 meses",
@@ -82,8 +83,8 @@ const plans = [
     color: "muted"
   },
   {
-    id: "anual",
-    name: "Anual",
+    id: PLAN_TYPES.ANUAL,
+    name: "ANUAL",
     price: 99700,
     priceDisplay: "R$ 997,00",
     period: "/ano",
@@ -93,8 +94,6 @@ const plans = [
     color: "muted"
   },
 ];
-
-const MAX_EMBAIXADOR_MEMBERS = 25;
 
 export default function Assinatura() {
   const navigate = useNavigate();
@@ -134,7 +133,7 @@ export default function Assinatura() {
         supabase
           .from("subscriptions")
           .select("*", { count: "exact", head: true })
-          .eq("plan_type", "embaixador")
+          .eq("plan_type", PLAN_TYPES.ELITE_FUNDADOR)
           .eq("status", "active")
       ]);
 
@@ -152,9 +151,9 @@ export default function Assinatura() {
     }
   };
 
-  // Filter out Embaixador plan if limit reached
+  // Filter out Elite Fundador plan if limit reached
   const availablePlans = plans.filter(plan => {
-    if (plan.id === "embaixador" && embaixadorCount >= MAX_EMBAIXADOR_MEMBERS) {
+    if (plan.id === PLAN_TYPES.ELITE_FUNDADOR && embaixadorCount >= MAX_ELITE_FUNDADOR_MEMBERS) {
       return false;
     }
     return true;

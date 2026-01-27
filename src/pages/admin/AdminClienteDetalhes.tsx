@@ -98,8 +98,8 @@ interface Subscription {
 }
 
 const PLAN_OPTIONS = [
-  { value: "free", label: "Free - Cortesia", days: 30 },
-  { value: "embaixador", label: "Embaixador - R$49,90/mês", days: 30 },
+  { value: "gratuito", label: "Gratuito - Cortesia", days: 30 },
+  { value: "elite_fundador", label: "Elite Fundador - R$49,90/mês", days: 30 },
   { value: "mensal", label: "Mensal - R$197/mês", days: 30 },
   { value: "trimestral", label: "Trimestral - R$497", days: 90 },
   { value: "semestral", label: "Semestral - R$697", days: 180 },

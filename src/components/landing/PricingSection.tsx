@@ -8,9 +8,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-const MAX_EMBAIXADOR_MEMBERS = 25;
+import { MAX_ELITE_FUNDADOR_MEMBERS, PLAN_TYPES } from "@/lib/planConstants";
+
 const allPlans = [{
-  id: "embaixador",
+  id: PLAN_TYPES.ELITE_FUNDADOR,
   name: "Elite Fundador",
   price: "49,90",
   period: "/mês",
@@ -20,7 +21,7 @@ const allPlans = [{
   popular: true,
   promotional: true
 }, {
-  id: "mensal",
+  id: PLAN_TYPES.MENSAL,
   name: "Mensal",
   price: "197",
   period: "/mês",
@@ -28,7 +29,7 @@ const allPlans = [{
   features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
   popular: false
 }, {
-  id: "trimestral",
+  id: PLAN_TYPES.TRIMESTRAL,
   name: "Trimestral",
   price: "497",
   period: "/3 meses",
@@ -38,7 +39,7 @@ const allPlans = [{
   features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
   popular: false
 }, {
-  id: "semestral",
+  id: PLAN_TYPES.SEMESTRAL,
   name: "Semestral",
   price: "697",
   period: "/6 meses",
@@ -48,7 +49,7 @@ const allPlans = [{
   features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
   popular: false
 }, {
-  id: "anual",
+  id: PLAN_TYPES.ANUAL,
   name: "Anual",
   price: "997",
   period: "/ano",
@@ -74,21 +75,21 @@ export function PricingSection() {
   const navigate = useNavigate();
   const [embaixadorCount, setEmbaixadorCount] = useState(0);
   useEffect(() => {
-    const fetchEmbaixadorCount = async () => {
+    const fetchEliteFundadorCount = async () => {
       const {
         count
       } = await supabase.from("subscriptions").select("*", {
         count: "exact",
         head: true
-      }).eq("plan_type", "embaixador").eq("status", "active");
+      }).eq("plan_type", PLAN_TYPES.ELITE_FUNDADOR).eq("status", "active");
       setEmbaixadorCount(count || 0);
     };
-    fetchEmbaixadorCount();
+    fetchEliteFundadorCount();
   }, []);
 
-  // Filter out Embaixador plan if limit reached
+  // Filter out Elite Fundador plan if limit reached
   const plans = allPlans.filter(plan => {
-    if (plan.id === "embaixador" && embaixadorCount >= MAX_EMBAIXADOR_MEMBERS) {
+    if (plan.id === PLAN_TYPES.ELITE_FUNDADOR && embaixadorCount >= MAX_ELITE_FUNDADOR_MEMBERS) {
       return false;
     }
     return true;

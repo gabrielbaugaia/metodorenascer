@@ -16,8 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Mail, ArrowLeft, Copy, Check, Link as LinkIcon, Trash2, CreditCard, Gift } from "lucide-react";
+import { Loader2, Mail, ArrowLeft, Copy, Check, Link as LinkIcon, Trash2, CreditCard, Gift, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import { PLAN_OPTIONS_ADMIN, FREE_DURATION_OPTIONS, PLAN_TYPES } from "@/lib/planConstants";
 
 export default function AdminConvites() {
   const { session } = useAuth();
@@ -35,12 +36,20 @@ export default function AdminConvites() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCreds, setCopiedCreds] = useState(false);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    full_name: string;
+    email: string;
+    whatsapp: string;
+    plan_type: string;
+    requires_payment: boolean;
+    free_duration_days: number;
+  }>({
     full_name: "",
     email: "",
     whatsapp: "",
-    plan_type: "mensal",
-    requires_payment: false, // New: toggle for requiring Stripe payment
+    plan_type: PLAN_TYPES.MENSAL,
+    requires_payment: false,
+    free_duration_days: 30,
   });
 
   const handleDeleteUser = async () => {
@@ -121,6 +130,7 @@ export default function AdminConvites() {
           whatsapp: formData.whatsapp || null,
           plan_type: formData.plan_type,
           requires_payment: formData.requires_payment,
+          free_duration_days: formData.plan_type === PLAN_TYPES.GRATUITO ? formData.free_duration_days : undefined,
         },
       });
 
@@ -161,8 +171,9 @@ export default function AdminConvites() {
         full_name: "",
         email: "",
         whatsapp: "",
-        plan_type: "mensal",
+        plan_type: PLAN_TYPES.MENSAL,
         requires_payment: false,
+        free_duration_days: 30,
       });
       
     } catch (error: any) {
@@ -178,14 +189,8 @@ export default function AdminConvites() {
     return null;
   }
 
-  const planOptions = [
-    { value: "free", label: "Gratuito - R$0,00" },
-    { value: "elite_founder", label: "Elite Fundador - R$49,90/mês" },
-    { value: "mensal", label: "Mensal - R$197,00/mês" },
-    { value: "trimestral", label: "Trimestral - R$497,00" },
-    { value: "semestral", label: "Semestral - R$697,00" },
-    { value: "anual", label: "Anual - R$997,00" },
-  ];
+  // Check if plan type is free/gratuito
+  const isFreePlan = formData.plan_type === PLAN_TYPES.GRATUITO;
 
   return (
     <ClientLayout>
@@ -313,7 +318,7 @@ export default function AdminConvites() {
                     <SelectValue placeholder="Selecione o plano" />
                   </SelectTrigger>
                   <SelectContent>
-                    {planOptions.map((plan) => (
+                    {PLAN_OPTIONS_ADMIN.map((plan) => (
                       <SelectItem key={plan.value} value={plan.value}>
                         {plan.label}
                       </SelectItem>
@@ -322,15 +327,43 @@ export default function AdminConvites() {
                 </Select>
               </div>
 
-              {/* Toggle for payment requirement */}
-              {formData.plan_type !== "free" && (
+              {/* Duration selection for free plan */}
+              {isFreePlan && (
+                <div className="space-y-2">
+                  <Label htmlFor="free_duration">Duração do Acesso Gratuito *</Label>
+                  <Select
+                    value={formData.free_duration_days.toString()}
+                    onValueChange={(value) => setFormData({ ...formData, free_duration_days: parseInt(value) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a duração" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FREE_DURATION_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value.toString()}>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            {option.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    O cliente terá acesso completo ao sistema durante esse período.
+                  </p>
+                </div>
+              )}
+
+              {/* Toggle for payment requirement - only show for non-free plans */}
+              {!isFreePlan && (
                 <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/20">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       {formData.requires_payment ? (
-                        <CreditCard className="h-4 w-4 text-yellow-500" />
+                        <CreditCard className="h-4 w-4 text-amber-500" />
                       ) : (
-                        <Gift className="h-4 w-4 text-green-500" />
+                        <Gift className="h-4 w-4 text-emerald-500" />
                       )}
                       <Label htmlFor="requires_payment" className="font-medium cursor-pointer">
                         {formData.requires_payment ? "Exigir pagamento Stripe" : "Liberar acesso direto"}

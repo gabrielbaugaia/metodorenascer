@@ -67,7 +67,7 @@ function PhotoUploadBox({
           <label className="flex flex-col items-center justify-center aspect-[3/4] border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-muted/20">
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
               onChange={onUpload}
               className="hidden"
               disabled={isProcessing}
@@ -80,8 +80,8 @@ function PhotoUploadBox({
             ) : (
               <>
                 <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                <span className="text-sm text-muted-foreground">Clique para selecionar</span>
-                <span className="text-xs text-muted-foreground mt-1">Máximo 10MB</span>
+                <span className="text-sm text-muted-foreground text-center">Clique para selecionar</span>
+                <span className="text-xs text-muted-foreground mt-1 text-center">JPG, PNG ou WEBP<br />Máximo 10MB</span>
               </>
             )}
           </label>

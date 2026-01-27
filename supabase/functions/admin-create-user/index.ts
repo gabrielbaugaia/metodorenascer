@@ -49,7 +49,7 @@ serve(async (req) => {
     }
 
     // Get request body
-    const { email, password, full_name, telefone, age, weight, height, goals, nivel_experiencia, plan_type } = await req.json();
+    const { email, password, full_name, telefone, age, weight, height, goals, nivel_experiencia, plan_type, free_duration_days } = await req.json();
 
     if (!email || !full_name) {
       return createErrorResponse(req, "Email e nome são obrigatórios", 400);
@@ -97,9 +97,10 @@ serve(async (req) => {
 
     // Create subscription if plan_type is provided
     if (plan_type) {
-      const planDurations: Record<string, number> = {
-        free: 365,
-        elite_founder: 30,
+      // Default duration for free is customizable, others are fixed
+      const baseDurations: Record<string, number> = {
+        gratuito: free_duration_days || 30,
+        elite_fundador: 30,
         mensal: 30,
         trimestral: 90,
         semestral: 180,
@@ -107,8 +108,8 @@ serve(async (req) => {
       };
 
       const planPrices: Record<string, number> = {
-        free: 0,
-        elite_founder: 4990,
+        gratuito: 0,
+        elite_fundador: 4990,
         mensal: 19700,
         trimestral: 49700,
         semestral: 69700,
@@ -116,17 +117,17 @@ serve(async (req) => {
       };
 
       const planNames: Record<string, string> = {
-        free: "Gratuito",
-        elite_founder: "Elite Fundador",
-        mensal: "Mensal",
-        trimestral: "Trimestral",
-        semestral: "Semestral",
-        anual: "Anual",
+        gratuito: "GRATUITO",
+        elite_fundador: "ELITE FUNDADOR",
+        mensal: "MENSAL",
+        trimestral: "TRIMESTRAL",
+        semestral: "SEMESTRAL",
+        anual: "ANUAL",
       };
 
-      const durationDays = planDurations[plan_type] || 30;
+      const durationDays = baseDurations[plan_type] || 30;
       const priceCents = planPrices[plan_type] || 0;
-      const planName = planNames[plan_type] || plan_type;
+      const planName = planNames[plan_type] || plan_type.toUpperCase();
       const currentPeriodStart = new Date();
       const currentPeriodEnd = new Date();
       currentPeriodEnd.setDate(currentPeriodEnd.getDate() + durationDays);
