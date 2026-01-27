@@ -4,8 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Settings, Globe, Bell, Palette, Moon, Sun, Monitor } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Settings, Globe, Palette, Moon, Sun, Monitor, RefreshCw, Info } from "lucide-react";
 import { useTheme } from "next-themes";
+import { APP_VERSION, getSWVersion, forceAppUpdate } from "@/lib/appVersion";
+import { toast } from "@/hooks/use-toast";
 
 const languages = [
   { value: "pt-BR", label: "Português (Brasil)", flag: "🇧🇷" },
@@ -17,6 +20,7 @@ export default function Configuracoes() {
   const [language, setLanguage] = useState("pt-BR");
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -30,6 +34,18 @@ export default function Configuracoes() {
   const handleLanguageChange = (value: string) => {
     setLanguage(value);
     localStorage.setItem("app-language", value);
+  };
+
+  const handleForceUpdate = async () => {
+    setIsUpdating(true);
+    toast({
+      title: "Atualizando...",
+      description: "Limpando cache e recarregando o aplicativo.",
+    });
+    
+    // Small delay to show the toast
+    await new Promise(resolve => setTimeout(resolve, 500));
+    await forceAppUpdate();
   };
 
   if (!mounted) {
@@ -151,6 +167,44 @@ export default function Configuracoes() {
             </RadioGroup>
             <p className="text-xs text-muted-foreground mt-3">
               Atualmente apenas Português (Brasil) está disponível. Novos idiomas serão adicionados em breve.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Atualização e Versão */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Info className="h-5 w-5" />
+              Sobre o App
+            </CardTitle>
+            <CardDescription>
+              Versão do aplicativo e opções de atualização
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <div>
+                <p className="text-sm font-medium">Versão do App</p>
+                <p className="text-xs text-muted-foreground">v{APP_VERSION}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium">Service Worker</p>
+                <p className="text-xs text-muted-foreground">{getSWVersion()}</p>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={handleForceUpdate}
+              disabled={isUpdating}
+              variant="outline"
+              className="w-full"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isUpdating ? 'animate-spin' : ''}`} />
+              {isUpdating ? "Atualizando..." : "Forçar Atualização"}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Use esta opção se estiver enfrentando problemas de carregamento ou visualização.
             </p>
           </CardContent>
         </Card>

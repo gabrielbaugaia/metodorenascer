@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import { Flame } from "lucide-react";
+import { APP_VERSION, getSWVersion } from "@/lib/appVersion";
 export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
   return <footer ref={ref} className="py-12 bg-card border-t border-border">
       <div className="container mx-auto px-4">
@@ -22,9 +23,12 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
           
         </div>
 
-        <div className="mt-8 pt-8 border-t border-border text-center">
+        <div className="mt-8 pt-8 border-t border-border text-center space-y-2">
           <p className="text-muted-foreground text-sm">
             2024 Metodo Renascer. Todos os direitos reservados.
+          </p>
+          <p className="text-muted-foreground/60 text-xs">
+            v{APP_VERSION} • SW {getSWVersion()}
           </p>
         </div>
       </div>
