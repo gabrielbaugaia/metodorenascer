@@ -152,7 +152,7 @@ export async function generateAnamnesePdf(
     yPos += lines.length * 4 + 4;
   };
 
-  // Add image from URL
+  // Add image from URL with robust error handling
   const addImageFromUrl = async (url: string, label: string, width: number = 50) => {
     checkNewPage(80);
     doc.setTextColor(60, 60, 60);
@@ -162,11 +162,29 @@ export async function generateAnamnesePdf(
     yPos += 4;
 
     try {
-      const response = await fetch(url);
+      console.log(`[PDF] Attempting to load image: ${label}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        console.warn(`[PDF] Failed to fetch ${label}: HTTP ${response.status}`);
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("image/")) {
+        console.warn(`[PDF] Invalid content type for ${label}: ${contentType}`);
+        throw new Error(`Invalid content type: ${contentType}`);
+      }
+      
       const blob = await response.blob();
-      const base64 = await new Promise<string>((resolve) => {
+      const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("FileReader failed"));
         reader.readAsDataURL(blob);
       });
       
@@ -174,10 +192,13 @@ export async function generateAnamnesePdf(
       const height = width / aspectRatio;
       doc.addImage(base64, "JPEG", margin, yPos, width, height);
       yPos += height + 5;
+      console.log(`[PDF] Successfully added ${label}`);
     } catch (error) {
+      console.warn(`[PDF] Could not load ${label}:`, error);
       doc.setTextColor(150, 150, 150);
       doc.setFontSize(8);
-      doc.text("(Imagem não disponível)", margin, yPos);
+      doc.setFont("helvetica", "italic");
+      doc.text("(Imagem não disponível - formato não suportado ou erro de carregamento)", margin, yPos);
       yPos += 10;
     }
   };
@@ -293,14 +314,27 @@ export async function generateAnamnesePdf(
 
     const loadImage = async (url: string): Promise<string | null> => {
       try {
-        const response = await fetch(url);
+        console.log(`[PDF] Loading photo from: ${url.substring(0, 50)}...`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          console.warn(`[PDF] HTTP error loading photo: ${response.status}`);
+          return null;
+        }
+        
         const blob = await response.blob();
         return new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = () => resolve(null as unknown as string);
           reader.readAsDataURL(blob);
         });
-      } catch {
+      } catch (error) {
+        console.warn(`[PDF] Error loading photo:`, error);
         return null;
       }
     };
