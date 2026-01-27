@@ -177,7 +177,7 @@ function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     
     conteudo.treinos.forEach((treino: any, idx: number) => {
       checkNewPage(30);
-      addSubsectionTitle(`${treino.day} - ${treino.focus}${treino.duration ? ` (${treino.duration} min)` : ''}`);
+      addSubsectionTitle(`Treino ${treino.letra || treino.day || '?'} - ${treino.foco || treino.focus || ''}${treino.duration ? ` (${treino.duration} min)` : ''}`);
 
       // Tabela de exercícios
       let tableY = helpers.yPos ? helpers.yPos() : 0;
@@ -199,7 +199,7 @@ function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
       tableY += 7;
 
       // Linhas de exercícios
-      const exercises = treino.exercises || [];
+      const exercises = treino.exercicios || treino.exercises || [];
       exercises.forEach((ex: any, exIdx: number) => {
         checkNewPage(10);
         const bgColor = exIdx % 2 === 0 ? 250 : 240;
@@ -212,11 +212,11 @@ function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
         
         xPos = margin;
         const rowData = [
-          (ex.name || ex.nome)?.substring(0, 25) || "-",
-          String(ex.sets || ex.series || "-"),
-          String(ex.reps || ex.repeticoes || "-"),
-          ex.rest || ex.descanso || "-",
-          (ex.tips || ex.dicas)?.substring(0, 20) || "-"
+          (ex.nome || ex.name)?.substring(0, 25) || "-",
+          String(ex.series || ex.sets || "-"),
+          String(ex.repeticoes || ex.reps || "-"),
+          ex.descanso || ex.rest || "-",
+          (ex.dicas || ex.tips)?.substring(0, 20) || "-"
         ];
         
         rowData.forEach((cell, i) => {
