@@ -60,7 +60,8 @@ serve(async (req) => {
       .from("subscriptions")
       .select("*")
       .eq("user_id", user.id)
-      .eq("status", "active")
+      .in("status", ["active", "free", "trialing"])
+      .eq("access_blocked", false)
       .order("current_period_end", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -72,14 +73,35 @@ serve(async (req) => {
     if (localSub && (!localSub.current_period_end || new Date(localSub.current_period_end) > new Date())) {
       logStep("Active local subscription found", {
         plan_type: localSub.plan_type,
+        status: localSub.status,
         ends_at: localSub.current_period_end,
       });
 
+      // For free/gratuito plans, return immediately without checking Stripe
+      const isFreePlan = localSub.plan_type === "gratuito" || 
+                         localSub.status === "free" || 
+                         (localSub.stripe_customer_id && localSub.stripe_customer_id.startsWith("invite_"));
+
+      if (isFreePlan) {
+        logStep("Free plan detected, skipping Stripe check");
+        return new Response(
+          JSON.stringify({
+            subscribed: true,
+            subscription_end: localSub.current_period_end,
+            product_id: null,
+            plan_type: localSub.plan_type,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
+        );
+      }
+
+      // For paid plans with valid local subscription, still return success
       return new Response(
         JSON.stringify({
           subscribed: true,
           subscription_end: localSub.current_period_end,
           product_id: null,
+          plan_type: localSub.plan_type,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
       );
