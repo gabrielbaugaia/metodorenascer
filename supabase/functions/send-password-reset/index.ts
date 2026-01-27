@@ -104,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
       type: 'recovery',
       email: email,
       options: {
-        redirectTo: 'https://metodorenascer.lovable.app/redefinir-senha',
+        redirectTo: 'https://metodo.renascerapp.com.br/redefinir-senha',
       }
     });
 
