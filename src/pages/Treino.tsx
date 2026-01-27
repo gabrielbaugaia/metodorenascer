@@ -162,9 +162,9 @@ export default function Treino() {
   }, [protocol]);
 
   const completedWorkoutsToday = todayCompleted ? 1 : 0;
-  const totalCaloriesFromTracking = getTotalCalories();
-  const weeklyCount = getWeeklyCount();
-  const totalCount = getTotalCount();
+  const totalCaloriesFromTracking = loading ? 0 : getTotalCalories();
+  const weeklyCount = loading ? 0 : getWeeklyCount();
+  const totalCount = loading ? 0 : getTotalCount();
 
   const handleCompleteWorkout = async (workout: Workout) => {
     console.log("[Treino] Completing workout:", workout.focus);
