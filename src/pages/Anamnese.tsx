@@ -167,11 +167,57 @@ export default function Anamnese() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Validar horários da rotina
+  const validateSchedule = (): boolean => {
+    const { horario_acorda, horario_treino, horario_dorme } = formData;
+    
+    if (!horario_acorda || !horario_treino || !horario_dorme) {
+      return true; // Se não preencheu, usa defaults
+    }
+    
+    const toMinutes = (time: string): number => {
+      const [h, m] = time.split(":").map(Number);
+      return h * 60 + (m || 0);
+    };
+    
+    const acordaMin = toMinutes(horario_acorda);
+    const treinoMin = toMinutes(horario_treino);
+    const dormeMin = toMinutes(horario_dorme);
+    
+    // Verificar sequência lógica: Acordar < Dormir
+    if (acordaMin >= dormeMin) {
+      toast.error("Horário de acordar deve ser antes do horário de dormir");
+      return false;
+    }
+    
+    // Verificar que há pelo menos 8 horas entre acordar e dormir
+    if (dormeMin - acordaMin < 480) { // 8 horas mínimo
+      toast.error("O período entre acordar e dormir deve ser de pelo menos 8 horas");
+      return false;
+    }
+    
+    // Log para debugging
+    console.log("[ANAMNESE] Schedule validation passed:", {
+      acordaMin, treinoMin, dormeMin,
+      primeiraRefeicao: acordaMin + 30,
+      preTreino: treinoMin - 90,
+      posTreino: treinoMin + 90,
+      ultimaRefeicao: dormeMin - 60
+    });
+    
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!user) {
       toast.error("Usuário não autenticado");
+      return;
+    }
+
+    // Validar horários antes de prosseguir
+    if (!validateSchedule()) {
       return;
     }
 

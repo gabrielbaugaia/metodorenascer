@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -21,6 +22,8 @@ interface AutomatedMessage {
   target_audience: TargetAudience;
   scheduled_at: string | null;
   schedule_recurring: string | null;
+  min_days_since_signup: number | null;
+  cooldown_days: number | null;
 }
 
 interface Profile {
@@ -49,12 +52,12 @@ serve(async (req) => {
 
     const { messageId, sendNow } = await req.json().catch(() => ({}));
 
-    console.log("Processing automated messages", { messageId, sendNow });
+    console.log("[process-automated-messages] Processing", { messageId, sendNow });
 
-    // Get messages to process
+    // Get messages to process (including new columns)
     let messagesQuery = supabase
       .from("automated_messages")
-      .select("*")
+      .select("*, min_days_since_signup, cooldown_days")
       .eq("is_active", true);
 
     if (messageId) {
@@ -69,25 +72,27 @@ serve(async (req) => {
     const { data: messages, error: messagesError } = await messagesQuery;
     
     if (messagesError) {
-      console.error("Error fetching messages:", messagesError);
+      console.error("[process-automated-messages] Error fetching messages:", messagesError);
       throw messagesError;
     }
 
     if (!messages || messages.length === 0) {
-      console.log("No messages to process");
+      console.log("[process-automated-messages] No messages to process");
       return new Response(JSON.stringify({ processed: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     let totalSent = 0;
-    const results: { messageId: string; sent: number; errors: string[] }[] = [];
+    let totalSkipped = 0;
+    const results: { messageId: string; sent: number; skipped: number; errors: string[] }[] = [];
 
     for (const message of messages as AutomatedMessage[]) {
-      console.log(`Processing message: ${message.message_title}`);
+      console.log(`[process-automated-messages] Processing message: ${message.message_title} (id: ${message.id})`);
       
       const audience = message.target_audience || { type: "all" };
       const errors: string[] = [];
+      let skippedCount = 0;
 
       // Build query based on audience
       let profilesQuery = supabase.from("profiles").select("*");
@@ -140,10 +145,10 @@ serve(async (req) => {
 
         if (subscriptions) {
           const freeUserIds = subscriptions
-            .filter((s: { plan_type: string | null }) => s.plan_type === "free" || !s.plan_type)
+            .filter((s: { plan_type: string | null }) => s.plan_type === "free" || s.plan_type === "gratuito" || !s.plan_type)
             .map((s: { user_id: string }) => s.user_id);
           const paidUserIds = subscriptions
-            .filter((s: { plan_type: string | null }) => s.plan_type && s.plan_type !== "free")
+            .filter((s: { plan_type: string | null }) => s.plan_type && s.plan_type !== "free" && s.plan_type !== "gratuito")
             .map((s: { user_id: string }) => s.user_id);
 
           if (audience.plan_filter === "free") {
@@ -157,24 +162,75 @@ serve(async (req) => {
       const { data: profiles, error: profilesError } = await profilesQuery;
 
       if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
+        console.error("[process-automated-messages] Error fetching profiles:", profilesError);
         errors.push(`Profile fetch error: ${profilesError.message}`);
         continue;
       }
 
       if (!profiles || profiles.length === 0) {
-        console.log(`No matching profiles for message: ${message.message_title}`);
-        results.push({ messageId: message.id, sent: 0, errors: ["No matching profiles"] });
+        console.log(`[process-automated-messages] No matching profiles for message: ${message.message_title}`);
+        results.push({ messageId: message.id, sent: 0, skipped: 0, errors: ["No matching profiles"] });
         continue;
       }
 
-      console.log(`Found ${profiles.length} profiles for message: ${message.message_title}`);
+      console.log(`[process-automated-messages] Found ${profiles.length} profiles for message: ${message.message_title}`);
 
       // Send to each profile
       for (const profile of profiles as Profile[]) {
         if (!profile.email) {
           errors.push(`No email for user ${profile.id}`);
           continue;
+        }
+
+        // === CHECK 1: min_days_since_signup ===
+        const minDays = message.min_days_since_signup || 0;
+        if (minDays > 0 && profile.created_at) {
+          const daysSinceSignup = Math.floor(
+            (Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          
+          if (daysSinceSignup < minDays) {
+            console.log(`[process-automated-messages] Skipping ${profile.email}: only ${daysSinceSignup} days since signup, needs ${minDays}`);
+            skippedCount++;
+            continue;
+          }
+        }
+
+        // === CHECK 2: cooldown_days ===
+        const cooldownDays = message.cooldown_days || 0;
+        if (cooldownDays > 0) {
+          const { data: lastSend } = await supabase
+            .from("message_sends")
+            .select("sent_at")
+            .eq("message_id", message.id)
+            .eq("user_id", profile.id)
+            .order("sent_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          if (lastSend) {
+            const daysSinceLastSend = Math.floor(
+              (Date.now() - new Date(lastSend.sent_at).getTime()) / (1000 * 60 * 60 * 24)
+            );
+            
+            if (daysSinceLastSend < cooldownDays) {
+              console.log(`[process-automated-messages] Skipping ${profile.email}: cooldown active (${daysSinceLastSend}/${cooldownDays} days)`);
+              skippedCount++;
+              continue;
+            }
+          }
+        }
+
+        // === CHECK 3: Re-verify is_active before sending (prevent race condition) ===
+        const { data: currentMessage } = await supabase
+          .from("automated_messages")
+          .select("is_active")
+          .eq("id", message.id)
+          .single();
+
+        if (!currentMessage?.is_active) {
+          console.log(`[process-automated-messages] Message ${message.id} was deactivated before send`);
+          break; // Stop processing this message entirely
         }
 
         try {
@@ -216,6 +272,7 @@ serve(async (req) => {
           }
 
           totalSent++;
+          console.log(`[process-automated-messages] Sent to ${profile.email}`);
         } catch (emailError) {
           const errorMessage = emailError instanceof Error ? emailError.message : "Unknown error";
           errors.push(`Email error for ${profile.email}: ${errorMessage}`);
@@ -228,7 +285,8 @@ serve(async (req) => {
         }
       }
 
-      results.push({ messageId: message.id, sent: totalSent, errors });
+      totalSkipped += skippedCount;
+      results.push({ messageId: message.id, sent: totalSent, skipped: skippedCount, errors });
 
       // Update scheduled_at for recurring messages or clear for one-time
       if (message.schedule_recurring && message.schedule_recurring !== "once") {
@@ -257,13 +315,13 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Processed ${messages.length} messages, sent ${totalSent} emails`);
+    console.log(`[process-automated-messages] Completed: sent ${totalSent}, skipped ${totalSkipped}`);
 
-    return new Response(JSON.stringify({ processed: messages.length, totalSent, results }), {
+    return new Response(JSON.stringify({ processed: messages.length, totalSent, totalSkipped, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error processing messages:", error);
+    console.error("[process-automated-messages] Error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -8,6 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Table,
   TableBody,
@@ -40,11 +44,17 @@ import {
   Play,
   FileText,
   Loader2,
-  Download
+  Download,
+  Filter,
+  X,
+  CalendarIcon,
+  ChevronDown
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { PLAN_TYPES, PLAN_NAMES } from "@/lib/planConstants";
 
 interface Client {
   id: string;
@@ -55,12 +65,34 @@ interface Client {
   weight: number | null;
   goals: string | null;
   age: number | null;
+  sexo: string | null;
+  objetivo_principal: string | null;
   subscription?: {
     status: string;
     plan_type: string;
     current_period_end: string;
   } | null;
 }
+
+interface Filters {
+  planType: string;
+  startDateFrom: Date | null;
+  startDateTo: Date | null;
+  endDateFrom: Date | null;
+  endDateTo: Date | null;
+  sex: string;
+  goal: string;
+}
+
+const initialFilters: Filters = {
+  planType: "all",
+  startDateFrom: null,
+  startDateTo: null,
+  endDateFrom: null,
+  endDateTo: null,
+  sex: "all",
+  goal: "all"
+};
 
 export default function AdminClientes() {
   const { user, loading: authLoading } = useAuth();
@@ -69,6 +101,8 @@ export default function AdminClientes() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<Filters>(initialFilters);
+  const [showFilters, setShowFilters] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     action: string;
@@ -94,7 +128,7 @@ export default function AdminClientes() {
     try {
       const { data: profiles, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("*, sexo, objetivo_principal")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -106,10 +140,10 @@ export default function AdminClientes() {
             .from("subscriptions")
             .select("status, plan_type, current_period_end")
             .eq("user_id", profile.id)
-            .in("status", ["active", "pending_payment"])
+            .in("status", ["active", "pending_payment", "free"])
             .order("created_at", { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           return { ...profile, subscription: sub };
         })
@@ -153,19 +187,61 @@ export default function AdminClientes() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const filteredClients = clients.filter(
-    (client) =>
-      client.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const clearFilters = () => {
+    setFilters(initialFilters);
+  };
+
+  const hasActiveFilters = () => {
+    return filters.planType !== "all" ||
+      filters.startDateFrom !== null ||
+      filters.startDateTo !== null ||
+      filters.endDateFrom !== null ||
+      filters.endDateTo !== null ||
+      filters.sex !== "all" ||
+      filters.goal !== "all";
+  };
+
+  const filteredClients = clients.filter((client) => {
+    // Busca por nome/email
+    const matchesSearch = client.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filtro por plano
+    const matchesPlan = filters.planType === "all" || 
+      client.subscription?.plan_type === filters.planType;
+    
+    // Filtro por data de entrada
+    const createdAt = new Date(client.created_at);
+    const matchesStartDate = (!filters.startDateFrom || createdAt >= filters.startDateFrom) &&
+      (!filters.startDateTo || createdAt <= filters.startDateTo);
+    
+    // Filtro por data de término
+    const endDate = client.subscription?.current_period_end 
+      ? new Date(client.subscription.current_period_end) 
+      : null;
+    const matchesEndDate = (!filters.endDateFrom || (endDate && endDate >= filters.endDateFrom)) &&
+      (!filters.endDateTo || (endDate && endDate <= filters.endDateTo));
+    
+    // Filtro por sexo
+    const matchesSex = filters.sex === "all" || 
+      (client.sexo?.toLowerCase() === filters.sex.toLowerCase());
+    
+    // Filtro por objetivo
+    const matchesGoal = filters.goal === "all" || 
+      (client.objetivo_principal?.toLowerCase().includes(filters.goal.toLowerCase()));
+    
+    return matchesSearch && matchesPlan && matchesStartDate && matchesEndDate && matchesSex && matchesGoal;
+  });
 
   const exportCSV = () => {
-    const headers = ["Nome", "Email", "Status", "Plano", "Data Cadastro"];
+    const headers = ["Nome", "Email", "Status", "Plano", "Sexo", "Objetivo", "Data Cadastro"];
     const rows = filteredClients.map((c) => [
       c.full_name,
       c.email,
       c.client_status || "active",
       c.subscription?.plan_type || "Sem plano",
+      c.sexo || "N/A",
+      c.objetivo_principal || "N/A",
       format(new Date(c.created_at), "dd/MM/yyyy"),
     ]);
 
@@ -214,10 +290,28 @@ export default function AdminClientes() {
         <Card variant="glass">
           <CardHeader className="pb-4">
             <div className="flex flex-col gap-4">
-              <div>
-                <CardTitle className="text-lg">Lista de Clientes</CardTitle>
-                <CardDescription>{filteredClients.length} clientes encontrados</CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle className="text-lg">Lista de Clientes</CardTitle>
+                  <CardDescription>{filteredClients.length} clientes encontrados</CardDescription>
+                </div>
+                <Button 
+                  variant={hasActiveFilters() ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="w-full sm:w-auto"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filtros
+                  {hasActiveFilters() && (
+                    <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      !
+                    </Badge>
+                  )}
+                  <ChevronDown className={cn("h-4 w-4 ml-2 transition-transform", showFilters && "rotate-180")} />
+                </Button>
               </div>
+              
               <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -227,6 +321,170 @@ export default function AdminClientes() {
                   className="pl-10"
                 />
               </div>
+
+              {/* Filtros Avançados */}
+              <Collapsible open={showFilters} onOpenChange={setShowFilters}>
+                <CollapsibleContent>
+                  <div className="border border-border rounded-lg p-4 space-y-4 bg-card/50">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-sm">Filtros Avançados</h4>
+                      {hasActiveFilters() && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters}>
+                          <X className="h-4 w-4 mr-1" />
+                          Limpar
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Tipo de Plano */}
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Tipo de Plano</label>
+                        <Select 
+                          value={filters.planType} 
+                          onValueChange={(value) => setFilters(prev => ({ ...prev, planType: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Todos" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os planos</SelectItem>
+                            <SelectItem value={PLAN_TYPES.ELITE_FUNDADOR}>{PLAN_NAMES[PLAN_TYPES.ELITE_FUNDADOR]}</SelectItem>
+                            <SelectItem value={PLAN_TYPES.GRATUITO}>{PLAN_NAMES[PLAN_TYPES.GRATUITO]}</SelectItem>
+                            <SelectItem value={PLAN_TYPES.MENSAL}>{PLAN_NAMES[PLAN_TYPES.MENSAL]}</SelectItem>
+                            <SelectItem value={PLAN_TYPES.TRIMESTRAL}>{PLAN_NAMES[PLAN_TYPES.TRIMESTRAL]}</SelectItem>
+                            <SelectItem value={PLAN_TYPES.SEMESTRAL}>{PLAN_NAMES[PLAN_TYPES.SEMESTRAL]}</SelectItem>
+                            <SelectItem value={PLAN_TYPES.ANUAL}>{PLAN_NAMES[PLAN_TYPES.ANUAL]}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Sexo */}
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Sexo</label>
+                        <Select 
+                          value={filters.sex} 
+                          onValueChange={(value) => setFilters(prev => ({ ...prev, sex: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Todos" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos</SelectItem>
+                            <SelectItem value="masculino">Masculino</SelectItem>
+                            <SelectItem value="feminino">Feminino</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Objetivo */}
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Objetivo</label>
+                        <Select 
+                          value={filters.goal} 
+                          onValueChange={(value) => setFilters(prev => ({ ...prev, goal: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Todos" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos os objetivos</SelectItem>
+                            <SelectItem value="emagrecimento">Emagrecimento</SelectItem>
+                            <SelectItem value="massa">Ganho de Massa</SelectItem>
+                            <SelectItem value="definição">Definição Muscular</SelectItem>
+                            <SelectItem value="condicionamento">Condicionamento</SelectItem>
+                            <SelectItem value="saúde">Saúde e Bem-estar</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Data de Entrada - De */}
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Cadastro - De</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !filters.startDateFrom && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {filters.startDateFrom ? format(filters.startDateFrom, "dd/MM/yyyy") : "Selecionar"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={filters.startDateFrom || undefined}
+                              onSelect={(date) => setFilters(prev => ({ ...prev, startDateFrom: date || null }))}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      {/* Data de Entrada - Até */}
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Cadastro - Até</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !filters.startDateTo && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {filters.startDateTo ? format(filters.startDateTo, "dd/MM/yyyy") : "Selecionar"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={filters.startDateTo || undefined}
+                              onSelect={(date) => setFilters(prev => ({ ...prev, startDateTo: date || null }))}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      {/* Data de Término - De */}
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Término Plano - De</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !filters.endDateFrom && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {filters.endDateFrom ? format(filters.endDateFrom, "dd/MM/yyyy") : "Selecionar"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={filters.endDateFrom || undefined}
+                              onSelect={(date) => setFilters(prev => ({ ...prev, endDateFrom: date || null }))}
+                              initialFocus
+                              className="pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </CardHeader>
           <CardContent className="px-0 sm:px-6">
@@ -247,6 +505,13 @@ export default function AdminClientes() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{client.email}</p>
+                    <div className="flex gap-1 mt-1">
+                      {client.subscription?.plan_type && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {PLAN_NAMES[client.subscription.plan_type] || client.subscription.plan_type}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -328,6 +593,7 @@ export default function AdminClientes() {
                     <TableHead>Cliente</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="hidden md:table-cell">Plano</TableHead>
+                    <TableHead className="hidden lg:table-cell">Objetivo</TableHead>
                     <TableHead className="hidden lg:table-cell">Cadastro</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -346,7 +612,9 @@ export default function AdminClientes() {
                         <div className="flex flex-col gap-1">
                           {client.subscription ? (
                             <>
-                              <Badge variant="outline" className="text-xs w-fit">{client.subscription.plan_type}</Badge>
+                              <Badge variant="outline" className="text-xs w-fit">
+                                {PLAN_NAMES[client.subscription.plan_type] || client.subscription.plan_type}
+                              </Badge>
                               {client.subscription.status === "pending_payment" && (
                                 <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-600 border-amber-500/30 w-fit">
                                   Aguardando Pagamento
@@ -357,6 +625,9 @@ export default function AdminClientes() {
                             <span className="text-muted-foreground text-xs">Sem plano</span>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-xs">
+                        {client.objetivo_principal || "-"}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-xs">
                         {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
@@ -430,7 +701,7 @@ export default function AdminClientes() {
                   ))}
                   {filteredClients.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         Nenhum cliente encontrado
                       </TableCell>
                     </TableRow>

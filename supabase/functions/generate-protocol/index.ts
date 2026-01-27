@@ -95,6 +95,39 @@ serve(async (req) => {
         userContext.refeicoes_por_dia = userContext?.refeicoes_por_dia || "5";
       }
       
+      // ==== VALIDAÇÃO DE COERÊNCIA DOS HORÁRIOS ====
+      const toMinutes = (time: string): number => {
+        const [h, m] = time.split(":").map(Number);
+        return h * 60 + (m || 0);
+      };
+      
+      const acordaMin = toMinutes(userContext.horario_acorda);
+      const treinoMin = toMinutes(userContext.horario_treino);
+      const dormeMin = toMinutes(userContext.horario_dorme);
+      
+      console.log(`[generate-protocol] Schedule validation:`, {
+        acordaMin, treinoMin, dormeMin,
+        primeiraRefeicao: acordaMin + 30,
+        preTreino: treinoMin - 90,
+        posTreino: treinoMin + 90,
+        ultimaRefeicao: dormeMin - 60
+      });
+      
+      // Verificar que primeira refeição não é antes de acordar
+      if (acordaMin + 30 > treinoMin - 90 && treinoMin > acordaMin) {
+        console.warn("[generate-protocol] Warning: Breakfast may overlap with pre-workout - training very early");
+      }
+      
+      // Verificar que há pelo menos 12h entre acordar e dormir
+      if (dormeMin - acordaMin < 720) {
+        console.warn("[generate-protocol] Warning: Very short waking window (less than 12h)");
+      }
+      
+      // Verificar se pós-treino não ultrapassa horário de dormir
+      if (treinoMin + 90 > dormeMin) {
+        console.warn("[generate-protocol] Warning: Post-workout meal may be too close to bedtime");
+      }
+      
       console.log(`[generate-protocol] Final routine for nutrition generation:`, {
         horario_acorda: userContext.horario_acorda,
         horario_treino: userContext.horario_treino,
