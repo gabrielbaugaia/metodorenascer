@@ -28,12 +28,22 @@ export function useWorkoutTracking() {
       return;
     }
 
+    const startTime = performance.now();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
     try {
+      console.log("[WorkoutTracking] Fetching completions for user:", user.id);
       const { data, error } = await supabase
         .from("workout_completions")
         .select("*")
         .eq("user_id", user.id)
-        .order("workout_date", { ascending: false });
+        .order("workout_date", { ascending: false })
+        .abortSignal(controller.signal);
+
+      clearTimeout(timeoutId);
+      const elapsed = Math.round(performance.now() - startTime);
+      console.log(`[WorkoutTracking] Fetch completed in ${elapsed}ms, records: ${data?.length || 0}`);
 
       if (error) throw error;
 
@@ -43,8 +53,14 @@ export function useWorkoutTracking() {
       const today = new Date().toISOString().split("T")[0];
       const todayWorkout = data?.find((c) => c.workout_date === today);
       setTodayCompleted(!!todayWorkout);
-    } catch (error) {
-      console.error("Error fetching workout completions:", error);
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        console.error("[WorkoutTracking] Timeout exceeded");
+      } else {
+        console.error("[WorkoutTracking] Error fetching completions:", error);
+      }
+      setCompletions([]); // Fallback seguro
     } finally {
       setLoading(false);
     }
