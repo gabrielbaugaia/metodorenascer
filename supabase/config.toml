@@ -101,3 +101,6 @@ verify_jwt = true
 
 [functions.clean-youtube-urls]
 verify_jwt = true
+
+[functions.cleanup-old-conversations]
+verify_jwt = false
