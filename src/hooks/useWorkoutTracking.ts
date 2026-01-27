@@ -22,7 +22,11 @@ export function useWorkoutTracking() {
   const [todayCompleted, setTodayCompleted] = useState(false);
 
   const fetchCompletions = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setCompletions([]);
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -270,28 +274,29 @@ export function useWorkoutTracking() {
   };
 
   const getWeeklyCount = () => {
+    if (!completions || !Array.isArray(completions)) return 0;
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    
     return completions.filter((c) => new Date(c.workout_date) >= oneWeekAgo).length;
   };
 
   const getMonthlyCount = () => {
+    if (!completions || !Array.isArray(completions)) return 0;
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    
     return completions.filter((c) => new Date(c.workout_date) >= oneMonthAgo).length;
   };
 
-  const getTotalCount = () => completions.length;
+  const getTotalCount = () => completions?.length ?? 0;
 
   const getTotalCalories = () => {
+    if (!completions || !Array.isArray(completions)) return 0;
     return completions.reduce((acc, c) => acc + (c.calories_burned || 0), 0);
   };
 
   // Calculate current streak from completions
   const getCurrentStreak = useCallback(() => {
-    if (completions.length === 0) return 0;
+    if (!completions || !Array.isArray(completions) || completions.length === 0) return 0;
     
     let streak = 0;
     const today = new Date();
