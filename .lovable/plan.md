@@ -1,144 +1,74 @@
 
-# Plano: Corrigir Download de Anamnese e Campos Faltantes no Admin
+# Plano: Correção do Bug de Acesso aos Protocolos de Clientes
 
-## Problemas Identificados
+## Diagnóstico do Problema
 
-### 1. Erro TIFF no PDF
-O erro "addImage does not support files of type 'TIFF'" indica que uma foto foi enviada em formato TIFF, que nao e suportado pelo jsPDF.
+Os clientes **Vinicius** e **bau@gabrielbau.com.br** não conseguem acessar seus protocolos de treino porque:
 
-**Solucao**: Detectar e ignorar fotos em formato incompativel, exibindo mensagem amigavel no PDF.
+1. **A Edge Function `check-subscription` não reconhece o status "free"**: A query busca apenas por `status = "active"`, mas assinaturas gratuitas podem ter `status = "free"` ou `plan_type = "gratuito"`.
 
-### 2. Campos de Horario Faltando
-Os campos `horario_treino`, `horario_acorda` e `horario_dorme`:
-- Existem no banco de dados
-- Sao preenchidos na anamnese do cliente
-- NAO aparecem no painel admin
-- NAO sao incluidos no PDF
+2. **A lógica de validação local está incompleta**: Mesmo encontrando a assinatura no banco local, a função não trata corretamente os planos gratuitos/free.
 
----
+3. **O fluxo está indo ao Stripe desnecessariamente**: Para planos gratuitos, não deveria consultar o Stripe, pois não há cliente real.
 
-## Arquivos a Modificar
+## Dados Confirmados no Banco
 
-| Arquivo | Alteracoes |
-|---------|-----------|
-| `src/pages/admin/AdminClienteDetalhes.tsx` | Adicionar campos de horario na interface Profile e na UI |
-| `src/lib/generateAnamnesePdf.ts` | Adicionar campos de horario e tratar erro TIFF |
+| Cliente | Status | Plan Type | Stripe ID |
+|---------|--------|-----------|-----------|
+| bau@gabrielbau.com.br | active | gratuito | invite_... |
+| vinicius.hs@outlook.com | active | embaixador | cus_Trkk... |
 
----
+Os dois têm assinaturas válidas e ativas, mas a Edge Function está retornando `subscribed: false`.
 
-## Alteracoes Detalhadas
+## Plano de Correção
 
-### 1. AdminClienteDetalhes.tsx
+### 1. Corrigir a Edge Function `check-subscription`
 
-#### 1.1 Adicionar campos na interface Profile (linha 87)
+Atualizar a query de assinatura local para incluir todos os status válidos:
 
-```typescript
-interface Profile {
-  // ... campos existentes ...
-  data_nascimento: string | null;
-  // NOVOS CAMPOS:
-  horario_treino: string | null;
-  horario_acorda: string | null;
-  horario_dorme: string | null;
-}
+```text
+Alterar a linha que busca status = "active" para:
+.in("status", ["active", "free"])
 ```
 
-#### 1.2 Adicionar secao "Rotina" no formulario (apos "Objetivo e Treino", antes de "Saude")
+E adicionar verificação para planos gratuitos não irem ao Stripe:
 
-Nova Card com os campos:
-- Horario de Treino (input type="time")
-- Horario que Acorda (input type="time")
-- Horario que Dorme (input type="time")
-
-#### 1.3 Incluir campos no handleSave (linha 504-543)
-
-Adicionar `horario_treino`, `horario_acorda`, `horario_dorme` no update do Supabase.
-
----
-
-### 2. generateAnamnesePdf.ts
-
-#### 2.1 Adicionar campos de horario na interface Profile
-
-```typescript
-interface Profile {
-  // ... campos existentes ...
-  horario_treino?: string | null;
-  horario_acorda?: string | null;
-  horario_dorme?: string | null;
-}
+```text
+Se plan_type = "gratuito" ou status = "free":
+  - Retornar subscribed: true imediatamente
+  - Não consultar Stripe
 ```
 
-#### 2.2 Adicionar secao "Rotina" no PDF (apos "Historico de Treino")
+### 2. Arquivos a Modificar
 
-```typescript
-addSectionTitle("Rotina");
-addField("Horario de Treino", profile.horario_treino);
-addField("Horario que Acorda", profile.horario_acorda);
-addField("Horario que Dorme", profile.horario_dorme);
-```
+**`supabase/functions/check-subscription/index.ts`**
+- Alterar query na linha ~60-66 para incluir status "free"
+- Adicionar lógica para skip Stripe em planos gratuitos
+- Melhorar logs para debug
 
-#### 2.3 Tratar erro TIFF no loadImage
+### 3. Também Atualizar `SubscriptionGuard.tsx`
 
-Modificar a funcao `loadImage` para detectar e rejeitar formatos nao suportados antes de tentar adicionar a imagem:
+Garantir que a verificação local também considere status "free":
+- Linha ~72-75: adicionar "free" na verificação de status ativo
 
-```typescript
-const loadImage = async (url: string): Promise<string | null> => {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    
-    const contentType = response.headers.get("content-type") || "";
-    
-    // Rejeitar formatos nao suportados pelo jsPDF
-    if (contentType.includes("tiff") || contentType.includes("image/tiff")) {
-      console.warn("[PDF] Formato TIFF nao suportado, ignorando foto");
-      return null;
-    }
-    
-    const blob = await response.blob();
-    // ... resto da logica
-  } catch (error) {
-    return null;
-  }
-};
-```
+### 4. Deploy e Teste
 
----
+Após as correções:
+1. Deploy automático da Edge Function
+2. Testar com as contas dos clientes afetados
+3. Confirmar que o protocolo de treino aparece
 
-## Resumo das Alteracoes
+## Benefícios
 
-| Arquivo | Tipo | Descricao |
-|---------|------|-----------|
-| `AdminClienteDetalhes.tsx` | Interface + UI + Save | Adicionar 3 campos de horario |
-| `generateAnamnesePdf.ts` | Interface + Secao + Tratamento TIFF | Adicionar rotina e corrigir erro |
+- Clientes com planos gratuitos terão acesso correto
+- Menos chamadas desnecessárias ao Stripe (performance)
+- Logs melhorados para debug futuro
 
----
+## Resumo Técnico
 
-## Campos da Anamnese - Validacao de Obrigatoriedade
+O bug ocorre porque a Edge Function `check-subscription` não está tratando corretamente os planos gratuitos criados pelo admin. A query só busca `status = "active"` e depois vai ao Stripe, que obviamente não encontra nenhum cliente para emails de planos gratuitos, retornando `subscribed: false` e bloqueando o acesso.
 
-Os seguintes campos sao **obrigatorios** na anamnese (ja validados em `Anamnese.tsx`):
-- Data de nascimento
-- Peso
-- Altura
-- Objetivo principal
-- Historico de treino (ja treinou antes)
-- Dias disponiveis
-- Nivel de condicionamento
-- Horario de treino
-
-Os seguintes campos sao **opcionais**:
-- Fotos corporais (frente, lado, costas)
-- Observacoes adicionais
-
-Esta validacao ja esta correta no codigo atual.
-
----
-
-## Resultado Esperado
-
-Apos implementacao:
-1. O admin vera os campos de horario (treino, acorda, dorme) na pagina de detalhes do cliente
-2. O PDF da anamnese incluira a secao "Rotina" com os horarios
-3. Fotos em formato TIFF serao ignoradas no PDF com mensagem amigavel
-4. O PDF sera gerado mesmo quando houver fotos incompativeis
+A solução é:
+1. Incluir status "free" na query local
+2. Para planos gratuitos, retornar imediatamente sem consultar Stripe
+3. Atualizar o SubscriptionGuard no frontend para consistência
