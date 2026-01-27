@@ -1,6 +1,6 @@
 // Service Worker para Push Notifications e Cache
-// v4: evita servir bundles JS/CSS antigos (causa comum de tela preta após update)
-const CACHE_NAME = 'renascer-cache-v4';
+// v5: fix tela preta - força update imediato e notifica clientes
+const CACHE_NAME = 'renascer-cache-v5';
 const STATIC_ASSETS = [
   '/',
   '/favicon.ico'
@@ -8,17 +8,18 @@ const STATIC_ASSETS = [
 
 // Cache static assets on install
 self.addEventListener('install', function(event) {
-  console.log('[SW] Instalado');
+  console.log('[SW] Instalando v5');
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(STATIC_ASSETS);
     })
   );
+  // Force immediate activation
   self.skipWaiting();
 });
 
 self.addEventListener('activate', function(event) {
-  console.log('[SW] Ativado');
+  console.log('[SW] Ativando v5 - limpando caches antigos');
   event.waitUntil(
     caches.keys().then(function(cacheNames) {
       return Promise.all(
@@ -27,11 +28,19 @@ self.addEventListener('activate', function(event) {
             return name !== CACHE_NAME;
           })
           .map(function(name) {
+            console.log('[SW] Deletando cache antigo:', name);
             return caches.delete(name);
           })
       );
     }).then(function() {
       return clients.claim();
+    }).then(function() {
+      // Notify all clients to reload
+      return clients.matchAll({ type: 'window' }).then(function(windowClients) {
+        windowClients.forEach(function(client) {
+          client.postMessage({ type: 'SW_UPDATED', version: 'v5' });
+        });
+      });
     })
   );
 });

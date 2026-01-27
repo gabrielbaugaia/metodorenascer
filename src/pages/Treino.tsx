@@ -70,6 +70,25 @@ export default function Treino() {
   const currentStreak = getCurrentStreak();
   console.log("[Treino] Current streak:", currentStreak);
   
+  // Telemetry helper
+  const logTrace = async (outcome: string, details: Record<string, unknown> = {}) => {
+    if (!user) return;
+    try {
+      await supabase.from("events").insert({
+        user_id: user.id,
+        event_name: "treino_page_trace",
+        page_name: "/treino",
+        metadata: {
+          outcome,
+          ...details,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      console.error("[Treino] Trace log failed:", e);
+    }
+  };
+
   useEffect(() => {
     console.log("[Treino] fetchProtocol useEffect triggered");
     const fetchProtocol = async () => {
@@ -104,11 +123,22 @@ export default function Treino() {
         if (fetchError) {
           console.error("[Treino] Error fetching protocol:", fetchError);
           setError("Erro ao carregar treino. Tente novamente.");
+          logTrace("fetch_error", { error: fetchError.message, elapsed_ms: elapsed });
         } else if (data) {
           console.log("[Treino] Protocol fetched successfully");
+          const conteudo = data.conteudo as Record<string, unknown>;
+          const treinosLen = Array.isArray(conteudo?.treinos) ? conteudo.treinos.length : 0;
+          const semanasLen = Array.isArray(conteudo?.semanas) ? conteudo.semanas.length : 0;
+          logTrace("fetch_success", { 
+            elapsed_ms: elapsed, 
+            protocol_id: data.id,
+            treinos_len: treinosLen,
+            semanas_len: semanasLen,
+          });
           setProtocol(data as Protocol);
         } else {
           console.log("[Treino] No protocol found for user");
+          logTrace("no_protocol", { elapsed_ms: elapsed });
         }
       } catch (err: any) {
         clearTimeout(timeoutId);
@@ -116,8 +146,10 @@ export default function Treino() {
         
         if (err.name === 'AbortError') {
           setError("Tempo esgotado. Verifique sua conexão.");
+          logTrace("timeout", {});
         } else {
           setError("Erro ao carregar treino. Tente novamente.");
+          logTrace("exception", { error: err.message });
         }
       } finally {
         console.log("[Treino] Setting loading to false");
@@ -133,56 +165,58 @@ export default function Treino() {
 
     const conteudo: any = protocol.conteudo;
 
+    // Helper: normalize exercise fields (accept multiple field names)
+    const normalizeExercise = (ex: any): Exercise => ({
+      name: ex.nome || ex.name || "Exercício",
+      sets: ex.series ?? ex.sets ?? 3,
+      reps: ex.repeticoes || ex.reps || "12",
+      rest: ex.descanso || ex.rest || "60s",
+      videoUrl: ex.video_url || ex.videoUrl || undefined,
+      tips: ex.dicas || ex.tips || undefined,
+      completed: false,
+    });
+
     // Novo formato: treinos com letras (A, B, C, D) - PREFERIDO
     if (Array.isArray(conteudo.treinos) && conteudo.treinos.length > 0) {
-      return conteudo.treinos.map((treino: any): Workout => ({
-        day: `Treino ${treino.letra || treino.nome || ""}`, // "Treino A", "Treino B"
-        focus: treino.foco || treino.nome || "",
-        duration: String(treino.duracao_minutos || 45),
-        calories: treino.calorias_estimadas || 0,
-        completed: false,
-        exercises: Array.isArray(treino.exercicios) ? treino.exercicios.map(
-          (ex: any): Exercise => ({
-            name: ex.nome,
-            sets: ex.series,
-            reps: ex.repeticoes,
-            rest: ex.descanso,
-            videoUrl: ex.video_url,
-            tips: ex.dicas,
-            completed: false,
-          }),
-        ) : [],
-      }));
+      console.log("[Treino] Usando formato A/B/C/D, treinos:", conteudo.treinos.length);
+      return conteudo.treinos.map((treino: any): Workout => {
+        const exercicios = Array.isArray(treino.exercicios) ? treino.exercicios : [];
+        return {
+          day: `Treino ${treino.letra || treino.nome || ""}`, // "Treino A", "Treino B"
+          focus: treino.foco || treino.nome || "",
+          duration: String(treino.duracao_minutos || 45),
+          calories: treino.calorias_estimadas || 0,
+          completed: false,
+          exercises: exercicios.map(normalizeExercise),
+        };
+      });
     }
 
     // Formato legado: semanas com dias
     const semanas = conteudo.semanas;
-    if (!Array.isArray(semanas) || semanas.length === 0) return [];
+    if (!Array.isArray(semanas) || semanas.length === 0) {
+      console.log("[Treino] Nenhum formato válido encontrado");
+      return [];
+    }
 
+    console.log("[Treino] Usando formato legado (semanas)");
     const currentWeekNumber = conteudo.semana_atual || semanas[0].semana;
     const currentWeek =
       semanas.find((s: any) => s.semana === currentWeekNumber) || semanas[0];
 
     if (!Array.isArray(currentWeek.dias)) return [];
 
-    return currentWeek.dias.map((dia: any): Workout => ({
-      day: dia.dia,
-      focus: dia.foco,
-      duration: String(dia.duracao_minutos || dia.duracao || 45),
-      calories: dia.calorias || 0,
-      completed: false,
-      exercises: Array.isArray(dia.exercicios) ? dia.exercicios.map(
-        (ex: any): Exercise => ({
-          name: ex.nome,
-          sets: ex.series,
-          reps: ex.repeticoes,
-          rest: ex.descanso,
-          videoUrl: ex.video_url,
-          tips: ex.dicas,
-          completed: false,
-        }),
-      ) : [],
-    }));
+    return currentWeek.dias.map((dia: any): Workout => {
+      const exercicios = Array.isArray(dia.exercicios) ? dia.exercicios : [];
+      return {
+        day: dia.dia,
+        focus: dia.foco,
+        duration: String(dia.duracao_minutos || dia.duracao || 45),
+        calories: dia.calorias || 0,
+        completed: false,
+        exercises: exercicios.map(normalizeExercise),
+      };
+    });
   }, [protocol]);
 
   const completedWorkoutsToday = todayCompleted ? 1 : 0;
