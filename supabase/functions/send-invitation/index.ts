@@ -57,7 +57,7 @@ serve(async (req) => {
     }
 
     // Get request body
-    const { full_name, email, whatsapp, plan_type, requires_payment } = await req.json();
+    const { full_name, email, whatsapp, plan_type, requires_payment, free_duration_days } = await req.json();
 
     if (!full_name || !email || !plan_type) {
       return createErrorResponse(req, "Nome, email e plano são obrigatórios.", 400);
@@ -93,14 +93,14 @@ serve(async (req) => {
         .eq("id", newUser.user.id);
     }
 
-    // Plan configuration with Stripe price IDs
+    // Plan configuration with Stripe price IDs - standardized naming
     const planConfig: Record<string, { days: number; price: number; name: string; priceId?: string }> = {
-      free: { days: 365, price: 0, name: "Gratuito" },
-      elite_founder: { days: 30, price: 4990, name: "Elite Fundador", priceId: "price_1ScZqTCuFZvf5xFdZuOBMzpt" },
-      mensal: { days: 30, price: 19700, name: "Mensal", priceId: "price_1ScZrECuFZvf5xFdfS9W8kvY" },
-      trimestral: { days: 90, price: 49700, name: "Trimestral", priceId: "price_1ScZsTCuFZvf5xFdbW8kJeQF" },
-      semestral: { days: 180, price: 69700, name: "Semestral", priceId: "price_1ScZtrCuFZvf5xFd8iXDfbEp" },
-      anual: { days: 365, price: 99700, name: "Anual", priceId: "price_1ScZvCCuFZvf5xFdjrs51JQB" },
+      gratuito: { days: free_duration_days || 30, price: 0, name: "GRATUITO" },
+      elite_fundador: { days: 30, price: 4990, name: "ELITE FUNDADOR", priceId: "price_1ScZqTCuFZvf5xFdZuOBMzpt" },
+      mensal: { days: 30, price: 19700, name: "MENSAL", priceId: "price_1ScZrECuFZvf5xFdfS9W8kvY" },
+      trimestral: { days: 90, price: 49700, name: "TRIMESTRAL", priceId: "price_1ScZsTCuFZvf5xFdbW8kJeQF" },
+      semestral: { days: 180, price: 69700, name: "SEMESTRAL", priceId: "price_1ScZtrCuFZvf5xFd8iXDfbEp" },
+      anual: { days: 365, price: 99700, name: "ANUAL", priceId: "price_1ScZvCCuFZvf5xFdjrs51JQB" },
     };
 
     const plan = planConfig[plan_type] || planConfig.mensal;
@@ -110,7 +110,7 @@ serve(async (req) => {
 
     // Determine subscription status based on payment requirement
     // If requires_payment is true and plan is not free, set status to "pending_payment"
-    const shouldRequirePayment = requires_payment && plan_type !== "free";
+    const shouldRequirePayment = requires_payment && plan_type !== "gratuito";
     const subscriptionStatus = shouldRequirePayment ? "pending_payment" : "active";
 
     await supabaseAdmin.from("subscriptions").insert({

@@ -16,9 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, UserPlus, ArrowLeft, Copy, Check } from "lucide-react";
+import { Loader2, UserPlus, ArrowLeft, Copy, Check, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { PLAN_OPTIONS_ADMIN, FREE_DURATION_OPTIONS, PLAN_TYPES } from "@/lib/planConstants";
 
 const clientSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -39,7 +40,18 @@ export default function AdminCriarCliente() {
   const [loading, setLoading] = useState(false);
   const [createdUser, setCreatedUser] = useState<{ email: string; password: string } | null>(null);
   const [copied, setCopied] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    email: string;
+    full_name: string;
+    telefone: string;
+    age: string;
+    weight: string;
+    height: string;
+    goals: string;
+    nivel_experiencia: string;
+    plan_type: string;
+    free_duration_days: number;
+  }>({
     email: "",
     full_name: "",
     telefone: "",
@@ -48,7 +60,8 @@ export default function AdminCriarCliente() {
     height: "",
     goals: "",
     nivel_experiencia: "",
-    plan_type: "free",
+    plan_type: PLAN_TYPES.GRATUITO,
+    free_duration_days: 30,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -110,6 +123,7 @@ export default function AdminCriarCliente() {
           goals: formData.goals || null,
           nivel_experiencia: formData.nivel_experiencia || null,
           plan_type: formData.plan_type,
+          free_duration_days: formData.plan_type === PLAN_TYPES.GRATUITO ? formData.free_duration_days : undefined,
         },
       });
 
@@ -291,16 +305,40 @@ export default function AdminCriarCliente() {
                       <SelectValue placeholder="Selecione o plano" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="free">Plano Free (Cortesia)</SelectItem>
-                      <SelectItem value="elite_founder">Elite Fundador</SelectItem>
-                      <SelectItem value="mensal">Mensal</SelectItem>
-                      <SelectItem value="trimestral">Trimestral</SelectItem>
-                      <SelectItem value="semestral">Semestral</SelectItem>
-                      <SelectItem value="anual">Anual</SelectItem>
+                      {PLAN_OPTIONS_ADMIN.map((plan) => (
+                        <SelectItem key={plan.value} value={plan.value}>
+                          {plan.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+
+              {/* Duration selection for free plan */}
+              {formData.plan_type === PLAN_TYPES.GRATUITO && (
+                <div className="space-y-2">
+                  <Label htmlFor="free_duration">Duração do Acesso Gratuito</Label>
+                  <Select
+                    value={formData.free_duration_days.toString()}
+                    onValueChange={(value) => setFormData({ ...formData, free_duration_days: parseInt(value) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a duração" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FREE_DURATION_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value.toString()}>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            {option.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="goals">Objetivos</Label>

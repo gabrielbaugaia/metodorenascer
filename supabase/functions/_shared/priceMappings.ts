@@ -1,12 +1,13 @@
 // Centralized price ID to plan type mappings
 // Used by check-subscription, create-checkout, and stripe-webhook
+// IMPORTANT: Use standardized plan types (elite_fundador, gratuito, etc.)
 
 export const PRICE_TO_PLAN: Record<string, { type: string; name: string }> = {
-  "price_1ScZqTCuFZvf5xFdZuOBMzpt": { type: "embaixador", name: "ELITE Fundador" },
-  "price_1ScZrECuFZvf5xFdfS9W8kvY": { type: "mensal", name: "Mensal" },
-  "price_1ScZsTCuFZvf5xFdbW8kJeQF": { type: "trimestral", name: "Trimestral" },
-  "price_1ScZtrCuFZvf5xFd8iXDfbEp": { type: "semestral", name: "Semestral" },
-  "price_1ScZvCCuFZvf5xFdjrs51JQB": { type: "anual", name: "Anual" },
+  "price_1ScZqTCuFZvf5xFdZuOBMzpt": { type: "elite_fundador", name: "ELITE FUNDADOR" },
+  "price_1ScZrECuFZvf5xFdfS9W8kvY": { type: "mensal", name: "MENSAL" },
+  "price_1ScZsTCuFZvf5xFdbW8kJeQF": { type: "trimestral", name: "TRIMESTRAL" },
+  "price_1ScZtrCuFZvf5xFd8iXDfbEp": { type: "semestral", name: "SEMESTRAL" },
+  "price_1ScZvCCuFZvf5xFdjrs51JQB": { type: "anual", name: "ANUAL" },
 };
 
 // Map price to MRR value in cents (normalized to monthly)
@@ -21,11 +22,11 @@ export const PRICE_TO_MRR: Record<string, number> = {
 // Price IDs for validation
 export const VALID_PRICE_IDS = Object.keys(PRICE_TO_PLAN);
 
-// Embaixador plan ID
-export const EMBAIXADOR_PRICE_ID = "price_1ScZqTCuFZvf5xFdZuOBMzpt";
+// Elite Fundador plan ID (legacy name was "embaixador")
+export const ELITE_FUNDADOR_PRICE_ID = "price_1ScZqTCuFZvf5xFdZuOBMzpt";
 
-// Maximum number of Embaixador subscribers
-export const MAX_EMBAIXADOR_MEMBERS = 25;
+// Maximum number of Elite Fundador subscribers
+export const MAX_ELITE_FUNDADOR_MEMBERS = 25;
 
 // Helper to get plan info from price ID
 export function getPlanFromPriceId(priceId: string): { type: string; name: string } | null {
@@ -35,4 +36,17 @@ export function getPlanFromPriceId(priceId: string): { type: string; name: strin
 // Helper to get MRR from price ID
 export function getMrrFromPriceId(priceId: string): number | null {
   return PRICE_TO_MRR[priceId] || null;
+}
+
+// Helper to normalize legacy plan types to standardized ones
+export function normalizePlanType(planType: string | null | undefined): string {
+  if (!planType) return "gratuito";
+  
+  const legacyMapping: Record<string, string> = {
+    "embaixador": "elite_fundador",
+    "free": "gratuito",
+    "elite_founder": "elite_fundador",
+  };
+  
+  return legacyMapping[planType.toLowerCase()] || planType;
 }
