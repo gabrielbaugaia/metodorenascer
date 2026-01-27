@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Download } from "lucide-react";
+import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Download, AlertTriangle, RefreshCw } from "lucide-react";
 import { WorkoutCard } from "@/components/treino/WorkoutCard";
 import { SuccessAnimation } from "@/components/feedback/SuccessAnimation";
 import { StreakDisplay } from "@/components/gamification/StreakDisplay";
@@ -53,6 +53,8 @@ export default function Treino() {
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   console.log("[Treino] Initializing workout tracking");
   const { 
@@ -71,11 +73,20 @@ export default function Treino() {
   useEffect(() => {
     console.log("[Treino] fetchProtocol useEffect triggered");
     const fetchProtocol = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      
+      setError(null);
+      setLoading(true);
+      const startTime = performance.now();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
       
       try {
         console.log("[Treino] Fetching protocol for user:", user.id);
-        const { data, error } = await supabase
+        const { data, error: fetchError } = await supabase
           .from("protocolos")
           .select("id, conteudo")
           .eq("user_id", user.id)
@@ -83,18 +94,31 @@ export default function Treino() {
           .eq("ativo", true)
           .order("created_at", { ascending: false })
           .limit(1)
+          .abortSignal(controller.signal)
           .maybeSingle();
         
-        if (error) {
-          console.error("Error fetching protocol:", error);
+        clearTimeout(timeoutId);
+        const elapsed = Math.round(performance.now() - startTime);
+        console.log(`[Treino] Protocol fetch completed in ${elapsed}ms`);
+        
+        if (fetchError) {
+          console.error("[Treino] Error fetching protocol:", fetchError);
+          setError("Erro ao carregar treino. Tente novamente.");
         } else if (data) {
-          console.log("[Treino] Protocol fetched successfully:", data);
+          console.log("[Treino] Protocol fetched successfully");
           setProtocol(data as Protocol);
         } else {
           console.log("[Treino] No protocol found for user");
         }
-      } catch (err) {
-        console.error("Error:", err);
+      } catch (err: any) {
+        clearTimeout(timeoutId);
+        console.error("[Treino] Error:", err);
+        
+        if (err.name === 'AbortError') {
+          setError("Tempo esgotado. Verifique sua conexão.");
+        } else {
+          setError("Erro ao carregar treino. Tente novamente.");
+        }
       } finally {
         console.log("[Treino] Setting loading to false");
         setLoading(false);
@@ -102,7 +126,7 @@ export default function Treino() {
     };
 
     fetchProtocol();
-  }, [user]);
+  }, [user, retryCount]);
 
   const workouts = useMemo<Workout[]>(() => {
     if (!protocol?.conteudo) return [];
@@ -189,8 +213,33 @@ export default function Treino() {
           message="Treino Concluído!"
           subMessage="Você está cada vez mais perto do seu objetivo!"
         />
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground text-sm">Carregando seu treino...</p>
+        </div>
+      </ClientLayout>
+    );
+  }
+
+  if (error) {
+    console.log("[Treino] Rendering error state:", error);
+    return (
+      <ClientLayout>
+        <div className="max-w-4xl mx-auto">
+          <Card className="p-8 text-center border-destructive/50">
+            <AlertTriangle className="w-16 h-16 mx-auto text-destructive mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Erro ao carregar</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <div className="flex gap-2 justify-center flex-wrap">
+              <Button variant="outline" onClick={() => setRetryCount(c => c + 1)}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Tentar novamente
+              </Button>
+              <Button variant="fire" onClick={() => navigate("/suporte")}>
+                Falar com Suporte
+              </Button>
+            </div>
+          </Card>
         </div>
       </ClientLayout>
     );

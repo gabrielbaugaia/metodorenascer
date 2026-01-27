@@ -211,13 +211,13 @@ serve(async (req) => {
       }
     }
 
-    // Price ID to plan type mapping
+    // Price ID to plan type mapping - STANDARDIZED names
     const PRICE_TO_PLAN: Record<string, { type: string; name: string }> = {
-      "price_1ScZqTCuFZvf5xFdZuOBMzpt": { type: "embaixador", name: "ELITE Fundador" },
-      "price_1ScZrECuFZvf5xFdfS9W8kvY": { type: "mensal", name: "Mensal" },
-      "price_1ScZsTCuFZvf5xFdbW8kJeQF": { type: "trimestral", name: "Trimestral" },
-      "price_1ScZtrCuFZvf5xFd8iXDfbEp": { type: "semestral", name: "Semestral" },
-      "price_1ScZvCCuFZvf5xFdjrs51JQB": { type: "anual", name: "Anual" },
+      "price_1ScZqTCuFZvf5xFdZuOBMzpt": { type: "elite_fundador", name: "ELITE FUNDADOR" },
+      "price_1ScZrECuFZvf5xFdfS9W8kvY": { type: "mensal", name: "MENSAL" },
+      "price_1ScZsTCuFZvf5xFdbW8kJeQF": { type: "trimestral", name: "TRIMESTRAL" },
+      "price_1ScZtrCuFZvf5xFd8iXDfbEp": { type: "semestral", name: "SEMESTRAL" },
+      "price_1ScZvCCuFZvf5xFdjrs51JQB": { type: "anual", name: "ANUAL" },
     };
 
     const priceId = subscription.items.data[0]?.price?.id;
