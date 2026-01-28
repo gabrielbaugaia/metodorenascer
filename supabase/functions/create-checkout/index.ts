@@ -33,15 +33,16 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // Get price_id from request body
+    // Get price_id and UTM data from request body
     const body = await req.json().catch(() => ({}));
     const priceId = body.price_id || "price_1ScZqTCuFZvf5xFdZuOBMzpt"; // Default to Embaixador
     const applyReferralDiscount = body.apply_referral_discount === true;
+    const utmData = body.utm_data || {}; // UTM parameters from frontend
     
     if (!VALID_PRICE_IDS.includes(priceId)) {
       throw new Error("Invalid price ID");
     }
-    logStep("Price ID received", { priceId, applyReferralDiscount });
+    logStep("Price ID received", { priceId, applyReferralDiscount, hasUtmData: Object.keys(utmData).length > 0 });
 
     // Use service role key to check embaixador count and cashback balance
     const supabaseAdmin = createClient(
@@ -206,6 +207,12 @@ serve(async (req) => {
       metadata: {
         user_id: user?.id || "guest",
         cashback_applied: hasCashback && applyReferralDiscount ? "true" : "false",
+        // Include UTM parameters for attribution tracking
+        utm_source: utmData.utm_source || "",
+        utm_medium: utmData.utm_medium || "",
+        utm_campaign: utmData.utm_campaign || "",
+        utm_term: utmData.utm_term || "",
+        utm_content: utmData.utm_content || "",
       },
     };
 

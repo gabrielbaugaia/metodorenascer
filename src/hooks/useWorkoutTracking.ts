@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface WorkoutCompletion {
   id: string;
@@ -20,6 +21,7 @@ export function useWorkoutTracking() {
   const [completions, setCompletions] = useState<WorkoutCompletion[]>([]);
   const [loading, setLoading] = useState(true);
   const [todayCompleted, setTodayCompleted] = useState(false);
+  const { trackFirstWorkoutCompleted, trackStreak3Days, trackWorkoutCompleted } = useAnalytics();
 
   const fetchCompletions = useCallback(async () => {
     if (!user) {
@@ -245,6 +247,19 @@ export function useWorkoutTracking() {
       
       // Get total workout count for achievements
       const newTotalCount = completions.length + 1;
+      
+      // Track activation events
+      trackWorkoutCompleted(workoutName, exercisesCompleted);
+      
+      // Track first workout completed (activation event)
+      if (newTotalCount === 1) {
+        trackFirstWorkoutCompleted();
+      }
+      
+      // Track streak_3_days activation event
+      if (streakResult && streakResult.newStreak === 3) {
+        trackStreak3Days();
+      }
       
       // Check for achievements
       if (streakResult) {
