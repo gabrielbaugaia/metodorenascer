@@ -1,38 +1,44 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import gabrielBauPhoto from "@/assets/gabriel-bau.png";
+
 export const MentorSection = () => {
-  const {
-    ref,
-    isVisible
-  } = useScrollAnimation();
-  return <section ref={ref} className="py-20 md:py-28 relative overflow-hidden bg-background">
+  const { ref, isVisible } = useScrollAnimation();
+  
+  return (
+    <section ref={ref} className="py-16 md:py-24 relative overflow-hidden bg-background">
       <div className="container mx-auto px-4">
-        <div className={`flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16 max-w-5xl mx-auto transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          {/* Photo */}
+        <div className={`flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 max-w-4xl mx-auto transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          
+          {/* Photo with glow */}
           <div className="relative flex-shrink-0">
-            <div className="w-56 h-56 md:w-72 md:h-72 rounded-lg overflow-hidden border-2 border-primary/50 shadow-xl">
-              <img src={gabrielBauPhoto} alt="Gabriel Baú - CEO e criador do Método Renascer" className="w-full h-full object-cover object-top" loading="lazy" decoding="async" width="288" height="288" />
+            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-110" />
+            <div className="relative w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 rounded-lg overflow-hidden border border-primary/30 shadow-2xl">
+              <img 
+                src={gabrielBauPhoto} 
+                alt="Gabriel Baú - Criador do Método Renascer" 
+                className="w-full h-full object-cover object-top" 
+                loading="lazy" 
+                decoding="async"
+              />
             </div>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 text-center lg:text-left max-w-xl lg:max-w-lg flex flex-col gap-5">
-            <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em]">
-              Liderado por <span className="text-primary">Gabriel Baú</span>
+          {/* Content - Simplified */}
+          <div className="flex-1 text-center md:text-left max-w-md flex flex-col gap-4">
+            <h2 className="font-display font-black text-foreground text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em]">
+              Gabriel <span className="text-primary">Baú</span>
             </h2>
 
-            <p className="text-foreground text-[1.1rem] md:text-lg leading-relaxed text-justify">Eu não sou apenas um treinador online. Sou o estrategista 
-que vai guiar sua jornada de reconstrução.</p>
-
-            <p className="text-muted-foreground text-sm md:text-base leading-relaxed text-justify font-light">
-              Criei o Método Renascer porque cansei de ver pessoas com potencial sendo destruídas pelo ciclo do fracasso fitness. Minha missão é clara: usar a ciência do treino e a profundidade do comportamento humano para transformar pessoas comuns em suas melhores versões.
+            <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
+              O estrategista por trás do Método Renascer.
             </p>
 
-            <p className="text-primary text-base md:text-lg font-semibold">
+            <p className="text-primary text-lg md:text-xl font-semibold italic mt-2">
               "Aqui não existe tentar. Existe fazer até conquistar."
             </p>
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };

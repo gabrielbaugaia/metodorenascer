@@ -5,7 +5,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { Button } from "@/components/ui/button";
 
 const faqs = [
   {
@@ -72,31 +71,27 @@ export const FAQSection = () => {
   return (
     <section 
       ref={ref} 
-      className={`py-20 md:py-28 bg-background transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      className={`py-16 md:py-24 section-dark transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
     >
       <div className="container mx-auto px-4">
-        {/* Section Header */}
-        <div className="text-center mb-14 max-w-3xl mx-auto flex flex-col items-center gap-4">
-          <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center">
-            Perguntas <span className="text-primary">Frequentes</span>
-          </h2>
-          <p className="text-muted-foreground text-base md:text-lg leading-relaxed text-center max-w-xl">
-            Tudo que você precisa saber sobre o Método Renascer
-          </p>
-        </div>
+        {/* Section Header - No subtitle */}
+        <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center mb-12 md:mb-16">
+          Perguntas <span className="text-primary">Frequentes</span>
+        </h2>
 
         <div className="max-w-3xl mx-auto">
-          <Accordion type="single" collapsible className="space-y-3">
+          {/* Editorial accordion - no visible borders */}
+          <Accordion type="single" collapsible className="space-y-0">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="bg-card border border-border/50 rounded-lg px-5 overflow-hidden data-[state=open]:border-primary/40"
+                className="border-b border-border/20 last:border-b-0"
               >
-                <AccordionTrigger className="text-left text-foreground font-medium text-sm md:text-base hover:text-primary hover:no-underline py-4">
+                <AccordionTrigger className="text-left text-foreground font-medium text-base md:text-lg hover:text-primary hover:no-underline py-5">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-sm pb-4 leading-relaxed">
+                <AccordionContent className="text-muted-foreground text-sm md:text-base pb-5 leading-relaxed">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
