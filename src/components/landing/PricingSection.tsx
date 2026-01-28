@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { MAX_ELITE_FUNDADOR_MEMBERS, PLAN_TYPES } from "@/lib/planConstants";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 const allPlans = [{
   id: PLAN_TYPES.ELITE_FUNDADOR,
@@ -74,6 +75,14 @@ export function PricingSection() {
   } = useAuth();
   const navigate = useNavigate();
   const [embaixadorCount, setEmbaixadorCount] = useState(0);
+  const { trackPlanClicked, trackPlanView } = useAnalytics();
+
+  // Track plan view when section becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      trackPlanView();
+    }
+  }, [isVisible, trackPlanView]);
   useEffect(() => {
     const fetchEliteFundadorCount = async () => {
       const {
@@ -94,8 +103,11 @@ export function PricingSection() {
     }
     return true;
   });
-  const handleSelectPlan = async (priceId: string) => {
+  const handleSelectPlan = async (priceId: string, planName: string) => {
     try {
+      // Track plan clicked event
+      trackPlanClicked(planName, priceId);
+      
       // Allow checkout for both logged in and guest users
       // Stripe will collect email for guests
       await createCheckout(priceId);
@@ -151,7 +163,7 @@ para os primeiros 25 embaixadores.</p>
                     </li>)}
                 </ul>
 
-                <Button variant={plan.popular ? "fire" : "outline"} size="sm" className="w-full mt-auto" onClick={() => handleSelectPlan(plan.priceId)}>
+                <Button variant={plan.popular ? "fire" : "outline"} size="sm" className="w-full mt-auto" onClick={() => handleSelectPlan(plan.priceId, plan.name)}>
                   {plan.promotional ? "GARANTIR VAGA" : "ESCOLHER PLANO"}
                 </Button>
               </CardContent>

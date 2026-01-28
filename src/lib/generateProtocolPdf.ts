@@ -10,6 +10,14 @@ interface Protocol {
   data_geracao: string;
 }
 
+// Track PDF download event (called from components that use this function)
+export function trackPdfDownloadEvent(tipo: string, trackFn: (pdfType: "treino" | "nutricao" | "mindset" | "anamnese" | "evolucao") => void) {
+  const validTypes = ["treino", "nutricao", "mindset", "anamnese", "evolucao"] as const;
+  if (validTypes.includes(tipo as any)) {
+    trackFn(tipo as typeof validTypes[number]);
+  }
+}
+
 export function generateProtocolPdf(protocol: Protocol): void {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();

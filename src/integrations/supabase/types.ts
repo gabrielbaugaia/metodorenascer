@@ -435,6 +435,7 @@ export type Database = {
           id: string
           metadata: Json | null
           page_name: string | null
+          session_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -443,6 +444,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           page_name?: string | null
+          session_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -451,6 +453,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           page_name?: string | null
+          session_id?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -912,6 +915,7 @@ export type Database = {
           foto_perfil_url: string | null
           full_name: string
           fuma: string | null
+          funnel_status: string | null
           goals: string | null
           height: number | null
           horario_acorda: string | null
@@ -966,6 +970,7 @@ export type Database = {
           foto_perfil_url?: string | null
           full_name: string
           fuma?: string | null
+          funnel_status?: string | null
           goals?: string | null
           height?: number | null
           horario_acorda?: string | null
@@ -1020,6 +1025,7 @@ export type Database = {
           foto_perfil_url?: string | null
           full_name?: string
           fuma?: string | null
+          funnel_status?: string | null
           goals?: string | null
           height?: number | null
           horario_acorda?: string | null
@@ -1649,6 +1655,10 @@ export type Database = {
       recalculate_engagement: {
         Args: { target_user_id: string }
         Returns: undefined
+      }
+      recalculate_funnel_status: {
+        Args: { target_user_id: string }
+        Returns: string
       }
       validate_referral_code: {
         Args: { lookup_code: string }

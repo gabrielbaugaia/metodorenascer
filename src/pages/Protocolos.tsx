@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/accordion";
 import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
 import { useNavigate } from "react-router-dom";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface Protocol {
   id: string;
@@ -39,6 +40,12 @@ export default function Protocolos() {
   const navigate = useNavigate();
   const [protocols, setProtocols] = useState<Protocol[]>([]);
   const [loading, setLoading] = useState(true);
+  const { trackPdfDownloaded } = useAnalytics();
+
+  const handleDownloadPdf = (protocol: Protocol) => {
+    trackPdfDownloaded(protocol.tipo as "treino" | "nutricao" | "mindset");
+    generateProtocolPdf(protocol);
+  };
 
   useEffect(() => {
     fetchData();
@@ -237,7 +244,7 @@ export default function Protocolos() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => generateProtocolPdf(protocol)}
+                            onClick={() => handleDownloadPdf(protocol)}
                           >
                             <Download className="h-4 w-4 mr-1" />
                             PDF
@@ -286,7 +293,7 @@ export default function Protocolos() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => generateProtocolPdf(protocol)}
+                          onClick={() => handleDownloadPdf(protocol)}
                         >
                           <Download className="h-4 w-4 mr-1" />
                           PDF

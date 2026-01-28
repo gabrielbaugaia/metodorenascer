@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getStoredUtmData } from "@/hooks/useAnalytics";
 
 interface SubscriptionStatus {
   subscribed: boolean;
@@ -113,11 +114,15 @@ export function useSubscription() {
       headers.Authorization = `Bearer ${session.access_token}`;
     }
 
+    // Get UTM data to pass to checkout for attribution
+    const utmData = getStoredUtmData();
+
     const { data, error } = await supabase.functions.invoke("create-checkout", {
       headers,
       body: { 
         price_id: priceId,
-        apply_referral_discount: applyReferralDiscount ?? false
+        apply_referral_discount: applyReferralDiscount ?? false,
+        utm_data: utmData || {}
       },
     });
 

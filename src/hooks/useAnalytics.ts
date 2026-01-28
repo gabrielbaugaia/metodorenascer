@@ -10,29 +10,73 @@ interface EventMetadata {
 let sessionStartTime: number | null = null;
 let currentPage: string | null = null;
 
+// Anonymous session ID for tracking visitors before login
+const SESSION_ID_KEY = "renascer_session_id";
+const UTM_DATA_KEY = "renascer_utm_data";
+
+function getOrCreateSessionId(): string {
+  let sessionId = sessionStorage.getItem(SESSION_ID_KEY);
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    sessionStorage.setItem(SESSION_ID_KEY, sessionId);
+  }
+  return sessionId;
+}
+
+// Capture and store UTM parameters
+export function captureUtmParameters(): Record<string, string> | null {
+  const urlParams = new URLSearchParams(window.location.search);
+  const utmParams: Record<string, string> = {};
+  
+  const utmKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+  utmKeys.forEach(key => {
+    const value = urlParams.get(key);
+    if (value) {
+      utmParams[key] = value;
+    }
+  });
+  
+  if (Object.keys(utmParams).length > 0) {
+    localStorage.setItem(UTM_DATA_KEY, JSON.stringify(utmParams));
+    return utmParams;
+  }
+  
+  // Return stored UTM data if available
+  const stored = localStorage.getItem(UTM_DATA_KEY);
+  return stored ? JSON.parse(stored) : null;
+}
+
+export function getStoredUtmData(): Record<string, string> | null {
+  const stored = localStorage.getItem(UTM_DATA_KEY);
+  return stored ? JSON.parse(stored) : null;
+}
+
 export function useAnalytics() {
   const { user } = useAuth();
   const hasTrackedAppOpen = useRef(false);
+  const sessionId = useRef<string>(getOrCreateSessionId());
 
-  // Track event to Supabase (only for authenticated users due to RLS)
+  // Track event to Supabase (supports both authenticated and anonymous users)
   const trackEvent = useCallback(
     async (
       eventName: string,
       pageName?: string,
       metadata?: EventMetadata
     ) => {
-      // Skip tracking for anonymous users - RLS requires auth.uid() IS NOT NULL
-      if (!user?.id) {
-        console.debug("Analytics: skipping event for anonymous user", eventName);
-        return;
-      }
-      
       try {
+        // Get UTM data to include in metadata
+        const utmData = getStoredUtmData();
+        const enrichedMetadata = {
+          ...metadata,
+          ...(utmData || {}),
+        };
+
         await supabase.from("events").insert({
-          user_id: user.id,
+          user_id: user?.id || null,
+          session_id: user?.id ? null : sessionId.current, // Only use session_id for anonymous
           event_name: eventName,
           page_name: pageName || currentPage,
-          metadata: metadata || {},
+          metadata: enrichedMetadata,
         });
       } catch (error) {
         console.error("Failed to track event:", error);
@@ -46,6 +90,19 @@ export function useAnalytics() {
     (pageName: string) => {
       currentPage = pageName;
       trackEvent("page_view", pageName);
+    },
+    [trackEvent]
+  );
+
+  // Track landing page view (anonymous-friendly)
+  const trackLandingView = useCallback(() => {
+    trackEvent("landing_view", "landing");
+  }, [trackEvent]);
+
+  // Track plan clicked (before checkout)
+  const trackPlanClicked = useCallback(
+    (planName: string, priceId: string) => {
+      trackEvent("plan_clicked", "planos", { plan_name: planName, price_id: priceId });
     },
     [trackEvent]
   );
@@ -107,6 +164,22 @@ export function useAnalytics() {
   const trackProtocolViewed = useCallback(
     (protocolType: "treino" | "nutricao" | "mindset") => {
       trackEvent("protocol_viewed", protocolType, { tipo: protocolType });
+    },
+    [trackEvent]
+  );
+
+  // Activation events
+  const trackFirstWorkoutCompleted = useCallback(() => {
+    trackEvent("first_workout_completed", "treino");
+  }, [trackEvent]);
+
+  const trackStreak3Days = useCallback(() => {
+    trackEvent("streak_3_days", "treino");
+  }, [trackEvent]);
+
+  const trackPdfDownloaded = useCallback(
+    (pdfType: "treino" | "nutricao" | "mindset" | "anamnese" | "evolucao") => {
+      trackEvent("pdf_downloaded", pdfType, { pdf_type: pdfType });
     },
     [trackEvent]
   );
@@ -193,6 +266,8 @@ export function useAnalytics() {
   return {
     trackEvent,
     trackPageView,
+    trackLandingView,
+    trackPlanClicked,
     trackAppOpen,
     trackSessionEnd,
     // Funnel
@@ -204,6 +279,10 @@ export function useAnalytics() {
     trackAnamneseCompleted,
     trackProtocolGenerated,
     trackProtocolViewed,
+    // Activation
+    trackFirstWorkoutCompleted,
+    trackStreak3Days,
+    trackPdfDownloaded,
     // Workout
     trackWorkoutStarted,
     trackWorkoutCompleted,
@@ -226,6 +305,9 @@ export function useAnalytics() {
 // Utility to capture UTM parameters and save acquisition channel
 export function captureAcquisitionChannel(): string | null {
   const urlParams = new URLSearchParams(window.location.search);
+  
+  // Capture UTM params first
+  captureUtmParameters();
   
   // Check UTM source first
   const utmSource = urlParams.get("utm_source");
