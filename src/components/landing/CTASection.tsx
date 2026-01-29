@@ -16,19 +16,29 @@ export const CTASection = forwardRef<HTMLElement>((_, forwardedRef) => {
     }} />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl mx-auto text-center flex flex-col items-center gap-5">
-          <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center">
-            Sua Nova Vida <span className="text-primary">Começa Agora</span>
+        <div className="max-w-3xl mx-auto text-center flex flex-col items-center gap-8">
+          {/* Reinforcement Block */}
+          <div className="flex flex-col items-center gap-4 text-muted-foreground text-base md:text-lg leading-relaxed max-w-2xl">
+            <p>
+              O Método Renascer não é um desafio de 21 dias.<br />
+              É um sistema contínuo de prescrição e ajuste.
+            </p>
+            <p>
+              Você não está comprando acesso a um app.<br />
+              Está entrando em um processo.
+            </p>
+          </div>
+
+          {/* Main Headline */}
+          <h2 className="font-display font-black text-foreground text-[2rem] sm:text-3xl md:text-4xl lg:text-5xl leading-[1.1] tracking-[-0.02em] text-center">
+            Corpo forte, mente disciplinada e rotina sob controle <span className="text-primary">mudam tudo.</span>
           </h2>
 
-          <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">Vagas limitadas para acompanhamento individual. 
-Não aceitamos curiosos, apenas comprometidos.</p>
-
-          <div className="pt-4">
+          <div className="pt-2">
             <Button variant="fire" size="xl" asChild className="group text-base md:text-lg px-10 md:px-14 py-6 md:py-7">
               <a href="#preco">
                 <span className="relative z-10 font-semibold tracking-wide">
-                  RESERVAR MINHA TRANSFORMAÇÃO
+                  ENTRAR NO MÉTODO RENASCER
                 </span>
                 <ArrowRight className="w-5 h-5 relative z-10 ml-2 group-hover:translate-x-1 transition-transform" />
               </a>

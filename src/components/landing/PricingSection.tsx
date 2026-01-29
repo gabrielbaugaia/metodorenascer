@@ -18,17 +18,21 @@ const allPlans = [{
   period: "/mês",
   badge: "25 VAGAS",
   priceId: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
-  features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h", "Acesso vitalício ao preço"],
+  description: "Para quem quer começar agora e entender o método na prática.",
+  features: ["Prescrição personalizada de treino, nutrição e mentalidade", "Acesso completo ao app", "Check-ins e ajustes contínuos", "Receitas inteligentes", "Acompanhamento de evolução"],
   popular: true,
-  promotional: true
+  promotional: true,
+  ctaText: "ENTRAR NO MÉTODO"
 }, {
   id: PLAN_TYPES.MENSAL,
   name: "Mensal",
   price: "197",
   period: "/mês",
   priceId: "price_1ScZrECuFZvf5xFdfS9W8kvY",
-  features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
-  popular: false
+  description: "Para quem quer começar agora e entender o método na prática.",
+  features: ["Prescrição personalizada de treino, nutrição e mentalidade", "Acesso completo ao app", "Check-ins e ajustes contínuos", "Receitas inteligentes", "Acompanhamento de evolução"],
+  popular: false,
+  ctaText: "ENTRAR NO MÉTODO"
 }, {
   id: PLAN_TYPES.TRIMESTRAL,
   name: "Trimestral",
@@ -36,9 +40,11 @@ const allPlans = [{
   period: "/3 meses",
   monthlyEquivalent: "R$165,67/mês",
   priceId: "price_1ScZsTCuFZvf5xFdbW8kJeQF",
-  savings: "Economia de 16%",
-  features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
-  popular: false
+  savings: "RECOMENDADO",
+  description: "O tempo mínimo para o corpo responder ao método. Resultados consistentes não acontecem em semanas.",
+  features: ["Prescrição personalizada de treino, nutrição e mentalidade", "Acesso completo ao app", "Check-ins e ajustes contínuos", "Receitas inteligentes", "Acompanhamento de evolução"],
+  popular: false,
+  ctaText: "ASSUMIR O COMPROMISSO"
 }, {
   id: PLAN_TYPES.SEMESTRAL,
   name: "Semestral",
@@ -47,8 +53,10 @@ const allPlans = [{
   monthlyEquivalent: "R$116,17/mês",
   priceId: "price_1ScZtrCuFZvf5xFd8iXDfbEp",
   savings: "Economia de 41%",
-  features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
-  popular: false
+  description: "O corpo muda. A rotina se ajusta. A disciplina deixa de ser esforço.",
+  features: ["Prescrição personalizada de treino, nutrição e mentalidade", "Acesso completo ao app", "Check-ins e ajustes contínuos", "Receitas inteligentes", "Acompanhamento de evolução"],
+  popular: false,
+  ctaText: "ENTRAR NO PROCESSO"
 }, {
   id: PLAN_TYPES.ANUAL,
   name: "Anual",
@@ -57,8 +65,10 @@ const allPlans = [{
   monthlyEquivalent: "R$83,08/mês",
   priceId: "price_1ScZvCCuFZvf5xFdjrs51JQB",
   savings: "Economia de 58%",
-  features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
-  popular: false
+  description: "Para quem decidiu fazer do método parte da própria vida. O corpo muda, a rotina se ajusta, a disciplina vira padrão.",
+  features: ["Prescrição personalizada de treino, nutrição e mentalidade", "Acesso completo ao app", "Check-ins e ajustes contínuos", "Receitas inteligentes", "Acompanhamento de evolução"],
+  popular: false,
+  ctaText: "ENTRAR NO PROCESSO"
 }];
 export function PricingSection() {
   const {
@@ -120,11 +130,12 @@ export function PricingSection() {
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-14 max-w-3xl mx-auto flex flex-col items-center gap-4">
-          <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center">
-            Escolha Seu <span className="text-primary">Plano</span>
+          <h2 className="font-display font-black text-foreground text-[2rem] sm:text-3xl md:text-4xl lg:text-5xl leading-[1.1] tracking-[-0.02em] text-center">
+            Escolha o nível de compromisso <span className="text-primary">com a sua evolução</span>
           </h2>
-          <p className="text-base md:text-lg leading-relaxed text-center max-w-xl text-primary-foreground">De R$197/mês por apenas R$49/mês , preço vitalício 
-para os primeiros 25 embaixadores.</p>
+          <p className="text-base md:text-lg leading-relaxed text-center max-w-xl text-muted-foreground">
+            O método é o mesmo. O que muda é o tempo que você decide se comprometer com o processo.
+          </p>
           <p className="text-primary text-sm font-medium">
             Não gostou? Devolvemos 100% do seu investimento.
           </p>
@@ -156,6 +167,13 @@ para os primeiros 25 embaixadores.</p>
                 )}
                 {!plan.monthlyEquivalent && <div className="mb-4" />}
 
+                {/* Description */}
+                {plan.description && (
+                  <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                    {plan.description}
+                  </p>
+                )}
+
                 <ul className="space-y-2 mb-6 flex-1">
                   {plan.features.map(feature => <li key={feature} className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
@@ -164,7 +182,7 @@ para os primeiros 25 embaixadores.</p>
                 </ul>
 
                 <Button variant={plan.popular ? "fire" : "outline"} size="sm" className="w-full mt-auto" onClick={() => handleSelectPlan(plan.priceId, plan.name)}>
-                  {plan.promotional ? "GARANTIR VAGA" : "ESCOLHER PLANO"}
+                  {plan.ctaText || "ESCOLHER PLANO"}
                 </Button>
               </CardContent>
             </Card>)}

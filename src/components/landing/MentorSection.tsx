@@ -23,18 +23,19 @@ export const MentorSection = () => {
             </div>
           </div>
 
-          {/* Content - Simplified */}
+          {/* Content - Authority focused */}
           <div className="flex-1 text-center md:text-left max-w-md flex flex-col gap-4">
+            <p className="text-primary text-sm md:text-base font-medium uppercase tracking-wider">
+              Criado por quem vive o método
+            </p>
+            
             <h2 className="font-display font-black text-foreground text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em]">
               Gabriel <span className="text-primary">Baú</span>
             </h2>
 
             <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
-              O estrategista por trás do Método Renascer.
-            </p>
-
-            <p className="text-primary text-lg md:text-xl font-semibold italic mt-2">
-              "Aqui não existe tentar. Existe fazer até conquistar."
+              O Método Renascer nasceu da integração entre corpo, mente e rotina real. 
+              Não foi criado para ser moda. Foi criado para funcionar.
             </p>
           </div>
         </div>
