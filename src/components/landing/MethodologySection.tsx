@@ -5,7 +5,7 @@ const pillars = [
   {
     icon: Camera,
     title: "Análise Individual",
-    description: "Avaliação completa do seu perfil físico, histórico, rotina e objetivo para prescrever treino, nutrição e mentalidade de forma personalizada."
+    description: "Avaliação completa do seu perfil físico, rotina, histórico e objetivo para prescrever o que realmente funciona para você."
   },
   {
     icon: Dumbbell,
@@ -15,17 +15,17 @@ const pillars = [
   {
     icon: Utensils,
     title: "Nutrição + Receitas",
-    description: "Plano alimentar alinhado ao seu objetivo, com receitas inteligentes geradas por IA para facilitar a execução no dia a dia."
+    description: "Plano alimentar alinhado ao seu objetivo, mais acesso IA de receitas exclusiva que facilitam a execução no dia a dia."
   },
   {
     icon: Brain,
     title: "Mentalidade",
-    description: "Disciplina mental aplicada à rotina real, com acompanhamento contínuo e ajustes conforme sua evolução."
+    description: "Guia exclusivo aplicado à sua rotina real, com acompanhamento contínuo e ajustes conforme sua evolução."
   },
   {
     icon: Target,
     title: "Consistência",
-    description: "Sistema que transforma execução diária em progresso real e mensurável."
+    description: "Um sistema que transforma execução diária em progresso real e mensurável."
   }
 ];
 
