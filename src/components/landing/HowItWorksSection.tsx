@@ -15,19 +15,19 @@ export function HowItWorksSection() {
   return (
     <section 
       ref={ref} 
-      className={`py-16 md:py-24 section-dark transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      className={`py-16 md:py-24 section-light transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
     >
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto flex flex-col items-center gap-10">
           {/* Header */}
           <div className="text-center flex flex-col items-center gap-4">
-            <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl leading-[1.1] tracking-[-0.02em]">
+            <h2 className="font-display font-black text-[2.5rem] sm:text-4xl md:text-5xl leading-[1.1] tracking-[-0.02em]">
               O método se adapta à sua vida. <span className="text-primary">Não o contrário.</span>
             </h2>
             
-            <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-2xl">
+            <p className="text-lg md:text-xl leading-relaxed max-w-2xl">
               Você é analisado, recebe prescrições claras, executa no dia a dia, 
-              registra evolução e ajusta conforme os resultados. Simples, direto e sustentável.
+              registra evolução e ajusta conforme os resultados.
             </p>
           </div>
 
@@ -39,14 +39,14 @@ export function HowItWorksSection() {
                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary/10 flex items-center justify-center">
                     <step.icon className="w-7 h-7 md:w-8 md:h-8 text-primary" />
                   </div>
-                  <span className="font-display text-foreground text-sm md:text-base">
+                  <span className="font-display text-sm md:text-base">
                     {step.label}
                   </span>
                 </div>
                 
                 {/* Arrow connector (not on last item) */}
                 {index < steps.length - 1 && (
-                  <div className="hidden md:block text-primary/50 text-2xl">→</div>
+                  <div className="hidden md:block text-primary text-2xl font-bold">→</div>
                 )}
               </div>
             ))}

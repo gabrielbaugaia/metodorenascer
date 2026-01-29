@@ -107,7 +107,7 @@ const TransformationsGallery = () => {
           <p className="text-muted-foreground text-sm mb-4">Você pode ser o próximo</p>
           <Button variant="fire" size="lg" asChild>
             <a href="#preco">
-              QUERO MINHA TRANSFORMAÇÃO
+              ENTRAR NO MÉTODO
             </a>
           </Button>
         </div>
