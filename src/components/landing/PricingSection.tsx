@@ -22,7 +22,7 @@ const allPlans = [{
   features: ["Prescrição personalizada de treino, nutrição e mentalidade", "Acesso completo ao app", "Check-ins e ajustes contínuos", "Receitas inteligentes", "Acompanhamento de evolução"],
   popular: true,
   promotional: true,
-  ctaText: "ENTRAR NO MÉTODO"
+  ctaText: "Entrar no Método"
 }, {
   id: PLAN_TYPES.MENSAL,
   name: "Mensal",
@@ -32,7 +32,7 @@ const allPlans = [{
   description: "Para quem quer começar agora e entender o método na prática.",
   features: ["Prescrição personalizada de treino, nutrição e mentalidade", "Acesso completo ao app", "Check-ins e ajustes contínuos", "Receitas inteligentes", "Acompanhamento de evolução"],
   popular: false,
-  ctaText: "ENTRAR NO MÉTODO"
+  ctaText: "Começar agora"
 }, {
   id: PLAN_TYPES.TRIMESTRAL,
   name: "Trimestral",
@@ -44,7 +44,7 @@ const allPlans = [{
   description: "O tempo mínimo para o corpo responder ao método. Resultados consistentes não acontecem em semanas.",
   features: ["Prescrição personalizada de treino, nutrição e mentalidade", "Acesso completo ao app", "Check-ins e ajustes contínuos", "Receitas inteligentes", "Acompanhamento de evolução"],
   popular: false,
-  ctaText: "ASSUMIR O COMPROMISSO"
+  ctaText: "Assumir o compromisso"
 }, {
   id: PLAN_TYPES.SEMESTRAL,
   name: "Semestral",
@@ -56,7 +56,7 @@ const allPlans = [{
   description: "O corpo muda. A rotina se ajusta. A disciplina deixa de ser esforço.",
   features: ["Prescrição personalizada de treino, nutrição e mentalidade", "Acesso completo ao app", "Check-ins e ajustes contínuos", "Receitas inteligentes", "Acompanhamento de evolução"],
   popular: false,
-  ctaText: "ENTRAR NO PROCESSO"
+  ctaText: "Entrar no processo"
 }, {
   id: PLAN_TYPES.ANUAL,
   name: "Anual",
@@ -68,7 +68,7 @@ const allPlans = [{
   description: "Para quem decidiu fazer do método parte da própria vida. O corpo muda, a rotina se ajusta, a disciplina vira padrão.",
   features: ["Prescrição personalizada de treino, nutrição e mentalidade", "Acesso completo ao app", "Check-ins e ajustes contínuos", "Receitas inteligentes", "Acompanhamento de evolução"],
   popular: false,
-  ctaText: "ENTRAR NO PROCESSO"
+  ctaText: "Acelerar resultados"
 }];
 export function PricingSection() {
   const {
