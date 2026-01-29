@@ -1,220 +1,255 @@
 
-
-# Plano: Refinamento Visual da Landing Page
+# Plano: Preenchimento Completo da Home — Método Renascer
 
 ## Diagnóstico Atual
 
-A landing page atual segue um padrão visual que, apesar de bem estruturado tecnicamente, transmite sensação de **layout SaaS genérico** devido a:
+A página está visualmente estruturada mas com conteúdo incompleto. O problema principal: **cria clima, mas não explica o método nem vende o processo**.
 
-| Problema | Onde Ocorre | Impacto |
-|----------|-------------|---------|
-| Cards com bordas visíveis em todas as seções | ProblemSection, MethodologySection, TestimonialsSection, PricingSection, FAQSection | Fragmentação visual, reduz impacto |
-| Grid de cards pequenos competindo por atenção | Metodologia (4 cards), Preços (5 cards) | Diminui hierarquia de importância |
-| Headlines de tamanho uniforme entre seções | Todas as seções usam mesma escala | Sem contraste de importância |
-| Espaçamento padronizado demais | py-20 md:py-28 em todas as seções | Layout previsível, sem respiro |
-| Texto explicativo demais | Subtítulos longos em cada seção | Dilui impacto das afirmações |
+| Seção | Estado Atual | Problema |
+|-------|-------------|----------|
+| Hero | "Não Busque Evolução, Busque RENASCIMENTO" | Frase de impacto mas sem explicar o que é o método |
+| Mentor | Nome + frase + citação curta | OK — mantém ancoragem |
+| ProblemSection | 3 problemas genéricos | Não conecta com a solução prescritiva |
+| MethodologySection | 4 ícones (Análise, Receitas, Mentor, Gamificação) | Títulos vagos, sem descrição do sistema |
+| TransformationsGallery | Grid de fotos | OK — provas visuais |
+| TestimonialsSection | Carrossel de depoimentos | OK — prova social |
+| PricingSection | 5 cards de planos | Texto promocional, falta linguagem de compromisso |
+| FAQSection | 14 perguntas | OK — completo |
+| CTASection | "Sua Nova Vida Começa Agora" | Genérico, falta fechamento forte |
 
 ---
 
-## Proposta de Ajustes
+## Implementação Proposta
 
-### 1. Hero Mais Dominante
+### 1. HeroSection — Headline + Subheadline Obrigatória
 
-**Estado Atual:**
-- H1: `text-[2.5rem] sm:text-5xl md:text-6xl lg:text-7xl`
-- Subtítulo longo com 2 linhas
-- Container `max-w-4xl`
-
-**Proposta:**
-- Aumentar H1 para `text-[3rem] sm:text-6xl md:text-7xl lg:text-8xl`
-- Subtítulo em uma única frase de impacto (máx 15 palavras)
-- Remover texto secundário sob o CTA (preço aparece só na seção de planos)
-- Aumentar espaçamento vertical para `min-h-[100svh]` com mais padding top
-- Adicionar sutil gradiente de fundo ou vignette para profundidade
-
-**Copy sugerido:**
-```text
+**De:**
+```
 Headline: "Não Busque Evolução, Busque RENASCIMENTO"
 Subtítulo: "O método que transforma corpos e reconstrói mentes."
+CTA: "QUERO RENASCER"
 ```
 
-### 2. Menos Cards, Mais Blocos Largos
-
-**Seções a Refatorar:**
-
-#### ProblemSection
-- **Atual:** 3 cards com ícones em grid
-- **Proposta:** Bloco único full-width com 3 statements em lista vertical, sem bordas
-- Cada problema como linha de texto com ícone inline (não em círculo)
-- Fundo sutil diferenciado (section-dark)
-
-#### MethodologySection  
-- **Atual:** 4 cards em grid 2x2/4x1
-- **Proposta:** Layout horizontal com 4 ícones + títulos em uma única linha
-- Descrições aparecem apenas em hover/mobile accordion
-- Fundo contrastante para destacar do resto
-
-#### TestimonialsSection
-- **Atual:** Card único com carrossel e bordas
-- **Proposta:** Citação em destaque sem bordas, apenas aspas grandes e texto
-- Nome e resultado como linha única abaixo
-- Background limpo, sem container visual
-
-#### FAQSection
-- **Atual:** Accordion com bordas e hover states
-- **Proposta:** Manter accordion mas remover bordas visíveis
-- Separadores sutis (1px border-bottom) entre itens
-- Estilo mais editorial
-
-### 3. Texto Mais Declarativo
-
-**Padrão Atual de Subtítulos:**
+**Para:**
 ```
-"O problema não é a falta de esforço, é a falta de estratégia."
-"Para construir o novo, o velho precisa deixar de existir."
-"Veja quem decidiu parar de dar desculpas e assumiu o controle."
+Headline: "O Método Renascer."
+Subheadline: "Um sistema de prescrição física, nutricional e mental criado para 
+transformar corpo, energia e disciplina de forma personalizada e sustentável."
+Reforço: "Não é desafio. Não é treino genérico. É método."
+CTA: "Entrar no Método"
 ```
 
-**Padrão Proposto:**
-- Eliminar subtítulos explicativos
-- Manter apenas headlines de impacto
-- Se necessário subtítulo, máximo 8 palavras afirmativas
+**Alterações técnicas:**
+- Simplificar H1 para uma linha impactante
+- Adicionar subheadline explicativo (p)
+- Adicionar frase de reforço curta
+- Mudar texto do CTA
 
-| Seção | Atual | Proposta |
-|-------|-------|----------|
-| Problema | "O problema não é a falta de esforço..." | Remover subtítulo |
-| Metodologia | "Para construir o novo..." | Remover subtítulo |
-| Transformações | "Resultados reais de nossos alunos" | Remover subtítulo |
-| Depoimentos | "Veja quem decidiu..." | Remover subtítulo |
-| FAQ | "Tudo que você precisa saber..." | Remover subtítulo |
+---
 
-### 4. Presença Humana
+### 2. Nova Seção — "O Que É o Renascer"
 
-**MentorSection Atual:**
-- Foto 288x288px com borda
-- Título + 3 parágrafos de texto (bio longa)
-- Citação final
+**Criar nova seção após MentorSection**
 
-**Proposta:**
-- Mover seção para **logo após o Hero** (antes de Problema)
-- Foto maior: 320x320px desktop, 240x240px mobile
-- Reduzir para: **Nome + 1 frase de posicionamento + citação**
-- Layout lado a lado em desktop, empilhado em mobile
+```
+Título: "O Renascer não é um treino. É um sistema."
 
-**Copy sugerido:**
-```text
-"Gabriel Baú"
+Texto: "O Método Renascer foi criado para quem entende que resultado não vem 
+de motivação, mas de prescrição correta e execução consistente.
+Cada decisão — treino, alimentação e mentalidade — é baseada no seu corpo, 
+na sua rotina e no seu objetivo."
+```
+
+**Implementação:**
+- Criar novo componente `WhatIsSection.tsx`
+- Adicionar em Index.tsx após MentorSection
+- Estilo: bloco largo centralizado, fundo neutro, texto grande
+
+---
+
+### 3. MethodologySection — Expandir com 5 Pilares + Descrições
+
+**De:** 4 ícones sem descrição (Análise, Receitas, Mentor 24h, Gamificação)
+
+**Para:** 5 pilares com títulos e descrições completas
+
+| Ícone | Título | Descrição |
+|-------|--------|-----------|
+| Camera | Análise Individual | Avaliação completa do seu perfil físico, histórico, rotina e objetivo para prescrever treino, nutrição e mentalidade de forma personalizada. |
+| Dumbbell | Treino Prescrito | Treino estruturado de acordo com seu nível, tempo disponível e capacidade de recuperação. Sem padrão genérico. |
+| Utensils | Nutrição Prescrita + Receitas | Plano alimentar alinhado ao seu objetivo, com receitas inteligentes para facilitar a execução no dia a dia. |
+| Brain | Mentalidade e Acompanhamento | Disciplina mental aplicada à rotina real, com acompanhamento contínuo e ajustes conforme sua evolução. |
+| Target | Disciplina e Consistência | Sistema de acompanhamento que transforma execução diária em progresso real e mensurável. |
+
+**Adicionar subtítulo da seção:** "Um sistema completo de prescrição personalizada."
+
+**Alteração de layout:**
+- Manter ícones em linha horizontal (desktop) / grid 2x3 (mobile)
+- Adicionar tooltip ou accordion para descrições
+- Ou: layout vertical com ícone + título + descrição visível
+
+---
+
+### 4. Nova Seção — "Como Funciona na Prática"
+
+**Criar seção após MethodologySection**
+
+```
+Título: "O método se adapta à sua vida. Não o contrário."
+
+Texto: "Você é analisado, recebe prescrições claras, executa no dia a dia, 
+registra evolução e ajusta conforme os resultados.
+Simples, direto e sustentável."
+
+Fluxo visual: Análise → Prescrição → Execução → Evolução → Ajuste
+```
+
+**Implementação:**
+- Criar novo componente `HowItWorksSection.tsx`
+- Adicionar fluxo horizontal com 5 steps
+- Estilo limpo, sem cards, apenas ícones + textos conectados
+
+---
+
+### 5. Nova Seção — "Evolução e Acompanhamento"
+
+**Criar seção após TransformationsGallery**
+
+```
+Título: "Você não fica sozinho no processo."
+
+Texto: "Check-ins, análises visuais, feedbacks e ajustes fazem parte do método.
+Evolução aqui não é achismo. É medida."
+```
+
+**Implementação:**
+- Criar novo componente `EvolutionSection.tsx`
+- Seção curta, apenas título + texto
+- Fundo diferenciado (section-dark)
+
+---
+
+### 6. MentorSection — Ajustar Texto
+
+**De:**
+```
 "O estrategista por trás do Método Renascer."
-Citação: "Aqui não existe tentar. Existe fazer até conquistar."
+```
+
+**Para:**
+```
+Título: "Criado por quem vive o método."
+Subtítulo: "Gabriel Baú"
+Texto: "O Método Renascer nasceu da integração entre corpo, mente e rotina real.
+Não foi criado para ser moda. Foi criado para funcionar."
 ```
 
 ---
 
-## Ajustes Técnicos
+### 7. PricingSection — Linguagem de Compromisso
 
-### Arquivos a Modificar
+**Alterar título e subtítulo:**
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/pages/Index.tsx` | Reordenar seções (Mentor após Hero) |
-| `src/components/landing/HeroSection.tsx` | Aumentar headline, reduzir copy, remover preço |
-| `src/components/landing/MentorSection.tsx` | Simplificar para ancoragem rápida |
-| `src/components/landing/ProblemSection.tsx` | Remover cards, usar lista de statements |
-| `src/components/landing/MethodologySection.tsx` | Layout horizontal sem cards |
-| `src/components/landing/TestimonialsSection.tsx` | Remover bordas, estilo editorial |
-| `src/components/landing/FAQSection.tsx` | Remover bordas dos accordion items |
-| `src/index.css` | Adicionar classe `.section-statement` para blocos de texto |
+**De:**
+```
+Título: "Escolha Seu Plano"
+Subtítulo: "De R$197/mês por apenas R$49/mês, preço vitalício para os primeiros 25 embaixadores."
+```
 
-### Classes CSS Novas
-```css
-.section-statement {
-  /* Bloco de texto largo sem container visual */
-  @apply py-16 md:py-24;
-}
+**Para:**
+```
+Título: "Escolha o nível de compromisso com a sua evolução"
+Subtítulo: "O método é o mesmo. O que muda é o tempo que você decide se comprometer com o processo."
+```
 
-.statement-line {
-  /* Linha de statement com ícone inline */
-  @apply flex items-start gap-4 text-lg md:text-xl py-4 border-b border-border/20;
-}
+**Alterar descrições dos planos:**
 
-.headline-hero {
-  /* Headline extra grande para hero */
-  @apply text-[3rem] sm:text-6xl md:text-7xl lg:text-8xl;
-}
+| Plano | Descrição Nova |
+|-------|----------------|
+| Elite Fundador (Mensal) | Para quem quer começar agora e entender o método na prática. |
+| Trimestral | O tempo mínimo para o corpo responder ao método. Resultados consistentes não acontecem em semanas. |
+| Anual | Para quem decidiu fazer do método parte da própria vida. O corpo muda. A rotina se ajusta. A disciplina deixa de ser esforço e vira padrão. |
+
+**Alterar CTAs:**
+- Mensal: "Entrar no Método"
+- Trimestral: "Assumir o Compromisso" (destacar como RECOMENDADO)
+- Anual: "Entrar no Processo"
+
+---
+
+### 8. Novo Bloco — Reforço Final (antes do CTA)
+
+**Criar componente ou adicionar em CTASection:**
+
+```
+"O Método Renascer não é um desafio de 21 dias.
+É um sistema contínuo de prescrição e ajuste.
+
+Você não está comprando acesso a um app.
+Está entrando em um processo."
+```
+
+---
+
+### 9. CTASection — Fechamento Forte
+
+**De:**
+```
+Título: "Sua Nova Vida Começa Agora"
+Texto: "Vagas limitadas para acompanhamento individual. Não aceitamos curiosos, apenas comprometidos."
+CTA: "RESERVAR MINHA TRANSFORMAÇÃO"
+```
+
+**Para:**
+```
+Título: "Corpo forte, mente disciplinada e rotina sob controle mudam tudo."
+(sem subtítulo explicativo)
+CTA: "Entrar no Método Renascer"
 ```
 
 ---
 
 ## Ordem de Implementação
 
-1. **HeroSection** - Aumentar impacto visual (fundação)
-2. **MentorSection** - Simplificar e reposicionar (autoridade imediata)
-3. **ProblemSection** - Remover cards (fluidez)
-4. **MethodologySection** - Layout horizontal (clareza)
-5. **TestimonialsSection** - Estilo editorial (confiança)
-6. **FAQSection** - Limpar bordas (finalização)
+| Etapa | Arquivo | Tipo |
+|-------|---------|------|
+| 1 | `HeroSection.tsx` | Editar |
+| 2 | `WhatIsSection.tsx` | Criar |
+| 3 | `MethodologySection.tsx` | Editar (expandir pilares) |
+| 4 | `HowItWorksSection.tsx` | Criar |
+| 5 | `MentorSection.tsx` | Editar |
+| 6 | `EvolutionSection.tsx` | Criar |
+| 7 | `PricingSection.tsx` | Editar (textos e CTAs) |
+| 8 | `CTASection.tsx` | Editar |
+| 9 | `Index.tsx` | Editar (reordenar seções) |
 
 ---
 
-## Resultado Esperado
+## Estrutura Final da Home
 
-| Antes | Depois |
-|-------|--------|
-| 9+ containers visuais distintos | 3-4 blocos de impacto |
-| Headlines uniformes | Hierarquia clara (Hero > Seções) |
-| Subtítulos explicativos | Afirmações diretas |
-| Mentor no meio da página | Mentor logo após Hero |
-| Sensação de "escolher features" | Sensação de "seguir um método" |
+```text
+1. Header
+2. Hero (O Método Renascer + subheadline + CTA)
+3. MentorSection (Criado por quem vive o método)
+4. WhatIsSection (O Renascer não é um treino. É um sistema.)
+5. MethodologySection (5 pilares com descrições)
+6. HowItWorksSection (Fluxo: Análise → Prescrição → Execução → Evolução → Ajuste)
+7. TransformationsGallery (Provas visuais)
+8. TestimonialsSection (Depoimentos)
+9. EvolutionSection (Você não fica sozinho no processo)
+10. PricingSection (Escolha o nível de compromisso)
+11. FAQSection (Perguntas frequentes)
+12. CTASection (Fechamento + bloco de reforço)
+13. Footer
+```
 
 ---
 
-## Detalhes Técnicos
+## Observações Finais
 
-### HeroSection - Refatoração
-
-```text
-Estrutura proposta:
-- Container fullscreen com gradiente sutil
-- H1 em 2 linhas: "Não Busque Evolução," / "Busque RENASCIMENTO"
-- Subtítulo: "O método que transforma corpos e reconstrói mentes."
-- CTA: "QUERO RENASCER" (sem preço visível)
-- Sem indicador de scroll
-```
-
-### MentorSection - Simplificação
-
-```text
-Estrutura proposta:
-- Flex horizontal (foto à esquerda, texto à direita)
-- Foto: maior, com glow laranja sutil
-- Nome: "Gabriel Baú" em display font
-- Subtítulo: "O estrategista por trás do Método Renascer."
-- Citação: em itálico com cor primária
-- Total: 3 elementos textuais apenas
-```
-
-### ProblemSection - Formato Statement
-
-```text
-Layout proposto:
-- Full-width com fundo section-dark
-- H2: "O Fitness Tradicional FALHOU com Você"
-- 3 linhas de statement:
-  ✕ Autoestima destruída por dietas genéricas
-  ✕ Corpo estagnado pelo efeito sanfona
-  ✕ Desistência por falta de estratégia real
-- Frase de fechamento em destaque
-```
-
-### MethodologySection - Layout Horizontal
-
-```text
-Layout proposto:
-- Container centralizado
-- H2: "O Método Renascer"
-- 4 pilares em linha horizontal:
-  [Ícone] Análise | [Ícone] Receitas | [Ícone] Mentor 24h | [Ícone] Gamificação
-- Títulos apenas, sem descrições longas
-- Em mobile: 2x2 grid compacto
-```
-
+- Nenhuma rota será alterada
+- Nenhuma lógica de planos será modificada
+- Nenhum acesso ou arquitetura será alterado
+- Apenas conteúdo textual e criação de 3 novas seções de texto
+- Visual sóbrio e espaçado mantido
+- Linguagem de método, não de ferramenta SaaS
