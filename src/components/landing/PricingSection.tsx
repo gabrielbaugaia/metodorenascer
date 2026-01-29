@@ -130,16 +130,19 @@ export function PricingSection() {
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-14 max-w-3xl mx-auto flex flex-col items-center gap-4">
-          <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center">
-            Escolha o nível de compromisso <span className="text-primary">com a sua evolução</span>
-          </h2>
-          <p className="text-base md:text-lg leading-relaxed text-center max-w-xl text-muted-foreground">
-            O método é o mesmo. O que muda é o tempo que você decide se comprometer com o processo.
-          </p>
-          <p className="text-primary text-sm font-medium">
-            Não gostou? Devolvemos 100% do seu investimento.
-          </p>
-        </div>
+    <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight">
+  Escolha como você quer evoluir
+</h2>
+<p className="text-base md:text-lg leading-relaxed text-center max-w-xl text-muted-foreground">
+  Sem fidelidade forçada. Cancele quando quiser.
+</p>
+<p className="text-base md:text-lg leading-relaxed text-center max-w-xl text-muted-foreground">
+  O método é o mesmo. Você escolhe o ritmo e a condição que fazem sentido para sua fase.
+</p>
+<p className="text-primary text-sm font-medium">
+  Garantia de 7 dias. Não gostou? Devolvemos 100%.
+</p>
+
 
         {/* Plan Cards */}
         <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-5 max-w-7xl mx-auto">
