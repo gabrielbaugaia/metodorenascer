@@ -15,7 +15,7 @@ const pillars = [
   {
     icon: Utensils,
     title: "Nutrição + Receitas",
-    description: "Plano alimentar alinhado ao seu objetivo, com receitas inteligentes para facilitar a execução no dia a dia."
+    description: "Plano alimentar alinhado ao seu objetivo, com receitas inteligentes geradas por IA para facilitar a execução no dia a dia."
   },
   {
     icon: Brain,
@@ -25,7 +25,7 @@ const pillars = [
   {
     icon: Target,
     title: "Consistência",
-    description: "Sistema de acompanhamento que transforma execução diária em progresso real e mensurável."
+    description: "Sistema que transforma execução diária em progresso real e mensurável."
   }
 ];
 

@@ -179,6 +179,35 @@
   }
 }
 
+/* Background variations for visual rhythm */
+.section-graphite {
+  background: hsl(0 0% 8%);
+}
+
+.section-light {
+  background: hsl(0 0% 95%);
+}
+
+.section-light h2,
+.section-light h3,
+.section-light .text-foreground {
+  color: hsl(0 0% 10%);
+}
+
+.section-light p,
+.section-light span:not(.text-primary),
+.section-light .text-muted-foreground {
+  color: hsl(0 0% 35%);
+}
+
+.section-light .text-primary {
+  color: hsl(16 100% 45%);
+}
+
+.section-light .bg-primary\/10 {
+  background: hsl(16 100% 50% / 0.15);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

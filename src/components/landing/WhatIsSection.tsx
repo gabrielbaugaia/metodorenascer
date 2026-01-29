@@ -6,7 +6,7 @@ export function WhatIsSection() {
   return (
     <section 
       ref={ref} 
-      className={`py-16 md:py-24 bg-background transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      className={`py-16 md:py-24 section-graphite transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
     >
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center flex flex-col items-center gap-6">
@@ -20,8 +20,8 @@ export function WhatIsSection() {
           </p>
           
           <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-2xl">
-            Cada decisão — treino, alimentação e mentalidade — é baseada no seu corpo, 
-            na sua rotina e no seu objetivo.
+            Treino, nutrição e mentalidade são definidos a partir do seu corpo, 
+            da sua rotina e do seu objetivo.
           </p>
         </div>
       </div>

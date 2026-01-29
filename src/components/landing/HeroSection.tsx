@@ -4,32 +4,33 @@ import { ArrowRight } from "lucide-react";
 
 export const HeroSection = memo(function HeroSection() {
   return (
-    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-background pt-32 md:pt-40">
+    <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden bg-background pt-24 md:pt-32">
       {/* Subtle radial gradient for depth */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(16_100%_50%/0.05)_0%,_transparent_70%)]" />
       
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 md:px-8">
-        <div className="max-w-5xl mx-auto flex flex-col items-center gap-8 md:gap-10">
+        <div className="max-w-5xl mx-auto flex flex-col items-center gap-10 md:gap-12">
           
-          {/* Title Block */}
-          <div className="animate-fade-in w-full flex flex-col items-center gap-4">
-            <h1 className="font-display font-black text-foreground text-[3rem] sm:text-6xl md:text-7xl lg:text-8xl leading-[1.05] tracking-[-0.02em] text-center">
-              O Método <span className="text-primary drop-shadow-[0_0_40px_rgba(255,69,0,0.7)]">Renascer.</span>
+          {/* Title Block - Dominant headline */}
+          <div className="animate-fade-in w-full flex flex-col items-center gap-6">
+            <h1 className="font-display font-black text-foreground text-[2.75rem] sm:text-6xl md:text-7xl lg:text-8xl leading-[1.05] tracking-[0.01em] text-center">
+              Quando o corpo entra em ordem,{" "}
+              <span className="text-primary drop-shadow-[0_0_40px_rgba(255,69,0,0.7)]">tudo muda.</span>
             </h1>
           </div>
 
-          {/* Subheadline - Explicative */}
+          {/* Subheadline - Smaller, breathing room */}
           <p 
-            className="text-muted-foreground text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto animate-fade-in leading-relaxed text-center" 
+            className="text-muted-foreground text-base md:text-lg lg:text-xl max-w-2xl mx-auto animate-fade-in leading-relaxed text-center" 
             style={{ animationDelay: "0.1s" }}
           >
-            Um sistema de prescrição física, nutricional e mental criado para transformar corpo, energia e disciplina de forma personalizada e sustentável.
+            O Método Renascer foi criado para transformar físico, energia e disciplina com prescrição individual e acompanhamento contínuo.
           </p>
 
           {/* Reinforcement phrase */}
           <p 
-            className="text-primary text-base md:text-lg font-semibold animate-fade-in text-center" 
+            className="text-primary text-sm md:text-base font-semibold animate-fade-in text-center" 
             style={{ animationDelay: "0.2s" }}
           >
             Não é desafio. Não é treino genérico. É método.
@@ -37,7 +38,7 @@ export const HeroSection = memo(function HeroSection() {
 
           {/* CTA Block */}
           <div 
-            className="animate-fade-in flex flex-col items-center gap-6 pt-2" 
+            className="animate-fade-in flex flex-col items-center gap-6 pt-4" 
             style={{ animationDelay: "0.3s" }}
           >
             <Button 
