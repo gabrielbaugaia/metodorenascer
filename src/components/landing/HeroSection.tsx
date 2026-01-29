@@ -15,8 +15,8 @@ export const HeroSection = memo(function HeroSection() {
           {/* Title Block - Dominant headline */}
           <div className="animate-fade-in w-full flex flex-col items-center gap-6">
             <h1 className="font-display font-black text-foreground text-[2.75rem] sm:text-6xl md:text-7xl lg:text-8xl leading-[1.05] tracking-[0.01em] text-center">
-              Quando o corpo entra em ordem,{" "}
-              <span className="text-primary drop-shadow-[0_0_40px_rgba(255,69,0,0.7)]">tudo muda.</span>
+              Treinos que funcionam de verdade —{" "}
+              <span className="text-primary drop-shadow-[0_0_40px_rgba(255,69,0,0.7)]">com método e progresso visível.</span>
             </h1>
           </div>
 
@@ -25,7 +25,7 @@ export const HeroSection = memo(function HeroSection() {
             className="text-muted-foreground text-base md:text-lg lg:text-xl max-w-2xl mx-auto animate-fade-in leading-relaxed text-center" 
             style={{ animationDelay: "0.1s" }}
           >
-            O Método Renascer foi criado para transformar físico, energia e disciplina com prescrição individual e acompanhamento contínuo.
+            Prescrição individual + acompanhamento. Você sabe exatamente o que fazer e como evoluir.
           </p>
 
           {/* Reinforcement phrase */}
@@ -48,7 +48,7 @@ export const HeroSection = memo(function HeroSection() {
               className="group text-xl md:text-2xl px-12 md:px-16 py-7 md:py-8 rounded-xl shadow-2xl animate-pulse-glow hover:animate-none"
             >
               <a href="#preco">
-                <span className="relative z-10 tracking-wide font-semibold">ENTRAR NO MÉTODO</span>
+                <span className="relative z-10 tracking-wide font-semibold">Entrar no método</span>
                 <ArrowRight className="w-6 h-6 md:w-7 md:h-7 relative z-10 ml-3 group-hover:translate-x-1 transition-transform" />
               </a>
             </Button>
