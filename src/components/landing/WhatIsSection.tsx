@@ -15,13 +15,13 @@ export function WhatIsSection() {
           </h2>
           
           <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-2xl">
-            O Método Renascer foi criado para quem entende que resultado não vem de motivação, 
-            mas de prescrição correta e execução consistente.
+            O Método Renascer foi criado para quem entende que resultado não vem de motivação,
+mas de prescrição correta e execução consistente.
           </p>
           
           <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-2xl">
-            Treino, nutrição e mentalidade são definidos a partir do seu corpo, 
-            da sua rotina e do seu objetivo.
+            Treino, nutrição e mentalidade são definidos a partir do seu corpo,
+da sua rotina e do seu objetivo.
           </p>
         </div>
       </div>
