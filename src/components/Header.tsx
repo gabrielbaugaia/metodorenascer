@@ -74,11 +74,16 @@ export function Header() {
           {/* CTA Button */}
           <div className="hidden md:flex items-center gap-4">
             {user ? (
-              <Button variant="ghost" onClick={handleLogout} size="sm">
+              <Button 
+                variant="outline" 
+                onClick={handleLogout} 
+                size="sm"
+                className="border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-foreground/50"
+              >
                 Sair
               </Button>
             ) : (
-              <Button variant="outline" size="sm" asChild className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
+              <Button variant="default" size="sm" asChild>
                 <Link to="/auth">ENTRAR</Link>
               </Button>
             )}
@@ -127,12 +132,17 @@ export function Header() {
                   >
                     Dashboard
                   </Link>
-                  <Button variant="ghost" onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} size="sm" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }} 
+                    size="sm" 
+                    className="w-full border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-foreground/50"
+                  >
                     Sair
                   </Button>
                 </>
               ) : (
-                <Button variant="outline" size="sm" asChild className="w-full border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
+                <Button variant="default" size="sm" asChild className="w-full">
                   <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>ENTRAR</Link>
                 </Button>
               )}

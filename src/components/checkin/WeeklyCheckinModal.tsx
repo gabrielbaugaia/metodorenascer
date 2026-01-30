@@ -83,15 +83,16 @@ export function WeeklyCheckinModal({ open, onOpenChange, onComplete }: WeeklyChe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="shrink-0">
           <DialogTitle>Check-in Semanal</DialogTitle>
           <DialogDescription>
             Como foi sua semana? Registre seu progresso rapidamente.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        {/* Área scrollável */}
+        <div className="flex-1 overflow-y-auto space-y-6 py-4 pr-2">
           {/* Weight */}
           <div className="space-y-2">
             <Label htmlFor="weight">Peso atual (kg) - opcional</Label>
@@ -184,7 +185,8 @@ export function WeeklyCheckinModal({ open, onOpenChange, onComplete }: WeeklyChe
           </div>
         </div>
 
-        <div className="flex gap-3">
+        {/* Footer fixo - sempre visível */}
+        <div className="flex gap-3 pt-4 border-t border-border/50 shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
             Cancelar
           </Button>
