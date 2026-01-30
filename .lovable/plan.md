@@ -1,272 +1,217 @@
 
-# Plano: Impacto Visual e Clareza de Promessa — Landing Page
+# Plano: Correção de Visibilidade e Usabilidade de Botões
 
-## Diagnóstico Atual
+## Diagnóstico dos Problemas
 
-A página está com conteúdo bem estruturado, mas visualmente **flat**:
+Analisando as capturas de tela e o código, identifiquei 4 problemas específicos:
 
-| Problema | Onde Ocorre | Impacto |
-|----------|-------------|---------|
-| Fundo uniforme (preto/section-dark) | Todas as seções | Sem ritmo visual, página monótona |
-| Headlines com mesma escala | Hero vs outras seções | Sem hierarquia de importância |
-| Headline atual fraca | HeroSection | "O Método Renascer." é declarativo mas não impactante |
-| Pouco espaço em branco | Hero, seções | Elementos competindo por atenção |
-
----
-
-## Implementação Proposta
-
-### 1. Hero — Headline Dominante + Mais Espaço
-
-**Alterações em `HeroSection.tsx`:**
-
-**Headline:** "O Método Renascer." → **"Quando o corpo entra em ordem, tudo muda."**
-
-**Subheadline:** 
-"O Método Renascer foi criado para transformar físico, energia e disciplina com prescrição individual e acompanhamento contínuo."
-
-**Reforço:** "Não é desafio. Não é treino genérico. É método."
-
-**CTA:** "ENTRAR NO MÉTODO"
-
-**Ajustes visuais:**
-- Headline ainda maior: manter `text-8xl` mas com mais `letter-spacing`
-- Subheadline visualmente menor (de `text-xl` para `text-lg md:text-xl`)
-- Aumentar gap entre elementos para mais respiro
-- Manter gradiente sutil já existente
+| Problema | Localização | Causa Técnica |
+|----------|-------------|---------------|
+| Botão "ENTRAR" transparente | Header.tsx (mobile menu) | `variant="outline"` + `border-primary/50` cria borda semi-transparente sem fundo sólido |
+| Botão "Sair" invisível | Header.tsx + ClientSidebar.tsx | `variant="ghost"` não tem fundo, difícil visualização |
+| Texto ilegível nos botões da Tour | OnboardingTour.tsx | `variant="fire"` com `text-primary-foreground` conflita com gradiente de fundo |
+| Botão de Check-in fora da tela | WeeklyCheckinModal.tsx | Modal usa `fixed top-[50%]` sem scroll interno, conteúdo corta em telas pequenas |
 
 ---
 
-### 2. Ritmo Visual — Alternância de Fundos
+## Correções Propostas
 
-**Criar "capítulos visuais" com 3 tipos de fundo:**
+### 1. Botão "ENTRAR" no Header
 
-| Seção | Fundo Atual | Fundo Proposto | Classe CSS |
-|-------|-------------|----------------|------------|
-| Hero | bg-background (preto) | bg-background | Manter |
-| MentorSection | bg-background | bg-background | Manter |
-| WhatIsSection | bg-background | **section-graphite** | Grafite escuro (novo) |
-| MethodologySection | bg-background | bg-background | Manter |
-| HowItWorksSection | section-dark | **section-light** | Off-white/cinza claro (novo) |
-| TransformationsGallery | section-dark | section-dark | Manter |
-| TestimonialsSection | bg-background | bg-background | Manter |
-| EvolutionSection | section-dark | **section-graphite** | Grafite escuro |
-| PricingSection | section-dark | section-dark | Manter |
-| FAQSection | section-dark | bg-background | Alternar |
-| CTASection | section-dark | section-dark | Manter |
+**Arquivo:** `src/components/Header.tsx`
 
-**Novas classes CSS em `index.css`:**
+**Problema atual (linhas 81-83, 135-137):**
+```tsx
+// Desktop
+<Button variant="outline" size="sm" asChild 
+  className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
+  
+// Mobile
+<Button variant="outline" size="sm" asChild 
+  className="w-full border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
+```
 
-```css
-.section-graphite {
-  background: hsl(0 0% 8%);
-}
+**Solução:**
+- Trocar de `variant="outline"` para `variant="default"` (fundo laranja sólido)
+- Remover classes de borda transparente
+- Texto já será branco via `text-primary-foreground`
 
-.section-light {
-  background: hsl(0 0% 95%);
-  color: hsl(0 0% 10%);
-}
+```tsx
+// Desktop
+<Button variant="default" size="sm" asChild>
+  <Link to="/auth">ENTRAR</Link>
+</Button>
 
-.section-light .text-foreground {
-  color: hsl(0 0% 10%);
-}
-
-.section-light .text-muted-foreground {
-  color: hsl(0 0% 40%);
-}
-
-.section-light .text-primary {
-  color: hsl(16 100% 45%);
-}
+// Mobile  
+<Button variant="default" size="sm" asChild className="w-full">
+  <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>ENTRAR</Link>
+</Button>
 ```
 
 ---
 
-### 3. WhatIsSection — Texto Ajustado
+### 2. Botão "Sair" no Header e Sidebar
 
-**Alterações em `WhatIsSection.tsx`:**
+**Header.tsx (linhas 77-79, 130-131):**
 
-**Texto atualizado:**
-"O Método Renascer foi criado para quem entende que resultado não vem de motivação, mas de prescrição correta e execução consistente.
-Treino, nutrição e mentalidade são definidos a partir do seu corpo, da sua rotina e do seu objetivo."
+**Problema atual:**
+```tsx
+// Desktop
+<Button variant="ghost" onClick={handleLogout} size="sm">Sair</Button>
 
-**Fundo:** Mudar de `bg-background` para `section-graphite`
+// Mobile
+<Button variant="ghost" onClick={() => {...}} size="sm" className="w-full">Sair</Button>
+```
 
----
+**Solução:**
+- Usar `variant="outline"` com borda visível
+- Adicionar `border-border` para garantir visibilidade
 
-### 4. MethodologySection — Textos Atualizados
+```tsx
+<Button 
+  variant="outline" 
+  onClick={handleLogout} 
+  size="sm"
+  className="border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-foreground/50"
+>
+  Sair
+</Button>
+```
 
-**Alterações em `MethodologySection.tsx`:**
+**ClientSidebar.tsx (linhas 189-196):**
 
-Manter layout e ícones, apenas ajustar descrições:
+**Problema atual:**
+```tsx
+<SidebarMenuButton
+  onClick={handleLogout}
+  tooltip="Sair"
+  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+>
+```
 
-| Pilar | Descrição Atualizada |
-|-------|---------------------|
-| Análise Individual | Avaliação completa do seu perfil físico, histórico, rotina e objetivo para prescrever treino, nutrição e mentalidade de forma personalizada. |
-| Treino Prescrito | Treino estruturado de acordo com seu nível, tempo disponível e capacidade de recuperação. Sem padrão genérico. |
-| Nutrição + Receitas | Plano alimentar alinhado ao seu objetivo, com receitas inteligentes geradas por IA para facilitar a execução no dia a dia. |
-| Mentalidade | Disciplina mental aplicada à rotina real, com acompanhamento contínuo e ajustes conforme sua evolução. |
-| Consistência | Sistema que transforma execução diária em progresso real e mensurável. |
-
----
-
-### 5. HowItWorksSection — Fundo Claro (Quebra de Padrão)
-
-**Alterações em `HowItWorksSection.tsx`:**
-
-**Fundo:** Mudar de `section-dark` para `section-light` (off-white)
-
-**Efeito:** Cria ruptura visual, destaca a seção como "explicação prática" diferente das seções de impacto
-
-**Ajustes de cor:**
-- Texto principal: preto/cinza escuro
-- Ícones: manter laranja (contrasta bem com fundo claro)
-- Setas: manter laranja
-
----
-
-### 6. EvolutionSection — Título Invertido
-
-**Alterações em `EvolutionSection.tsx`:**
-
-**Título:** "Você não fica sozinho no processo." → **"Evolução aqui não é achismo."**
-
-**Texto:** "Check-ins, análises visuais, feedbacks e ajustes fazem parte do método. Você não fica sozinho no processo."
-
-**Fundo:** Mudar para `section-graphite`
+Este já está OK visualmente dentro da sidebar. Mantém styling atual.
 
 ---
 
-### 7. PricingSection — Garantia + CTAs
+### 3. Botões da Tour de Onboarding
 
-**Alterações em `PricingSection.tsx`:**
+**Arquivo:** `src/components/onboarding/OnboardingTour.tsx`
 
-**Adicionar linha de garantia após subtítulo:**
-"Não gostou? Devolvemos 100% do seu investimento."
+**Problema atual (linhas 196-212):**
+```tsx
+<Button
+  variant="fire"
+  onClick={handleNext}
+  className="w-full sm:w-auto text-white font-semibold"
+>
+```
 
-**Planos já estão com textos corretos, apenas garantir:**
-- Elite Fundador: CTA "ENTRAR NO MÉTODO"
-- Trimestral: CTA "ASSUMIR O COMPROMISSO"  
-- Anual: CTA "ENTRAR NO PROCESSO"
+O `variant="fire"` usa `text-primary-foreground` que é branco, mas a classe `.btn-fire` aplica um gradiente que pode interferir. A imagem mostra o botão sem texto visível.
 
----
+**Solução:**
+- Forçar `!text-white` para garantir contraste
+- Ou trocar para `variant="default"` que é mais confiável
 
-### 8. TransformationsGallery — CTA Ajustado
-
-**Alterações em `TransformationsGallery.tsx`:**
-
-**CTA:** "QUERO MINHA TRANSFORMAÇÃO" → "ENTRAR NO MÉTODO"
-
-Manter consistência de linguagem.
-
----
-
-## Ordem de Implementação
-
-| Etapa | Arquivo | Tipo |
-|-------|---------|------|
-| 1 | `src/index.css` | Editar (adicionar classes de fundo) |
-| 2 | `src/components/landing/HeroSection.tsx` | Editar (headline, subheadline, espaçamento) |
-| 3 | `src/components/landing/WhatIsSection.tsx` | Editar (texto, fundo) |
-| 4 | `src/components/landing/MethodologySection.tsx` | Editar (descrições) |
-| 5 | `src/components/landing/HowItWorksSection.tsx` | Editar (fundo claro) |
-| 6 | `src/components/landing/EvolutionSection.tsx` | Editar (título, fundo) |
-| 7 | `src/components/landing/PricingSection.tsx` | Editar (garantia) |
-| 8 | `src/components/landing/TransformationsGallery.tsx` | Editar (CTA) |
-| 9 | `src/components/landing/FAQSection.tsx` | Editar (fundo alternado) |
+```tsx
+<Button
+  variant="default"
+  onClick={handleNext}
+  className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white font-semibold"
+>
+```
 
 ---
 
-## Resultado Visual Esperado
+### 4. Modal de Check-in Semanal (Botão fora do viewport)
 
+**Arquivo:** `src/components/checkin/WeeklyCheckinModal.tsx`
+
+**Problema atual:**
+O `DialogContent` padrão usa posicionamento fixo centralizado sem overflow handling:
+```tsx
+fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]
+```
+
+Em telas pequenas, o conteúdo do modal (com muitos campos de formulário) ultrapassa a altura visível, e o botão "Registrar" fica abaixo da área visível.
+
+**Solução:**
+1. Adicionar `max-h-[90vh]` e `overflow-y-auto` ao DialogContent
+2. Reorganizar para que o footer com botões fique sempre visível
+
+```tsx
+<DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+  <DialogHeader>...</DialogHeader>
+  
+  {/* Área scrollável */}
+  <div className="flex-1 overflow-y-auto space-y-6 py-4">
+    {/* campos do formulário */}
+  </div>
+  
+  {/* Footer fixo no final do modal */}
+  <div className="flex gap-3 pt-4 border-t border-border/50 shrink-0">
+    <Button variant="outline">Cancelar</Button>
+    <Button>Registrar</Button>
+  </div>
+</DialogContent>
+```
+
+---
+
+## Arquivos a Modificar
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/components/Header.tsx` | Trocar variant dos botões ENTRAR e Sair |
+| `src/components/onboarding/OnboardingTour.tsx` | Ajustar botões para garantir contraste de texto |
+| `src/components/checkin/WeeklyCheckinModal.tsx` | Adicionar scroll interno e footer fixo |
+
+---
+
+## Resultado Esperado
+
+| Componente | Antes | Depois |
+|------------|-------|--------|
+| ENTRAR (Header) | Borda transparente, sem fundo | Fundo laranja sólido, texto branco |
+| Sair (Header) | Invisível (ghost) | Borda visível, texto legível |
+| Tour buttons | Texto ilegível sobre gradiente | Texto branco claro sobre laranja |
+| Check-in modal | Botão cortado fora da tela | Scroll interno, botões sempre visíveis |
+
+---
+
+## Detalhes Técnicos Adicionais
+
+### CSS do variant="default" (já existente)
+```tsx
+default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow"
+```
+- `bg-primary` = laranja sólido (#FF4500)
+- `text-primary-foreground` = branco (100%)
+- Não há transparência
+
+### Ajuste no WeeklyCheckinModal - Estrutura Final
 ```text
 ┌─────────────────────────────────────┐
-│ HERO                                │ ← Preto, headline massiva
+│ DialogHeader (título + descrição)   │
 ├─────────────────────────────────────┤
-│ MENTOR                              │ ← Preto
+│                                     │
+│  [área scrollável]                  │
+│  - Peso                             │
+│  - Nível de energia                 │
+│  - Aderência                        │ ← max-h com scroll
+│  - Humor                            │
+│  - Observações                      │
+│                                     │
 ├─────────────────────────────────────┤
-│ O QUE É                             │ ← Grafite (contraste sutil)
-├─────────────────────────────────────┤
-│ METODOLOGIA (5 pilares)             │ ← Preto
-├─────────────────────────────────────┤
-│ COMO FUNCIONA                       │ ← OFF-WHITE (quebra visual)
-├─────────────────────────────────────┤
-│ TRANSFORMAÇÕES                      │ ← Preto/gradiente
-├─────────────────────────────────────┤
-│ DEPOIMENTOS                         │ ← Preto
-├─────────────────────────────────────┤
-│ EVOLUÇÃO                            │ ← Grafite
-├─────────────────────────────────────┤
-│ PLANOS                              │ ← Preto/gradiente
-├─────────────────────────────────────┤
-│ FAQ                                 │ ← Preto
-├─────────────────────────────────────┤
-│ CTA FINAL                           │ ← Preto/gradiente
+│ [Cancelar]  [Registrar]             │ ← sempre visível (shrink-0)
 └─────────────────────────────────────┘
-```
-
----
-
-## Detalhes Técnicos
-
-### Novas Classes CSS
-
-```css
-/* Fundo grafite para variação sutil */
-.section-graphite {
-  background: hsl(0 0% 8%);
-}
-
-/* Fundo claro para quebra de padrão */
-.section-light {
-  background: hsl(0 0% 95%);
-}
-
-.section-light h2,
-.section-light h3,
-.section-light .text-foreground {
-  color: hsl(0 0% 10%);
-}
-
-.section-light p,
-.section-light .text-muted-foreground {
-  color: hsl(0 0% 35%);
-}
-
-.section-light .text-primary {
-  color: hsl(16 100% 45%);
-}
-
-.section-light .bg-primary\/10 {
-  background: hsl(16 100% 50% / 0.15);
-}
-```
-
-### HeroSection — Estrutura Visual
-
-```text
-┌─────────────────────────────────────────────┐
-│                                             │
-│     Quando o corpo entra em ordem,          │  ← text-8xl, muito grande
-│              tudo muda.                     │
-│                                             │
-│   O Método Renascer foi criado para...      │  ← text-lg, menor, mais espaço
-│                                             │
-│   Não é desafio. Não é treino genérico.     │  ← text-primary, destaque
-│                É método.                    │
-│                                             │
-│         [ ENTRAR NO MÉTODO → ]              │  ← CTA grande
-│                                             │
-└─────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Observações Finais
 
-- Nenhuma rota será alterada
-- Nenhuma lógica de planos será modificada
-- Nenhum acesso ou arquitetura será alterado
-- Foco em **contraste visual** e **hierarquia de texto**
-- A seção clara (HowItWorks) cria ruptura que chama atenção
-- Linguagem consistente: "Entrar no Método" como CTA principal
+- Nenhuma alteração de rotas ou lógica de negócio
+- Foco exclusivo em visibilidade e contraste
+- Mantém identidade visual (laranja + preto)
+- Garante acessibilidade em todos os dispositivos
+- Todas as ações ficam acessíveis sem scroll oculto
