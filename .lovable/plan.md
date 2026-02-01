@@ -56,9 +56,9 @@ Criar uma página de vendas independente em `/oferta`, completamente isolada do 
 ## Especificacoes Tecnicas
 
 ### Design
-- Fundo preto solido (`bg-background`)
-- Texto branco/cinza (`text-foreground` / `text-muted-foreground`)
-- CTA laranja solido (`bg-primary text-white`)
+- Fundo preto solido (`bg-black`)
+- Texto branco/cinza (`text-white` / `text-gray-400`)
+- CTA laranja solido LOCAL (`bg-orange-500 hover:bg-orange-600 text-white`)
 - Zero gradientes
 - Mobile-first e responsivo
 - Header e footer proprios (nao usa globais)
@@ -74,8 +74,7 @@ const handleCheckout = async () => {
 ```
 
 ### Componentes Utilizados
-- `Button` (variant="default")
-- `Card` + `CardContent`
+- `Button` (com classes locais para cor)
 - `Accordion` + `AccordionItem` + `AccordionTrigger` + `AccordionContent`
 - `Check` e `X` (Lucide icons)
 
