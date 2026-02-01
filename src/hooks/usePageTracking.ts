@@ -4,6 +4,7 @@ import { useAnalytics } from "./useAnalytics";
 
 const routeToPageName: Record<string, string> = {
   "/": "landing",
+  "/oferta": "oferta_vendas",
   "/auth": "auth",
   "/assinatura": "planos",
   "/pagamento": "checkout",

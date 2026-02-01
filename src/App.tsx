@@ -53,6 +53,7 @@ const BlogPost = lazy(() => import("./pages/BlogPost"));
 const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
 const AdminBlogEditor = lazy(() => import("./pages/admin/AdminBlogEditor"));
 const AcessoBloqueado = lazy(() => import("./pages/AcessoBloqueado"));
+const Oferta = lazy(() => import("./pages/Oferta"));
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,7 @@ const App = () => (
             <Route path="/acesso-bloqueado" element={<AcessoBloqueado />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/oferta" element={<Oferta />} />
 
             {/* ROTAS QUE REQUEREM APENAS AUTENTICAÇÃO (mostram planos se sem assinatura) */}
             <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
