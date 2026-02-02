@@ -1,100 +1,266 @@
 
 
-# Plano: Nova Landing Page de Vendas Isolada
+# Plano: Correção do Módulo Suporte - Chats (Admin) + Limite de 1 Conversa por Cliente
 
 ## Resumo
 
-Criar uma página de vendas independente em `/oferta`, completamente isolada do site principal, focada na conversão para o Plano Inicial (R$49,90/mês).
+Corrigir o módulo de suporte admin para funcionar corretamente no mobile, adicionar status visual das conversas, modo de intervenção admin, e garantir que cada cliente tenha apenas UMA conversa de suporte ativa.
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Ação | Descrição |
+| Arquivo | Acao | Descricao |
 |---------|------|-----------|
-| `src/pages/Oferta.tsx` | **CRIAR** | Nova página de vendas completa e isolada |
-| `src/App.tsx` | **EDITAR** | Adicionar import lazy e rota `/oferta` (2 linhas) |
-| `src/hooks/usePageTracking.ts` | **EDITAR** | Adicionar tracking `"/oferta": "oferta_vendas"` (1 linha) |
+| `src/pages/admin/AdminSuporteChats.tsx` | **EDITAR** | Redesenhar layout mobile, adicionar status e intervencao |
+| `src/pages/Suporte.tsx` | **EDITAR** | Corrigir logica para garantir 1 conversa por cliente |
+| Migracao SQL | **CRIAR** | Adicionar constraint UNIQUE e campo status |
 
 ---
 
-## Estrutura da Nova Página
+## Parte 1: Limite de 1 Conversa por Cliente
 
-```text
-+-------------------------------------------------------------+
-| HEADER MINIMALISTA (proprio da pagina)                      |
-| "Metodo Renascer"                                           |
-+-------------------------------------------------------------+
-| HERO                                                        |
-| "PARE DE TENTAR SOZINHO."                                   |
-| "COMECE HOJE COM ACOMPANHAMENTO REAL POR R$49,90."          |
-| [CTA: Quero comecar agora por R$49,90]                      |
-| Acesso imediato | Sem fidelidade | Cancele quando quiser    |
-+-------------------------------------------------------------+
-| PROBLEMA                                                    |
-| "SE VOCE JA TENTOU VARIAS VEZES E DESISTIU..."              |
-+-------------------------------------------------------------+
-| O QUE ESTA INCLUIDO (5 itens com checkmarks)                |
-+-------------------------------------------------------------+
-| PARA QUEM E / PARA QUEM NAO E (duas colunas)                |
-+-------------------------------------------------------------+
-| COMO FUNCIONA (3 passos numerados)                          |
-+-------------------------------------------------------------+
-| CARD DE PRECO - R$49,90/mes + [CTA]                         |
-+-------------------------------------------------------------+
-| FAQ (5 perguntas em accordion)                              |
-+-------------------------------------------------------------+
-| CTA FINAL + urgencia                                        |
-+-------------------------------------------------------------+
-| FOOTER MINIMALISTA (proprio da pagina)                      |
-| "Metodo Renascer 2025"                                      |
-+-------------------------------------------------------------+
+### Problema Atual
+
+```typescript
+// Linha 261-271 de Suporte.tsx - CRIA NOVA sem verificar duplicatas
+const { data } = await supabase
+  .from("conversas")
+  .insert({
+    user_id: user.id,
+    tipo: "suporte",
+    mensagens: messages as any
+  })
+```
+
+### Solucao
+
+**1. Migracao SQL - Adicionar UNIQUE constraint:**
+
+```sql
+-- Remover conversas duplicadas (manter apenas a mais recente)
+DELETE FROM conversas a
+USING conversas b
+WHERE a.user_id = b.user_id
+  AND a.tipo = b.tipo
+  AND a.created_at < b.created_at;
+
+-- Adicionar constraint para prevenir duplicatas futuras
+ALTER TABLE conversas
+ADD CONSTRAINT unique_user_tipo UNIQUE (user_id, tipo);
+
+-- Adicionar campo status para controle
+ALTER TABLE conversas
+ADD COLUMN IF NOT EXISTS status text DEFAULT 'active';
+```
+
+**2. Corrigir Suporte.tsx - Usar UPSERT:**
+
+```typescript
+// ANTES: INSERT simples
+const { data } = await supabase
+  .from("conversas")
+  .insert({...})
+
+// DEPOIS: UPSERT com on conflict
+const { data } = await supabase
+  .from("conversas")
+  .upsert({
+    user_id: user.id,
+    tipo: "suporte",
+    mensagens: messages as any,
+    updated_at: new Date().toISOString()
+  }, {
+    onConflict: 'user_id,tipo',
+    ignoreDuplicates: false
+  })
+  .select("id")
+  .single();
 ```
 
 ---
 
-## Especificacoes Tecnicas
+## Parte 2: Layout Mobile Responsivo
 
-### Design
-- Fundo preto solido (`bg-black`)
-- Texto branco/cinza (`text-white` / `text-gray-400`)
-- CTA laranja solido LOCAL (`bg-orange-500 hover:bg-orange-600 text-white`)
-- Zero gradientes
-- Mobile-first e responsivo
-- Header e footer proprios (nao usa globais)
+### Cards Clicaveis no Mobile
 
-### Logica de Checkout
+```text
++---------------------------------------------------+
+| [Verde] Rosangela Garcia                          |
+| zanarebeca78@gmail.com                            |
+| Status: Respondido pela IA                        |
+| "Sobre alimentacao, eu como de manha..."          |
+| ha 2 horas • 2 mensagens                          |
+|                                     [Ver Chat ->] |
++---------------------------------------------------+
+```
+
+Cada card:
+- Totalmente clicavel para abrir o chat
+- Badge de status colorido
+- Preview da ultima mensagem
+
+---
+
+## Parte 3: Sistema de Status
+
+| Status | Indicador | Cor | Condicao |
+|--------|-----------|-----|----------|
+| **Respondido pela IA** | `Check` | Verde | Ultima mensagem e `role: assistant` |
+| **Aguardando IA** | `Clock` | Amarelo | Ultima mensagem e `role: user` ha menos de 5 min |
+| **Requer Intervencao** | `AlertTriangle` | Vermelho | Ultima mensagem e `role: user` ha mais de 5 min |
+| **Intervencao Admin** | `User` | Azul | Ultima mensagem e `role: admin` |
+
+### Funcao de Calculo
+
 ```typescript
-const handleCheckout = async () => {
-  const { data } = await supabase.functions.invoke("create-checkout", {
-    body: { price_id: "price_1ScZqTCuFZvf5xFdZuOBMzpt" }
-  });
-  if (data?.url) window.location.href = data.url;
+const getConversationStatus = (conversa: Conversa) => {
+  const msgs = conversa.mensagens;
+  if (!Array.isArray(msgs) || msgs.length === 0) {
+    return { label: 'Vazia', color: 'gray', icon: Circle };
+  }
+  
+  const lastMsg = msgs[msgs.length - 1];
+  const lastUpdate = new Date(conversa.updated_at);
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  
+  if (lastMsg.role === 'admin') {
+    return { label: 'Intervencao Admin', color: 'blue', icon: User };
+  }
+  
+  if (lastMsg.role === 'assistant') {
+    return { label: 'Respondido pela IA', color: 'green', icon: Check };
+  }
+  
+  if (lastMsg.role === 'user') {
+    if (lastUpdate < fiveMinutesAgo) {
+      return { label: 'Requer Intervencao', color: 'red', icon: AlertTriangle };
+    }
+    return { label: 'Aguardando IA', color: 'yellow', icon: Clock };
+  }
+  
+  return { label: 'Ativa', color: 'gray', icon: Circle };
 };
 ```
 
-### Componentes Utilizados
-- `Button` (com classes locais para cor)
-- `Accordion` + `AccordionItem` + `AccordionTrigger` + `AccordionContent`
-- `Check` e `X` (Lucide icons)
+---
+
+## Parte 4: Modo Intervencao Admin
+
+### Novo Campo de Entrada no Modal
+
+```text
++---------------------------------------------------+
+| Chat com Rosangela Garcia                [Fechar] |
+| zanarebeca78@gmail.com                            |
++---------------------------------------------------+
+| [Verde] Respondido pela IA                        |
+| [Assumir Conversa]                                |
++---------------------------------------------------+
+| HISTORICO                                         |
+|                                                   |
+| [Cliente] 12:29                                   |
+| "Sobre alimentacao, eu como de manha 1 ovo..."    |
+|                                                   |
+| [IA] 12:29                          [Editar] [X]  |
+| "Ola, Rosangela! Gabriel Bau aqui..."             |
++---------------------------------------------------+
+| INTERVENCAO ADMIN                                 |
+| [Digite sua resposta...]              [Enviar]    |
+| Suas mensagens aparecerao como "Admin"            |
++---------------------------------------------------+
+```
+
+### Logica de Envio Admin
+
+```typescript
+const handleAdminReply = async (content: string) => {
+  const adminMessage = {
+    role: 'admin',
+    content: content,
+    timestamp: new Date().toISOString(),
+    admin_name: 'Gabriel Bau'
+  };
+  
+  const updatedMsgs = [...selectedConversa.mensagens, adminMessage];
+  
+  await supabase
+    .from("conversas")
+    .update({
+      mensagens: updatedMsgs,
+      status: 'admin_intervention',
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", selectedConversa.id);
+};
+```
 
 ---
 
-## Copy Aplicada (Exatamente como fornecida)
+## Parte 5: Contadores de Status
 
-Toda a copy sera implementada palavra por palavra conforme o texto enviado, incluindo:
-- Headlines em CAPS
-- Listas de beneficios
-- Secoes "Para quem e" / "Para quem nao e"
-- 5 perguntas do FAQ
-- CTA final com urgencia
+### Dashboard no Topo
+
+```text
++---------------------------------------------------+
+| SUPORTE - CHATS                                   |
+| Monitore e intervenha nas conversas               |
++---------------------------------------------------+
+| [2 Ativas] [0 Aguardando] [0 Intervencoes]       |
++---------------------------------------------------+
+```
 
 ---
 
-## Garantias
+## Estrutura Final do Modal
 
-- ZERO impacto na home atual
-- ZERO alteracao em estilos globais
-- ZERO modificacao em headers/footers existentes
-- Pagina 100% isolada, pronta para subdominio
+```text
++---------------------------------------------------+
+| Chat com [Nome do Cliente]              [X Fechar]|
+| [email] • suporte                                 |
++---------------------------------------------------+
+| STATUS: [Badge colorido]                          |
+| [Assumir Conversa] [Limpar Historico]             |
++---------------------------------------------------+
+| HISTORICO (ScrollArea)                            |
+|                                                   |
+| [12:29] Cliente                                   |
+| "Mensagem do cliente..."                          |
+|                                                   |
+| [12:30] IA                      [Editar] [Excluir]|
+| "Resposta da IA..."                               |
+|                                                   |
+| [12:35] Admin (Gabriel Bau)                       |
+| "Intervencao do admin..."                         |
++---------------------------------------------------+
+| RESPONDER COMO ADMIN                              |
+| [_________________________________] [Enviar]      |
++---------------------------------------------------+
+```
+
+---
+
+## Resumo das Alteracoes
+
+1. **Constraint UNIQUE** no banco: Impede multiplas conversas por cliente
+2. **UPSERT** no frontend: Garante reuso da conversa existente
+3. **Layout mobile**: Cards clicaveis em vez de tabela
+4. **Sistema de status**: Badges coloridos com deteccao automatica
+5. **Timeout de 5 min**: Marca como "Requer Intervencao"
+6. **Botao Assumir**: Admin pode tomar controle
+7. **Campo de resposta**: Admin pode responder manualmente
+8. **Contadores**: Dashboard com metricas de status
+
+---
+
+## Ordem de Implementacao
+
+1. Criar migracao SQL (constraint + campo status)
+2. Corrigir `Suporte.tsx` para usar UPSERT
+3. Refatorar `AdminSuporteChats.tsx`:
+   - Funcao `getConversationStatus()`
+   - Layout mobile com cards
+   - Contadores de status
+   - Modal expandido com intervencao
+   - Campo de resposta admin
 
