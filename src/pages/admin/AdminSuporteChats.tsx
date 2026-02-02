@@ -49,7 +49,11 @@ import {
   Pencil,
   Trash2,
   MoreVertical,
-  Eraser
+  Eraser,
+  AlertTriangle,
+  User,
+  Circle,
+  ChevronRight
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -66,6 +70,7 @@ interface Mensagem {
   content: string;
   timestamp?: string;
   editedAt?: string;
+  admin_name?: string;
 }
 
 interface Conversa {
@@ -75,11 +80,63 @@ interface Conversa {
   mensagens: Mensagem[];
   created_at: string | null;
   updated_at: string | null;
+  status?: string | null;
   profile?: {
     full_name: string;
     email: string | null;
   } | null;
 }
+
+interface ConversationStatus {
+  label: string;
+  color: 'green' | 'yellow' | 'red' | 'blue' | 'gray';
+  icon: typeof CheckCircle2;
+}
+
+// Helper function to calculate conversation status
+const getConversationStatus = (conversa: Conversa): ConversationStatus => {
+  const msgs = conversa.mensagens;
+  if (!Array.isArray(msgs) || msgs.length === 0) {
+    return { label: 'Vazia', color: 'gray', icon: Circle };
+  }
+  
+  const lastMsg = msgs[msgs.length - 1];
+  const lastUpdate = new Date(conversa.updated_at || conversa.created_at || Date.now());
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  
+  if (lastMsg.role === 'admin') {
+    return { label: 'Intervenção Admin', color: 'blue', icon: User };
+  }
+  
+  if (lastMsg.role === 'assistant') {
+    return { label: 'Respondido pela IA', color: 'green', icon: CheckCircle2 };
+  }
+  
+  if (lastMsg.role === 'user') {
+    if (lastUpdate < fiveMinutesAgo) {
+      return { label: 'Requer Intervenção', color: 'red', icon: AlertTriangle };
+    }
+    return { label: 'Aguardando IA', color: 'yellow', icon: Clock };
+  }
+  
+  return { label: 'Ativa', color: 'gray', icon: Circle };
+};
+
+// Status badge color classes
+const getStatusColorClasses = (color: ConversationStatus['color']) => {
+  switch (color) {
+    case 'green':
+      return 'bg-green-500/20 text-green-500 border-green-500/30';
+    case 'yellow':
+      return 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30';
+    case 'red':
+      return 'bg-red-500/20 text-red-500 border-red-500/30';
+    case 'blue':
+      return 'bg-blue-500/20 text-blue-500 border-blue-500/30';
+    default:
+      return 'bg-muted text-muted-foreground border-border';
+  }
+};
 
 export default function AdminSuporteChats() {
   const { user, loading: authLoading } = useAuth();
@@ -188,7 +245,8 @@ export default function AdminSuporteChats() {
         {
           role: "admin",
           content: adminMessage.trim(),
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          admin_name: "Gabriel Baú"
         }
       ];
 
@@ -196,7 +254,8 @@ export default function AdminSuporteChats() {
         .from("conversas")
         .update({ 
           mensagens: updatedMensagens as unknown as Json,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          status: 'admin_intervention'
         })
         .eq("id", selectedConversa.id);
 
@@ -318,7 +377,8 @@ export default function AdminSuporteChats() {
         .from("conversas")
         .update({ 
           mensagens: [] as unknown as Json,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          status: 'active'
         })
         .eq("id", selectedConversa.id);
 
@@ -357,6 +417,20 @@ export default function AdminSuporteChats() {
       conversa.profile?.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Calculate status counts
+  const statusCounts = {
+    active: filteredConversas.filter(c => getMessageCount(c.mensagens) > 0).length,
+    awaiting: filteredConversas.filter(c => {
+      const status = getConversationStatus(c);
+      return status.color === 'yellow' || status.color === 'red';
+    }).length,
+    interventions: filteredConversas.filter(c => {
+      const msgs = c.mensagens;
+      if (!Array.isArray(msgs)) return false;
+      return msgs.some(m => m.role === 'admin');
+    }).length
+  };
+
   if (authLoading || adminLoading || loading) {
     return (
       <ClientLayout>
@@ -371,11 +445,11 @@ export default function AdminSuporteChats() {
 
   return (
     <ClientLayout>
-      <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-4 md:space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold">Suporte - Chats</h1>
-            <p className="text-muted-foreground">Monitore e intervenha nas conversas com IA</p>
+            <h1 className="text-2xl md:text-3xl font-display font-bold">Suporte - Chats</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Monitore e intervenha nas conversas</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="flex items-center gap-1">
@@ -389,62 +463,50 @@ export default function AdminSuporteChats() {
                 onClick={() => setConfirmClearAll(true)}
                 className="text-destructive hover:text-destructive"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Limpar Todas
+                <Trash2 className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Limpar Todas</span>
               </Button>
             )}
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 md:gap-4">
           <Card variant="glass">
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:pt-6 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Conversas Ativas</p>
-                  <p className="text-2xl font-bold">{conversas.filter(c => getMessageCount(c.mensagens) > 0).length}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Ativas</p>
+                  <p className="text-xl md:text-2xl font-bold">{statusCounts.active}</p>
                 </div>
-                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card variant="glass">
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:pt-6 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Aguardando Resposta</p>
-                  <p className="text-2xl font-bold">
-                    {conversas.filter(c => {
-                      const msgs = c.mensagens;
-                      if (!Array.isArray(msgs) || msgs.length === 0) return false;
-                      return msgs[msgs.length - 1]?.role === 'user';
-                    }).length}
-                  </p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Aguardando</p>
+                  <p className="text-xl md:text-2xl font-bold">{statusCounts.awaiting}</p>
                 </div>
-                <div className="h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-yellow-500" />
+                <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                  <Clock className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card variant="glass">
-            <CardContent className="pt-6">
+            <CardContent className="p-3 md:pt-6 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Intervenções Admin</p>
-                  <p className="text-2xl font-bold">
-                    {conversas.filter(c => {
-                      const msgs = c.mensagens;
-                      if (!Array.isArray(msgs)) return false;
-                      return msgs.some(m => m.role === 'admin');
-                    }).length}
-                  </p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Intervenções</p>
+                  <p className="text-xl md:text-2xl font-bold">{statusCounts.interventions}</p>
                 </div>
-                <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <AlertCircle className="h-5 w-5 text-blue-500" />
+                <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <User className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
                 </div>
               </div>
             </CardContent>
@@ -452,11 +514,11 @@ export default function AdminSuporteChats() {
         </div>
 
         <Card variant="glass">
-          <CardHeader>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <CardHeader className="pb-3 md:pb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
               <div>
-                <CardTitle>Conversas dos Clientes</CardTitle>
-                <CardDescription>Visualize e intervenha nos chats quando necessário</CardDescription>
+                <CardTitle className="text-lg md:text-xl">Conversas dos Clientes</CardTitle>
+                <CardDescription className="text-sm">Visualize e intervenha nos chats quando necessário</CardDescription>
               </div>
               <div className="relative w-full md:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -469,58 +531,122 @@ export default function AdminSuporteChats() {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
+          <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
+            {/* Mobile: Cards Layout */}
+            <div className="md:hidden space-y-3">
+              {filteredConversas.map((conversa) => {
+                const status = getConversationStatus(conversa);
+                const StatusIcon = status.icon;
+                return (
+                  <div
+                    key={conversa.id}
+                    onClick={() => setSelectedConversa(conversa)}
+                    className="p-4 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors active:scale-[0.98]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`h-2 w-2 rounded-full ${
+                            status.color === 'green' ? 'bg-green-500' :
+                            status.color === 'yellow' ? 'bg-yellow-500' :
+                            status.color === 'red' ? 'bg-red-500' :
+                            status.color === 'blue' ? 'bg-blue-500' :
+                            'bg-muted-foreground'
+                          }`} />
+                          <p className="font-medium truncate">{conversa.profile?.full_name || "Desconhecido"}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate mb-2">{conversa.profile?.email}</p>
+                        <Badge variant="outline" className={`text-xs mb-2 ${getStatusColorClasses(status.color)}`}>
+                          <StatusIcon className="h-3 w-3 mr-1" />
+                          {status.label}
+                        </Badge>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          "{getLastMessage(conversa.mensagens)}"
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                          <span>{conversa.updated_at && formatDistanceToNow(new Date(conversa.updated_at), { 
+                            addSuffix: true, 
+                            locale: ptBR 
+                          })}</span>
+                          <span>•</span>
+                          <span>{getMessageCount(conversa.mensagens)} msgs</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredConversas.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhuma conversa encontrada
+                </div>
+              )}
+            </div>
+
+            {/* Desktop: Table Layout */}
+            <div className="hidden md:block rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Status</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Última Mensagem</TableHead>
-                    <TableHead>Mensagens</TableHead>
+                    <TableHead>Msgs</TableHead>
                     <TableHead>Atualizado</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredConversas.map((conversa) => (
-                    <TableRow key={conversa.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{conversa.profile?.full_name || "Desconhecido"}</p>
-                          <p className="text-sm text-muted-foreground">{conversa.profile?.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{conversa.tipo || "suporte"}</Badge>
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {getLastMessage(conversa.mensagens)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{getMessageCount(conversa.mensagens)}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {conversa.updated_at && formatDistanceToNow(new Date(conversa.updated_at), { 
-                          addSuffix: true, 
-                          locale: ptBR 
-                        })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedConversa(conversa)}
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Ver Chat
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredConversas.map((conversa) => {
+                    const status = getConversationStatus(conversa);
+                    const StatusIcon = status.icon;
+                    return (
+                      <TableRow key={conversa.id}>
+                        <TableCell>
+                          <Badge variant="outline" className={`${getStatusColorClasses(status.color)}`}>
+                            <StatusIcon className="h-3 w-3 mr-1" />
+                            {status.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{conversa.profile?.full_name || "Desconhecido"}</p>
+                            <p className="text-sm text-muted-foreground">{conversa.profile?.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{conversa.tipo || "suporte"}</Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {getLastMessage(conversa.mensagens)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{getMessageCount(conversa.mensagens)}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {conversa.updated_at && formatDistanceToNow(new Date(conversa.updated_at), { 
+                            addSuffix: true, 
+                            locale: ptBR 
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedConversa(conversa)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Ver Chat
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                   {filteredConversas.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         Nenhuma conversa encontrada
                       </TableCell>
                     </TableRow>
@@ -533,14 +659,14 @@ export default function AdminSuporteChats() {
 
         {/* Chat View Dialog */}
         <Dialog open={!!selectedConversa} onOpenChange={(open) => !open && setSelectedConversa(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh]">
-            <DialogHeader>
-              <div className="flex items-center justify-between">
+          <DialogContent className="max-w-2xl max-h-[90vh] md:max-h-[80vh] p-4 md:p-6">
+            <DialogHeader className="pb-2">
+              <div className="flex items-start justify-between gap-2">
                 <div>
-                  <DialogTitle>
+                  <DialogTitle className="text-lg">
                     Chat com {selectedConversa?.profile?.full_name || "Cliente"}
                   </DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription className="text-sm">
                     {selectedConversa?.profile?.email} • {selectedConversa?.tipo || "suporte"}
                   </DialogDescription>
                 </div>
@@ -549,16 +675,32 @@ export default function AdminSuporteChats() {
                     variant="outline" 
                     size="sm" 
                     onClick={() => setConfirmClearSingle(true)}
-                    className="text-destructive hover:text-destructive"
+                    className="text-destructive hover:text-destructive flex-shrink-0"
                   >
-                    <Eraser className="h-4 w-4 mr-2" />
-                    Limpar
+                    <Eraser className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">Limpar</span>
                   </Button>
                 )}
               </div>
             </DialogHeader>
+
+            {/* Status Badge */}
+            {selectedConversa && (
+              <div className="flex items-center gap-2 py-2 border-b">
+                {(() => {
+                  const status = getConversationStatus(selectedConversa);
+                  const StatusIcon = status.icon;
+                  return (
+                    <Badge variant="outline" className={`${getStatusColorClasses(status.color)}`}>
+                      <StatusIcon className="h-3 w-3 mr-1" />
+                      {status.label}
+                    </Badge>
+                  );
+                })()}
+              </div>
+            )}
             
-            <ScrollArea className="h-[400px] pr-4">
+            <ScrollArea className="h-[300px] md:h-[400px] pr-4">
               <div className="space-y-4">
                 {Array.isArray(selectedConversa?.mensagens) && selectedConversa.mensagens.map((msg, idx) => (
                   <div
@@ -568,7 +710,7 @@ export default function AdminSuporteChats() {
                     }`}
                   >
                     <div
-                      className={`relative max-w-[80%] rounded-lg p-3 ${
+                      className={`relative max-w-[85%] md:max-w-[80%] rounded-lg p-3 ${
                         msg.role === "user"
                           ? "bg-primary text-primary-foreground"
                           : msg.role === "admin"
@@ -603,9 +745,9 @@ export default function AdminSuporteChats() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       )}
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <Badge variant="outline" className="text-xs">
-                          {msg.role === "user" ? "Cliente" : msg.role === "admin" ? "Admin" : "IA"}
+                          {msg.role === "user" ? "Cliente" : msg.role === "admin" ? `Admin${msg.admin_name ? ` (${msg.admin_name})` : ''}` : "IA"}
                         </Badge>
                         {msg.timestamp && (
                           <span className="text-xs opacity-70">
@@ -616,7 +758,7 @@ export default function AdminSuporteChats() {
                           <span className="text-xs opacity-50">(editado)</span>
                         )}
                       </div>
-                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                     </div>
                   </div>
                 ))}
@@ -628,18 +770,19 @@ export default function AdminSuporteChats() {
               </div>
             </ScrollArea>
 
-            <div className="border-t pt-4 mt-4">
+            <div className="border-t pt-4 mt-2">
               <div className="flex gap-2">
                 <Textarea
-                  placeholder="Intervenção do admin..."
+                  placeholder="Responder como admin..."
                   value={adminMessage}
                   onChange={(e) => setAdminMessage(e.target.value)}
-                  className="flex-1"
+                  className="flex-1 min-h-[60px]"
                   rows={2}
                 />
                 <Button 
                   onClick={handleAdminIntervention}
                   disabled={!adminMessage.trim() || sending}
+                  className="self-end"
                 >
                   {sending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -649,7 +792,7 @@ export default function AdminSuporteChats() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Suas mensagens aparecerão como "Admin" para o cliente
+                Suas mensagens aparecerão como "Admin (Gabriel Baú)" para o cliente
               </p>
             </div>
           </DialogContent>
