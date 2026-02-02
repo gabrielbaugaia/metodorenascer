@@ -243,13 +243,14 @@ export default function Suporte() {
     fetchData();
   }, [user]);
 
-  // Save messages to database with debounce to avoid excessive requests
+  // Save messages to database with debounce - uses UPSERT to ensure only 1 conversation per user+tipo
   useEffect(() => {
     if (!user || messages.length === 0 || loadingHistory) return;
     
     const timeoutId = setTimeout(async () => {
       try {
         if (conversaId) {
+          // Update existing conversation
           await supabase
             .from("conversas")
             .update({ 
@@ -258,17 +259,44 @@ export default function Suporte() {
             })
             .eq("id", conversaId);
         } else {
-          const { data } = await supabase
+          // Use UPSERT to prevent duplicates - unique constraint on (user_id, tipo)
+          const { data, error } = await supabase
             .from("conversas")
-            .insert({
+            .upsert({
               user_id: user.id,
               tipo: "suporte",
-              mensagens: messages as any
+              mensagens: messages as any,
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id,tipo',
+              ignoreDuplicates: false
             })
             .select("id")
             .single();
           
-          if (data) setConversaId(data.id);
+          if (error) {
+            // If upsert fails, try to find existing conversation
+            const { data: existing } = await supabase
+              .from("conversas")
+              .select("id")
+              .eq("user_id", user.id)
+              .eq("tipo", "suporte")
+              .single();
+            
+            if (existing) {
+              setConversaId(existing.id);
+              // Update the existing one
+              await supabase
+                .from("conversas")
+                .update({ 
+                  mensagens: messages as any,
+                  updated_at: new Date().toISOString()
+                })
+                .eq("id", existing.id);
+            }
+          } else if (data) {
+            setConversaId(data.id);
+          }
         }
       } catch (error) {
         console.error("Error saving chat history:", error);
