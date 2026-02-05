@@ -318,6 +318,57 @@ export type Database = {
         }
         Relationships: []
       }
+      commercial_plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_popular: boolean | null
+          modules_access: Json
+          name: string
+          period_months: number | null
+          price_cents: number
+          slug: string
+          sort_order: number | null
+          stripe_price_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          modules_access?: Json
+          name: string
+          period_months?: number | null
+          price_cents: number
+          slug: string
+          sort_order?: number | null
+          stripe_price_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          modules_access?: Json
+          name?: string
+          period_months?: number | null
+          price_cents?: number
+          slug?: string
+          sort_order?: number | null
+          stripe_price_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       conversas: {
         Row: {
           created_at: string | null
@@ -1246,6 +1297,7 @@ export type Database = {
           access_blocked: boolean | null
           blocked_reason: string | null
           canceled_at: string | null
+          commercial_plan_id: string | null
           created_at: string | null
           current_period_end: string | null
           current_period_start: string | null
@@ -1267,6 +1319,7 @@ export type Database = {
           access_blocked?: boolean | null
           blocked_reason?: string | null
           canceled_at?: string | null
+          commercial_plan_id?: string | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
@@ -1288,6 +1341,7 @@ export type Database = {
           access_blocked?: boolean | null
           blocked_reason?: string | null
           canceled_at?: string | null
+          commercial_plan_id?: string | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
@@ -1304,6 +1358,56 @@ export type Database = {
           stripe_subscription_id?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_commercial_plan_id_fkey"
+            columns: ["commercial_plan_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trial_campaigns: {
+        Row: {
+          created_at: string | null
+          current_participants: number | null
+          duration_days: number
+          ends_at: string | null
+          id: string
+          is_active: boolean | null
+          max_participants: number | null
+          module_limits: Json
+          name: string
+          starts_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_participants?: number | null
+          duration_days?: number
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          module_limits?: Json
+          name: string
+          starts_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_participants?: number | null
+          duration_days?: number
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_participants?: number | null
+          module_limits?: Json
+          name?: string
+          starts_at?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1371,6 +1475,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_module_access: {
+        Row: {
+          access_level: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          limits: Json | null
+          module: string
+          trial_campaign_id: string | null
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          access_level?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          limits?: Json | null
+          module: string
+          trial_campaign_id?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          access_level?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          limits?: Json | null
+          module?: string
+          trial_campaign_id?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_module_access_trial_campaign_id_fkey"
+            columns: ["trial_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "trial_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
