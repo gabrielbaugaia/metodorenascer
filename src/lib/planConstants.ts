@@ -1,6 +1,7 @@
 // Centralized plan type and name constants for the entire application
 // Use these constants to ensure consistency across all code paths
 
+// Legacy plan types (for backward compatibility)
 export const PLAN_TYPES = {
   ELITE_FUNDADOR: "elite_fundador",
   GRATUITO: "gratuito",
@@ -8,6 +9,14 @@ export const PLAN_TYPES = {
   TRIMESTRAL: "trimestral",
   SEMESTRAL: "semestral",
   ANUAL: "anual"
+} as const;
+
+// New commercial plan slugs
+export const COMMERCIAL_PLAN_SLUGS = {
+  TREINO: "treino",
+  TREINO_DIETA: "treino_dieta",
+  COMPLETO: "completo",
+  NUTRICAO_RECEITAS: "nutricao_receitas"
 } as const;
 
 export const PLAN_NAMES: Record<string, string> = {

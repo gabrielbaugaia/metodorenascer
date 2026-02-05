@@ -54,6 +54,8 @@ const AdminBlog = lazy(() => import("./pages/admin/AdminBlog"));
 const AdminBlogEditor = lazy(() => import("./pages/admin/AdminBlogEditor"));
 const AcessoBloqueado = lazy(() => import("./pages/AcessoBloqueado"));
 const Oferta = lazy(() => import("./pages/Oferta"));
+const AdminCommercialPlans = lazy(() => import("./pages/admin/AdminCommercialPlans"));
+const AdminTrialCampaigns = lazy(() => import("./pages/admin/AdminTrialCampaigns"));
 
 const queryClient = new QueryClient();
 
@@ -122,6 +124,8 @@ const App = () => (
             <Route path="/admin/leads" element={<AdminLeads />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
               <Route path="/admin/blog/:id" element={<AdminBlogEditor />} />
+              <Route path="/admin/commercial-plans" element={<AdminCommercialPlans />} />
+              <Route path="/admin/trial-campaigns" element={<AdminTrialCampaigns />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
