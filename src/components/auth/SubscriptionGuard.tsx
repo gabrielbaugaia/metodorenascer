@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -10,172 +11,109 @@ interface SubscriptionGuardProps {
   children: ReactNode;
 }
 
-interface LocalSubscriptionState {
-  hasSubscription: boolean;
-  isBlocked: boolean;
-  isPendingPayment: boolean;
-  pendingPlanType?: string;
-}
-
 /**
- * Protege rotas que requerem assinatura ativa.
- * Usuários sem assinatura são redirecionados para o Dashboard (que mostra planos).
- * Admins têm acesso livre.
- * Usuários com plano free (criado pelo admin) têm acesso.
- * Usuários com acesso bloqueado são redirecionados para página de bloqueio.
+ * Protege rotas que requerem algum nível de acesso (trial ou full).
+ * - Admins: acesso livre
+ * - Full: acesso total
+ * - Trial: acesso parcial (páginas controlam limites individualmente)
+ * - None/bloqueado: redireciona para dashboard ou acesso-bloqueado
  */
 export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { subscribed, loading: subLoading } = useSubscription();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
-  const [localState, setLocalState] = useState<LocalSubscriptionState | null>(null);
+  const { effectiveLevel, loading: entLoading } = useEntitlements();
+  const [localBlocked, setLocalBlocked] = useState(false);
+  const [localPending, setLocalPending] = useState(false);
   const [checkingLocal, setCheckingLocal] = useState(true);
 
-  // Check local subscription in database (for admin-created free plans and trial users)
+  // Check for blocked/pending_payment in subscriptions table
   useEffect(() => {
-    const checkLocalSubscription = async () => {
+    const checkLocal = async () => {
       if (!user) {
         setCheckingLocal(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("subscriptions")
-          .select("status, current_period_end, access_blocked, plan_type")
+          .select("status, access_blocked")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (error) {
-          console.error("Error checking local subscription:", error);
-          // Don't give up yet — check trial access below
-        } else if (data) {
-          // Check if access is blocked (for expired free plans)
-          const isBlocked = data.access_blocked === true;
-          
-          // Check if pending payment (invited but not paid yet)
-          const isPendingPayment = data.status === "pending_payment";
-          
-          if (isBlocked) {
-            setLocalState({ hasSubscription: false, isBlocked: true, isPendingPayment: false });
-            setCheckingLocal(false);
-            return;
-          } else if (isPendingPayment) {
-            setLocalState({ 
-              hasSubscription: false, 
-              isBlocked: false, 
-              isPendingPayment: true,
-              pendingPlanType: data.plan_type || undefined
-            });
-            setCheckingLocal(false);
-            return;
-          } else {
-            // Check if subscription is still valid
-            const isActive = data.status === "active" || data.status === "trialing" || data.status === "free";
-            const notExpired = !data.current_period_end || new Date(data.current_period_end) > new Date();
-            if (isActive && notExpired) {
-              setLocalState({ hasSubscription: true, isBlocked: false, isPendingPayment: false });
-              setCheckingLocal(false);
-              return;
-            }
-          }
+        if (data?.access_blocked === true) {
+          setLocalBlocked(true);
         }
-
-        // 3. Check if user has trial access (user_module_access) — allows trial users through
-        const { data: trialAccess } = await supabase
-          .from("user_module_access")
-          .select("id")
-          .eq("user_id", user.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (trialAccess) {
-          setLocalState({ hasSubscription: true, isBlocked: false, isPendingPayment: false });
-        } else {
-          setLocalState({ hasSubscription: false, isBlocked: false, isPendingPayment: false });
+        if (data?.status === "pending_payment") {
+          setLocalPending(true);
         }
       } catch (err) {
-        console.error("Error checking subscription:", err);
-        setLocalState({ hasSubscription: false, isBlocked: false, isPendingPayment: false });
+        console.error("Error checking local subscription:", err);
       } finally {
         setCheckingLocal(false);
       }
     };
 
-    checkLocalSubscription();
+    checkLocal();
   }, [user]);
 
-  // Derive values from state
-  const hasLocalSubscription = localState?.hasSubscription ?? false;
-  const isBlocked = localState?.isBlocked ?? false;
-  const isPendingPayment = localState?.isPendingPayment ?? false;
-  const pendingPlanType = localState?.pendingPlanType;
+  const isLoading = authLoading || subLoading || adminLoading || entLoading || checkingLocal;
 
-  const isLoading = authLoading || subLoading || adminLoading || checkingLocal;
+  // Derived access states
+  const hasAccess = effectiveLevel !== 'none' || subscribed;
+  const hasFullAccess = effectiveLevel === 'full' || subscribed;
+  const isTrial = effectiveLevel === 'trial_limited' && !subscribed;
 
-  // Redirect to auth if not logged in
+  // Redirect: not logged in
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
 
-  // Redirect admins to admin panel
+  // Redirect: admin to admin panel
   useEffect(() => {
     if (!authLoading && !adminLoading && isAdmin) {
       navigate("/admin");
     }
   }, [isAdmin, authLoading, adminLoading, navigate]);
 
-  // Redirect to blocked page if access is blocked
+  // Redirect: blocked access
   useEffect(() => {
     if (isLoading || !user || isAdmin) return;
 
-    if (isBlocked) {
+    if (localBlocked) {
       navigate("/acesso-bloqueado");
       return;
     }
 
-    // Redirect to payment if pending payment
-    // BUT: if Stripe says subscribed, don't redirect (local DB might be outdated)
-    if (isPendingPayment && !subscribed) {
-      // Navigate to dashboard which will show the payment required message
+    if (localPending && !subscribed) {
       navigate("/dashboard");
       return;
     }
-  }, [isLoading, user, isAdmin, isBlocked, isPendingPayment, subscribed, navigate]);
+  }, [isLoading, user, isAdmin, localBlocked, localPending, subscribed, navigate]);
 
-  // Redirect to dashboard (plan selection) if no subscription
+  // Redirect: no access at all
   useEffect(() => {
-    if (isLoading || !user || isAdmin || isBlocked) return;
+    if (isLoading || !user || isAdmin || localBlocked) return;
 
-    const hasAccess = subscribed || hasLocalSubscription;
-    
     if (!hasAccess) {
       navigate("/dashboard");
     }
-  }, [isLoading, user, isAdmin, isBlocked, subscribed, hasLocalSubscription, navigate]);
+  }, [isLoading, user, isAdmin, localBlocked, hasAccess, navigate]);
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return <FullPageLoader />;
   }
 
-  // Don't render children if no access
-  if (!user) {
-    return <FullPageLoader />;
-  }
-
-  // Admins always have access
   if (isAdmin) {
     return <>{children}</>;
   }
 
-  // Check subscription access
-  const hasAccess = subscribed || hasLocalSubscription;
-  
   if (!hasAccess) {
     return <FullPageLoader />;
   }
