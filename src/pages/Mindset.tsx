@@ -22,6 +22,10 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProtocol } from "@/hooks/useProtocol";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
+import { LockedContent } from "@/components/access/LockedContent";
+import { TrialBanner } from "@/components/access/TrialBadge";
+import { UpgradeModal } from "@/components/access/UpgradeModal";
 
 interface MindsetPratica {
   nome: string;
@@ -65,7 +69,9 @@ export default function Mindset() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { protocol: protocolData, loading } = useProtocol("mindset");
+  const { access, loading: accessLoading, hasFullAccess, hasAnyAccess, isTrialing, trialDaysLeft } = useModuleAccess('mindset');
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -177,6 +183,23 @@ export default function Mindset() {
   return (
     <ClientLayout>
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Access blocked */}
+        {!accessLoading && !hasAnyAccess && (
+          <LockedContent module="mindset">
+            <div />
+          </LockedContent>
+        )}
+
+        {/* Trial banner */}
+        {isTrialing && (
+          <TrialBanner 
+            trialDaysLeft={trialDaysLeft} 
+            onUpgradeClick={() => setShowUpgradeModal(true)} 
+          />
+        )}
+
+        {hasAnyAccess && (
+          <>
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-2">
@@ -260,104 +283,128 @@ export default function Mindset() {
           </Card>
         )}
 
-        {/* Rotina da Noite */}
-        {content.rotina_noite && (
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Moon className="h-5 w-5 text-indigo-400" />
-                  ROTINA DA NOITE
-                </CardTitle>
-                <Badge variant="secondary" className="text-primary">
-                  {content.rotina_noite.duracao || content.rotina_noite.duracao_total}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {content.rotina_noite.praticas?.map((pratica, index) => (
-                <div
-                  key={`noite-${index}`}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() => toggleItem(`noite-${index}`)}
-                >
-                  <Checkbox
-                    checked={checkedItems[`noite-${index}`] || false}
-                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                  <div className="flex-1">
-                    <span className={checkedItems[`noite-${index}`] ? "line-through text-muted-foreground" : ""}>
-                      {pratica.nome}
-                    </span>
-                  </div>
+        {/* Rotina da Noite - Locked for limited access */}
+        {hasFullAccess ? (
+          content.rotina_noite && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Moon className="h-5 w-5 text-indigo-400" />
+                    ROTINA DA NOITE
+                  </CardTitle>
+                  <Badge variant="secondary" className="text-primary">
+                    {content.rotina_noite.duracao || content.rotina_noite.duracao_total}
+                  </Badge>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {content.rotina_noite.praticas?.map((pratica, index) => (
+                  <div
+                    key={`noite-${index}`}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => toggleItem(`noite-${index}`)}
+                  >
+                    <Checkbox
+                      checked={checkedItems[`noite-${index}`] || false}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <div className="flex-1">
+                      <span className={checkedItems[`noite-${index}`] ? "line-through text-muted-foreground" : ""}>
+                        {pratica.nome}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )
+        ) : (
+          content.rotina_noite && (
+            <LockedContent module="mindset" fallbackMessage="Rotina da noite disponível no plano completo">
+              <div />
+            </LockedContent>
+          )
         )}
 
-        {/* Crenças Limitantes */}
-        {content.crencas_limitantes && content.crencas_limitantes.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">
-                Crenças Limitantes para Superar
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible defaultValue="crenca-0" className="space-y-2">
-                {content.crencas_limitantes.map((item, index) => {
-                  const crenca = item.crenca || item.crenca_original || "";
-                  const acao = item.acao || item.acao_pratica || "";
+        {/* Crenças Limitantes - Locked for limited access */}
+        {hasFullAccess ? (
+          content.crencas_limitantes && content.crencas_limitantes.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">
+                  Crenças Limitantes para Superar
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Accordion type="single" collapsible defaultValue="crenca-0" className="space-y-2">
+                  {content.crencas_limitantes.map((item, index) => {
+                    const crenca = item.crenca || item.crenca_original || "";
+                    const acao = item.acao || item.acao_pratica || "";
+                    return (
+                      <AccordionItem key={index} value={`crenca-${index}`} className="border-none">
+                        <AccordionTrigger className="py-3 px-4 bg-muted/30 rounded-lg hover:bg-muted/50 hover:no-underline">
+                          <div className="flex items-center gap-3">
+                            <X className="h-4 w-4 text-red-500" />
+                            <span className="text-left">"{crenca}"</span>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-3 px-4 pb-0">
+                          <div className="space-y-3 pl-7">
+                            <div>
+                              <p className="text-xs text-muted-foreground uppercase mb-1">Reformulação</p>
+                              <p className="text-sm text-green-500">{item.reformulacao}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground uppercase mb-1">Ação</p>
+                              <p className="text-sm">{acao}</p>
+                            </div>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              </CardContent>
+            </Card>
+          )
+        ) : (
+          content.crencas_limitantes && content.crencas_limitantes.length > 0 && (
+            <LockedContent module="mindset" fallbackMessage="Crenças limitantes disponíveis no plano completo">
+              <div />
+            </LockedContent>
+          )
+        )}
+
+        {/* Afirmações Personalizadas - Locked for limited access */}
+        {hasFullAccess ? (
+          content.afirmacoes_personalizadas && content.afirmacoes_personalizadas.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
+                  <Target className="h-4 w-4" />
+                  Afirmações Personalizadas
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {content.afirmacoes_personalizadas.map((afirmacao, index) => {
+                  const text = typeof afirmacao === 'string' ? afirmacao : afirmacao.afirmacao;
                   return (
-                    <AccordionItem key={index} value={`crenca-${index}`} className="border-none">
-                      <AccordionTrigger className="py-3 px-4 bg-muted/30 rounded-lg hover:bg-muted/50 hover:no-underline">
-                        <div className="flex items-center gap-3">
-                          <X className="h-4 w-4 text-red-500" />
-                          <span className="text-left">"{crenca}"</span>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="pt-3 px-4 pb-0">
-                        <div className="space-y-3 pl-7">
-                          <div>
-                            <p className="text-xs text-muted-foreground uppercase mb-1">Reformulação</p>
-                            <p className="text-sm text-green-500">{item.reformulacao}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground uppercase mb-1">Ação</p>
-                            <p className="text-sm">{acao}</p>
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
+                    <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                      <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                      <span className="text-sm">{text}</span>
+                    </div>
                   );
                 })}
-              </Accordion>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Afirmações Personalizadas */}
-        {content.afirmacoes_personalizadas && content.afirmacoes_personalizadas.length > 0 && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
-                <Target className="h-4 w-4" />
-                Afirmações Personalizadas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {content.afirmacoes_personalizadas.map((afirmacao, index) => {
-                const text = typeof afirmacao === 'string' ? afirmacao : afirmacao.afirmacao;
-                return (
-                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm">{text}</span>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )
+        ) : (
+          content.afirmacoes_personalizadas && content.afirmacoes_personalizadas.length > 0 && (
+            <LockedContent module="mindset" fallbackMessage="Afirmações personalizadas disponíveis no plano completo">
+              <div />
+            </LockedContent>
+          )
         )}
 
         {/* Action Buttons */}
@@ -371,29 +418,39 @@ export default function Mindset() {
             <MessageCircle className="h-4 w-4 mr-2" />
             <span className="text-xs sm:text-sm">FALAR COM MENTOR</span>
           </Button>
-          <Button 
-            variant="default" 
-            className="flex-1" 
-            size="default"
-            onClick={() => {
-              if (protocolData && content) {
-                import("@/lib/generateProtocolPdf").then(({ generateProtocolPdf }) => {
-                  generateProtocolPdf({
-                    id: protocolData.id,
-                    tipo: "mindset",
-                    titulo: content.titulo || "Protocolo de Mindset",
-                    conteudo: protocolData.conteudo,
-                    data_geracao: protocolData.data_geracao || new Date().toISOString(),
+          {hasFullAccess && (
+            <Button 
+              variant="default" 
+              className="flex-1" 
+              size="default"
+              onClick={() => {
+                if (protocolData && content) {
+                  import("@/lib/generateProtocolPdf").then(({ generateProtocolPdf }) => {
+                    generateProtocolPdf({
+                      id: protocolData.id,
+                      tipo: "mindset",
+                      titulo: content.titulo || "Protocolo de Mindset",
+                      conteudo: protocolData.conteudo,
+                      data_geracao: protocolData.data_geracao || new Date().toISOString(),
+                    });
                   });
-                });
-              }
-            }}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            <span className="text-xs sm:text-sm">BAIXAR PDF</span>
-          </Button>
+                }
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              <span className="text-xs sm:text-sm">BAIXAR PDF</span>
+            </Button>
+          )}
         </div>
+          </>
+        )}
       </div>
+      <UpgradeModal 
+        open={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+        currentModule="mindset"
+        trialDaysLeft={trialDaysLeft}
+      />
     </ClientLayout>
   );
 }
