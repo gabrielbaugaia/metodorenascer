@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -54,6 +54,9 @@ import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BatchActionsBar } from "@/components/admin/BatchActionsBar";
+import { BatchPlanModal } from "@/components/admin/BatchPlanModal";
 import { PLAN_TYPES, PLAN_NAMES } from "@/lib/planConstants";
 
 interface Client {
@@ -129,6 +132,9 @@ export default function AdminClientes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
+  const [showBatchPlanModal, setShowBatchPlanModal] = useState(false);
+  const [batchLoading, setBatchLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     action: string;
@@ -244,6 +250,63 @@ export default function AdminClientes() {
 
   const clearFilters = () => {
     setFilters(initialFilters);
+    setSelectedClients(new Set());
+  };
+
+  // Selection helpers
+  const toggleSelectClient = useCallback((id: string) => {
+    setSelectedClients((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback((currentFiltered: Client[]) => {
+    setSelectedClients((prev) => {
+      if (prev.size === currentFiltered.length && currentFiltered.every(c => prev.has(c.id))) return new Set();
+      return new Set(currentFiltered.map((c) => c.id));
+    });
+  }, []);
+
+  const handleBatchStatusChange = async (newStatus: "active" | "paused" | "blocked") => {
+    if (selectedClients.size === 0) return;
+    setBatchLoading(true);
+    try {
+      const ids = Array.from(selectedClients);
+      const results = await Promise.all(
+        ids.map(async (userId) => {
+          const { error } = await supabase
+            .from("profiles")
+            .update({ client_status: newStatus })
+            .eq("id", userId);
+          
+          if (newStatus === "blocked") {
+            await supabase
+              .from("subscriptions")
+              .update({ access_blocked: true, blocked_reason: `Bloqueado manualmente pelo admin` })
+              .eq("user_id", userId);
+          } else if (newStatus === "active") {
+            await supabase
+              .from("subscriptions")
+              .update({ access_blocked: false, blocked_reason: null })
+              .eq("user_id", userId);
+          }
+          
+          return !error;
+        })
+      );
+      const success = results.filter(Boolean).length;
+      toast.success(`${success} clientes atualizados para ${newStatus === "active" ? "ativo" : newStatus === "paused" ? "pausado" : "bloqueado"}`);
+      setSelectedClients(new Set());
+      fetchClients();
+    } catch (error) {
+      console.error("Batch status error:", error);
+      toast.error("Erro na operação em lote");
+    } finally {
+      setBatchLoading(false);
+    }
   };
 
   const hasActiveFilters = () => {
@@ -319,6 +382,10 @@ export default function AdminClientes() {
     
     return matchesSearch && matchesPlan && matchesStartDate && matchesEndDate && matchesSex && matchesGoal && matchesEngagement;
   });
+
+  const allSelected = filteredClients.length > 0 && filteredClients.every(c => selectedClients.has(c.id));
+  const someSelected = filteredClients.some(c => selectedClients.has(c.id)) && !allSelected;
+
 
   const exportCSV = () => {
     const headers = ["Nome", "Email", "Status", "Plano", "Sexo", "Objetivo", "Último Acesso", "Data Cadastro"];
@@ -643,8 +710,13 @@ export default function AdminClientes() {
               {filteredClients.map((client) => (
                 <div 
                   key={client.id} 
-                  className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card/50"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-card/50"
                 >
+                  <Checkbox
+                    checked={selectedClients.has(client.id)}
+                    onCheckedChange={() => toggleSelectClient(client.id)}
+                    className="shrink-0"
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium truncate">{client.full_name}</p>
@@ -740,6 +812,15 @@ export default function AdminClientes() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={allSelected}
+                        ref={(el) => {
+                          if (el) (el as any).indeterminate = someSelected;
+                        }}
+                        onCheckedChange={() => toggleSelectAll(filteredClients)}
+                      />
+                    </TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="hidden md:table-cell">Plano</TableHead>
@@ -750,7 +831,13 @@ export default function AdminClientes() {
                 </TableHeader>
                 <TableBody>
                   {filteredClients.map((client) => (
-                    <TableRow key={client.id}>
+                    <TableRow key={client.id} data-state={selectedClients.has(client.id) ? "selected" : undefined}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedClients.has(client.id)}
+                          onCheckedChange={() => toggleSelectClient(client.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
@@ -860,7 +947,7 @@ export default function AdminClientes() {
                   ))}
                   {filteredClients.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                         Nenhum cliente encontrado
                       </TableCell>
                     </TableRow>
@@ -899,6 +986,27 @@ export default function AdminClientes() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Batch Actions */}
+        <BatchActionsBar
+          selectedCount={selectedClients.size}
+          onClearSelection={() => setSelectedClients(new Set())}
+          onChangePlan={() => setShowBatchPlanModal(true)}
+          onPause={() => handleBatchStatusChange("paused")}
+          onBlock={() => handleBatchStatusChange("blocked")}
+          onReactivate={() => handleBatchStatusChange("active")}
+          loading={batchLoading}
+        />
+
+        <BatchPlanModal
+          open={showBatchPlanModal}
+          onOpenChange={setShowBatchPlanModal}
+          selectedIds={Array.from(selectedClients)}
+          onComplete={() => {
+            setSelectedClients(new Set());
+            fetchClients();
+          }}
+        />
       </div>
     </ClientLayout>
   );
