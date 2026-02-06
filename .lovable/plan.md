@@ -1,56 +1,48 @@
 
+# Corrigir Mapeamento de Precos no Dashboard
 
-# Alterar Plano em Lote: Exigir Pagamento (Sem Acesso Imediato)
+## Problema Encontrado
 
-## Problema Atual
+O fluxo de "pendente de pagamento" funciona corretamente: o cliente nao consegue acessar a plataforma e ve a tela de pagamento. Porem, o botao "Pagar Agora" tem um bug que impede o redirecionamento para o Stripe.
 
-Quando voce muda clientes de GRATUITO para ELITE FUNDADOR via acao em lote, o sistema seta:
-- `subscription.status = "active"` (acesso liberado)
-- `entitlements.access_level = "full"` (acesso total)
-
-Isso faz o cliente entrar direto na plataforma sem pagar.
+No Dashboard (linha 236), o mapeamento de precos usa a chave `elite_founder`, mas o `BatchPlanModal` salva o plano como `elite_fundador` (com 'd'). Resultado: quando o cliente clica em "Pagar Agora", o sistema nao encontra o preco correspondente e nada acontece.
 
 ## Solucao
 
-Alterar o `BatchPlanModal` para marcar como `pending_payment` em vez de `active`, mantendo o entitlement em `none`. Dessa forma, quando o cliente fizer login, o Dashboard (que ja tem essa logica implementada) mostra automaticamente a tela "Pagamento Pendente" com o botao "Pagar Agora" via Stripe.
+Substituir o mapeamento manual (hardcoded) no Dashboard pelo mapeamento centralizado que ja existe em `planConstants.ts` (`STRIPE_PRICE_IDS`). Isso garante consistencia e evita esse tipo de erro de digitacao.
 
-## Fluxo do Cliente Apos a Mudanca
+## Mudanca Tecnica
 
+### Arquivo: `src/pages/Dashboard.tsx`
+
+1. Importar `STRIPE_PRICE_IDS` de `@/lib/planConstants`
+2. Remover o objeto `priceIdMap` hardcoded (linhas 235-241)
+3. Usar `STRIPE_PRICE_IDS[data.plan_type]` no lugar
+
+Antes:
 ```text
-Admin muda plano em lote
-        |
-        v
-subscription.status = "pending_payment"
-entitlements.access_level = "none"
-        |
-        v
-Cliente faz login
-        |
-        v
-Dashboard detecta "pending_payment"
-        |
-        v
-Exibe tela de pagamento com botao "Pagar Agora"
-        |
-        v
-Cliente paga via Stripe --> webhook ativa a subscription
+const priceIdMap = {
+  elite_founder: "price_...",   <-- chave errada (falta o 'd')
+  mensal: "price_...",
+  ...
+};
+priceId: priceIdMap[data.plan_type]
 ```
 
-## Mudancas Tecnicas
+Depois:
+```text
+import { STRIPE_PRICE_IDS } from "@/lib/planConstants";
+// ...
+priceId: STRIPE_PRICE_IDS[data.plan_type || "mensal"]
+```
 
-### Arquivo: `src/components/admin/BatchPlanModal.tsx`
+### Nenhum outro arquivo modificado
 
-Apenas 3 alteracoes no `handleConfirm`:
+O `BatchPlanModal`, `SubscriptionGuard` e `AcessoBloqueado` permanecem inalterados.
 
-1. **Subscription status**: mudar de `"active"` para `"pending_payment"`
-2. **Entitlements access_level**: mudar de `"full"` para `"none"`
-3. **Profile client_status**: mudar de `"active"` para `"pending_payment"`
+## Resultado Esperado
 
-A tela de pagamento pendente ja existe no Dashboard (linhas 338-389) e ja mapeia os `plan_type` para os `priceId` corretos do Stripe, entao nenhuma mudanca adicional e necessaria no frontend.
-
-### Nenhum arquivo novo
-
-### Nenhuma mudanca no Dashboard, SubscriptionGuard ou AcessoBloqueado
-
-Toda a logica de exibir a tela de pagamento e redirecionar apos confirmacao ja esta implementada.
-
+1. Admin muda cliente de Gratuito para Elite Fundador via acao em lote
+2. Cliente faz login e ve a tela "Pagamento Pendente"
+3. Cliente clica "Pagar Agora" e e redirecionado ao Stripe com o preco correto (R$49,90)
+4. Apos pagamento, webhook ativa a subscription automaticamente
