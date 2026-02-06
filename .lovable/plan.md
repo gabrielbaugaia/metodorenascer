@@ -1,133 +1,88 @@
 
 
-# Filtros de Engajamento + Bloqueio Automatico de Plano Gratuito (30 dias)
+# Seleção em Lote + Alteração de Plano na Lista de Clientes
 
-## Resumo
+## Problema Identificado
 
-Adicionar novos filtros na aba de Clientes do admin para identificar rapidamente clientes inativos, sem protocolos gerados e que nunca acessaram. Tambem implementar a regra de negocio: clientes do plano gratuito que completam 30 dias sao automaticamente bloqueados e redirecionados para assinar, sem direito ao trial de 7 dias.
+Os filtros de engajamento (nunca acessou, sem protocolos, inativo 7/14/30d, gratuito expirado) e a coluna "Ultimo Acesso" ja estao implementados no codigo. Porem, falta a funcionalidade de **selecao em lote** para que voce consiga:
+
+1. Filtrar clientes (ex: "Gratuito expirado 30d+")
+2. Selecionar varios (ou todos) de uma vez
+3. Aplicar uma acao em massa -- como alterar para plano pago
+
+## O Que Sera Implementado
+
+### 1. Checkboxes de Selecao na Tabela
+
+- Adicionar checkbox no cabecalho da tabela para "selecionar todos" (da pagina filtrada)
+- Adicionar checkbox em cada linha de cliente
+- Contador visual: "X clientes selecionados"
+
+### 2. Barra de Acoes em Lote
+
+Quando houver clientes selecionados, aparece uma barra flutuante no topo/rodape com acoes:
+
+| Acao | Descricao |
+|------|-----------|
+| Alterar para Plano Pago | Abre modal para escolher qual plano (Elite Fundador, Trimestral, Anual, etc.) |
+| Pausar Selecionados | Pausa todos os clientes selecionados |
+| Bloquear Selecionados | Bloqueia todos os selecionados |
+| Reativar Selecionados | Reativa todos os selecionados |
+
+### 3. Modal de Alteracao de Plano
+
+Ao clicar "Alterar para Plano Pago":
+- Mostra quantos clientes serao afetados
+- Select para escolher o plano de destino (Elite Fundador, Mensal, Trimestral, Semestral, Anual)
+- Confirmar com um botao claro
+- Atualiza a subscription de cada cliente selecionado no banco
+
+### 4. Verificacao dos Filtros no Preview
+
+Tambem vou verificar se o preview esta renderizando os filtros corretamente. Se houver algum erro de compilacao ou import impedindo a visualizacao, sera corrigido.
 
 ---
 
-## Parte 1: Novos Filtros no AdminClientes
+## Detalhes Tecnicos
 
-### 1.1 Dados adicionais no fetch
+### Arquivo modificado
 
-O `fetchClients` atual busca `profiles` e `subscriptions`. Precisamos adicionar:
-- `user_activity.last_access` para cada cliente
-- Contagem de `protocolos` por tipo (treino, nutricao, mindset)
+`src/pages/admin/AdminClientes.tsx`
 
-Isso sera feito em batch (nao N+1) usando queries paralelas:
+### Novos estados
 
 ```text
-1. Fetch todos user_activity (admin tem RLS ALL)
-2. Fetch contagem de protocolos agrupado por user_id e tipo (admin tem RLS ALL)
-3. Merge no array de clients
+selectedClients: Set<string>       -- IDs dos clientes marcados
+showBatchPlanModal: boolean        -- controla modal de troca de plano
+batchPlanTarget: string            -- plano escolhido para aplicar em lote
+batchLoading: boolean              -- loading durante operacao em lote
 ```
 
-### 1.2 Novo filtro: "Engajamento"
+### Logica de selecao
 
-Adicionar um novo Select no painel de Filtros Avancados com as opcoes:
+- "Selecionar todos" marca apenas os clientes da lista filtrada atual
+- Limpar filtros ou mudar filtro limpa a selecao
+- Desmarcar checkbox individual remove do Set
 
-| Valor | Label | Logica |
-|-------|-------|--------|
-| `all` | Todos | Sem filtro |
-| `never_accessed` | Nunca acessou | `last_access` e null ou nao existe em user_activity |
-| `no_protocols` | Sem protocolos gerados | Nenhum protocolo de treino, nutricao ou mindset |
-| `inactive_7d` | Inativo +7 dias | `last_access` anterior a 7 dias atras |
-| `inactive_14d` | Inativo +14 dias | `last_access` anterior a 14 dias atras |
-| `inactive_30d` | Inativo +30 dias | `last_access` anterior a 30 dias atras |
-| `free_expired_30d` | Gratuito expirado (30d+) | Plano gratuito com `created_at` da subscription ha mais de 30 dias |
+### Logica de alteracao de plano em lote
 
-### 1.3 Interface do filtro
+Para cada cliente selecionado:
+1. Fazer upsert na tabela `subscriptions` com o novo `plan_type` e `status = 'active'`
+2. Atualizar `entitlements` para `access_level = 'full'` se o plano for pago
+3. Atualizar `profiles.client_status = 'active'`
+4. Se tinha `access_blocked = true`, remover o bloqueio
 
-O novo select sera posicionado na grid de filtros avancados existente (linha 339), adicionando mais uma coluna:
+Isso e feito via Promise.all para performance.
 
-```text
-Tipo de Plano | Sexo | Objetivo | Engajamento
-Cadastro - De | Cadastro - Ate | Termino Plano - De
-```
+### Interface mobile
 
-### 1.4 Dados no Client interface
+No layout mobile (cards), os checkboxes aparecem como circulo no canto esquerdo de cada card. A barra de acoes em lote fica fixa no rodape da tela.
 
-Estender a interface `Client` com:
-```typescript
-interface Client {
-  // ... existentes
-  lastAccess: string | null;        // de user_activity
-  protocolCount: {
-    treino: number;
-    nutricao: number;
-    mindset: number;
-  };
-}
-```
+### Ordem de execucao
 
-### 1.5 Coluna "Ultimo Acesso" na tabela
-
-Adicionar uma nova coluna visivel na tabela desktop (hidden em mobile) mostrando a data do ultimo acesso. Se nunca acessou, mostrar badge vermelha "Nunca acessou".
-
----
-
-## Parte 2: Bloqueio Automatico do Plano Gratuito apos 30 dias
-
-### 2.1 Atualizar `check-free-expiration/index.ts`
-
-A funcao atual ja verifica subscriptions com `status = 'free'` e `invitation_expires_at < now()`. O comportamento sera expandido:
-
-**Regra nova:** Alem de verificar `invitation_expires_at`, adicionar uma verificacao separada para subscriptions gratuitas com mais de 30 dias de existencia (`created_at + 30 days < now()`), independente do `invitation_expires_at`.
-
-Para esses usuarios:
-1. Marcar `access_blocked = true` na subscription
-2. Atualizar `blocked_reason = "Plano gratuito expirado apos 30 dias. Assine para continuar."`
-3. Atualizar `entitlements.access_level = 'none'` (sem override)
-4. Atualizar `profiles.client_status = 'blocked'`
-5. **Nao conceder trial de 7 dias** -- o entitlement vai direto para `'none'`, forcando assinatura direta
-
-### 2.2 Pagina de bloqueio (AcessoBloqueado.tsx)
-
-A pagina `AcessoBloqueado.tsx` ja existe. Ela recebera uma variacao de mensagem quando o motivo for "plano gratuito expirado":
-- Mensagem: "Seu periodo gratuito de 30 dias expirou. Para continuar acessando o Metodo Renascer, escolha um plano."
-- Mostrar apenas os botoes de assinatura direta (sem opcao de trial)
-- Usar os links Stripe diretos ja configurados
-
-### 2.3 Logica no SubscriptionGuard
-
-O `SubscriptionGuard` ja verifica `access_blocked`. Quando detectar que o motivo e "plano gratuito expirado", redirecionar para `/acesso-bloqueado` com um parametro indicando que nao tem direito a trial.
-
----
-
-## Parte 3: Indicador visual na lista
-
-Na tabela de clientes, alem do filtro, adicionar indicadores visuais:
-
-- **Badge vermelha "Nunca acessou"** ao lado do nome quando `lastAccess` e null
-- **Badge amarela "Sem protocolos"** quando nenhum protocolo foi gerado
-- **Badge cinza "Inativo Xd"** calculada dinamicamente a partir de `lastAccess`
-- **Badge vermelha "Gratuito expirado"** quando plano gratuito tem mais de 30 dias
-
-Esses badges aparecem apenas no layout desktop (na coluna de Status ou como badges adicionais).
-
----
-
-## Resumo Tecnico de Arquivos
-
-### Modificar
-
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/pages/admin/AdminClientes.tsx` | Novo filtro de engajamento, fetch de user_activity e protocolos, coluna ultimo acesso, badges visuais |
-| `supabase/functions/check-free-expiration/index.ts` | Nova regra de bloqueio apos 30 dias para planos gratuitos + sincronizar entitlements |
-| `src/pages/AcessoBloqueado.tsx` | Mensagem diferenciada para plano gratuito expirado sem opcao de trial |
-| `src/components/auth/SubscriptionGuard.tsx` | Passar motivo de bloqueio para AcessoBloqueado |
-
-### Nenhum arquivo novo necessario
-
----
-
-## Ordem de Execucao
-
-1. Atualizar `AdminClientes.tsx` com novos dados (user_activity, protocolos), filtro de engajamento e badges visuais
-2. Atualizar `check-free-expiration/index.ts` com regra de 30 dias + sync entitlements
-3. Atualizar `AcessoBloqueado.tsx` com mensagem diferenciada
-4. Atualizar `SubscriptionGuard.tsx` para passar motivo de bloqueio
+1. Adicionar estados de selecao e barra de acoes em lote
+2. Adicionar checkboxes na tabela desktop e nos cards mobile
+3. Criar modal de alteracao de plano em lote
+4. Implementar funcao de alteracao em massa no banco
+5. Verificar e corrigir qualquer erro de renderizacao dos filtros existentes
 
