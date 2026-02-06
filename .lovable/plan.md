@@ -1,88 +1,56 @@
 
 
-# Seleção em Lote + Alteração de Plano na Lista de Clientes
+# Alterar Plano em Lote: Exigir Pagamento (Sem Acesso Imediato)
 
-## Problema Identificado
+## Problema Atual
 
-Os filtros de engajamento (nunca acessou, sem protocolos, inativo 7/14/30d, gratuito expirado) e a coluna "Ultimo Acesso" ja estao implementados no codigo. Porem, falta a funcionalidade de **selecao em lote** para que voce consiga:
+Quando voce muda clientes de GRATUITO para ELITE FUNDADOR via acao em lote, o sistema seta:
+- `subscription.status = "active"` (acesso liberado)
+- `entitlements.access_level = "full"` (acesso total)
 
-1. Filtrar clientes (ex: "Gratuito expirado 30d+")
-2. Selecionar varios (ou todos) de uma vez
-3. Aplicar uma acao em massa -- como alterar para plano pago
+Isso faz o cliente entrar direto na plataforma sem pagar.
 
-## O Que Sera Implementado
+## Solucao
 
-### 1. Checkboxes de Selecao na Tabela
+Alterar o `BatchPlanModal` para marcar como `pending_payment` em vez de `active`, mantendo o entitlement em `none`. Dessa forma, quando o cliente fizer login, o Dashboard (que ja tem essa logica implementada) mostra automaticamente a tela "Pagamento Pendente" com o botao "Pagar Agora" via Stripe.
 
-- Adicionar checkbox no cabecalho da tabela para "selecionar todos" (da pagina filtrada)
-- Adicionar checkbox em cada linha de cliente
-- Contador visual: "X clientes selecionados"
-
-### 2. Barra de Acoes em Lote
-
-Quando houver clientes selecionados, aparece uma barra flutuante no topo/rodape com acoes:
-
-| Acao | Descricao |
-|------|-----------|
-| Alterar para Plano Pago | Abre modal para escolher qual plano (Elite Fundador, Trimestral, Anual, etc.) |
-| Pausar Selecionados | Pausa todos os clientes selecionados |
-| Bloquear Selecionados | Bloqueia todos os selecionados |
-| Reativar Selecionados | Reativa todos os selecionados |
-
-### 3. Modal de Alteracao de Plano
-
-Ao clicar "Alterar para Plano Pago":
-- Mostra quantos clientes serao afetados
-- Select para escolher o plano de destino (Elite Fundador, Mensal, Trimestral, Semestral, Anual)
-- Confirmar com um botao claro
-- Atualiza a subscription de cada cliente selecionado no banco
-
-### 4. Verificacao dos Filtros no Preview
-
-Tambem vou verificar se o preview esta renderizando os filtros corretamente. Se houver algum erro de compilacao ou import impedindo a visualizacao, sera corrigido.
-
----
-
-## Detalhes Tecnicos
-
-### Arquivo modificado
-
-`src/pages/admin/AdminClientes.tsx`
-
-### Novos estados
+## Fluxo do Cliente Apos a Mudanca
 
 ```text
-selectedClients: Set<string>       -- IDs dos clientes marcados
-showBatchPlanModal: boolean        -- controla modal de troca de plano
-batchPlanTarget: string            -- plano escolhido para aplicar em lote
-batchLoading: boolean              -- loading durante operacao em lote
+Admin muda plano em lote
+        |
+        v
+subscription.status = "pending_payment"
+entitlements.access_level = "none"
+        |
+        v
+Cliente faz login
+        |
+        v
+Dashboard detecta "pending_payment"
+        |
+        v
+Exibe tela de pagamento com botao "Pagar Agora"
+        |
+        v
+Cliente paga via Stripe --> webhook ativa a subscription
 ```
 
-### Logica de selecao
+## Mudancas Tecnicas
 
-- "Selecionar todos" marca apenas os clientes da lista filtrada atual
-- Limpar filtros ou mudar filtro limpa a selecao
-- Desmarcar checkbox individual remove do Set
+### Arquivo: `src/components/admin/BatchPlanModal.tsx`
 
-### Logica de alteracao de plano em lote
+Apenas 3 alteracoes no `handleConfirm`:
 
-Para cada cliente selecionado:
-1. Fazer upsert na tabela `subscriptions` com o novo `plan_type` e `status = 'active'`
-2. Atualizar `entitlements` para `access_level = 'full'` se o plano for pago
-3. Atualizar `profiles.client_status = 'active'`
-4. Se tinha `access_blocked = true`, remover o bloqueio
+1. **Subscription status**: mudar de `"active"` para `"pending_payment"`
+2. **Entitlements access_level**: mudar de `"full"` para `"none"`
+3. **Profile client_status**: mudar de `"active"` para `"pending_payment"`
 
-Isso e feito via Promise.all para performance.
+A tela de pagamento pendente ja existe no Dashboard (linhas 338-389) e ja mapeia os `plan_type` para os `priceId` corretos do Stripe, entao nenhuma mudanca adicional e necessaria no frontend.
 
-### Interface mobile
+### Nenhum arquivo novo
 
-No layout mobile (cards), os checkboxes aparecem como circulo no canto esquerdo de cada card. A barra de acoes em lote fica fixa no rodape da tela.
+### Nenhuma mudanca no Dashboard, SubscriptionGuard ou AcessoBloqueado
 
-### Ordem de execucao
-
-1. Adicionar estados de selecao e barra de acoes em lote
-2. Adicionar checkboxes na tabela desktop e nos cards mobile
-3. Criar modal de alteracao de plano em lote
-4. Implementar funcao de alteracao em massa no banco
-5. Verificar e corrigir qualquer erro de renderizacao dos filtros existentes
+Toda a logica de exibir a tela de pagamento e redirecionar apos confirmacao ja esta implementada.
 
