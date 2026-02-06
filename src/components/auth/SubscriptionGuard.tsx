@@ -25,6 +25,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const { effectiveLevel, loading: entLoading } = useEntitlements();
   const [localBlocked, setLocalBlocked] = useState(false);
+  const [blockedReason, setBlockedReason] = useState<string | null>(null);
   const [localPending, setLocalPending] = useState(false);
   const [checkingLocal, setCheckingLocal] = useState(true);
 
@@ -39,7 +40,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
       try {
         const { data } = await supabase
           .from("subscriptions")
-          .select("status, access_blocked")
+          .select("status, access_blocked, blocked_reason")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(1)
@@ -47,6 +48,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
 
         if (data?.access_blocked === true) {
           setLocalBlocked(true);
+          setBlockedReason(data.blocked_reason ?? null);
         }
         if (data?.status === "pending_payment") {
           setLocalPending(true);
@@ -65,8 +67,6 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
 
   // Derived access states
   const hasAccess = effectiveLevel !== 'none' || subscribed;
-  const hasFullAccess = effectiveLevel === 'full' || subscribed;
-  const isTrial = effectiveLevel === 'trial_limited' && !subscribed;
 
   // Redirect: not logged in
   useEffect(() => {
@@ -87,7 +87,9 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
     if (isLoading || !user || isAdmin) return;
 
     if (localBlocked) {
-      navigate("/acesso-bloqueado");
+      const isFreeExpired = blockedReason?.toLowerCase().includes("30 dias");
+      const reason = isFreeExpired ? "free_expired_30d" : "inactivity";
+      navigate(`/acesso-bloqueado?reason=${reason}`);
       return;
     }
 
@@ -95,7 +97,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
       navigate("/dashboard");
       return;
     }
-  }, [isLoading, user, isAdmin, localBlocked, localPending, subscribed, navigate]);
+  }, [isLoading, user, isAdmin, localBlocked, blockedReason, localPending, subscribed, navigate]);
 
   // Redirect: no access at all
   useEffect(() => {

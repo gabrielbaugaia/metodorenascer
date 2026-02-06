@@ -51,7 +51,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { PLAN_TYPES, PLAN_NAMES } from "@/lib/planConstants";
@@ -67,10 +67,17 @@ interface Client {
   age: number | null;
   sexo: string | null;
   objetivo_principal: string | null;
+  lastAccess: string | null;
+  protocolCount: {
+    treino: number;
+    nutricao: number;
+    mindset: number;
+  };
   subscription?: {
     status: string;
     plan_type: string;
     current_period_end: string;
+    created_at: string;
   } | null;
 }
 
@@ -82,6 +89,7 @@ interface Filters {
   endDateTo: Date | null;
   sex: string;
   goal: string;
+  engagement: string;
 }
 
 const initialFilters: Filters = {
@@ -91,8 +99,26 @@ const initialFilters: Filters = {
   endDateFrom: null,
   endDateTo: null,
   sex: "all",
-  goal: "all"
+  goal: "all",
+  engagement: "all"
 };
+
+function getInactivityLabel(lastAccess: string | null): string | null {
+  if (!lastAccess) return null;
+  const days = differenceInDays(new Date(), new Date(lastAccess));
+  if (days >= 30) return `Inativo ${days}d`;
+  if (days >= 14) return `Inativo ${days}d`;
+  if (days >= 7) return `Inativo ${days}d`;
+  return null;
+}
+
+function isFreeExpired30d(subscription: Client["subscription"]): boolean {
+  if (!subscription) return false;
+  const isFree = subscription.plan_type === PLAN_TYPES.GRATUITO || subscription.status === "free";
+  if (!isFree) return false;
+  const days = differenceInDays(new Date(), new Date(subscription.created_at));
+  return days >= 30;
+}
 
 export default function AdminClientes() {
   const { user, loading: authLoading } = useAuth();
@@ -126,26 +152,55 @@ export default function AdminClientes() {
     if (!isAdmin) return;
 
     try {
-      const { data: profiles, error } = await supabase
-        .from("profiles")
-        .select("*, sexo, objetivo_principal")
-        .order("created_at", { ascending: false });
+      // Parallel fetches: profiles, user_activity, protocolos
+      const [profilesRes, activityRes, protocolosRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("*, sexo, objetivo_principal")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("user_activity")
+          .select("user_id, last_access"),
+        supabase
+          .from("protocolos")
+          .select("user_id, tipo")
+      ]);
 
-      if (error) throw error;
+      if (profilesRes.error) throw profilesRes.error;
+
+      // Build lookup maps
+      const activityMap = new Map<string, string | null>();
+      (activityRes.data || []).forEach((a) => {
+        activityMap.set(a.user_id, a.last_access);
+      });
+
+      const protocolMap = new Map<string, { treino: number; nutricao: number; mindset: number }>();
+      (protocolosRes.data || []).forEach((p) => {
+        const existing = protocolMap.get(p.user_id) || { treino: 0, nutricao: 0, mindset: 0 };
+        if (p.tipo === "treino") existing.treino++;
+        else if (p.tipo === "nutricao") existing.nutricao++;
+        else if (p.tipo === "mindset") existing.mindset++;
+        protocolMap.set(p.user_id, existing);
+      });
 
       // Fetch subscriptions for each client (including pending_payment)
       const clientsWithSubs = await Promise.all(
-        (profiles || []).map(async (profile) => {
+        (profilesRes.data || []).map(async (profile) => {
           const { data: sub } = await supabase
             .from("subscriptions")
-            .select("status, plan_type, current_period_end")
+            .select("status, plan_type, current_period_end, created_at")
             .eq("user_id", profile.id)
             .in("status", ["active", "pending_payment", "free"])
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
 
-          return { ...profile, subscription: sub };
+          return {
+            ...profile,
+            subscription: sub,
+            lastAccess: activityMap.get(profile.id) ?? null,
+            protocolCount: protocolMap.get(profile.id) || { treino: 0, nutricao: 0, mindset: 0 },
+          };
         })
       );
 
@@ -198,7 +253,8 @@ export default function AdminClientes() {
       filters.endDateFrom !== null ||
       filters.endDateTo !== null ||
       filters.sex !== "all" ||
-      filters.goal !== "all";
+      filters.goal !== "all" ||
+      filters.engagement !== "all";
   };
 
   const filteredClients = clients.filter((client) => {
@@ -229,12 +285,43 @@ export default function AdminClientes() {
     // Filtro por objetivo
     const matchesGoal = filters.goal === "all" || 
       (client.objetivo_principal?.toLowerCase().includes(filters.goal.toLowerCase()));
+
+    // Filtro por engajamento
+    let matchesEngagement = true;
+    if (filters.engagement !== "all") {
+      const now = new Date();
+      switch (filters.engagement) {
+        case "never_accessed":
+          matchesEngagement = client.lastAccess === null;
+          break;
+        case "no_protocols":
+          matchesEngagement = client.protocolCount.treino === 0 && 
+            client.protocolCount.nutricao === 0 && 
+            client.protocolCount.mindset === 0;
+          break;
+        case "inactive_7d":
+          matchesEngagement = client.lastAccess !== null && 
+            differenceInDays(now, new Date(client.lastAccess)) >= 7;
+          break;
+        case "inactive_14d":
+          matchesEngagement = client.lastAccess !== null && 
+            differenceInDays(now, new Date(client.lastAccess)) >= 14;
+          break;
+        case "inactive_30d":
+          matchesEngagement = client.lastAccess !== null && 
+            differenceInDays(now, new Date(client.lastAccess)) >= 30;
+          break;
+        case "free_expired_30d":
+          matchesEngagement = isFreeExpired30d(client.subscription);
+          break;
+      }
+    }
     
-    return matchesSearch && matchesPlan && matchesStartDate && matchesEndDate && matchesSex && matchesGoal;
+    return matchesSearch && matchesPlan && matchesStartDate && matchesEndDate && matchesSex && matchesGoal && matchesEngagement;
   });
 
   const exportCSV = () => {
-    const headers = ["Nome", "Email", "Status", "Plano", "Sexo", "Objetivo", "Data Cadastro"];
+    const headers = ["Nome", "Email", "Status", "Plano", "Sexo", "Objetivo", "Último Acesso", "Data Cadastro"];
     const rows = filteredClients.map((c) => [
       c.full_name,
       c.email,
@@ -242,6 +329,7 @@ export default function AdminClientes() {
       c.subscription?.plan_type || "Sem plano",
       c.sexo || "N/A",
       c.objetivo_principal || "N/A",
+      c.lastAccess ? format(new Date(c.lastAccess), "dd/MM/yyyy") : "Nunca",
       format(new Date(c.created_at), "dd/MM/yyyy"),
     ]);
 
@@ -253,6 +341,46 @@ export default function AdminClientes() {
     a.download = "clientes.csv";
     a.click();
     toast.success("CSV exportado com sucesso!");
+  };
+
+  const renderEngagementBadges = (client: Client) => {
+    const badges: React.ReactNode[] = [];
+    
+    if (client.lastAccess === null) {
+      badges.push(
+        <Badge key="never" variant="destructive" className="text-[10px]">
+          Nunca acessou
+        </Badge>
+      );
+    } else {
+      const inactLabel = getInactivityLabel(client.lastAccess);
+      if (inactLabel) {
+        badges.push(
+          <Badge key="inact" variant="secondary" className="text-[10px]">
+            {inactLabel}
+          </Badge>
+        );
+      }
+    }
+    
+    const totalProtocols = client.protocolCount.treino + client.protocolCount.nutricao + client.protocolCount.mindset;
+    if (totalProtocols === 0) {
+      badges.push(
+        <Badge key="noproto" variant="outline" className="text-[10px] border-amber-500/50 text-amber-600">
+          Sem protocolos
+        </Badge>
+      );
+    }
+    
+    if (isFreeExpired30d(client.subscription)) {
+      badges.push(
+        <Badge key="freeexp" variant="destructive" className="text-[10px]">
+          Gratuito expirado
+        </Badge>
+      );
+    }
+    
+    return badges;
   };
 
   if (authLoading || adminLoading || loading) {
@@ -336,7 +464,7 @@ export default function AdminClientes() {
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       {/* Tipo de Plano */}
                       <div className="space-y-2">
                         <label className="text-sm text-muted-foreground">Tipo de Plano</label>
@@ -394,6 +522,28 @@ export default function AdminClientes() {
                             <SelectItem value="definição">Definição Muscular</SelectItem>
                             <SelectItem value="condicionamento">Condicionamento</SelectItem>
                             <SelectItem value="saúde">Saúde e Bem-estar</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Engajamento */}
+                      <div className="space-y-2">
+                        <label className="text-sm text-muted-foreground">Engajamento</label>
+                        <Select 
+                          value={filters.engagement} 
+                          onValueChange={(value) => setFilters(prev => ({ ...prev, engagement: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Todos" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos</SelectItem>
+                            <SelectItem value="never_accessed">Nunca acessou</SelectItem>
+                            <SelectItem value="no_protocols">Sem protocolos gerados</SelectItem>
+                            <SelectItem value="inactive_7d">Inativo +7 dias</SelectItem>
+                            <SelectItem value="inactive_14d">Inativo +14 dias</SelectItem>
+                            <SelectItem value="inactive_30d">Inativo +30 dias</SelectItem>
+                            <SelectItem value="free_expired_30d">Gratuito expirado (30d+)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -505,7 +655,7 @@ export default function AdminClientes() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{client.email}</p>
-                    <div className="flex gap-1 mt-1">
+                    <div className="flex flex-wrap gap-1 mt-1">
                       {client.subscription?.plan_type && (
                         <Badge variant="outline" className="text-[10px]">
                           {PLAN_NAMES[client.subscription.plan_type] || client.subscription.plan_type}
@@ -593,7 +743,7 @@ export default function AdminClientes() {
                     <TableHead>Cliente</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="hidden md:table-cell">Plano</TableHead>
-                    <TableHead className="hidden lg:table-cell">Objetivo</TableHead>
+                    <TableHead className="hidden lg:table-cell">Último Acesso</TableHead>
                     <TableHead className="hidden lg:table-cell">Cadastro</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -603,8 +753,13 @@ export default function AdminClientes() {
                     <TableRow key={client.id}>
                       <TableCell>
                         <div className="min-w-0">
-                          <p className="font-medium truncate max-w-[200px]">{client.full_name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium truncate max-w-[200px]">{client.full_name}</p>
+                          </div>
                           <p className="text-xs text-muted-foreground truncate max-w-[200px]">{client.email}</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {renderEngagementBadges(client)}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>{getStatusBadge(client.client_status)}</TableCell>
@@ -627,7 +782,11 @@ export default function AdminClientes() {
                         </div>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-xs">
-                        {client.objetivo_principal || "-"}
+                        {client.lastAccess ? (
+                          format(new Date(client.lastAccess), "dd/MM/yyyy HH:mm", { locale: ptBR })
+                        ) : (
+                          <Badge variant="destructive" className="text-[10px]">Nunca acessou</Badge>
+                        )}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-xs">
                         {format(new Date(client.created_at), "dd/MM/yyyy", { locale: ptBR })}
