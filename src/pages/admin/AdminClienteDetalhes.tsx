@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
+import { AdminAccessControlSection } from "@/components/admin/AdminAccessControlSection";
 import {
   Dialog,
   DialogContent,
@@ -926,6 +927,9 @@ export default function AdminClienteDetalhes() {
                   Gera um PDF com todas as informações e fotos do cliente
                 </p>
               </div>
+
+              {/* Access Control */}
+              <AdminAccessControlSection clientId={id!} />
 
               {/* Delete Client */}
               <div className="pt-4 border-t border-destructive/20">

@@ -1,17 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { useProtocol } from "@/hooks/useProtocol";
-import { useModuleAccess } from "@/hooks/useModuleAccess";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Utensils, Loader2, Apple, Download, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { LockedContent } from "@/components/access/LockedContent";
 import { TrialBanner } from "@/components/access/TrialBadge";
 import { UpgradeModal } from "@/components/access/UpgradeModal";
 import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Macros {
   proteinas_g?: number;
@@ -38,7 +37,7 @@ interface NutritionContent {
 export default function Nutricao() {
   const navigate = useNavigate();
   const { protocol, loading } = useProtocol("nutricao");
-  const { access, loading: accessLoading, hasFullAccess, hasAnyAccess, isTrialing, trialDaysLeft } = useModuleAccess('nutricao');
+  const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
   const [downloading, setDownloading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -48,9 +47,14 @@ export default function Nutricao() {
   const dicas = conteudo.dicas || [];
 
   // Limit meals based on access
-  const maxMealsVisible = access?.level === 'limited'
-    ? (access.limits?.max_meals_visible as number || 2)
-    : refeicoes.length;
+  const maxMealsVisible = isTrialing ? 2 : refeicoes.length;
+
+  // Mark diet as used for trial
+  useEffect(() => {
+    if (isTrialing && !trialUsage.used_diet && refeicoes.length > 0) {
+      markUsed('used_diet');
+    }
+  }, [isTrialing, trialUsage.used_diet, refeicoes.length]);
   const visibleRefeicoes = refeicoes.slice(0, maxMealsVisible);
   const lockedRefeicoes = refeicoes.slice(maxMealsVisible);
 
@@ -104,7 +108,7 @@ export default function Nutricao() {
               </p>
             </div>
           </div>
-          {protocol && hasFullAccess && (
+          {protocol && isFull && (
             <Button
               variant="outline"
               size="sm"
@@ -118,22 +122,20 @@ export default function Nutricao() {
           )}
         </div>
 
-        {/* Access blocked */}
-        {!accessLoading && !hasAnyAccess && (
-          <LockedContent module="nutricao">
-            <div />
-          </LockedContent>
+        {/* Access blocked - auto open modal */}
+        {!entLoading && isBlocked && (
+          <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />
         )}
 
         {/* Trial banner */}
         {isTrialing && (
           <TrialBanner 
-            trialDaysLeft={trialDaysLeft} 
+            isTrialing={isTrialing} 
             onUpgradeClick={() => setShowUpgradeModal(true)} 
           />
         )}
 
-        {refeicoes.length === 0 && hasAnyAccess ? (
+        {refeicoes.length === 0 && !isBlocked ? (
           <Card className="p-8 text-center">
             <Utensils className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Nenhum plano nutricional disponível</h3>
@@ -144,10 +146,10 @@ export default function Nutricao() {
               Falar com Mentor
             </Button>
           </Card>
-        ) : hasAnyAccess ? (
+        ) : !isBlocked ? (
           <>
             {/* Macros overview - only for full access */}
-            {macros && hasFullAccess && (
+            {macros && isFull && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Card className="p-4 text-center bg-primary/10">
                   <p className="text-xl md:text-2xl font-bold text-primary">
@@ -237,7 +239,7 @@ export default function Nutricao() {
             )}
 
             {/* Tips */}
-            {dicas.length > 0 && hasFullAccess && (
+            {dicas.length > 0 && isFull && (
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">
                   <strong className="text-foreground">Dica do dia:</strong> {dicas[0]}
@@ -250,8 +252,6 @@ export default function Nutricao() {
       <UpgradeModal 
         open={showUpgradeModal} 
         onClose={() => setShowUpgradeModal(false)} 
-        currentModule="nutricao"
-        trialDaysLeft={trialDaysLeft}
       />
     </ClientLayout>
   );

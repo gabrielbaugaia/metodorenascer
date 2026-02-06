@@ -56,14 +56,18 @@ export function TrialBadge({ module, className, showDaysOnly = false }: TrialBad
  * Banner component for trial users - shows at top of pages
  */
 interface TrialBannerProps {
-  trialDaysLeft: number;
+  isTrialing: boolean;
+  trialDaysLeft?: number;
   onUpgradeClick: () => void;
   className?: string;
 }
 
-export function TrialBanner({ trialDaysLeft, onUpgradeClick, className }: TrialBannerProps) {
-  const isExpiringSoon = trialDaysLeft <= 2;
-  const isLastDay = trialDaysLeft <= 1;
+export function TrialBanner({ isTrialing, trialDaysLeft, onUpgradeClick, className }: TrialBannerProps) {
+  if (!isTrialing) return null;
+
+  const hasExactDays = typeof trialDaysLeft === 'number';
+  const isExpiringSoon = hasExactDays && trialDaysLeft <= 2;
+  const isLastDay = hasExactDays && trialDaysLeft <= 1;
 
   return (
     <div className={cn(
@@ -84,7 +88,9 @@ export function TrialBanner({ trialDaysLeft, onUpgradeClick, className }: TrialB
         <span className="font-medium">
           {isLastDay 
             ? 'Seu período de teste termina hoje!'
-            : `Seu período de teste termina em ${trialDaysLeft} dias`
+            : hasExactDays
+              ? `Seu período de teste termina em ${trialDaysLeft} dias`
+              : 'Você está no período de teste gratuito'
           }
         </span>
       </div>

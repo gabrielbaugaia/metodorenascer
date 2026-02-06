@@ -9,8 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChefHat, Plus, X, Loader2, Sparkles, Bookmark, BookmarkCheck, Heart, Trash2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useModuleAccess } from "@/hooks/useModuleAccess";
-import { LockedContent } from "@/components/access/LockedContent";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { TrialBanner } from "@/components/access/TrialBadge";
 import { UpgradeModal } from "@/components/access/UpgradeModal";
 import { toast } from "@/hooks/use-toast";
@@ -34,7 +33,7 @@ interface SavedRecipe {
 export default function Receitas() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { access, loading: accessLoading, hasFullAccess, hasAnyAccess, isTrialing, trialDaysLeft, incrementUsage } = useModuleAccess('receitas');
+  const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [recipe, setRecipe] = useState<string | null>(null);
@@ -47,9 +46,7 @@ export default function Receitas() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Recipe generation limit for trial users
-  const totalRecipesAllowed = (access?.limits?.total_recipes_allowed as number) || 3;
-  const currentUsage = access?.usageCount || 0;
-  const canGenerate = hasFullAccess || currentUsage < totalRecipesAllowed;
+  const canGenerate = isFull || (isTrialing && trialUsage.used_recipe_count < 1);
 
   useEffect(() => {
     if (user) {
@@ -139,8 +136,8 @@ export default function Receitas() {
         setRecipe(data.recipe);
         setRecipeTitle(extractTitle(data.recipe));
         // Increment usage count for trial users
-        if (!hasFullAccess) {
-          await incrementUsage();
+        if (isTrialing) {
+          await markUsed('used_recipe_count', true);
         }
       } else {
         throw new Error("Receita não foi gerada");
@@ -237,22 +234,20 @@ export default function Receitas() {
   return (
     <ClientLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Access blocked */}
-        {!accessLoading && !hasAnyAccess && (
-          <LockedContent module="receitas">
-            <div />
-          </LockedContent>
+        {/* Access blocked - auto open modal */}
+        {!entLoading && isBlocked && (
+          <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />
         )}
 
         {/* Trial banner */}
         {isTrialing && (
           <TrialBanner 
-            trialDaysLeft={trialDaysLeft} 
+            isTrialing={isTrialing} 
             onUpgradeClick={() => setShowUpgradeModal(true)} 
           />
         )}
 
-        {hasAnyAccess && (
+        {!isBlocked && (
         <>
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
@@ -264,8 +259,8 @@ export default function Receitas() {
               Gerador de <span className="text-primary">Receitas</span>
             </h1>
             <p className="text-muted-foreground text-sm">
-              {!hasFullAccess 
-                ? `${currentUsage}/${totalRecipesAllowed} receitas usadas no período de teste`
+              {isTrialing 
+                ? `${trialUsage.used_recipe_count}/1 receita usada no período de teste`
                 : "Escolha ingredientes e nossa IA criará uma receita fitness personalizada"
               }
             </p>
@@ -507,8 +502,6 @@ export default function Receitas() {
       <UpgradeModal 
         open={showUpgradeModal} 
         onClose={() => setShowUpgradeModal(false)} 
-        currentModule="receitas"
-        trialDaysLeft={trialDaysLeft}
       />
     </ClientLayout>
   );
