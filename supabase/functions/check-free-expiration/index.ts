@@ -25,41 +25,25 @@ serve(async (req) => {
 
     logStep("Starting free subscription expiration check");
 
-    // Find free subscriptions that have expired and haven't been blocked yet
     const now = new Date().toISOString();
-    
-    const { data: expiredSubscriptions, error: fetchError } = await supabase
+    const blockedUsers: string[] = [];
+
+    // ===== RULE 1: Original - invitation_expires_at expired (7-day inactivity check) =====
+    const { data: expiredByInvitation, error: fetchError1 } = await supabase
       .from("subscriptions")
-      .select(`
-        id,
-        user_id,
-        invitation_expires_at,
-        created_at
-      `)
+      .select("id, user_id, invitation_expires_at, created_at")
       .eq("status", "free")
       .eq("access_blocked", false)
       .lt("invitation_expires_at", now);
 
-    if (fetchError) {
-      logStep("Error fetching expired subscriptions", { error: fetchError.message });
-      throw fetchError;
+    if (fetchError1) {
+      logStep("Error fetching expired-by-invitation subscriptions", { error: fetchError1.message });
+      throw fetchError1;
     }
 
-    logStep("Found expired subscriptions", { count: expiredSubscriptions?.length || 0 });
+    logStep("Found expired-by-invitation subscriptions", { count: expiredByInvitation?.length || 0 });
 
-    if (!expiredSubscriptions || expiredSubscriptions.length === 0) {
-      return new Response(JSON.stringify({ 
-        message: "No expired subscriptions found",
-        blocked: 0 
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    const blockedUsers: string[] = [];
-
-    for (const subscription of expiredSubscriptions) {
+    for (const subscription of expiredByInvitation || []) {
       // Check if user has accessed the system
       const { data: activity } = await supabase
         .from("user_activity")
@@ -78,7 +62,7 @@ serve(async (req) => {
 
       const anamneseComplete = profile?.anamnese_completa === true;
 
-      logStep("Checking user", { 
+      logStep("Checking user (invitation rule)", { 
         userId: subscription.user_id, 
         hasAccessed, 
         anamneseComplete,
@@ -87,68 +71,58 @@ serve(async (req) => {
 
       // Block if hasn't accessed OR hasn't completed anamnese
       if (!hasAccessed || !anamneseComplete) {
-        // Update subscription to blocked
-        const { error: updateSubError } = await supabase
-          .from("subscriptions")
-          .update({
-            access_blocked: true,
-            blocked_reason: "Acesso expirado por inatividade após 7 dias"
-          })
-          .eq("id", subscription.id);
-
-        if (updateSubError) {
-          logStep("Error blocking subscription", { error: updateSubError.message });
-          continue;
-        }
-
-        // Update profile status to blocked
-        const { error: updateProfileError } = await supabase
-          .from("profiles")
-          .update({ client_status: "blocked" })
-          .eq("id", subscription.user_id);
-
-        if (updateProfileError) {
-          logStep("Error updating profile status", { error: updateProfileError.message });
-        }
-
-        // Add notification to user's conversation
-        const blockMessage = {
-          role: "system",
-          content: `⚠️ Seu acesso expirou após 7 dias sem uso do sistema. Para liberar seu acesso imediatamente, entre em contato com o administrador ou adquira um plano pago.`,
-          timestamp: now
-        };
-
-        // Get or create conversation
-        const { data: existingConvo } = await supabase
-          .from("conversas")
-          .select("id, mensagens")
-          .eq("user_id", subscription.user_id)
-          .eq("tipo", "suporte")
-          .maybeSingle();
-
-        if (existingConvo) {
-          const messages = Array.isArray(existingConvo.mensagens) 
-            ? existingConvo.mensagens 
-            : [];
-          messages.push(blockMessage);
-          
-          await supabase
-            .from("conversas")
-            .update({ mensagens: messages, updated_at: now })
-            .eq("id", existingConvo.id);
-        } else {
-          await supabase
-            .from("conversas")
-            .insert({
-              user_id: subscription.user_id,
-              tipo: "suporte",
-              mensagens: [blockMessage]
-            });
-        }
-
+        await blockUser(supabase, subscription.id, subscription.user_id, 
+          "Acesso expirado por inatividade após 7 dias", now);
         blockedUsers.push(subscription.user_id);
-        logStep("User blocked successfully", { userId: subscription.user_id });
+        logStep("User blocked (invitation rule)", { userId: subscription.user_id });
       }
+    }
+
+    // ===== RULE 2: New - Free plan older than 30 days (absolute expiration) =====
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
+
+    const { data: expiredBy30Days, error: fetchError2 } = await supabase
+      .from("subscriptions")
+      .select("id, user_id, created_at")
+      .eq("status", "free")
+      .eq("access_blocked", false)
+      .lt("created_at", thirtyDaysAgoISO);
+
+    if (fetchError2) {
+      logStep("Error fetching expired-by-30-days subscriptions", { error: fetchError2.message });
+      throw fetchError2;
+    }
+
+    // Filter out users already blocked by Rule 1
+    const newToBlock = (expiredBy30Days || []).filter(
+      (s) => !blockedUsers.includes(s.user_id)
+    );
+
+    logStep("Found expired-by-30-days subscriptions", { count: newToBlock.length });
+
+    for (const subscription of newToBlock) {
+      await blockUser(supabase, subscription.id, subscription.user_id, 
+        "Plano gratuito expirado após 30 dias. Assine para continuar.", now);
+      
+      // Also set entitlements to 'none' (no trial override)
+      const { error: entError } = await supabase
+        .from("entitlements")
+        .upsert({
+          user_id: subscription.user_id,
+          access_level: "none",
+          override_level: null,
+          override_expires_at: null,
+          updated_at: now,
+        }, { onConflict: "user_id" });
+
+      if (entError) {
+        logStep("Error updating entitlements", { error: entError.message, userId: subscription.user_id });
+      }
+
+      blockedUsers.push(subscription.user_id);
+      logStep("User blocked (30-day rule)", { userId: subscription.user_id });
     }
 
     logStep("Expiration check completed", { blockedCount: blockedUsers.length });
@@ -171,3 +145,70 @@ serve(async (req) => {
     });
   }
 });
+
+// Helper to block a user's subscription and update profile
+async function blockUser(
+  supabase: ReturnType<typeof createClient>,
+  subscriptionId: string,
+  userId: string,
+  reason: string,
+  now: string
+) {
+  // Update subscription to blocked
+  const { error: updateSubError } = await supabase
+    .from("subscriptions")
+    .update({
+      access_blocked: true,
+      blocked_reason: reason,
+    })
+    .eq("id", subscriptionId);
+
+  if (updateSubError) {
+    logStep("Error blocking subscription", { error: updateSubError.message });
+    return;
+  }
+
+  // Update profile status to blocked
+  const { error: updateProfileError } = await supabase
+    .from("profiles")
+    .update({ client_status: "blocked" })
+    .eq("id", userId);
+
+  if (updateProfileError) {
+    logStep("Error updating profile status", { error: updateProfileError.message });
+  }
+
+  // Add notification to user's conversation
+  const blockMessage = {
+    role: "system",
+    content: `⚠️ ${reason}`,
+    timestamp: now,
+  };
+
+  const { data: existingConvo } = await supabase
+    .from("conversas")
+    .select("id, mensagens")
+    .eq("user_id", userId)
+    .eq("tipo", "suporte")
+    .maybeSingle();
+
+  if (existingConvo) {
+    const messages = Array.isArray(existingConvo.mensagens)
+      ? existingConvo.mensagens
+      : [];
+    messages.push(blockMessage);
+
+    await supabase
+      .from("conversas")
+      .update({ mensagens: messages, updated_at: now })
+      .eq("id", existingConvo.id);
+  } else {
+    await supabase
+      .from("conversas")
+      .insert({
+        user_id: userId,
+        tipo: "suporte",
+        mensagens: [blockMessage],
+      });
+  }
+}
