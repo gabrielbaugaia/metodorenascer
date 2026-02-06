@@ -1,398 +1,223 @@
 
-# Plano: Reestruturacao Completa do Sistema de Planos, Trial e Controle de Acesso
+
+# Integracao Completa: useEntitlements nas Paginas + Admin Override
 
 ## Resumo
 
-Este pacote unifica a pagina de precos (3 planos visiveis + dual CTA no Elite), cria uma tabela `entitlements` como fonte central de acesso, implementa um `UpgradeModal` padrao com links Stripe diretos, atualiza o webhook para sincronizar entitlements, e corrige usuarios "gratis elite" sem assinatura real.
+Integrar o hook `useEntitlements` (ja criado) nas 5 paginas de modulos (Treino, Nutricao, Mindset, Receitas, Suporte), substituindo a dependencia de `useModuleAccess` pelo sistema centralizado de entitlements + trial_usage. Tambem adicionar a secao de override de cortesia no AdminClienteDetalhes.
 
 ---
 
-## Links Stripe (Fixos)
+## Arquivos a Modificar
 
-| Tipo | URL |
-|------|-----|
-| Trial 7 dias | `https://buy.stripe.com/9B67sKeMW4ru2sp7Gy2B201` |
-| Direto (sem trial) | `https://buy.stripe.com/fZu3cudIS3nqaYVf902B205` |
-
----
-
-## Parte 1: Banco de Dados (Migracao SQL)
-
-### 1.1 Criar tabela `entitlements`
-
-```sql
-CREATE TABLE entitlements (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  access_level text NOT NULL DEFAULT 'none',
-  override_level text,
-  override_expires_at timestamptz,
-  updated_at timestamptz DEFAULT now(),
-  UNIQUE(user_id)
-);
-```
-
-Valores possiveis para `access_level`: `'none'`, `'trial_limited'`, `'full'`
-Valores possiveis para `override_level`: `'trial_limited'`, `'full'`, `NULL`
-
-### 1.2 Criar tabela `trial_usage`
-
-```sql
-CREATE TABLE trial_usage (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  used_workout boolean DEFAULT false,
-  used_diet boolean DEFAULT false,
-  used_mindset boolean DEFAULT false,
-  used_recipe_count integer DEFAULT 0,
-  used_support_count integer DEFAULT 0,
-  updated_at timestamptz DEFAULT now(),
-  UNIQUE(user_id)
-);
-```
-
-### 1.3 Adicionar campo `trial_end` na tabela `subscriptions`
-
-A tabela ja existe e tem os campos necessarios (stripe_customer_id, stripe_subscription_id, status, current_period_end). Adicionaremos:
-
-```sql
-ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS trial_end timestamptz;
-```
-
-### 1.4 RLS Policies
-
-- `entitlements`: Users SELECT own, Admins ALL, Service role ALL
-- `trial_usage`: Users SELECT/UPDATE own, Admins ALL, Service role ALL
-
-### 1.5 Migrar dados existentes
-
-Para cada usuario com `subscriptions.status = 'active'`, criar entitlement com `access_level = 'full'`.
-Para usuarios sem subscription ativa, criar entitlement com `access_level = 'none'`.
-Corrigir usuarios elite sem pagamento real (item 7):
-
-```sql
--- Corrigir elite "gratis" sem subscription Stripe real
-UPDATE entitlements SET access_level = 'none'
-WHERE user_id IN (
-  SELECT s.user_id FROM subscriptions s
-  WHERE s.plan_type IN ('elite_fundador','embaixador')
-  AND (s.stripe_subscription_id IS NULL OR s.stripe_subscription_id = '')
-  AND s.status NOT IN ('active','trialing')
-);
-```
+| Arquivo | Acao | Descricao |
+|---------|------|-----------|
+| `src/pages/Treino.tsx` | EDITAR | Substituir `useModuleAccess` por `useEntitlements` + trial_usage |
+| `src/pages/Nutricao.tsx` | EDITAR | Substituir `useModuleAccess` por `useEntitlements` + trial_usage |
+| `src/pages/Mindset.tsx` | EDITAR | Substituir `useModuleAccess` por `useEntitlements` + trial_usage |
+| `src/pages/Receitas.tsx` | EDITAR | Substituir `useModuleAccess` por `useEntitlements` + trial_usage |
+| `src/pages/Suporte.tsx` | EDITAR | Adicionar limite de mensagens trial |
+| `src/pages/admin/AdminClienteDetalhes.tsx` | EDITAR | Adicionar secao de entitlements + override |
+| `src/components/access/TrialBadge.tsx` | EDITAR | Adaptar TrialBanner para aceitar `isTrialing` do useEntitlements |
 
 ---
 
-## Parte 2: Hook `useEntitlements`
+## Mudancas Detalhadas
 
-Novo hook que substitui a logica dispersa de `useModuleAccess` e `useSubscription` para acesso premium.
+### 1. Treino.tsx
 
-### Arquivo: `src/hooks/useEntitlements.ts`
+**Antes:** Usa `useModuleAccess('treino')` para determinar `hasFullAccess`, `hasAnyAccess`, `isTrialing`, etc.
 
-```typescript
-function useEntitlements() {
-  // Busca da tabela entitlements
-  // Calcula effective_access_level:
-  //   se override_level != null E override_expires_at > now() -> override_level
-  //   senao -> access_level
-  
-  return {
-    effectiveLevel, // 'none' | 'trial_limited' | 'full'
-    isTrialing,     // effectiveLevel === 'trial_limited'
-    isFull,         // effectiveLevel === 'full'
-    isBlocked,      // effectiveLevel === 'none'
-    trialUsage,     // { used_workout, used_diet, etc. }
-    loading,
-    markUsed,       // (field: keyof trial_usage) => Promise
-    refetch
-  };
+**Depois:** Usa `useEntitlements()` como fonte primaria.
+
+- Importar `useEntitlements` em vez de `useModuleAccess`
+- Derivar acesso:
+  - `isFull` -> mostra tudo, PDF habilitado
+  - `isTrialing` -> mostra 1 treino, marca `used_workout = true` via `markUsed('used_workout')` ao abrir a pagina
+  - `isBlocked` -> abre UpgradeModal automaticamente
+- Remover imports de `LockedContent` (nao mais necessario com logica inline)
+- Manter cards bloqueados (blur + cadeado) para treinos alem do limite
+- `trialDaysLeft` nao vem mais do hook (o TrialBanner sera simplificado)
+
+Logica de limite:
+```
+const maxVisible = isTrialing ? 1 : workouts.length;
+// Ao renderizar, marcar used_workout
+useEffect(() => {
+  if (isTrialing && !trialUsage.used_workout && workouts.length > 0) {
+    markUsed('used_workout');
+  }
+}, [isTrialing, workouts]);
+```
+
+### 2. Nutricao.tsx
+
+**Antes:** Usa `useModuleAccess('nutricao')` com `access.limits.max_meals_visible`.
+
+**Depois:** Usa `useEntitlements()`.
+
+- `isFull` -> mostra todas refeicoes, macros, PDF
+- `isTrialing` -> mostra 2 refeicoes, oculta macros e PDF, marca `used_diet = true`
+- `isBlocked` -> UpgradeModal
+- Manter cards de refeicao bloqueados (blur) para refeicoes alem do limite
+
+Logica:
+```
+const maxMealsVisible = isTrialing ? 2 : refeicoes.length;
+useEffect(() => {
+  if (isTrialing && !trialUsage.used_diet && refeicoes.length > 0) {
+    markUsed('used_diet');
+  }
+}, [isTrialing, refeicoes]);
+```
+
+### 3. Mindset.tsx
+
+**Antes:** Usa `useModuleAccess('mindset')` com `hasFullAccess` para mostrar/ocultar secoes.
+
+**Depois:** Usa `useEntitlements()`.
+
+- `isFull` -> mostra tudo (manha, noite, crencas, afirmacoes)
+- `isTrialing` -> mostra apenas rotina da manha + mentalidade necessaria. Bloqueio em noite/crencas/afirmacoes. Marca `used_mindset = true`
+- `isBlocked` -> UpgradeModal
+- Substituir `LockedContent` por cards bloqueados inline (mesma UX de Treino/Nutricao)
+
+### 4. Receitas.tsx
+
+**Antes:** Usa `useModuleAccess('receitas')` com `incrementUsage()` e `access.limits.total_recipes_allowed`.
+
+**Depois:** Usa `useEntitlements()`.
+
+- `isFull` -> geracao ilimitada
+- `isTrialing` -> `trialUsage.used_recipe_count <= 1` (maximo 1 receita). Apos gerar, chama `markUsed('used_recipe_count', true)`
+- `isBlocked` -> UpgradeModal
+- Botao de gerar desabilitado quando limite atingido + texto "Limite atingido"
+
+Logica:
+```
+const canGenerate = isFull || trialUsage.used_recipe_count < 1;
+// Apos gerar com sucesso:
+if (isTrialing) await markUsed('used_recipe_count', true);
+```
+
+### 5. Suporte.tsx
+
+**Antes:** Sem controle de acesso por entitlements.
+
+**Depois:** Adicionar `useEntitlements()`.
+
+- `isFull` -> chat sem restricoes
+- `isTrialing` -> permite enviar mensagem apenas se `trialUsage.used_support_count < 1`. Apos enviar primeira mensagem, chama `markUsed('used_support_count', true)`. Se limite atingido, desabilita input e mostra UpgradeModal
+- `isBlocked` -> mostra FAQ normalmente, mas chat bloqueado com UpgradeModal
+
+Logica no `sendMessage`:
+```
+if (isTrialing && trialUsage.used_support_count >= 1) {
+  setShowUpgradeModal(true);
+  return;
 }
+// Apos enviar com sucesso:
+if (isTrialing) await markUsed('used_support_count', true);
 ```
 
-### Integracao com `useModuleAccess`
+### 6. TrialBadge.tsx (TrialBanner)
 
-O hook `useModuleAccess` existente sera adaptado para consultar `entitlements` PRIMEIRO:
+Simplificar o `TrialBanner` para nao depender de `trialDaysLeft` do useModuleAccess (que nao existe mais nesse contexto). Em vez disso:
 
-- Se `effective_level === 'full'` -> todos os modulos = `full`
-- Se `effective_level === 'trial_limited'` -> verificar `trial_usage` para limites
-- Se `effective_level === 'none'` -> todos os modulos = `none`
+- Aceitar prop `isTrialing: boolean` (obrigatorio)
+- Remover `trialDaysLeft` como prop obrigatorio (tornando opcional)
+- Se `trialDaysLeft` nao fornecido, mostrar mensagem generica "Voce esta no periodo de teste"
 
-Isso mantem compatibilidade com o sistema `commercial_plans` ja criado, mas adiciona a camada de entitlements como autoridade final.
+### 7. AdminClienteDetalhes.tsx
 
----
+Adicionar nova secao "Controle de Acesso" no painel de acoes administrativas (antes da zona de perigo).
 
-## Parte 3: Pagina de Precos (PricingSection)
+Nova secao inclui:
+- **Visualizacao do entitlement atual**: badge com `access_level` e `effective_level`
+- **Visualizacao de trial_usage**: tabela simples mostrando used_workout, used_diet, etc.
+- **Botao "Aplicar Override de Cortesia"**: abre Dialog com:
+  - Select: nivel (`trial_limited` ou `full`)
+  - Input date: `override_expires_at` (obrigatorio, minimo = amanha)
+  - Botao salvar que faz upsert na tabela `entitlements`
+- **Botao "Remover Override"**: limpa override_level e override_expires_at
 
-### 3.1 Remover da UI: Mensal e Semestral
-
-Filtrar o array `allPlans` para mostrar apenas 3 cards:
-1. Elite Fundador
-2. Trimestral
-3. Anual
-
-Os dados permanecem no backend para assinaturas existentes.
-
-### 3.2 Card Elite Fundador (dual CTA)
-
-Layout do card:
-
-```text
-+---------------------------------------------------+
-|                              [25 VAGAS]           |
-| Elite Fundador                                    |
-| R$ 49,90 /mes                                    |
-|                                                   |
-| "Teste o metodo por 7 dias com acesso parcial     |
-|  para conhecer a plataforma antes de desbloquear  |
-|  tudo."                                           |
-|                                                   |
-| [CTA Primario - FIRE]                             |
-| "Testar 7 dias gratis"                            |
-| -> https://buy.stripe.com/...trial                |
-|                                                   |
-| [CTA Secundario - OUTLINE]                        |
-| "Assinar agora"                                   |
-| -> https://buy.stripe.com/...direto               |
-|                                                   |
-| "Acesso parcial no trial. Desbloqueio completo    |
-|  apos ativacao."                                  |
-+---------------------------------------------------+
+Novos estados:
+```
+const [entitlement, setEntitlement] = useState(null);
+const [trialUsageData, setTrialUsageData] = useState(null);
+const [overrideOpen, setOverrideOpen] = useState(false);
+const [overrideLevel, setOverrideLevel] = useState('trial_limited');
+const [overrideExpires, setOverrideExpires] = useState('');
+const [savingOverride, setSavingOverride] = useState(false);
 ```
 
-### 3.3 Cards Trimestral / Anual
-
-Manter CTAs existentes (chamam `createCheckout(priceId)`), atualizar textos:
-- Trimestral: "Compromisso minimo para consolidar resultados."
-- Anual: "Transformacao completa com melhor custo-beneficio."
-
----
-
-## Parte 4: UpgradeModal Padrao
-
-### Arquivo: `src/components/access/UpgradeModal.tsx` (reescrever)
-
-Modal unico para todo o app:
-
-```text
-+---------------------------------------------------+
-|                  [X]                              |
-|        [Crown Icon]                               |
-|                                                   |
-|     Desbloqueie o acesso completo                 |
-|                                                   |
-|  Voce esta no acesso limitado. Desbloqueie o      |
-|  plano completo para continuar.                   |
-|                                                   |
-|  [check] Todos os treinos personalizados          |
-|  [check] Plano nutricional completo               |
-|  [check] Biblioteca de receitas ilimitada         |
-|  [check] Mindset e desenvolvimento pessoal        |
-|  [check] Suporte prioritario com mentor           |
-|                                                   |
-|  [BTN FIRE] "Testar 7 dias gratis"               |
-|  -> TRIAL link                                    |
-|                                                   |
-|  [BTN OUTLINE] "Assinar agora"                    |
-|  -> DIRETO link                                   |
-|                                                   |
-|  Cancele a qualquer momento.                      |
-+---------------------------------------------------+
+Fetch no useEffect existente:
 ```
-
-Ambos os botoes abrem os links Stripe diretos em nova aba (`window.open`). Nao dependem de edge function.
-
----
-
-## Parte 5: Bloqueios nas Paginas
-
-### Logica para cada pagina
-
-Para todas as paginas (Treino, Nutricao, Mindset, Receitas, Suporte), usar `useEntitlements`:
-
-**Se `effectiveLevel === 'none'`:**
-- Mostrar UpgradeModal imediatamente
-- Bloquear todo conteudo premium
-
-**Se `effectiveLevel === 'trial_limited'`:**
-- Aplicar limites usando `trial_usage`:
-  - Treino: 1 treino visivel, marcar `used_workout = true`
-  - Nutricao: 1 secao amostra, marcar `used_diet = true`
-  - Mindset: 1 modulo, marcar `used_mindset = true`
-  - Receitas: `used_recipe_count <= 1`, incrementar apos gerar
-  - Suporte: `used_support_count <= 1`
-- Clicar em conteudo bloqueado abre UpgradeModal
-
-**Se `effectiveLevel === 'full'`:**
-- Liberar tudo
-
-### Arquivos a modificar:
-
-| Arquivo | Mudanca |
-|---------|---------|
-| `src/pages/Treino.tsx` | Integrar `useEntitlements` + trial_usage |
-| `src/pages/Nutricao.tsx` | Integrar `useEntitlements` + trial_usage |
-| `src/pages/Mindset.tsx` | Integrar `useEntitlements` + trial_usage |
-| `src/pages/Receitas.tsx` | Integrar `useEntitlements` + trial_usage |
-| `src/pages/Suporte.tsx` | Adicionar limite de mensagens para trial |
-
----
-
-## Parte 6: Webhook Stripe (Backend)
-
-### 6.1 `stripe-webhook/index.ts`
-
-Atualizar a funcao `upsertSubscription` para TAMBEM sincronizar `entitlements`:
-
-```typescript
-// Apos upsert em subscriptions:
-const accessLevel = 
-  subscription.status === 'trialing' ? 'trial_limited' :
-  subscription.status === 'active' ? 'full' : 'none';
-
-await supabase.from('entitlements').upsert({
-  user_id: userId,
-  access_level: accessLevel,
-  updated_at: new Date().toISOString()
-}, { onConflict: 'user_id' });
-
-// Se status = trialing, criar trial_usage se nao existe
-if (subscription.status === 'trialing') {
-  await supabase.from('trial_usage').upsert({
-    user_id: userId,
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'user_id', ignoreDuplicates: true });
-}
-
-// Se trial_end disponivel, salvar
-if (subscription.trial_end) {
-  await supabase.from('subscriptions').update({
-    trial_end: safeTimestampToISO(subscription.trial_end)
-  }).eq('user_id', userId);
-}
-```
-
-Para `customer.subscription.deleted` e `invoice.payment_failed`:
-```typescript
-await supabase.from('entitlements').upsert({
-  user_id: userId,
-  access_level: 'none',
-  updated_at: new Date().toISOString()
-}, { onConflict: 'user_id' });
-```
-
-### 6.2 Adicionar evento `customer.subscription.created`
-
-O webhook ja trata `checkout.session.completed` que cobre a criacao. Adicionaremos tratamento explicito para robustez.
-
-### 6.3 `create-checkout/index.ts`
-
-Nenhuma mudanca necessaria para os links Stripe diretos (Payment Links). Os botoes da pagina abrem URLs diretamente.
-
-O `create-checkout` continua funcionando para os planos Trimestral/Anual que usam `createCheckout(priceId)`.
-
----
-
-## Parte 7: Corrigir Elite Gratis (Migracao)
-
-Na migracao SQL, incluir:
-
-```sql
--- Usuarios com plan_type elite mas sem stripe_subscription_id real
--- Manter cadastro, bloquear acesso premium
-INSERT INTO entitlements (user_id, access_level)
-SELECT s.user_id, 'none'
-FROM subscriptions s
-WHERE s.plan_type IN ('elite_fundador', 'embaixador')
-AND (s.stripe_subscription_id IS NULL OR s.stripe_subscription_id = '' 
-     OR s.stripe_subscription_id LIKE 'invite_%')
-AND s.status NOT IN ('active', 'trialing')
-ON CONFLICT (user_id) DO UPDATE SET access_level = 'none';
-```
-
----
-
-## Parte 8: Admin - Override de Cortesia
-
-### Modificar `AdminClienteDetalhes.tsx`
-
-Adicionar secao para admin:
-- Visualizar `entitlements.access_level` atual
-- Visualizar `trial_usage`
-- Botao "Aplicar Override":
-  - Selecionar: `trial_limited` ou `full`
-  - Definir `override_expires_at` (obrigatorio, nunca infinito)
-  - Salvar no banco
-
-As paginas `AdminCommercialPlans.tsx` e `AdminTrialCampaigns.tsx` ja existem da fase anterior.
-
----
-
-## Parte 9: SubscriptionGuard
-
-### Adaptar `SubscriptionGuard.tsx`
-
-Adicionar verificacao de `entitlements`:
-
-```typescript
-// 1. Verificar subscription (existente)
-// 2. Verificar entitlements
-const { data: entitlement } = await supabase
+// Fetch entitlement
+const { data: entData } = await supabase
   .from('entitlements')
-  .select('access_level, override_level, override_expires_at')
-  .eq('user_id', user.id)
-  .single();
+  .select('*')
+  .eq('user_id', id)
+  .maybeSingle();
+setEntitlement(entData);
 
-const effectiveLevel = getEffectiveLevel(entitlement);
-if (effectiveLevel !== 'none') {
-  // Permitir acesso (trial ou full)
-  setLocalState({ hasSubscription: true, ... });
-}
+// Fetch trial usage
+const { data: usageData } = await supabase
+  .from('trial_usage')
+  .select('*')
+  .eq('user_id', id)
+  .maybeSingle();
+setTrialUsageData(usageData);
 ```
 
 ---
 
-## Parte 10: Assinatura.tsx (Pagina interna)
+## Padrao de Migracao por Pagina
 
-Filtrar para mostrar apenas Elite, Trimestral e Anual (mesmo filtro da PricingSection).
-Adicionar dual CTA no card Elite.
+Cada pagina segue o mesmo padrao:
 
----
-
-## Resumo de Arquivos
-
-### Criar
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/hooks/useEntitlements.ts` | Hook central de acesso baseado em entitlements |
-| Migracao SQL | Tabelas entitlements, trial_usage, campo trial_end |
-
-### Modificar
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/components/landing/PricingSection.tsx` | 3 planos + dual CTA no Elite |
-| `src/components/access/UpgradeModal.tsx` | Modal padrao com links Stripe diretos |
-| `src/hooks/useModuleAccess.ts` | Integrar com entitlements como autoridade |
-| `src/components/auth/SubscriptionGuard.tsx` | Verificar entitlements |
-| `src/pages/Treino.tsx` | Integrar trial_usage |
-| `src/pages/Nutricao.tsx` | Integrar trial_usage |
-| `src/pages/Mindset.tsx` | Integrar trial_usage |
-| `src/pages/Receitas.tsx` | Integrar trial_usage |
-| `src/pages/Suporte.tsx` | Adicionar limite trial |
-| `src/pages/Assinatura.tsx` | Filtrar planos + dual CTA |
-| `supabase/functions/stripe-webhook/index.ts` | Sincronizar entitlements |
-| `src/pages/admin/AdminClienteDetalhes.tsx` | Override de cortesia |
+1. Remover `import { useModuleAccess }` e `import { LockedContent }`
+2. Adicionar `import { useEntitlements } from '@/hooks/useEntitlements'`
+3. Manter `import { UpgradeModal }` (ja usa o novo com links Stripe)
+4. No componente:
+   ```typescript
+   const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
+   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+   ```
+5. Substituir condicoes `hasFullAccess` por `isFull`
+6. Substituir `hasAnyAccess` por `!isBlocked`
+7. Adicionar `useEffect` para auto-open UpgradeModal se `isBlocked`
+8. Adicionar marcacao de uso via `markUsed()`
 
 ---
 
-## Ordem de Execucao
+## Fluxo de Acesso Resultante
 
-1. Migracao SQL (entitlements + trial_usage + trial_end + dados iniciais + correcao elite gratis)
-2. Criar `useEntitlements.ts`
-3. Atualizar `useModuleAccess.ts` para usar entitlements
-4. Reescrever `UpgradeModal.tsx` com links Stripe diretos
-5. Atualizar `PricingSection.tsx` (3 planos + dual CTA)
-6. Atualizar `Assinatura.tsx` (mesma logica)
-7. Atualizar `SubscriptionGuard.tsx`
-8. Atualizar paginas de modulos (Treino, Nutricao, Mindset, Receitas, Suporte)
-9. Atualizar `stripe-webhook` para sincronizar entitlements
-10. Atualizar admin para override
+```text
+Usuario abre /treino
+  |
+  v
+SubscriptionGuard verifica entitlements:
+  - effectiveLevel != 'none' -> permite entrada
+  - effectiveLevel == 'none' -> redireciona /dashboard
+  |
+  v
+Treino.tsx usa useEntitlements():
+  - isFull -> mostra tudo
+  - isTrialing -> mostra 1 treino, marca used_workout
+  - isBlocked -> UpgradeModal auto-open
+```
+
+---
+
+## Resumo de Entregas
+
+1. Treino com limite de 1 treino e marcacao `used_workout`
+2. Nutricao com limite de 2 refeicoes e marcacao `used_diet`
+3. Mindset com limite de 1 modulo (manha) e marcacao `used_mindset`
+4. Receitas com limite de 1 geracao e contador `used_recipe_count`
+5. Suporte com limite de 1 mensagem e contador `used_support_count`
+6. TrialBanner simplificado para funcionar sem trialDaysLeft
+7. Admin com visualizacao de entitlements + override com validade
+8. UpgradeModal (ja pronto) acionado em todos os bloqueios
+
