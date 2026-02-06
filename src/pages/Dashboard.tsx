@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Target, Utensils, Brain, BookOpen, MessageCircle, Trophy, ClipboardCheck, CreditCard, Lock, Camera, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { STRIPE_PRICE_IDS } from "@/lib/planConstants";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
 import { PlanSelectionGrid } from "@/components/dashboard/PlanSelectionGrid";
@@ -231,19 +232,10 @@ export default function Dashboard() {
           .maybeSingle();
         
         if (data?.status === "pending_payment") {
-          // Map plan_type to Stripe price ID
-          const priceIdMap: Record<string, string> = {
-            elite_founder: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
-            mensal: "price_1ScZrECuFZvf5xFdfS9W8kvY",
-            trimestral: "price_1ScZsTCuFZvf5xFdbW8kJeQF",
-            semestral: "price_1ScZtrCuFZvf5xFd8iXDfbEp",
-            anual: "price_1ScZvCCuFZvf5xFdjrs51JQB",
-          };
-          
           setPendingPaymentInfo({
             planType: data.plan_type || "mensal",
             planName: data.plan_name || "Plano",
-            priceId: priceIdMap[data.plan_type || "mensal"],
+            priceId: STRIPE_PRICE_IDS[data.plan_type || "mensal"],
           });
         }
       } catch (error) {
