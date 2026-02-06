@@ -1,223 +1,133 @@
 
 
-# Integracao Completa: useEntitlements nas Paginas + Admin Override
+# Filtros de Engajamento + Bloqueio Automatico de Plano Gratuito (30 dias)
 
 ## Resumo
 
-Integrar o hook `useEntitlements` (ja criado) nas 5 paginas de modulos (Treino, Nutricao, Mindset, Receitas, Suporte), substituindo a dependencia de `useModuleAccess` pelo sistema centralizado de entitlements + trial_usage. Tambem adicionar a secao de override de cortesia no AdminClienteDetalhes.
+Adicionar novos filtros na aba de Clientes do admin para identificar rapidamente clientes inativos, sem protocolos gerados e que nunca acessaram. Tambem implementar a regra de negocio: clientes do plano gratuito que completam 30 dias sao automaticamente bloqueados e redirecionados para assinar, sem direito ao trial de 7 dias.
 
 ---
 
-## Arquivos a Modificar
+## Parte 1: Novos Filtros no AdminClientes
 
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `src/pages/Treino.tsx` | EDITAR | Substituir `useModuleAccess` por `useEntitlements` + trial_usage |
-| `src/pages/Nutricao.tsx` | EDITAR | Substituir `useModuleAccess` por `useEntitlements` + trial_usage |
-| `src/pages/Mindset.tsx` | EDITAR | Substituir `useModuleAccess` por `useEntitlements` + trial_usage |
-| `src/pages/Receitas.tsx` | EDITAR | Substituir `useModuleAccess` por `useEntitlements` + trial_usage |
-| `src/pages/Suporte.tsx` | EDITAR | Adicionar limite de mensagens trial |
-| `src/pages/admin/AdminClienteDetalhes.tsx` | EDITAR | Adicionar secao de entitlements + override |
-| `src/components/access/TrialBadge.tsx` | EDITAR | Adaptar TrialBanner para aceitar `isTrialing` do useEntitlements |
+### 1.1 Dados adicionais no fetch
 
----
+O `fetchClients` atual busca `profiles` e `subscriptions`. Precisamos adicionar:
+- `user_activity.last_access` para cada cliente
+- Contagem de `protocolos` por tipo (treino, nutricao, mindset)
 
-## Mudancas Detalhadas
-
-### 1. Treino.tsx
-
-**Antes:** Usa `useModuleAccess('treino')` para determinar `hasFullAccess`, `hasAnyAccess`, `isTrialing`, etc.
-
-**Depois:** Usa `useEntitlements()` como fonte primaria.
-
-- Importar `useEntitlements` em vez de `useModuleAccess`
-- Derivar acesso:
-  - `isFull` -> mostra tudo, PDF habilitado
-  - `isTrialing` -> mostra 1 treino, marca `used_workout = true` via `markUsed('used_workout')` ao abrir a pagina
-  - `isBlocked` -> abre UpgradeModal automaticamente
-- Remover imports de `LockedContent` (nao mais necessario com logica inline)
-- Manter cards bloqueados (blur + cadeado) para treinos alem do limite
-- `trialDaysLeft` nao vem mais do hook (o TrialBanner sera simplificado)
-
-Logica de limite:
-```
-const maxVisible = isTrialing ? 1 : workouts.length;
-// Ao renderizar, marcar used_workout
-useEffect(() => {
-  if (isTrialing && !trialUsage.used_workout && workouts.length > 0) {
-    markUsed('used_workout');
-  }
-}, [isTrialing, workouts]);
-```
-
-### 2. Nutricao.tsx
-
-**Antes:** Usa `useModuleAccess('nutricao')` com `access.limits.max_meals_visible`.
-
-**Depois:** Usa `useEntitlements()`.
-
-- `isFull` -> mostra todas refeicoes, macros, PDF
-- `isTrialing` -> mostra 2 refeicoes, oculta macros e PDF, marca `used_diet = true`
-- `isBlocked` -> UpgradeModal
-- Manter cards de refeicao bloqueados (blur) para refeicoes alem do limite
-
-Logica:
-```
-const maxMealsVisible = isTrialing ? 2 : refeicoes.length;
-useEffect(() => {
-  if (isTrialing && !trialUsage.used_diet && refeicoes.length > 0) {
-    markUsed('used_diet');
-  }
-}, [isTrialing, refeicoes]);
-```
-
-### 3. Mindset.tsx
-
-**Antes:** Usa `useModuleAccess('mindset')` com `hasFullAccess` para mostrar/ocultar secoes.
-
-**Depois:** Usa `useEntitlements()`.
-
-- `isFull` -> mostra tudo (manha, noite, crencas, afirmacoes)
-- `isTrialing` -> mostra apenas rotina da manha + mentalidade necessaria. Bloqueio em noite/crencas/afirmacoes. Marca `used_mindset = true`
-- `isBlocked` -> UpgradeModal
-- Substituir `LockedContent` por cards bloqueados inline (mesma UX de Treino/Nutricao)
-
-### 4. Receitas.tsx
-
-**Antes:** Usa `useModuleAccess('receitas')` com `incrementUsage()` e `access.limits.total_recipes_allowed`.
-
-**Depois:** Usa `useEntitlements()`.
-
-- `isFull` -> geracao ilimitada
-- `isTrialing` -> `trialUsage.used_recipe_count <= 1` (maximo 1 receita). Apos gerar, chama `markUsed('used_recipe_count', true)`
-- `isBlocked` -> UpgradeModal
-- Botao de gerar desabilitado quando limite atingido + texto "Limite atingido"
-
-Logica:
-```
-const canGenerate = isFull || trialUsage.used_recipe_count < 1;
-// Apos gerar com sucesso:
-if (isTrialing) await markUsed('used_recipe_count', true);
-```
-
-### 5. Suporte.tsx
-
-**Antes:** Sem controle de acesso por entitlements.
-
-**Depois:** Adicionar `useEntitlements()`.
-
-- `isFull` -> chat sem restricoes
-- `isTrialing` -> permite enviar mensagem apenas se `trialUsage.used_support_count < 1`. Apos enviar primeira mensagem, chama `markUsed('used_support_count', true)`. Se limite atingido, desabilita input e mostra UpgradeModal
-- `isBlocked` -> mostra FAQ normalmente, mas chat bloqueado com UpgradeModal
-
-Logica no `sendMessage`:
-```
-if (isTrialing && trialUsage.used_support_count >= 1) {
-  setShowUpgradeModal(true);
-  return;
-}
-// Apos enviar com sucesso:
-if (isTrialing) await markUsed('used_support_count', true);
-```
-
-### 6. TrialBadge.tsx (TrialBanner)
-
-Simplificar o `TrialBanner` para nao depender de `trialDaysLeft` do useModuleAccess (que nao existe mais nesse contexto). Em vez disso:
-
-- Aceitar prop `isTrialing: boolean` (obrigatorio)
-- Remover `trialDaysLeft` como prop obrigatorio (tornando opcional)
-- Se `trialDaysLeft` nao fornecido, mostrar mensagem generica "Voce esta no periodo de teste"
-
-### 7. AdminClienteDetalhes.tsx
-
-Adicionar nova secao "Controle de Acesso" no painel de acoes administrativas (antes da zona de perigo).
-
-Nova secao inclui:
-- **Visualizacao do entitlement atual**: badge com `access_level` e `effective_level`
-- **Visualizacao de trial_usage**: tabela simples mostrando used_workout, used_diet, etc.
-- **Botao "Aplicar Override de Cortesia"**: abre Dialog com:
-  - Select: nivel (`trial_limited` ou `full`)
-  - Input date: `override_expires_at` (obrigatorio, minimo = amanha)
-  - Botao salvar que faz upsert na tabela `entitlements`
-- **Botao "Remover Override"**: limpa override_level e override_expires_at
-
-Novos estados:
-```
-const [entitlement, setEntitlement] = useState(null);
-const [trialUsageData, setTrialUsageData] = useState(null);
-const [overrideOpen, setOverrideOpen] = useState(false);
-const [overrideLevel, setOverrideLevel] = useState('trial_limited');
-const [overrideExpires, setOverrideExpires] = useState('');
-const [savingOverride, setSavingOverride] = useState(false);
-```
-
-Fetch no useEffect existente:
-```
-// Fetch entitlement
-const { data: entData } = await supabase
-  .from('entitlements')
-  .select('*')
-  .eq('user_id', id)
-  .maybeSingle();
-setEntitlement(entData);
-
-// Fetch trial usage
-const { data: usageData } = await supabase
-  .from('trial_usage')
-  .select('*')
-  .eq('user_id', id)
-  .maybeSingle();
-setTrialUsageData(usageData);
-```
-
----
-
-## Padrao de Migracao por Pagina
-
-Cada pagina segue o mesmo padrao:
-
-1. Remover `import { useModuleAccess }` e `import { LockedContent }`
-2. Adicionar `import { useEntitlements } from '@/hooks/useEntitlements'`
-3. Manter `import { UpgradeModal }` (ja usa o novo com links Stripe)
-4. No componente:
-   ```typescript
-   const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
-   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-   ```
-5. Substituir condicoes `hasFullAccess` por `isFull`
-6. Substituir `hasAnyAccess` por `!isBlocked`
-7. Adicionar `useEffect` para auto-open UpgradeModal se `isBlocked`
-8. Adicionar marcacao de uso via `markUsed()`
-
----
-
-## Fluxo de Acesso Resultante
+Isso sera feito em batch (nao N+1) usando queries paralelas:
 
 ```text
-Usuario abre /treino
-  |
-  v
-SubscriptionGuard verifica entitlements:
-  - effectiveLevel != 'none' -> permite entrada
-  - effectiveLevel == 'none' -> redireciona /dashboard
-  |
-  v
-Treino.tsx usa useEntitlements():
-  - isFull -> mostra tudo
-  - isTrialing -> mostra 1 treino, marca used_workout
-  - isBlocked -> UpgradeModal auto-open
+1. Fetch todos user_activity (admin tem RLS ALL)
+2. Fetch contagem de protocolos agrupado por user_id e tipo (admin tem RLS ALL)
+3. Merge no array de clients
 ```
+
+### 1.2 Novo filtro: "Engajamento"
+
+Adicionar um novo Select no painel de Filtros Avancados com as opcoes:
+
+| Valor | Label | Logica |
+|-------|-------|--------|
+| `all` | Todos | Sem filtro |
+| `never_accessed` | Nunca acessou | `last_access` e null ou nao existe em user_activity |
+| `no_protocols` | Sem protocolos gerados | Nenhum protocolo de treino, nutricao ou mindset |
+| `inactive_7d` | Inativo +7 dias | `last_access` anterior a 7 dias atras |
+| `inactive_14d` | Inativo +14 dias | `last_access` anterior a 14 dias atras |
+| `inactive_30d` | Inativo +30 dias | `last_access` anterior a 30 dias atras |
+| `free_expired_30d` | Gratuito expirado (30d+) | Plano gratuito com `created_at` da subscription ha mais de 30 dias |
+
+### 1.3 Interface do filtro
+
+O novo select sera posicionado na grid de filtros avancados existente (linha 339), adicionando mais uma coluna:
+
+```text
+Tipo de Plano | Sexo | Objetivo | Engajamento
+Cadastro - De | Cadastro - Ate | Termino Plano - De
+```
+
+### 1.4 Dados no Client interface
+
+Estender a interface `Client` com:
+```typescript
+interface Client {
+  // ... existentes
+  lastAccess: string | null;        // de user_activity
+  protocolCount: {
+    treino: number;
+    nutricao: number;
+    mindset: number;
+  };
+}
+```
+
+### 1.5 Coluna "Ultimo Acesso" na tabela
+
+Adicionar uma nova coluna visivel na tabela desktop (hidden em mobile) mostrando a data do ultimo acesso. Se nunca acessou, mostrar badge vermelha "Nunca acessou".
 
 ---
 
-## Resumo de Entregas
+## Parte 2: Bloqueio Automatico do Plano Gratuito apos 30 dias
 
-1. Treino com limite de 1 treino e marcacao `used_workout`
-2. Nutricao com limite de 2 refeicoes e marcacao `used_diet`
-3. Mindset com limite de 1 modulo (manha) e marcacao `used_mindset`
-4. Receitas com limite de 1 geracao e contador `used_recipe_count`
-5. Suporte com limite de 1 mensagem e contador `used_support_count`
-6. TrialBanner simplificado para funcionar sem trialDaysLeft
-7. Admin com visualizacao de entitlements + override com validade
-8. UpgradeModal (ja pronto) acionado em todos os bloqueios
+### 2.1 Atualizar `check-free-expiration/index.ts`
+
+A funcao atual ja verifica subscriptions com `status = 'free'` e `invitation_expires_at < now()`. O comportamento sera expandido:
+
+**Regra nova:** Alem de verificar `invitation_expires_at`, adicionar uma verificacao separada para subscriptions gratuitas com mais de 30 dias de existencia (`created_at + 30 days < now()`), independente do `invitation_expires_at`.
+
+Para esses usuarios:
+1. Marcar `access_blocked = true` na subscription
+2. Atualizar `blocked_reason = "Plano gratuito expirado apos 30 dias. Assine para continuar."`
+3. Atualizar `entitlements.access_level = 'none'` (sem override)
+4. Atualizar `profiles.client_status = 'blocked'`
+5. **Nao conceder trial de 7 dias** -- o entitlement vai direto para `'none'`, forcando assinatura direta
+
+### 2.2 Pagina de bloqueio (AcessoBloqueado.tsx)
+
+A pagina `AcessoBloqueado.tsx` ja existe. Ela recebera uma variacao de mensagem quando o motivo for "plano gratuito expirado":
+- Mensagem: "Seu periodo gratuito de 30 dias expirou. Para continuar acessando o Metodo Renascer, escolha um plano."
+- Mostrar apenas os botoes de assinatura direta (sem opcao de trial)
+- Usar os links Stripe diretos ja configurados
+
+### 2.3 Logica no SubscriptionGuard
+
+O `SubscriptionGuard` ja verifica `access_blocked`. Quando detectar que o motivo e "plano gratuito expirado", redirecionar para `/acesso-bloqueado` com um parametro indicando que nao tem direito a trial.
+
+---
+
+## Parte 3: Indicador visual na lista
+
+Na tabela de clientes, alem do filtro, adicionar indicadores visuais:
+
+- **Badge vermelha "Nunca acessou"** ao lado do nome quando `lastAccess` e null
+- **Badge amarela "Sem protocolos"** quando nenhum protocolo foi gerado
+- **Badge cinza "Inativo Xd"** calculada dinamicamente a partir de `lastAccess`
+- **Badge vermelha "Gratuito expirado"** quando plano gratuito tem mais de 30 dias
+
+Esses badges aparecem apenas no layout desktop (na coluna de Status ou como badges adicionais).
+
+---
+
+## Resumo Tecnico de Arquivos
+
+### Modificar
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/pages/admin/AdminClientes.tsx` | Novo filtro de engajamento, fetch de user_activity e protocolos, coluna ultimo acesso, badges visuais |
+| `supabase/functions/check-free-expiration/index.ts` | Nova regra de bloqueio apos 30 dias para planos gratuitos + sincronizar entitlements |
+| `src/pages/AcessoBloqueado.tsx` | Mensagem diferenciada para plano gratuito expirado sem opcao de trial |
+| `src/components/auth/SubscriptionGuard.tsx` | Passar motivo de bloqueio para AcessoBloqueado |
+
+### Nenhum arquivo novo necessario
+
+---
+
+## Ordem de Execucao
+
+1. Atualizar `AdminClientes.tsx` com novos dados (user_activity, protocolos), filtro de engajamento e badges visuais
+2. Atualizar `check-free-expiration/index.ts` com regra de 30 dias + sync entitlements
+3. Atualizar `AcessoBloqueado.tsx` com mensagem diferenciada
+4. Atualizar `SubscriptionGuard.tsx` para passar motivo de bloqueio
 
