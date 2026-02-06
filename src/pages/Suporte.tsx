@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useEntitlements } from "@/hooks/useEntitlements";
+import { UpgradeModal } from "@/components/access/UpgradeModal";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,6 +111,8 @@ const faqs = [
 
 export default function Suporte() {
   const { user } = useAuth();
+  const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -411,6 +415,12 @@ export default function Suporte() {
   const sendMessage = async () => {
     if (!input.trim() || isLoading || !user) return;
 
+    // Trial limit check
+    if (isTrialing && trialUsage.used_support_count >= 1) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     const userMessage: Message = { role: "user", content: input };
     const messageContent = input;
     setMessages(prev => [...prev, userMessage]);
@@ -523,6 +533,11 @@ export default function Suporte() {
 
       // Create alert after message is sent (with or without urgency)
       await createSupportAlert(messageContent, isUrgent, keywords, reason);
+
+      // Mark support as used for trial
+      if (isTrialing) {
+        await markUsed('used_support_count', true);
+      }
 
     } catch (error: any) {
       console.error("Chat error:", error);
@@ -669,13 +684,13 @@ export default function Suporte() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Digite sua mensagem..."
-                      disabled={isLoading}
+                      placeholder={isTrialing && trialUsage.used_support_count >= 1 ? "Limite de mensagens atingido" : "Digite sua mensagem..."}
+                      disabled={isLoading || (isTrialing && trialUsage.used_support_count >= 1)}
                       className="flex-1"
                     />
                     <Button 
                       onClick={sendMessage} 
-                      disabled={!input.trim() || isLoading}
+                      disabled={!input.trim() || isLoading || (isTrialing && trialUsage.used_support_count >= 1)}
                       variant="fire"
                     >
                       {isLoading ? (
@@ -716,6 +731,10 @@ export default function Suporte() {
           </TabsContent>
         </Tabs>
       </div>
+      <UpgradeModal 
+        open={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+      />
     </ClientLayout>
   );
 }

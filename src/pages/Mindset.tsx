@@ -17,13 +17,13 @@ import {
   Loader2,
   CheckCircle,
   Target,
-  MessageCircle
+  MessageCircle,
+  Lock
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProtocol } from "@/hooks/useProtocol";
-import { useModuleAccess } from "@/hooks/useModuleAccess";
-import { LockedContent } from "@/components/access/LockedContent";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { TrialBanner } from "@/components/access/TrialBadge";
 import { UpgradeModal } from "@/components/access/UpgradeModal";
 
@@ -69,7 +69,7 @@ export default function Mindset() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { protocol: protocolData, loading } = useProtocol("mindset");
-  const { access, loading: accessLoading, hasFullAccess, hasAnyAccess, isTrialing, trialDaysLeft } = useModuleAccess('mindset');
+  const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -183,22 +183,20 @@ export default function Mindset() {
   return (
     <ClientLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Access blocked */}
-        {!accessLoading && !hasAnyAccess && (
-          <LockedContent module="mindset">
-            <div />
-          </LockedContent>
+        {/* Access blocked - auto open modal */}
+        {!entLoading && isBlocked && (
+          <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />
         )}
 
         {/* Trial banner */}
         {isTrialing && (
           <TrialBanner 
-            trialDaysLeft={trialDaysLeft} 
+            isTrialing={isTrialing} 
             onUpgradeClick={() => setShowUpgradeModal(true)} 
           />
         )}
 
-        {hasAnyAccess && (
+        {!isBlocked && (
           <>
         {/* Header */}
         <div className="text-center mb-8">
@@ -283,8 +281,8 @@ export default function Mindset() {
           </Card>
         )}
 
-        {/* Rotina da Noite - Locked for limited access */}
-        {hasFullAccess ? (
+        {/* Rotina da Noite - Locked for trial */}
+        {isFull ? (
           content.rotina_noite && (
             <Card>
               <CardHeader className="pb-2">
@@ -321,14 +319,23 @@ export default function Mindset() {
           )
         ) : (
           content.rotina_noite && (
-            <LockedContent module="mindset" fallbackMessage="Rotina da noite disponível no plano completo">
-              <div />
-            </LockedContent>
+            <Card 
+              className="p-4 relative overflow-hidden cursor-pointer opacity-60 blur-[2px] hover:opacity-80 transition-all"
+              onClick={() => setShowUpgradeModal(true)}
+            >
+              <div className="flex items-center gap-3">
+                <Lock className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="font-semibold">Rotina da Noite</p>
+                  <p className="text-sm text-muted-foreground">Disponível no plano completo</p>
+                </div>
+              </div>
+            </Card>
           )
         )}
 
-        {/* Crenças Limitantes - Locked for limited access */}
-        {hasFullAccess ? (
+        {/* Crenças Limitantes - Locked for trial */}
+        {isFull ? (
           content.crencas_limitantes && content.crencas_limitantes.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
@@ -370,14 +377,23 @@ export default function Mindset() {
           )
         ) : (
           content.crencas_limitantes && content.crencas_limitantes.length > 0 && (
-            <LockedContent module="mindset" fallbackMessage="Crenças limitantes disponíveis no plano completo">
-              <div />
-            </LockedContent>
+            <Card 
+              className="p-4 relative overflow-hidden cursor-pointer opacity-60 blur-[2px] hover:opacity-80 transition-all"
+              onClick={() => setShowUpgradeModal(true)}
+            >
+              <div className="flex items-center gap-3">
+                <Lock className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="font-semibold">Crenças Limitantes</p>
+                  <p className="text-sm text-muted-foreground">Disponível no plano completo</p>
+                </div>
+              </div>
+            </Card>
           )
         )}
 
-        {/* Afirmações Personalizadas - Locked for limited access */}
-        {hasFullAccess ? (
+        {/* Afirmações Personalizadas - Locked for trial */}
+        {isFull ? (
           content.afirmacoes_personalizadas && content.afirmacoes_personalizadas.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
@@ -401,9 +417,18 @@ export default function Mindset() {
           )
         ) : (
           content.afirmacoes_personalizadas && content.afirmacoes_personalizadas.length > 0 && (
-            <LockedContent module="mindset" fallbackMessage="Afirmações personalizadas disponíveis no plano completo">
-              <div />
-            </LockedContent>
+            <Card 
+              className="p-4 relative overflow-hidden cursor-pointer opacity-60 blur-[2px] hover:opacity-80 transition-all"
+              onClick={() => setShowUpgradeModal(true)}
+            >
+              <div className="flex items-center gap-3">
+                <Lock className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="font-semibold">Afirmações Personalizadas</p>
+                  <p className="text-sm text-muted-foreground">Disponível no plano completo</p>
+                </div>
+              </div>
+            </Card>
           )
         )}
 
@@ -418,7 +443,7 @@ export default function Mindset() {
             <MessageCircle className="h-4 w-4 mr-2" />
             <span className="text-xs sm:text-sm">FALAR COM MENTOR</span>
           </Button>
-          {hasFullAccess && (
+          {isFull && (
             <Button 
               variant="default" 
               className="flex-1" 
@@ -448,8 +473,6 @@ export default function Mindset() {
       <UpgradeModal 
         open={showUpgradeModal} 
         onClose={() => setShowUpgradeModal(false)} 
-        currentModule="mindset"
-        trialDaysLeft={trialDaysLeft}
       />
     </ClientLayout>
   );

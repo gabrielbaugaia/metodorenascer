@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkoutTracking } from "@/hooks/useWorkoutTracking";
-import { useModuleAccess } from "@/hooks/useModuleAccess";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,6 @@ import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Downl
 import { WorkoutCard } from "@/components/treino/WorkoutCard";
 import { SuccessAnimation } from "@/components/feedback/SuccessAnimation";
 import { StreakDisplay } from "@/components/gamification/StreakDisplay";
-import { LockedContent } from "@/components/access/LockedContent";
 import { TrialBanner } from "@/components/access/TrialBadge";
 import { UpgradeModal } from "@/components/access/UpgradeModal";
 import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
@@ -52,7 +51,7 @@ export default function Treino() {
   const navigate = useNavigate();
   const { user } = useAuth();
   console.log("[Treino] User:", user?.id);
-  const { access, loading: accessLoading, hasFullAccess, hasAnyAccess, isTrialing, trialDaysLeft } = useModuleAccess('treino');
+  const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
   const [protocol, setProtocol] = useState<Protocol | null>(null);
   
   const [loading, setLoading] = useState(true);
@@ -313,7 +312,7 @@ export default function Treino() {
               </p>
             </div>
           </div>
-          {protocol && hasFullAccess && (
+          {protocol && isFull && (
             <Button
               variant="outline"
               size="sm"
@@ -335,22 +334,20 @@ export default function Treino() {
           )}
         </div>
 
-        {/* Access blocked overlay */}
-        {!accessLoading && !hasAnyAccess && (
-          <LockedContent module="treino">
-            <div />
-          </LockedContent>
+        {/* Access blocked - auto open modal */}
+        {!entLoading && isBlocked && (
+          <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />
         )}
 
         {/* Trial banner */}
         {isTrialing && (
           <TrialBanner 
-            trialDaysLeft={trialDaysLeft} 
+            isTrialing={isTrialing} 
             onUpgradeClick={() => setShowUpgradeModal(true)} 
           />
         )}
 
-        {workouts.length === 0 && hasAnyAccess ? (
+        {workouts.length === 0 && !isBlocked ? (
           <Card className="p-8 text-center">
             <Target className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Nenhum treino disponível</h3>
@@ -361,7 +358,7 @@ export default function Treino() {
               Falar com Mentor
             </Button>
           </Card>
-        ) : hasAnyAccess ? (
+        ) : !isBlocked ? (
           <>
             {/* Streak Display */}
             <StreakDisplay 
@@ -445,9 +442,7 @@ export default function Treino() {
 
             {/* Workouts - limited by access */}
             {(() => {
-              const maxVisible = access?.level === 'limited'
-                ? (access.limits?.max_workouts_visible as number || 1)
-                : workouts.length;
+              const maxVisible = isTrialing ? 1 : workouts.length;
               const visibleWorkouts = workouts.slice(0, maxVisible);
               const lockedWorkouts = workouts.slice(maxVisible);
 
@@ -500,8 +495,6 @@ export default function Treino() {
       <UpgradeModal 
         open={showUpgradeModal} 
         onClose={() => setShowUpgradeModal(false)} 
-        currentModule="treino"
-        trialDaysLeft={trialDaysLeft}
       />
     </ClientLayout>
   );
