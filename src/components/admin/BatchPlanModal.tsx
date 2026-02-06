@@ -56,7 +56,7 @@ export function BatchPlanModal({ open, onOpenChange, selectedIds, onComplete }: 
               .upsert(
                 {
                   user_id: userId,
-                  status: "active",
+                  status: "pending_payment",
                   plan_type: targetPlan,
                   plan_name: PLAN_NAMES[targetPlan] || targetPlan.toUpperCase(),
                   current_period_start: now,
@@ -76,7 +76,7 @@ export function BatchPlanModal({ open, onOpenChange, selectedIds, onComplete }: 
               .upsert(
                 {
                   user_id: userId,
-                  access_level: "full",
+                  access_level: "none",
                   updated_at: now,
                 },
                 { onConflict: "user_id" }
@@ -86,7 +86,7 @@ export function BatchPlanModal({ open, onOpenChange, selectedIds, onComplete }: 
             // 3. Update profile status to active
             const { error: profError } = await supabase
               .from("profiles")
-              .update({ client_status: "active" })
+              .update({ client_status: "pending_payment" as any })
               .eq("id", userId);
             if (profError) throw profError;
 
