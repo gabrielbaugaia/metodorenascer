@@ -2,26 +2,31 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { 
-  Calendar, 
-  CreditCard, 
-  Gift, 
-  Clock, 
-  CheckCircle2, 
+import {
+  Calendar,
+  CreditCard,
+  Gift,
+  Clock,
+  CheckCircle2,
   Loader2,
   Crown,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Check,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MAX_ELITE_FUNDADOR_MEMBERS, PLAN_TYPES } from "@/lib/planConstants";
+
+const STRIPE_TRIAL_LINK = "https://buy.stripe.com/9B67sKeMW4ru2sp7Gy2B201";
+const STRIPE_DIRECT_LINK = "https://buy.stripe.com/fZu3cudIS3nqaYVf902B205";
 
 interface Subscription {
   id: string;
@@ -47,18 +52,8 @@ const plans = [
     priceId: "price_1ScZqTCuFZvf5xFdZuOBMzpt",
     features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
     popular: false,
-    color: "primary"
-  },
-  {
-    id: PLAN_TYPES.MENSAL,
-    name: "MENSAL",
-    price: 19700,
-    priceDisplay: "R$ 197,00",
-    period: "/mês",
-    priceId: "price_1ScZrECuFZvf5xFdfS9W8kvY",
-    features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h"],
-    popular: false,
-    color: "muted"
+    dualCta: true,
+    color: "primary",
   },
   {
     id: PLAN_TYPES.TRIMESTRAL,
@@ -69,18 +64,8 @@ const plans = [
     priceId: "price_1ScZsTCuFZvf5xFdbW8kJeQF",
     features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h", "Economia de 16%"],
     popular: true,
-    color: "primary"
-  },
-  {
-    id: PLAN_TYPES.SEMESTRAL,
-    name: "SEMESTRAL",
-    price: 69700,
-    priceDisplay: "R$ 697,00",
-    period: "/6 meses",
-    priceId: "price_1ScZtrCuFZvf5xFd8iXDfbEp",
-    features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h", "Economia de 41%"],
-    popular: false,
-    color: "muted"
+    dualCta: false,
+    color: "primary",
   },
   {
     id: PLAN_TYPES.ANUAL,
@@ -91,13 +76,15 @@ const plans = [
     priceId: "price_1ScZvCCuFZvf5xFdjrs51JQB",
     features: ["Treino personalizado", "Nutrição personalizada", "Mindset", "Suporte 24h", "Economia de 58%"],
     popular: false,
-    color: "muted"
+    dualCta: false,
+    color: "muted",
   },
 ];
 
 export default function Assinatura() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { effectiveLevel } = useEntitlements();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -134,15 +121,11 @@ export default function Assinatura() {
           .from("subscriptions")
           .select("*", { count: "exact", head: true })
           .eq("plan_type", PLAN_TYPES.ELITE_FUNDADOR)
-          .eq("status", "active")
+          .eq("status", "active"),
       ]);
 
-      if (subResult.data) {
-        setSubscription(subResult.data);
-      }
-      if (profileResult.data) {
-        setProfile(profileResult.data);
-      }
+      if (subResult.data) setSubscription(subResult.data);
+      if (profileResult.data) setProfile(profileResult.data);
       setEmbaixadorCount(embaixadorResult.count || 0);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -151,30 +134,24 @@ export default function Assinatura() {
     }
   };
 
-  // Filter out Elite Fundador plan if limit reached
-  const availablePlans = plans.filter(plan => {
+  const availablePlans = plans.filter((plan) => {
     if (plan.id === PLAN_TYPES.ELITE_FUNDADOR && embaixadorCount >= MAX_ELITE_FUNDADOR_MEMBERS) {
       return false;
     }
     return true;
   });
 
-  const handleRenewPlan = async (plan: typeof plans[0]) => {
+  const handleRenewPlan = async (plan: (typeof plans)[0]) => {
     if (!user) return;
 
     setProcessingPlan(plan.id);
-
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { priceId: plan.priceId },
       });
-
       if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      }
-    } catch (error: any) {
+      if (data?.url) window.open(data.url, "_blank");
+    } catch (error) {
       console.error("Erro ao criar checkout:", error);
       toast.error("Erro ao processar renovação");
     } finally {
@@ -185,13 +162,9 @@ export default function Assinatura() {
   const handleManageSubscription = async () => {
     try {
       const { data, error } = await supabase.functions.invoke("customer-portal");
-
       if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      }
-    } catch (error: any) {
+      if (data?.url) window.open(data.url, "_blank");
+    } catch (error) {
       console.error("Erro ao abrir portal:", error);
       toast.error("Erro ao abrir gerenciamento de assinatura");
     }
@@ -199,14 +172,11 @@ export default function Assinatura() {
 
   const calculateProgress = () => {
     if (!subscription?.current_period_start || !subscription?.current_period_end) return 0;
-    
     const start = new Date(subscription.current_period_start);
     const end = new Date(subscription.current_period_end);
     const now = new Date();
-    
     const totalDays = differenceInDays(end, start);
     const usedDays = differenceInDays(now, start);
-    
     return Math.min(Math.max((usedDays / totalDays) * 100, 0), 100);
   };
 
@@ -216,7 +186,7 @@ export default function Assinatura() {
   };
 
   const cashbackAmount = profile?.cashback_balance || 0;
-  const cashbackValue = cashbackAmount * 10; // 10% de desconto por indicação
+  const cashbackValue = cashbackAmount * 10;
 
   if (authLoading || loading) {
     return (
@@ -271,11 +241,9 @@ export default function Assinatura() {
                     <p className="font-semibold">
                       {subscription.current_period_start
                         ? format(new Date(subscription.current_period_start), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                        : "-"
-                      }
+                        : "-"}
                     </p>
                   </div>
-
                   <div className="p-4 rounded-lg bg-muted/50">
                     <div className="flex items-center gap-2 text-muted-foreground mb-1">
                       <Clock className="h-4 w-4" />
@@ -284,22 +252,17 @@ export default function Assinatura() {
                     <p className="font-semibold">
                       {subscription.current_period_end
                         ? format(new Date(subscription.current_period_end), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                        : "-"
-                      }
+                        : "-"}
                     </p>
                   </div>
-
                   <div className="p-4 rounded-lg bg-muted/50">
                     <div className="flex items-center gap-2 text-muted-foreground mb-1">
                       <CreditCard className="h-4 w-4" />
                       <span className="text-sm">Plano</span>
                     </div>
-                    <p className="font-semibold capitalize">
-                      {subscription.plan_type || "Padrão"}
-                    </p>
+                    <p className="font-semibold capitalize">{subscription.plan_type || "Padrão"}</p>
                   </div>
                 </div>
-
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Progresso do período</span>
@@ -307,13 +270,10 @@ export default function Assinatura() {
                   </div>
                   <Progress value={calculateProgress()} className="h-2" />
                 </div>
-
               </>
             ) : (
               <div className="text-center py-4">
-                <p className="text-muted-foreground mb-4">
-                  Escolha um plano abaixo para começar sua transformação
-                </p>
+                <p className="text-muted-foreground mb-4">Escolha um plano abaixo para começar sua transformação</p>
               </div>
             )}
           </CardContent>
@@ -329,9 +289,7 @@ export default function Assinatura() {
                 </div>
                 <div>
                   <CardTitle className="text-green-400">Cashback Disponível</CardTitle>
-                  <CardDescription>
-                    Você tem créditos de indicação para usar na renovação
-                  </CardDescription>
+                  <CardDescription>Você tem créditos de indicação para usar na renovação</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -351,38 +309,32 @@ export default function Assinatura() {
           </Card>
         )}
 
-        {/* Planos de Renovação */}
+        {/* Planos */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">
-            {subscription ? "Renovar ou Estender Plano" : "Escolha seu Plano"}
-          </h2>
+          <h2 className="text-xl font-semibold">{subscription ? "Renovar ou Estender Plano" : "Escolha seu Plano"}</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {availablePlans.map((plan) => (
-              <Card 
-                key={plan.id} 
+              <Card
+                key={plan.id}
                 className={`relative transition-all hover:border-primary/50 ${
                   plan.popular ? "border-primary ring-1 ring-primary/20" : ""
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground">
-                      Mais Popular
-                    </Badge>
+                    <Badge className="bg-primary text-primary-foreground">Mais Popular</Badge>
                   </div>
                 )}
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    {plan.name}
-                  </CardTitle>
+                  <CardTitle className="flex items-center justify-between">{plan.name}</CardTitle>
                   <div className="mt-2">
                     <span className="text-3xl font-bold">{plan.priceDisplay}</span>
                     <span className="text-muted-foreground">{plan.period}</span>
                   </div>
                   {cashbackAmount > 0 && (
                     <p className="text-sm text-green-400 mt-1">
-                      Com cashback: R$ {((plan.price - (plan.price * cashbackValue / 100)) / 100).toFixed(2).replace('.', ',')}
+                      Com cashback: R$ {((plan.price - (plan.price * cashbackValue) / 100) / 100).toFixed(2).replace(".", ",")}
                     </p>
                   )}
                 </CardHeader>
@@ -396,21 +348,40 @@ export default function Assinatura() {
                     ))}
                   </ul>
 
-                  <Button
-                    onClick={() => handleRenewPlan(plan)}
-                    disabled={processingPlan === plan.id}
-                    className="w-full"
-                    variant={plan.popular ? "default" : "outline"}
-                  >
-                    {processingPlan === plan.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        {subscription ? "Renovar" : "Assinar"}
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
+                  {plan.dualCta ? (
+                    <div className="space-y-2">
+                      <Button
+                        variant="fire"
+                        className="w-full"
+                        onClick={() => window.open(STRIPE_TRIAL_LINK, "_blank")}
+                      >
+                        Testar 7 dias grátis
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => window.open(STRIPE_DIRECT_LINK, "_blank")}
+                      >
+                        Assinar agora
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => handleRenewPlan(plan)}
+                      disabled={processingPlan === plan.id}
+                      className="w-full"
+                      variant={plan.popular ? "default" : "outline"}
+                    >
+                      {processingPlan === plan.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          {subscription ? "Renovar" : "Assinar"}
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}

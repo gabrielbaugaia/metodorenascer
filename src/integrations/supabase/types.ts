@@ -482,6 +482,41 @@ export type Database = {
         }
         Relationships: []
       }
+      entitlements: {
+        Row: {
+          access_level: string
+          id: string
+          override_expires_at: string | null
+          override_level: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_level?: string
+          id?: string
+          override_expires_at?: string | null
+          override_level?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_level?: string
+          id?: string
+          override_expires_at?: string | null
+          override_level?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entitlements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string
@@ -1312,6 +1347,7 @@ export type Database = {
           status: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          trial_end: string | null
           updated_at: string | null
           user_id: string
         }
@@ -1334,6 +1370,7 @@ export type Database = {
           status?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          trial_end?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -1356,6 +1393,7 @@ export type Database = {
           status?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          trial_end?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1410,6 +1448,47 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      trial_usage: {
+        Row: {
+          id: string
+          updated_at: string | null
+          used_diet: boolean | null
+          used_mindset: boolean | null
+          used_recipe_count: number | null
+          used_support_count: number | null
+          used_workout: boolean | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          updated_at?: string | null
+          used_diet?: boolean | null
+          used_mindset?: boolean | null
+          used_recipe_count?: number | null
+          used_support_count?: number | null
+          used_workout?: boolean | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          updated_at?: string | null
+          used_diet?: boolean | null
+          used_mindset?: boolean | null
+          used_recipe_count?: number | null
+          used_support_count?: number | null
+          used_workout?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trial_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_achievements: {
         Row: {
