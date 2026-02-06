@@ -32,7 +32,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
   const [localState, setLocalState] = useState<LocalSubscriptionState | null>(null);
   const [checkingLocal, setCheckingLocal] = useState(true);
 
-  // Check local subscription in database (for admin-created free plans)
+  // Check local subscription in database (for admin-created free plans and trial users)
   useEffect(() => {
     const checkLocalSubscription = async () => {
       if (!user) {
@@ -51,7 +51,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
 
         if (error) {
           console.error("Error checking local subscription:", error);
-          setLocalState({ hasSubscription: false, isBlocked: false, isPendingPayment: false });
+          // Don't give up yet — check trial access below
         } else if (data) {
           // Check if access is blocked (for expired free plans)
           const isBlocked = data.access_blocked === true;
@@ -61,6 +61,8 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
           
           if (isBlocked) {
             setLocalState({ hasSubscription: false, isBlocked: true, isPendingPayment: false });
+            setCheckingLocal(false);
+            return;
           } else if (isPendingPayment) {
             setLocalState({ 
               hasSubscription: false, 
@@ -68,12 +70,30 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
               isPendingPayment: true,
               pendingPlanType: data.plan_type || undefined
             });
+            setCheckingLocal(false);
+            return;
           } else {
             // Check if subscription is still valid
             const isActive = data.status === "active" || data.status === "trialing" || data.status === "free";
             const notExpired = !data.current_period_end || new Date(data.current_period_end) > new Date();
-            setLocalState({ hasSubscription: isActive && notExpired, isBlocked: false, isPendingPayment: false });
+            if (isActive && notExpired) {
+              setLocalState({ hasSubscription: true, isBlocked: false, isPendingPayment: false });
+              setCheckingLocal(false);
+              return;
+            }
           }
+        }
+
+        // 3. Check if user has trial access (user_module_access) — allows trial users through
+        const { data: trialAccess } = await supabase
+          .from("user_module_access")
+          .select("id")
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (trialAccess) {
+          setLocalState({ hasSubscription: true, isBlocked: false, isPendingPayment: false });
         } else {
           setLocalState({ hasSubscription: false, isBlocked: false, isPendingPayment: false });
         }

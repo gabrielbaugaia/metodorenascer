@@ -1,10 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { useProtocol } from "@/hooks/useProtocol";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Utensils, Loader2, Apple, Download } from "lucide-react";
+import { Utensils, Loader2, Apple, Download, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { LockedContent } from "@/components/access/LockedContent";
+import { TrialBanner } from "@/components/access/TrialBadge";
+import { UpgradeModal } from "@/components/access/UpgradeModal";
 import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -34,12 +38,21 @@ interface NutritionContent {
 export default function Nutricao() {
   const navigate = useNavigate();
   const { protocol, loading } = useProtocol("nutricao");
+  const { access, loading: accessLoading, hasFullAccess, hasAnyAccess, isTrialing, trialDaysLeft } = useModuleAccess('nutricao');
   const [downloading, setDownloading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const conteudo = (protocol?.conteudo as NutritionContent) || {};
   const refeicoes = conteudo.refeicoes || [];
   const macros = conteudo.macros;
   const dicas = conteudo.dicas || [];
+
+  // Limit meals based on access
+  const maxMealsVisible = access?.level === 'limited'
+    ? (access.limits?.max_meals_visible as number || 2)
+    : refeicoes.length;
+  const visibleRefeicoes = refeicoes.slice(0, maxMealsVisible);
+  const lockedRefeicoes = refeicoes.slice(maxMealsVisible);
 
   const handleDownloadPdf = () => {
     if (!protocol) return;
@@ -91,7 +104,7 @@ export default function Nutricao() {
               </p>
             </div>
           </div>
-          {protocol && (
+          {protocol && hasFullAccess && (
             <Button
               variant="outline"
               size="sm"
@@ -105,7 +118,22 @@ export default function Nutricao() {
           )}
         </div>
 
-        {refeicoes.length === 0 ? (
+        {/* Access blocked */}
+        {!accessLoading && !hasAnyAccess && (
+          <LockedContent module="nutricao">
+            <div />
+          </LockedContent>
+        )}
+
+        {/* Trial banner */}
+        {isTrialing && (
+          <TrialBanner 
+            trialDaysLeft={trialDaysLeft} 
+            onUpgradeClick={() => setShowUpgradeModal(true)} 
+          />
+        )}
+
+        {refeicoes.length === 0 && hasAnyAccess ? (
           <Card className="p-8 text-center">
             <Utensils className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Nenhum plano nutricional disponível</h3>
@@ -116,10 +144,10 @@ export default function Nutricao() {
               Falar com Mentor
             </Button>
           </Card>
-        ) : (
+        ) : hasAnyAccess ? (
           <>
-            {/* Macros overview */}
-            {macros && (
+            {/* Macros overview - only for full access */}
+            {macros && hasFullAccess && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Card className="p-4 text-center bg-primary/10">
                   <p className="text-xl md:text-2xl font-bold text-primary">
@@ -148,9 +176,9 @@ export default function Nutricao() {
               </div>
             )}
 
-            {/* Meals */}
+            {/* Visible Meals */}
             <div className="space-y-4">
-              {refeicoes.map((refeicao, index) => (
+              {visibleRefeicoes.map((refeicao, index) => (
                 <Card key={index} className="border border-border/60">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
@@ -182,8 +210,34 @@ export default function Nutricao() {
               ))}
             </div>
 
+            {/* Locked meals */}
+            {lockedRefeicoes.length > 0 && (
+              <>
+                {lockedRefeicoes.map((refeicao, index) => (
+                  <Card 
+                    key={`locked-${index}`} 
+                    className="p-4 relative overflow-hidden cursor-pointer opacity-60 blur-[2px] hover:opacity-80 transition-all"
+                    onClick={() => setShowUpgradeModal(true)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Lock className="w-5 h-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-semibold">{refeicao.nome}</p>
+                        {refeicao.horario && <p className="text-sm text-muted-foreground">{refeicao.horario}</p>}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+                <div className="text-center py-2">
+                  <Button variant="outline" onClick={() => setShowUpgradeModal(true)}>
+                    Desbloquear plano completo
+                  </Button>
+                </div>
+              </>
+            )}
+
             {/* Tips */}
-            {dicas.length > 0 && (
+            {dicas.length > 0 && hasFullAccess && (
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">
                   <strong className="text-foreground">Dica do dia:</strong> {dicas[0]}
@@ -191,8 +245,14 @@ export default function Nutricao() {
               </Card>
             )}
           </>
-        )}
+        ) : null}
       </div>
+      <UpgradeModal 
+        open={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+        currentModule="nutricao"
+        trialDaysLeft={trialDaysLeft}
+      />
     </ClientLayout>
   );
 }

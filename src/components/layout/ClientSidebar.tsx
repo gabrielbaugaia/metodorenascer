@@ -69,6 +69,8 @@ const adminMenuItems = [
   { title: "Métricas", url: "/admin/metricas", icon: BarChart3 },
   { title: "Mensagens Auto", url: "/admin/mensagens", icon: Bell },
   { title: "Suporte Chats", url: "/admin/suporte", icon: MessageCircle },
+  { title: "Planos Comerciais", url: "/admin/commercial-plans", icon: CreditCard },
+  { title: "Campanhas Trial", url: "/admin/trial-campaigns", icon: Gift },
 ];
 
 export function ClientSidebar() {

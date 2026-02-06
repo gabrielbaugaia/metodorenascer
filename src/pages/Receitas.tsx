@@ -9,6 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChefHat, Plus, X, Loader2, Sparkles, Bookmark, BookmarkCheck, Heart, Trash2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
+import { LockedContent } from "@/components/access/LockedContent";
+import { TrialBanner } from "@/components/access/TrialBadge";
+import { UpgradeModal } from "@/components/access/UpgradeModal";
 import { toast } from "@/hooks/use-toast";
 import { formatRecipeContent } from "@/lib/sanitize";
 
@@ -30,6 +34,7 @@ interface SavedRecipe {
 export default function Receitas() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { access, loading: accessLoading, hasFullAccess, hasAnyAccess, isTrialing, trialDaysLeft, incrementUsage } = useModuleAccess('receitas');
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [recipe, setRecipe] = useState<string | null>(null);
@@ -39,6 +44,12 @@ export default function Receitas() {
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [loadingRecipes, setLoadingRecipes] = useState(true);
   const [activeTab, setActiveTab] = useState("generate");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // Recipe generation limit for trial users
+  const totalRecipesAllowed = (access?.limits?.total_recipes_allowed as number) || 3;
+  const currentUsage = access?.usageCount || 0;
+  const canGenerate = hasFullAccess || currentUsage < totalRecipesAllowed;
 
   useEffect(() => {
     if (user) {
@@ -98,6 +109,11 @@ export default function Receitas() {
       return;
     }
 
+    if (!canGenerate) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     setLoading(true);
     setRecipe(null);
     setRecipeTitle("");
@@ -122,6 +138,10 @@ export default function Receitas() {
       if (data?.recipe) {
         setRecipe(data.recipe);
         setRecipeTitle(extractTitle(data.recipe));
+        // Increment usage count for trial users
+        if (!hasFullAccess) {
+          await incrementUsage();
+        }
       } else {
         throw new Error("Receita não foi gerada");
       }
@@ -217,6 +237,23 @@ export default function Receitas() {
   return (
     <ClientLayout>
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Access blocked */}
+        {!accessLoading && !hasAnyAccess && (
+          <LockedContent module="receitas">
+            <div />
+          </LockedContent>
+        )}
+
+        {/* Trial banner */}
+        {isTrialing && (
+          <TrialBanner 
+            trialDaysLeft={trialDaysLeft} 
+            onUpgradeClick={() => setShowUpgradeModal(true)} 
+          />
+        )}
+
+        {hasAnyAccess && (
+        <>
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
@@ -227,7 +264,10 @@ export default function Receitas() {
               Gerador de <span className="text-primary">Receitas</span>
             </h1>
             <p className="text-muted-foreground text-sm">
-              Escolha ingredientes e nossa IA criará uma receita fitness personalizada
+              {!hasFullAccess 
+                ? `${currentUsage}/${totalRecipesAllowed} receitas usadas no período de teste`
+                : "Escolha ingredientes e nossa IA criará uma receita fitness personalizada"
+              }
             </p>
           </div>
         </div>
@@ -321,7 +361,7 @@ export default function Receitas() {
                 {/* Generate button */}
                 <Button
                   onClick={generateRecipe}
-                  disabled={loading || ingredients.length === 0}
+                  disabled={loading || ingredients.length === 0 || !canGenerate}
                   className="w-full"
                   size="lg"
                 >
@@ -330,6 +370,8 @@ export default function Receitas() {
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Gerando receita...
                     </>
+                  ) : !canGenerate ? (
+                    "Limite de receitas atingido"
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 mr-2" />
@@ -337,6 +379,15 @@ export default function Receitas() {
                     </>
                   )}
                 </Button>
+                {!canGenerate && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-2" 
+                    onClick={() => setShowUpgradeModal(true)}
+                  >
+                    Fazer Upgrade para Receitas Ilimitadas
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -450,7 +501,15 @@ export default function Receitas() {
             )}
           </TabsContent>
         </Tabs>
+        </>
+        )}
       </div>
+      <UpgradeModal 
+        open={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+        currentModule="receitas"
+        trialDaysLeft={trialDaysLeft}
+      />
     </ClientLayout>
   );
 }

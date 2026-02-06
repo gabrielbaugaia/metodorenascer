@@ -286,6 +286,8 @@ const [stats, setStats] = useState<Stats>({
     { title: "Banco de Vídeos", icon: Video, url: "/admin/videos", color: "from-cyan-500 to-blue-600" },
     { title: "Banco de GIFs", icon: ImageIcon, url: "/admin/gifs", color: "from-teal-500 to-cyan-600" },
     { title: "Monitorar Suporte", icon: MessageCircle, url: "/admin/suporte", color: "from-orange-500 to-red-600" },
+    { title: "Planos Comerciais", icon: DollarSign, url: "/admin/commercial-plans", color: "from-indigo-500 to-violet-600" },
+    { title: "Campanhas Trial", icon: Activity, url: "/admin/trial-campaigns", color: "from-amber-500 to-orange-600" },
   ];
 
   return (

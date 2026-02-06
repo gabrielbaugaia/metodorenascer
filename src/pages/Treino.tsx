@@ -2,14 +2,18 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkoutTracking } from "@/hooks/useWorkoutTracking";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Download, AlertTriangle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Download, AlertTriangle, RefreshCw, Lock } from "lucide-react";
 import { WorkoutCard } from "@/components/treino/WorkoutCard";
 import { SuccessAnimation } from "@/components/feedback/SuccessAnimation";
 import { StreakDisplay } from "@/components/gamification/StreakDisplay";
+import { LockedContent } from "@/components/access/LockedContent";
+import { TrialBanner } from "@/components/access/TrialBadge";
+import { UpgradeModal } from "@/components/access/UpgradeModal";
 import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
 import { toast } from "sonner";
 
@@ -48,6 +52,7 @@ export default function Treino() {
   const navigate = useNavigate();
   const { user } = useAuth();
   console.log("[Treino] User:", user?.id);
+  const { access, loading: accessLoading, hasFullAccess, hasAnyAccess, isTrialing, trialDaysLeft } = useModuleAccess('treino');
   const [protocol, setProtocol] = useState<Protocol | null>(null);
   
   const [loading, setLoading] = useState(true);
@@ -55,6 +60,7 @@ export default function Treino() {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   
   console.log("[Treino] Initializing workout tracking");
   const { 
@@ -307,7 +313,7 @@ export default function Treino() {
               </p>
             </div>
           </div>
-          {protocol && (
+          {protocol && hasFullAccess && (
             <Button
               variant="outline"
               size="sm"
@@ -329,7 +335,22 @@ export default function Treino() {
           )}
         </div>
 
-        {workouts.length === 0 ? (
+        {/* Access blocked overlay */}
+        {!accessLoading && !hasAnyAccess && (
+          <LockedContent module="treino">
+            <div />
+          </LockedContent>
+        )}
+
+        {/* Trial banner */}
+        {isTrialing && (
+          <TrialBanner 
+            trialDaysLeft={trialDaysLeft} 
+            onUpgradeClick={() => setShowUpgradeModal(true)} 
+          />
+        )}
+
+        {workouts.length === 0 && hasAnyAccess ? (
           <Card className="p-8 text-center">
             <Target className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Nenhum treino disponível</h3>
@@ -340,7 +361,7 @@ export default function Treino() {
               Falar com Mentor
             </Button>
           </Card>
-        ) : (
+        ) : hasAnyAccess ? (
           <>
             {/* Streak Display */}
             <StreakDisplay 
@@ -422,26 +443,66 @@ export default function Treino() {
               </Card>
             )}
 
-            {/* Workouts */}
-            <div className="space-y-3 sm:space-y-4">
-              {workouts.map((workout, index) => (
-                <WorkoutCard
-                  key={workout.day || index}
-                  day={workout.day}
-                  focus={workout.focus}
-                  exercises={workout.exercises}
-                  duration={workout.duration}
-                  calories={workout.calories}
-                  completed={workout.completed}
-                  index={index}
-                  onComplete={() => handleCompleteWorkout(workout)}
-                  todayCompleted={todayCompleted}
-                />
-              ))}
-            </div>
+            {/* Workouts - limited by access */}
+            {(() => {
+              const maxVisible = access?.level === 'limited'
+                ? (access.limits?.max_workouts_visible as number || 1)
+                : workouts.length;
+              const visibleWorkouts = workouts.slice(0, maxVisible);
+              const lockedWorkouts = workouts.slice(maxVisible);
+
+              return (
+                <div className="space-y-3 sm:space-y-4">
+                  {visibleWorkouts.map((workout, index) => (
+                    <WorkoutCard
+                      key={workout.day || index}
+                      day={workout.day}
+                      focus={workout.focus}
+                      exercises={workout.exercises}
+                      duration={workout.duration}
+                      calories={workout.calories}
+                      completed={workout.completed}
+                      index={index}
+                      onComplete={() => handleCompleteWorkout(workout)}
+                      todayCompleted={todayCompleted}
+                    />
+                  ))}
+                  {lockedWorkouts.length > 0 && (
+                    <>
+                      {lockedWorkouts.map((workout, index) => (
+                        <Card 
+                          key={`locked-${index}`} 
+                          className="p-4 relative overflow-hidden cursor-pointer opacity-60 blur-[2px] hover:opacity-80 transition-all"
+                          onClick={() => setShowUpgradeModal(true)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Lock className="w-5 h-5 text-muted-foreground" />
+                            <div>
+                              <p className="font-semibold">{workout.day}</p>
+                              <p className="text-sm text-muted-foreground">{workout.focus}</p>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                      <div className="text-center py-2">
+                        <Button variant="outline" onClick={() => setShowUpgradeModal(true)}>
+                          Desbloquear todos os treinos
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
           </>
-        )}
+        ) : null}
       </div>
+      <UpgradeModal 
+        open={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)} 
+        currentModule="treino"
+        trialDaysLeft={trialDaysLeft}
+      />
     </ClientLayout>
   );
 }
