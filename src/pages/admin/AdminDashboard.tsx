@@ -113,17 +113,17 @@ const [stats, setStats] = useState<Stats>({
         // All subscriptions for detailed analysis
         const { data: allSubs } = await supabase
           .from("subscriptions")
-          .select("status, price_cents, plan_type, created_at, updated_at");
+          .select("status, price_cents, plan_type, created_at, updated_at, stripe_subscription_id");
 
         const activeSubs = allSubs?.filter(s => s.status === "active") || [];
         const pendingSubs = allSubs?.filter(s => s.status === "pending") || [];
         const canceledSubs = allSubs?.filter(s => s.status === "canceled") || [];
         const trialSubs = allSubs?.filter(s => s.status === "trialing") || [];
 
-        // Filter out free plans for financial calculations
-        const paidActiveSubs = activeSubs.filter(s => s.plan_type !== "free" && (s.price_cents || 0) > 0);
-        const paidAllSubs = allSubs?.filter(s => s.plan_type !== "free" && (s.price_cents || 0) > 0) || [];
-        const paidCanceledSubs = canceledSubs.filter(s => s.plan_type !== "free");
+        // Filter for REAL paying subscribers (must have stripe_subscription_id)
+        const paidActiveSubs = activeSubs.filter(s => s.stripe_subscription_id != null);
+        const paidAllSubs = allSubs?.filter(s => s.stripe_subscription_id != null) || [];
+        const paidCanceledSubs = canceledSubs.filter(s => s.stripe_subscription_id != null);
 
         const activeSubsCount = activeSubs.length;
         const paidActiveSubsCount = paidActiveSubs.length;
