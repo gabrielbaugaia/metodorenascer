@@ -1,54 +1,48 @@
 
-# Corrigir Exibicao do MRR: Dividir Centavos por 100
+# Ajuste de Layout e Responsividade do Hero
 
-## Problema
+## Problema Atual
 
-O campo `mrr_value` esta armazenado em **centavos** (4990 = R$49,90). A view `v_mrr_summary` soma os valores (4990 + 4990 = 9980), mas o frontend exibe esse numero diretamente como reais, resultando em R$ 9.980,00 ao inves de R$ 99,80.
+Conforme a screenshot, o Hero ocupa `min-h-[100svh]` com padding-top excessivo (`pt-24 md:pt-32`) e gaps grandes entre elementos (`gap-10 md:gap-12`). Isso empurra o CTA para o limite inferior da tela, quase fora do viewport no mobile.
 
-## Solucao
+## Alteracoes no Arquivo
 
-Corrigir a exibicao no frontend dividindo por 100 nos dois locais que usam dados de MRR em centavos:
+**Arquivo:** `src/components/landing/HeroSection.tsx`
 
-### 1. AdminMetricas.tsx
+### 1. Altura da section
 
-Dividir `totalMrr` por 100 antes de exibir:
+| Propriedade | Antes | Depois |
+|---|---|---|
+| min-height | `min-h-[100svh]` | `min-h-[85svh] md:min-h-[90vh]` |
+| padding-top | `pt-24 md:pt-32` | `pt-20 md:pt-28` |
 
-```text
-// Antes (errado):
-const totalMrr = paidMrrSummary.reduce((acc, s) => acc + (Number(s.total_mrr) || 0), 0);
+### 2. Espacamento vertical do container interno
 
-// Depois (correto):
-const totalMrr = paidMrrSummary.reduce((acc, s) => acc + (Number(s.total_mrr) || 0), 0) / 100;
-```
+| Propriedade | Antes | Depois |
+|---|---|---|
+| gap do flex container | `gap-10 md:gap-12` | `gap-6 md:gap-8` |
+| gap do title block | `gap-6` | `gap-4` |
+| padding-top do CTA | `pt-4` | `pt-2` |
 
-Tambem corrigir a exibicao individual por plano na secao "MRR por Plano":
+### 3. Tipografia mobile
 
-```text
-// Antes:
-R$ {Number(plan.total_mrr || 0).toLocaleString("pt-BR")}
+| Propriedade | Antes | Depois |
+|---|---|---|
+| h1 font-size mobile | `text-[2.75rem]` | `text-[2.25rem]` |
+| h1 line-height | `leading-[1.05]` | `leading-[1]` |
 
-// Depois:
-R$ {(Number(plan.total_mrr || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-```
+### O que NAO muda
 
-E na tabela de canais:
-
-```text
-// Antes:
-R$ {Number(ch.total_mrr || 0).toLocaleString("pt-BR")}
-
-// Depois:
-R$ {(Number(ch.total_mrr || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-```
-
-### 2. Arquivos afetados
-
-| Arquivo | Mudanca |
-|---------|---------|
-| `src/pages/admin/AdminMetricas.tsx` | Dividir total_mrr por 100 no KPI card, na secao MRR por Plano, e na tabela de canais |
+- Cores, estilos, copy, animacoes
+- Variante `fire` do botao
+- Radial gradient de fundo
+- Estrutura HTML
+- Link do CTA (#preco)
+- Classes de animacao (animate-fade-in, animate-pulse-glow)
 
 ### Resultado Esperado
 
-- **MRR Total**: R$ 99,80 (em vez de R$ 9.980,00)
-- **MRR por plano ELITE FUNDADOR**: R$ 99,80 (em vez de R$ 9.980,00)
-- Todos os valores monetarios exibidos corretamente em reais
+- CTA visivel sem scroll em iPhone, Android e desktop
+- Conteudo centralizado verticalmente de forma equilibrada
+- Headline levemente menor no mobile para caber melhor
+- Mesma identidade visual mantida
