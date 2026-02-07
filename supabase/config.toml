@@ -89,6 +89,7 @@ verify_jwt = false
 
 [functions.suggest-exercise-name]
 verify_jwt = false
+# Auth validated in code: admin role required
 
 [functions.search-exercise-gif]
 verify_jwt = true
