@@ -109,7 +109,7 @@ export default function AdminMetricas() {
 
   // Exclude free plans from financial metrics
   const paidMrrSummary = mrrSummary.filter(s => s.plan_name?.toLowerCase() !== "gratuito" && s.plan_name?.toLowerCase() !== "free");
-  const totalMrr = paidMrrSummary.reduce((acc, s) => acc + (Number(s.total_mrr) || 0), 0);
+  const totalMrr = paidMrrSummary.reduce((acc, s) => acc + (Number(s.total_mrr) || 0), 0) / 100;
   const totalActiveSubscribers = paidMrrSummary.reduce((acc, s) => acc + (Number(s.active_subscriptions) || 0), 0);
 
   const funnelConversion = funnel ? {
@@ -350,7 +350,7 @@ export default function AdminMetricas() {
                           <td className="p-3 font-medium">{ch.acquisition_channel}</td>
                           <td className="text-right p-3">{ch.total_users}</td>
                           <td className="text-right p-3">{ch.active_subscribers}</td>
-                          <td className="text-right p-3">R$ {Number(ch.total_mrr || 0).toLocaleString("pt-BR")}</td>
+                          <td className="text-right p-3">R$ {(Number(ch.total_mrr || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
                           <td className="text-right p-3 text-red-500">{ch.churned_users}</td>
                           <td className="text-right p-3">
                             {ch.total_users > 0 ? ((ch.active_subscribers / ch.total_users) * 100).toFixed(1) : 0}%
@@ -424,7 +424,7 @@ export default function AdminMetricas() {
                 <div key={plan.plan_name} className="p-4 bg-muted rounded-lg text-center">
                   <p className="font-medium capitalize">{plan.plan_name || "Não definido"}</p>
                   <p className="text-2xl font-bold text-primary">
-                    R$ {Number(plan.total_mrr || 0).toLocaleString("pt-BR")}
+                    R$ {(Number(plan.total_mrr || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-sm text-muted-foreground">{plan.active_subscriptions} assinantes</p>
                 </div>
