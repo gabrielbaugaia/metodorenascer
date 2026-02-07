@@ -1,48 +1,96 @@
 
-# Corrigir Mapeamento de Precos no Dashboard
 
-## Problema Encontrado
+# Corrigir Metricas Financeiras: Contar Apenas Vendas Reais do Stripe
 
-O fluxo de "pendente de pagamento" funciona corretamente: o cliente nao consegue acessar a plataforma e ve a tela de pagamento. Porem, o botao "Pagar Agora" tem um bug que impede o redirecionamento para o Stripe.
+## Diagnostico
 
-No Dashboard (linha 236), o mapeamento de precos usa a chave `elite_founder`, mas o `BatchPlanModal` salva o plano como `elite_fundador` (com 'd'). Resultado: quando o cliente clica em "Pagar Agora", o sistema nao encontra o preco correspondente e nada acontece.
+Analisei os dados e encontrei o problema central: das 21 assinaturas marcadas como "active" no banco, **apenas 1 tem pagamento real no Stripe** (Vinicius, com `stripe_subscription_id`). Os demais foram ativados manualmente (convite ou acao em lote) e nao pagaram.
 
-## Solucao
+**Rosangela**: ela TEM uma assinatura ativa no Stripe (`sub_1SnfhTCuFZvf5xFd0NKP23HZ`, cliente `cus_TlC5Rq3n1zIxuJ`), mas o banco nao esta sincronizado -- o `stripe_subscription_id` esta vazio e o `stripe_customer_id` esta com o valor do convite. Sera necessario corrigir o registro dela.
 
-Substituir o mapeamento manual (hardcoded) no Dashboard pelo mapeamento centralizado que ja existe em `planConstants.ts` (`STRIPE_PRICE_IDS`). Isso garante consistencia e evita esse tipo de erro de digitacao.
+## Regra de Negocio
 
-## Mudanca Tecnica
+- **Venda/Receita** = somente subscriptions com `stripe_subscription_id IS NOT NULL` (pagou de fato pelo Stripe)
+- **Cadastro** = todos os demais (gratuito, pending_payment, movido manualmente sem pagamento)
 
-### Arquivo: `src/pages/Dashboard.tsx`
+## O Que Sera Feito
 
-1. Importar `STRIPE_PRICE_IDS` de `@/lib/planConstants`
-2. Remover o objeto `priceIdMap` hardcoded (linhas 235-241)
-3. Usar `STRIPE_PRICE_IDS[data.plan_type]` no lugar
+### 1. Corrigir dados da Rosangela no banco
 
-Antes:
+Atualizar o registro dela na tabela `subscriptions` com o `stripe_subscription_id` e `stripe_customer_id` reais do Stripe, e setar `mrr_value = 4990` para que ela apareca corretamente nas metricas.
+
+### 2. Atualizar Views do banco de dados (migration)
+
+Recriar as 3 views financeiras adicionando o filtro `AND stripe_subscription_id IS NOT NULL`:
+
+| View | O que muda |
+|------|-----------|
+| `v_mrr_summary` | So soma MRR de quem tem stripe_subscription_id |
+| `v_metrics_by_channel` | So conta active_subscribers e total_mrr de quem tem stripe_subscription_id |
+| `v_retention_cohorts` | So rastreia retencao de quem efetivamente pagou |
+
+### 3. Corrigir AdminDashboard.tsx (codigo frontend)
+
+O Dashboard admin busca subscriptions e calcula metricas financeiras localmente. Atualmente filtra por `plan_type !== "free" && price_cents > 0`, mas isso inclui quem foi movido manualmente para Elite Fundador sem pagar.
+
+Mudancas:
+- Adicionar `stripe_subscription_id` ao `select` da query
+- Filtrar `paidActiveSubs` para incluir apenas registros com `stripe_subscription_id` preenchido
+- Corrigir calculo de churn para usar mesma logica
+- Corrigir distribuicao por plano para separar "pagantes reais" de "cadastros"
+
+### 4. Nenhuma mudanca em AdminMetricas.tsx
+
+A pagina de Metricas ja consome as views do banco (`v_mrr_summary`, etc). Ao corrigir as views, os dados exibidos la serao automaticamente corretos.
+
+---
+
+## Detalhes Tecnicos
+
+### Migration SQL
+
 ```text
-const priceIdMap = {
-  elite_founder: "price_...",   <-- chave errada (falta o 'd')
-  mensal: "price_...",
-  ...
-};
-priceId: priceIdMap[data.plan_type]
+-- Recriar v_mrr_summary com filtro stripe_subscription_id
+WHERE status = 'active' AND stripe_subscription_id IS NOT NULL
+
+-- Recriar v_metrics_by_channel com filtro
+CASE WHEN s.status = 'active' AND s.stripe_subscription_id IS NOT NULL THEN ...
+
+-- Recriar v_retention_cohorts com filtro
+WHERE started_at IS NOT NULL AND stripe_subscription_id IS NOT NULL
 ```
 
-Depois:
+### AdminDashboard.tsx
+
 ```text
-import { STRIPE_PRICE_IDS } from "@/lib/planConstants";
-// ...
-priceId: STRIPE_PRICE_IDS[data.plan_type || "mensal"]
+// Select
+.select("status, price_cents, plan_type, created_at, updated_at, stripe_subscription_id")
+
+// Filtro de pagantes reais
+const paidActiveSubs = activeSubs.filter(
+  s => s.stripe_subscription_id != null
+);
+
+// Churn so de quem pagou
+const paidCanceledSubs = canceledSubs.filter(
+  s => s.stripe_subscription_id != null
+);
 ```
 
-### Nenhum outro arquivo modificado
+### Dados da Rosangela (INSERT/UPDATE)
 
-O `BatchPlanModal`, `SubscriptionGuard` e `AcessoBloqueado` permanecem inalterados.
+```text
+UPDATE subscriptions
+SET stripe_subscription_id = 'sub_1SnfhTCuFZvf5xFd0NKP23HZ',
+    stripe_customer_id = 'cus_TlC5Rq3n1zIxuJ',
+    mrr_value = 4990
+WHERE user_id = '4c64442e-985a-418d-8683-e90c9d871f95';
+```
 
 ## Resultado Esperado
 
-1. Admin muda cliente de Gratuito para Elite Fundador via acao em lote
-2. Cliente faz login e ve a tela "Pagamento Pendente"
-3. Cliente clica "Pagar Agora" e e redirecionado ao Stripe com o preco correto (R$49,90)
-4. Apos pagamento, webhook ativa a subscription automaticamente
+Apos as mudancas:
+- **MRR**: R$ 99,80 (Vinicius R$49,90 + Rosangela R$49,90)
+- **Assinantes Ativos (pagantes)**: 2
+- **Total Clientes (cadastros)**: continua mostrando todos
+- **Distribuicao por Plano**: mostra separadamente quantos pagam de fato vs quantos sao gratuitos/pendentes
