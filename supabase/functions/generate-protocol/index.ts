@@ -505,10 +505,88 @@ serve(async (req) => {
 
     console.log(`Protocol ${tipo} generated and saved successfully for user ${targetUserId}`);
 
+    // === AUDIT STEP (admin-triggered or automatic) ===
+    let auditResult = null;
+    try {
+      // Fetch anamnese data for audit context
+      const { data: anamneseData } = await supabaseClient
+        .from("profiles")
+        .select("*")
+        .eq("id", targetUserId)
+        .single();
+
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+      if (LOVABLE_API_KEY) {
+        const auditSystemPrompt = `Você é um auditor especialista em fisiologia do exercício. Avalie os 9 critérios (true/false): coherence_anamnese, coherence_objective, restriction_respect, weekly_volume, muscle_distribution, progression_defined, instruction_clarity, mindset_quality, safety_score. Inclua issues[] e corrections_applied[]. Responda APENAS com JSON.`;
+
+        const auditUserPrompt = `ANAMNESE: ${JSON.stringify({
+          full_name: anamneseData?.full_name,
+          age: anamneseData?.age,
+          sexo: anamneseData?.sexo,
+          weight: anamneseData?.weight,
+          height: anamneseData?.height,
+          objetivo_principal: anamneseData?.objetivo_principal || anamneseData?.goals,
+          nivel_experiencia: anamneseData?.nivel_experiencia,
+          injuries: anamneseData?.injuries || anamneseData?.restricoes_medicas,
+          condicoes_saude: anamneseData?.condicoes_saude,
+          dias_disponiveis: anamneseData?.dias_disponiveis,
+        })}\n\nPROTOCOLO (${tipo}):\n${JSON.stringify(protocolData).substring(0, 12000)}`;
+
+        const auditResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: auditSystemPrompt },
+              { role: "user", content: auditUserPrompt },
+            ],
+          }),
+        });
+
+        if (auditResp.ok) {
+          const auditData = await auditResp.json();
+          const auditContent = auditData.choices?.[0]?.message?.content || "";
+          try {
+            const auditMatch = auditContent.match(/\{[\s\S]*\}/);
+            if (auditMatch) {
+              auditResult = JSON.parse(auditMatch[0]);
+              // Calculate score
+              const criteria = ["coherence_anamnese","coherence_objective","restriction_respect","weekly_volume","muscle_distribution","progression_defined","instruction_clarity","mindset_quality","safety_score"];
+              let passed = 0;
+              for (const c of criteria) { if (auditResult[c] === true) passed++; }
+              auditResult.final_score = Math.round((passed / criteria.length) * 100);
+              auditResult.classification = auditResult.final_score >= 90 ? "Excelente" : auditResult.final_score >= 80 ? "Muito bom" : auditResult.final_score >= 70 ? "Aceitável" : "Requer correção";
+              auditResult.audited_at = new Date().toISOString();
+
+              // Save audit result
+              await supabaseClient
+                .from("protocolos")
+                .update({ audit_result: auditResult })
+                .eq("id", savedProtocol.id);
+
+              console.log(`[audit] Protocol ${savedProtocol.id} scored ${auditResult.final_score}/100`);
+            }
+          } catch (parseErr) {
+            console.error("[audit] Failed to parse audit result:", parseErr);
+          }
+        } else {
+          await auditResp.text();
+          console.warn("[audit] AI audit call failed, skipping");
+        }
+      }
+    } catch (auditErr) {
+      console.error("[audit] Audit step failed (non-blocking):", auditErr);
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       protocol: savedProtocol,
-      data: protocolData 
+      data: protocolData,
+      audit: auditResult,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

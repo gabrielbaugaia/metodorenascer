@@ -4,9 +4,10 @@ interface Protocol {
   type: string;
   title: string;
   content: any;
+  audit_result?: any;
 }
 
-export function generateMqoProtocolPdf(protocols: Protocol[], clientName: string) {
+export function generateMqoProtocolPdf(protocols: Protocol[], clientName: string, includeAudit: boolean = false) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -125,6 +126,42 @@ export function generateMqoProtocolPdf(protocols: Protocol[], clientName: string
       checkPageBreak(6);
       doc.text(line, margin, y);
       y += 5;
+    }
+
+    // Audit section for this protocol (admin only)
+    if (includeAudit && protocol.audit_result) {
+      y += 5;
+      checkPageBreak(60);
+      y = addSectionTitle("AUDITORIA INTERNA DE QUALIDADE", y);
+
+      const criteriaLabels: Record<string, string> = {
+        coherence_anamnese: "Coerência com anamnese",
+        coherence_objective: "Coerência com objetivo",
+        restriction_respect: "Respeito às restrições/lesões",
+        weekly_volume: "Volume semanal adequado",
+        muscle_distribution: "Distribuição dos grupamentos musculares",
+        progression_defined: "Progressão definida (4 semanas)",
+        instruction_clarity: "Clareza das instruções",
+        mindset_quality: "Qualidade do protocolo de mindset",
+        safety_score: "Segurança geral da prescrição",
+      };
+
+      doc.setFontSize(9);
+      for (const [key, label] of Object.entries(criteriaLabels)) {
+        checkPageBreak(6);
+        const passed = protocol.audit_result[key] === true;
+        doc.setTextColor(passed ? 34 : 220, passed ? 139 : 38, passed ? 34 : 38);
+        doc.text(`${passed ? "✅" : "❌"} ${label}`, margin, y);
+        y += 5;
+      }
+
+      y += 3;
+      checkPageBreak(10);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Score: ${protocol.audit_result.final_score || 0}/100 — ${protocol.audit_result.classification || "N/A"}`, margin, y);
+      doc.setFont("helvetica", "normal");
+      y += 8;
     }
   });
 

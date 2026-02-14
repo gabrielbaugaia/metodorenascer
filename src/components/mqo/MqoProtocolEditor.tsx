@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Save, Loader2 } from "lucide-react";
+import { PrescriptionAuditPanel } from "@/components/admin/PrescriptionAuditPanel";
 
 interface Protocol {
   id: string;
@@ -13,6 +14,7 @@ interface Protocol {
   title: string;
   content: any;
   status: string;
+  audit_result?: any;
 }
 
 interface Props {
@@ -156,6 +158,7 @@ export function MqoProtocolEditor({ clientId, refreshTrigger }: Props) {
                   {saving === p.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Salvar Alterações
                 </Button>
+                <PrescriptionAuditPanel auditResult={p.audit_result} />
               </div>
             ))}
           </TabsContent>

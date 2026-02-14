@@ -8,6 +8,7 @@ interface Protocol {
   titulo: string;
   conteudo: any;
   data_geracao: string;
+  audit_result?: any;
 }
 
 // Track PDF download event (called from components that use this function)
@@ -18,7 +19,7 @@ export function trackPdfDownloadEvent(tipo: string, trackFn: (pdfType: "treino" 
   }
 }
 
-export function generateProtocolPdf(protocol: Protocol): void {
+export function generateProtocolPdf(protocol: Protocol, includeAudit: boolean = false): void {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 15;
@@ -139,6 +140,48 @@ export function generateProtocolPdf(protocol: Protocol): void {
     generateNutricaoPdf(doc, protocol.conteudo, { addSectionTitle, addSubsectionTitle, addText, addBoldText, checkNewPage, margin, contentWidth, yPos: () => yPos, setYPos: (v: number) => yPos = v });
   } else if (protocol.tipo === "mindset") {
     generateMindsetPdf(doc, protocol.conteudo, { addSectionTitle, addSubsectionTitle, addText, addBoldText, checkNewPage, margin, contentWidth, yPos: () => yPos, setYPos: (v: number) => yPos = v });
+  }
+
+  // Audit section (admin only)
+  if (includeAudit && protocol.audit_result) {
+    const audit = protocol.audit_result;
+    doc.addPage();
+    yPos = 20;
+    
+    addSectionTitle("AUDITORIA INTERNA DE QUALIDADE");
+    
+    const criteriaLabels: Record<string, string> = {
+      coherence_anamnese: "Coerência com anamnese",
+      coherence_objective: "Coerência com objetivo",
+      restriction_respect: "Respeito às restrições/lesões",
+      weekly_volume: "Volume semanal adequado",
+      muscle_distribution: "Distribuição dos grupamentos musculares",
+      progression_defined: "Progressão definida (4 semanas)",
+      instruction_clarity: "Clareza das instruções",
+      mindset_quality: "Qualidade do protocolo de mindset",
+      safety_score: "Segurança geral da prescrição",
+    };
+
+    for (const [key, label] of Object.entries(criteriaLabels)) {
+      const passed = audit[key] === true;
+      addText(`${passed ? "✅" : "❌"} ${label}: ${passed ? "Passou" : "Falhou"}`);
+    }
+
+    checkNewPage(15);
+    addBoldText(`Score final de qualidade: ${audit.final_score || 0}/100`);
+    addText(`Classificação: ${audit.classification || "N/A"}`);
+
+    if (audit.issues?.length > 0) {
+      checkNewPage(10);
+      addSubsectionTitle("Problemas Detectados");
+      audit.issues.forEach((issue: string) => addText(`• ${issue}`, 5));
+    }
+
+    if (audit.corrections_applied?.length > 0) {
+      checkNewPage(10);
+      addSubsectionTitle("Correções Aplicadas");
+      audit.corrections_applied.forEach((corr: string) => addText(`• ${corr}`, 5));
+    }
   }
 
   // Footer on all pages

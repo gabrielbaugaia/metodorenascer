@@ -984,6 +984,7 @@ export type Database = {
       }
       mqo_protocols: {
         Row: {
+          audit_result: Json | null
           client_id: string
           content: Json
           created_at: string
@@ -996,6 +997,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audit_result?: Json | null
           client_id: string
           content?: Json
           created_at?: string
@@ -1008,6 +1010,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audit_result?: Json | null
           client_id?: string
           content?: Json
           created_at?: string
@@ -1353,6 +1356,7 @@ export type Database = {
       protocolos: {
         Row: {
           ativo: boolean | null
+          audit_result: Json | null
           conteudo: Json
           created_at: string | null
           data_geracao: string | null
@@ -1364,6 +1368,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
+          audit_result?: Json | null
           conteudo: Json
           created_at?: string | null
           data_geracao?: string | null
@@ -1375,6 +1380,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
+          audit_result?: Json | null
           conteudo?: Json
           created_at?: string | null
           data_geracao?: string | null

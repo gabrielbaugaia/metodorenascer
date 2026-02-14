@@ -56,6 +56,7 @@ import { ProtocolEditor } from "@/components/admin/ProtocolEditor";
 import { NutritionProtocolEditor } from "@/components/admin/NutritionProtocolEditor";
 import { MindsetProtocolEditor } from "@/components/admin/MindsetProtocolEditor";
 import { ClientAnamneseCard } from "@/components/admin/ClientAnamneseCard";
+import { PrescriptionAuditPanel } from "@/components/admin/PrescriptionAuditPanel";
 
 interface Profile {
   full_name: string;
@@ -103,6 +104,7 @@ interface Protocol {
   conteudo: any;
   data_geracao: string;
   ativo: boolean;
+  audit_result?: any;
   profile?: Profile;
   currentWeight?: number | null;
 }
@@ -751,6 +753,11 @@ export default function AdminPlanos() {
                 saving={saving}
                 regenerating={regenerating}
               />
+            )}
+
+            {/* Audit Panel */}
+            {editDialog.protocol?.audit_result && (
+              <PrescriptionAuditPanel auditResult={editDialog.protocol.audit_result} />
             )}
           </DialogContent>
         </Dialog>

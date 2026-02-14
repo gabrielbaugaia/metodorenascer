@@ -161,7 +161,56 @@ Retorne em JSON: { "title": "...", "daily_routines": { "morning": [...], "evenin
       status: "rascunho",
     });
 
-    return new Response(JSON.stringify({ success: true, protocol }), {
+    // === AUDIT STEP ===
+    let auditResult = null;
+    try {
+      const auditSystemPrompt = `Você é um auditor especialista em fisiologia do exercício. Avalie os 9 critérios (true/false): coherence_anamnese, coherence_objective, restriction_respect, weekly_volume, muscle_distribution, progression_defined, instruction_clarity, mindset_quality, safety_score. Inclua issues[] e corrections_applied[]. Responda APENAS com JSON.`;
+
+      const auditUserPrompt = `CLIENTE: ${client.name}\nObjetivos: ${client.objectives || "N/A"}\nPontos de atenção: ${client.attention_points || "N/A"}\n\nPROTOCOLO (${type}):\n${JSON.stringify(protocolContent).substring(0, 12000)}`;
+
+      const auditResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: auditSystemPrompt },
+            { role: "user", content: auditUserPrompt },
+          ],
+        }),
+      });
+
+      if (auditResp.ok) {
+        const auditData = await auditResp.json();
+        const auditContent = auditData.choices?.[0]?.message?.content || "";
+        const auditMatch = auditContent.match(/\{[\s\S]*\}/);
+        if (auditMatch) {
+          auditResult = JSON.parse(auditMatch[0]);
+          const criteria = ["coherence_anamnese","coherence_objective","restriction_respect","weekly_volume","muscle_distribution","progression_defined","instruction_clarity","mindset_quality","safety_score"];
+          let passed = 0;
+          for (const c of criteria) { if (auditResult[c] === true) passed++; }
+          auditResult.final_score = Math.round((passed / criteria.length) * 100);
+          auditResult.classification = auditResult.final_score >= 90 ? "Excelente" : auditResult.final_score >= 80 ? "Muito bom" : auditResult.final_score >= 70 ? "Aceitável" : "Requer correção";
+          auditResult.audited_at = new Date().toISOString();
+
+          await supabase
+            .from("mqo_protocols")
+            .update({ audit_result: auditResult })
+            .eq("id", protocol.id);
+
+          console.log(`[audit] MQO Protocol ${protocol.id} scored ${auditResult.final_score}/100`);
+        }
+      } else {
+        await auditResp.text();
+      }
+    } catch (auditErr) {
+      console.error("[audit] MQO audit failed (non-blocking):", auditErr);
+    }
+
+    return new Response(JSON.stringify({ success: true, protocol, audit: auditResult }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
