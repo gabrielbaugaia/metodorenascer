@@ -229,13 +229,19 @@ export default function Treino() {
   const weeklyCount = loading ? 0 : getWeeklyCount();
   const totalCount = loading ? 0 : getTotalCount();
 
-  const handleCompleteWorkout = async (workout: Workout) => {
-    console.log("[Treino] Completing workout:", workout.focus);
+  const handleCompleteWorkout = async (workout: Workout, durationSeconds?: number, sessionId?: string) => {
+    console.log("[Treino] Completing workout:", workout.focus, "duration:", durationSeconds);
+    const durationMinutes = durationSeconds 
+      ? Math.round(durationSeconds / 60) 
+      : (parseInt(workout.duration) || 45);
     const success = await completeWorkout(
       workout.focus,
       workout.exercises.length,
-      parseInt(workout.duration) || 45,
-      workout.calories
+      durationMinutes,
+      workout.calories,
+      undefined,
+      durationSeconds,
+      sessionId
     );
     if (success) {
       setShowSuccess(true);
@@ -458,7 +464,9 @@ export default function Treino() {
                       calories={workout.calories}
                       completed={workout.completed}
                       index={index}
-                      onComplete={() => handleCompleteWorkout(workout)}
+                      onComplete={(durationSeconds?: number, sessionId?: string) => 
+                        handleCompleteWorkout(workout, durationSeconds, sessionId)
+                      }
                       todayCompleted={todayCompleted}
                     />
                   ))}
