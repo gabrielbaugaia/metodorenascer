@@ -1,218 +1,185 @@
 
-# MQO -- Laboratorio de Prescricao
+# Modo Auditor de Prescricao (Admin Only)
 
-Modulo completamente independente do fluxo Renascer, com branding, rota, logica e PDFs proprios.
+Sistema de auditoria automatica que valida qualidade, seguranca e coerencia dos protocolos de treino e mindset antes da liberacao.
 
 ---
 
-## Fase 1: Infraestrutura de Banco de Dados
+## Visao Geral
 
-Quatro novas tabelas com RLS restrito a admins:
+O auditor sera implementado como uma camada de validacao integrada ao fluxo de geracao de protocolos (tanto no fluxo Renascer quanto no MQO), executada por IA apos a geracao do protocolo. O resultado da auditoria e armazenado junto ao protocolo e visivel apenas para admins.
 
-### Tabela `mqo_clients`
-Perfil do cliente dentro do MQO (separado de `profiles`).
+---
 
-| Coluna | Tipo | Descricao |
+## Fase 1: Estrutura de Dados
+
+### Adicionar coluna na tabela `protocolos`
+
+| Coluna | Tipo | Default |
 |---|---|---|
-| id | uuid PK | |
-| profile_id | uuid | Referencia ao profiles.id (opcional) |
-| name | text | Nome do cliente |
-| summary | text | Resumo gerado/editado |
-| objectives | text | Objetivos detectados |
-| strengths | text | Pontos fortes |
-| attention_points | text | Pontos de atencao |
-| suggested_strategy | text | Estrategia sugerida |
-| trainer_direction | text | Direcionamento Tecnico do Treinador (campo prioritario) |
-| created_at / updated_at | timestamptz | |
+| audit_result | jsonb | null |
 
-### Tabela `mqo_materials`
-Arquivos enviados (metadados, URL no storage).
+### Adicionar coluna na tabela `mqo_protocols`
 
-| Coluna | Tipo |
-|---|---|
-| id | uuid PK |
-| client_id | uuid FK mqo_clients |
-| file_name | text |
-| file_url | text |
-| file_type | text |
-| file_size | integer |
-| created_at | timestamptz |
+| Coluna | Tipo | Default |
+|---|---|---|
+| audit_result | jsonb | null |
 
-### Tabela `mqo_protocols`
-Protocolos gerados no MQO.
-
-| Coluna | Tipo |
-|---|---|
-| id | uuid PK |
-| client_id | uuid FK mqo_clients |
-| type | text (treino/dieta/mentalidade) |
-| title | text |
-| content | jsonb |
-| status | text (rascunho/editado/publicado) |
-| generation_options | jsonb |
-| published_at | timestamptz |
-| created_at / updated_at | timestamptz |
-
-### Tabela `mqo_protocol_versions`
-Historico de versoes para restauracao.
-
-| Coluna | Tipo |
-|---|---|
-| id | uuid PK |
-| protocol_id | uuid FK mqo_protocols |
-| version_number | integer |
-| content | jsonb |
-| status | text |
-| created_at | timestamptz |
-
-### Storage
-- Novo bucket privado: `mqo-materials`
-
-### RLS
-- Todas as tabelas: somente `has_role(auth.uid(), 'admin')` para ALL.
-
----
-
-## Fase 2: Edge Functions Independentes
-
-### `mqo-analyze`
-- Recebe IDs dos materiais enviados
-- Usa Lovable AI (gemini-2.5-flash) para analisar PDFs/imagens via URLs
-- Retorna: resumo, objetivos, pontos fortes, atencao, estrategia
-- Requer role admin
-
-### `mqo-generate-protocol`
-- Recebe: tipo, dados do cliente, trainer_direction (campo prioritario), opcoes (frequencia, intensidade, considerar arquivos, etc.)
-- Gera protocolo via Lovable AI com prompts independentes (nao reutiliza prompts do Renascer)
-- O campo "Direcionamento Tecnico do Treinador" e inserido como instrucao prioritaria no system prompt
-- Requer role admin
-
----
-
-## Fase 3: Frontend -- Pagina /mqo
-
-### Rota
-- `/mqo` no App.tsx, protegida com AuthGuard + verificacao de admin interna
-
-### Identidade Visual (aplicada SOMENTE neste modulo)
-- Amarelo: `#FFC400`
-- Preto: `#000000`
-- Branco: `#FFFFFF`
-- Zero laranja, zero logo/nome Renascer
-- Classes Tailwind customizadas inline (sem poluir o tema global)
-
-### Layout da Pagina (componentes em `src/components/mqo/`)
+### Formato do `audit_result` (jsonb)
 
 ```text
-+------------------------------------------+
-| MQO -- Laboratorio de Prescricao         |
-+------------------------------------------+
-| [Selecionar Cliente v]  [+ Novo Cliente] |
-+------------------------------------------+
-|                                          |
-| SECAO 1: Upload de Materiais             |
-| [Drag & Drop / Selecionar Arquivos]      |
-| Lista de arquivos enviados               |
-| [Enviar Material]  [Analisar Arquivos]   |
-|                                          |
-+------------------------------------------+
-| SECAO 2: Analise + Edicao Manual         |
-| Resumo do cliente        [editavel]      |
-| Objetivos detectados     [editavel]      |
-| Pontos fortes            [editavel]      |
-| Pontos de atencao        [editavel]      |
-| Estrategia sugerida      [editavel]      |
-| ---------------------------------------- |
-| DIRECIONAMENTO TECNICO   [campo grande]  |
-| DO TREINADOR (prioritario)               |
-+------------------------------------------+
-| SECAO 3: Geracao de Protocolos           |
-| Opcoes:                                  |
-|  [x] Considerar arquivos enviados        |
-|  [x] Priorizar obs. do treinador         |
-|  Frequencia: [3x/sem v]                  |
-|  Intensidade: [Moderada v]               |
-| [Gerar Treino] [Gerar Dieta]            |
-| [Gerar Mentalidade] [Gerar Completo]     |
-+------------------------------------------+
-| SECAO 4: Editor Pos-Geracao              |
-| Tabs: Treino | Dieta | Mentalidade      |
-| Editor completo (todos campos editaveis) |
-+------------------------------------------+
-| SECAO 5: Versionamento                   |
-| Versao atual: Rascunho                   |
-| Historico: v1, v2, v3...                 |
-| [Restaurar v1]                           |
-+------------------------------------------+
-| SECAO 6: Publicacao                      |
-| [Baixar PDF MQO] [Publicar p/ cliente]   |
-+------------------------------------------+
+{
+  "coherence_anamnese": true/false,
+  "coherence_objective": true/false,
+  "restriction_respect": true/false,
+  "weekly_volume": true/false,
+  "muscle_distribution": true/false,
+  "progression_defined": true/false,
+  "instruction_clarity": true/false,
+  "mindset_quality": true/false,
+  "safety_score": true/false,
+  "final_score": 88,
+  "classification": "Muito bom",
+  "issues": ["lista de problemas encontrados"],
+  "corrections_applied": ["lista de correcoes automaticas"],
+  "audited_at": "ISO timestamp"
+}
 ```
 
-### Componentes a criar
+---
 
-| Componente | Responsabilidade |
+## Fase 2: Edge Function `audit-prescription`
+
+Nova edge function dedicada que recebe o protocolo gerado + dados do cliente (anamnese) e executa a auditoria via IA.
+
+### Fluxo
+
+1. Recebe: protocolo gerado (treino + mindset), dados da anamnese do cliente, tipo
+2. Envia para a IA com prompt de auditoria especifico
+3. IA retorna o objeto `prescription_audit` com os 9 criterios + score
+4. Se score < 80: a IA recebe instrucoes de correcao e regenera o protocolo corrigido
+5. Loop ate score >= 80 (maximo 2 tentativas de correcao)
+6. Retorna o protocolo (possivelmente corrigido) + resultado da auditoria
+
+### Criterios de avaliacao (9 itens, cada um vale ~11 pontos)
+
+1. Coerencia com anamnese
+2. Coerencia com objetivo
+3. Respeito a restricoes/lesoes
+4. Volume semanal adequado
+5. Distribuicao de grupamentos musculares
+6. Progressao definida (4 semanas)
+7. Clareza das instrucoes
+8. Qualidade do protocolo de mindset
+9. Seguranca geral da prescricao
+
+### Score final
+
+- 90-100: Excelente
+- 80-89: Muito bom
+- 70-79: Aceitavel
+- <70: Requer correcao automatica
+
+---
+
+## Fase 3: Integracao no Fluxo de Geracao
+
+### Fluxo Renascer (`generate-protocol`)
+
+Apos gerar e salvar o protocolo, chamar a auditoria automaticamente:
+
+1. Protocolo de treino e gerado e salvo
+2. Chama `audit-prescription` com os dados do protocolo + anamnese
+3. Se score < 80, o protocolo e regenerado com as correcoes
+4. O `audit_result` e salvo na coluna do protocolo
+5. O protocolo final (possivelmente corrigido) e atualizado
+
+### Fluxo MQO (`mqo-generate-protocol`)
+
+Mesmo processo: apos gerar, auditar e corrigir se necessario.
+
+---
+
+## Fase 4: Frontend - Exibicao do Auditor (Admin Only)
+
+### Componente `PrescriptionAuditPanel`
+
+Exibido apenas quando `useAdminCheck().isAdmin === true`.
+
+Mostra:
+- Titulo "AUDITORIA INTERNA DE QUALIDADE"
+- 9 criterios com icones de check verde ou X vermelho
+- Score final XX/100 com badge de classificacao colorida
+- Lista de problemas encontrados (se houver)
+- Lista de correcoes aplicadas (se houver)
+
+### Locais de exibicao
+
+1. **Pagina de Treino do admin** (`AdminClienteDetalhes.tsx`): ao visualizar protocolos de um cliente, mostrar o painel de auditoria abaixo de cada protocolo
+2. **MQO Editor** (`MqoProtocolEditor.tsx`): mostrar auditoria de cada protocolo gerado no MQO
+
+### Visibilidade
+
+- Admin: mostra o painel completo de auditoria
+- Aluno: componente NAO e renderizado (condicional via `useAdminCheck`)
+
+---
+
+## Fase 5: PDF com Auditoria (Apenas Admin)
+
+### PDF do aluno (existente)
+
+Nenhuma alteracao -- auditoria NAO aparece.
+
+### PDF admin (novo parametro)
+
+Adicionar parametro `includeAudit: boolean` nas funcoes de PDF:
+
+- `generateProtocolPdf`: adicionar secao final "AUDITORIA INTERNA DE QUALIDADE" quando `includeAudit = true`
+- `generateMqoProtocolPdf`: mesma logica
+
+A secao de auditoria no PDF mostra:
+- Tabela com os 9 criterios e status (Passou/Falhou)
+- Score final
+- Classificacao
+- Observacoes
+
+---
+
+## Arquivos a Criar
+
+| Arquivo | Descricao |
 |---|---|
-| `MqoPage.tsx` | Pagina principal /mqo |
-| `MqoLayout.tsx` | Wrapper com branding MQO |
-| `MqoClientSelector.tsx` | Selecao/criacao de cliente |
-| `MqoMaterialUpload.tsx` | Upload e listagem de arquivos |
-| `MqoAnalysisPanel.tsx` | Analise IA + edicao manual |
-| `MqoProtocolGenerator.tsx` | Opcoes e botoes de geracao |
-| `MqoProtocolEditor.tsx` | Editor completo pos-geracao |
-| `MqoVersionHistory.tsx` | Versionamento e restauracao |
-| `MqoPublishPanel.tsx` | Publicacao e download PDF |
+| `supabase/functions/audit-prescription/index.ts` | Edge function de auditoria com IA |
+| `src/components/admin/PrescriptionAuditPanel.tsx` | Componente visual do auditor |
+
+## Arquivos a Modificar
+
+| Arquivo | Alteracao |
+|---|---|
+| `supabase/functions/generate-protocol/index.ts` | Chamar auditoria apos geracao, salvar audit_result |
+| `supabase/functions/mqo-generate-protocol/index.ts` | Chamar auditoria apos geracao no MQO |
+| `supabase/config.toml` | Registrar nova edge function |
+| `src/pages/admin/AdminClienteDetalhes.tsx` | Exibir PrescriptionAuditPanel nos protocolos |
+| `src/components/mqo/MqoProtocolEditor.tsx` | Exibir auditoria nos protocolos MQO |
+| `src/lib/generateProtocolPdf.ts` | Adicionar secao de auditoria para PDFs admin |
+| `src/lib/generateMqoProtocolPdf.ts` | Adicionar secao de auditoria para PDFs MQO admin |
+
+## Migracao SQL
+
+```text
+ALTER TABLE protocolos ADD COLUMN audit_result jsonb DEFAULT null;
+ALTER TABLE mqo_protocols ADD COLUMN audit_result jsonb DEFAULT null;
+```
 
 ---
-
-## Fase 4: PDF com Branding MQO
-
-### Novo arquivo: `src/lib/generateMqoProtocolPdf.ts`
-
-Totalmente independente de `generateProtocolPdf.ts`.
-
-- Cabecalho: fundo preto, texto "MQO -- Metodologia de Qualificacao Operacional" em branco, detalhe amarelo `#FFC400`
-- Titulos de secao: fundo amarelo, texto preto
-- Linhas divisorias: amarelas
-- Fundo geral: branco
-- Rodape em todas as paginas: "Documento tecnico gerado pelo sistema MQO | Uso profissional -- confidencial"
-- Zero referencia a "Renascer", "Gabriel Bau" ou laranja
-
----
-
-## Fase 5: Publicacao para o Cliente
-
-O botao "Publicar para o cliente" faz:
-1. Salva o protocolo com status `publicado`
-2. Cria versao no historico
-3. Se o cliente tem `profile_id` vinculado, insere na tabela `protocolos` existente (para aparecer no app do aluno)
-4. Toast de confirmacao
-
----
-
-## O que NAO muda
-
-- Nenhuma alteracao no fluxo Renascer existente
-- Nenhuma alteracao em PDFs existentes
-- Nenhuma alteracao em cores/tema global
-- Nenhuma alteracao nas edge functions existentes (generate-protocol permanece intacta)
-
----
-
-## Sequencia de Implementacao
-
-1. Migracoes SQL (tabelas + bucket + RLS)
-2. Edge functions `mqo-analyze` e `mqo-generate-protocol`
-3. Componentes frontend MQO
-4. Pagina `/mqo` + rota no App.tsx
-5. PDF MQO independente
-6. Fluxo de publicacao
 
 ## Secao Tecnica
 
-- Todas as tabelas usam `has_role(auth.uid(), 'admin')` -- somente o treinador acessa
-- Edge functions validam JWT + role admin antes de processar
-- Arquivos vao para bucket `mqo-materials` (privado, RLS admin-only)
-- AI usa Lovable AI gateway (`google/gemini-2.5-flash`) -- sem API key adicional necessaria
-- Prompts sao 100% independentes dos prompts Renascer
-- O campo `trainer_direction` e injetado como `### INSTRUCAO PRIORITARIA DO TREINADOR ###` no system prompt da IA
+- A auditoria usa Lovable AI (`google/gemini-2.5-flash`) via tool calling para extrair o objeto estruturado de auditoria
+- O prompt de auditoria e independente dos prompts de geracao
+- A funcao `audit-prescription` valida JWT + role admin
+- O loop de correcao tem limite de 2 tentativas para evitar loops infinitos
+- Se apos 2 tentativas o score ainda for < 80, o protocolo e salvo com flag de alerta no audit_result
+- A verificacao de admin no frontend usa `useAdminCheck` (consulta server-side via `user_roles`), nunca localStorage
+- Nenhum dado de auditoria e exposto ao cliente via RLS (o campo `audit_result` so e lido por admins nas paginas admin)
