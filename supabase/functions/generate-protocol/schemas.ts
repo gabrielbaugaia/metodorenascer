@@ -1,7 +1,6 @@
 // ============================================================================
 // SCHEMAS DE VALIDAÇÃO - PROTOCOLOS MÉTODO RENASCER
 // ============================================================================
-// Validação estrutural dos JSONs gerados pela IA para garantir consistência
 
 // Exercício individual
 export interface ExercicioSchema {
@@ -33,8 +32,8 @@ export interface SemanaSchema {
 
 // Treino individual por letra (A, B, C, D) - formato novo
 export interface TreinoDivisaoSchema {
-  letra: string;  // "A", "B", "C", "D"
-  foco: string;   // "Peito, Ombro e Tríceps"
+  letra: string;
+  foco: string;
   duracao_minutos: number;
   exercicios: ExercicioSchema[];
 }
@@ -47,7 +46,7 @@ export interface TreinoLegadoSchema {
   exercicios: ExercicioSchema[];
 }
 
-// Protocolo de Treino completo (aceita 'treinos' com letras OU 'semanas' para compatibilidade)
+// Protocolo de Treino completo
 export interface TreinoProtocolSchema {
   titulo: string;
   duracao_semanas: number;
@@ -61,29 +60,67 @@ export interface TreinoProtocolSchema {
   observacao_ajustes?: string;
   aquecimento?: string;
   alongamento?: string;
-  // Novo formato com treinos por letra (A, B, C, D) - PREFERIDO
   treinos?: TreinoDivisaoSchema[];
-  // Formato legado com semanas (mantido para compatibilidade)
   semanas?: SemanaSchema[];
   observacoes_gerais?: string;
   proxima_avaliacao?: string;
 }
 
-// Refeição
+// ============================================================================
+// NUTRIÇÃO - SCHEMAS EXPANDIDOS
+// ============================================================================
+
+// Macros por refeição (obrigatório)
+export interface MacrosRefeicao {
+  proteinas_g: number;
+  carboidratos_g: number;
+  gorduras_g: number;
+  calorias: number;
+}
+
+// Refeição expandida com macros obrigatórios
 export interface RefeicaoSchema {
   nome: string;
   horario: string;
+  tipo?: string; // pre_treino, pos_treino, pre_sono, etc.
   alimentos: string[];
+  macros_refeicao: MacrosRefeicao;
   calorias_aproximadas?: number;
-  macros_refeicao?: {
-    proteinas: string;
-    carboidratos: string;
-    gorduras: string;
-  };
   substituicoes?: string[];
 }
 
-// Protocolo de Nutrição completo
+// Opção pré-sono com macros
+export interface OpcaoPreSono {
+  descricao: string;
+  alimentos: string[];
+  macros: MacrosRefeicao;
+}
+
+// Item da lista de compras
+export interface ItemCompras {
+  nome: string;
+  quantidade_semanal: string;
+}
+
+// Categoria de substituição
+export interface SubstituicaoCategoria {
+  categoria: string;
+  equivalencias: Array<{
+    original: string;
+    substituicoes: string[];
+  }>;
+}
+
+// Macros diários completos
+export interface MacrosDiarios {
+  calorias: number;
+  proteina_g: number;
+  carboidrato_g: number;
+  gordura_g: number;
+  agua_litros: number;
+}
+
+// Protocolo de Nutrição completo EXPANDIDO
 export interface NutricaoProtocolSchema {
   titulo: string;
   duracao_semanas: number;
@@ -91,17 +128,67 @@ export interface NutricaoProtocolSchema {
   nivel: "iniciante" | "intermediario" | "avancado";
   objetivo: "emagrecimento" | "hipertrofia";
   observacao_ajustes?: string;
-  calorias_diarias: number;
+  
+  // Macros diários obrigatórios (novo formato)
+  macros_diarios: MacrosDiarios;
   deficit_ou_superavit?: string;
-  macros: {
+  
+  // Compatibilidade com formato antigo
+  calorias_diarias?: number;
+  macros?: {
     proteinas_g: number;
     proteinas_por_kg?: string;
     carboidratos_g: number;
     gorduras_g: number;
   };
+  
+  // Hidratação obrigatória
+  hidratacao: {
+    litros_dia: number;
+    calculo: string; // "40ml x 75kg = 3.0L"
+    distribuicao: string[]; // ["500ml ao acordar", "500ml manhã", ...]
+  };
+  
+  // Planos diferenciados (novo - obrigatório)
+  plano_dia_treino: {
+    calorias_totais: number;
+    refeicoes: RefeicaoSchema[];
+  };
+  plano_dia_descanso: {
+    calorias_totais: number;
+    nota_ajuste: string; // "Carboidratos reduzidos em 20%"
+    refeicoes: RefeicaoSchema[];
+  };
+  
+  // Refeição pré-sono obrigatória
+  refeicao_pre_sono: {
+    explicacao: string;
+    opcoes: OpcaoPreSono[];
+  };
+  
+  // Estratégia anti-compulsão
+  estrategia_anti_compulsao: {
+    titulo: string;
+    orientacoes: string[];
+  };
+  
+  // Lista de compras semanal
+  lista_compras_semanal: {
+    proteinas: ItemCompras[];
+    carboidratos: ItemCompras[];
+    gorduras: ItemCompras[];
+    frutas: ItemCompras[];
+    vegetais: ItemCompras[];
+    outros: ItemCompras[];
+  };
+  
+  // Substituições equivalentes
+  substituicoes: SubstituicaoCategoria[];
+  
+  // Campos legados mantidos para compatibilidade
   distribuicao_proteina?: string;
-  refeicoes: RefeicaoSchema[];
-  hidratacao?: {
+  refeicoes?: RefeicaoSchema[];
+  hidratacao_legacy?: {
     quantidade: string;
     dicas: string[];
   };
@@ -112,7 +199,7 @@ export interface NutricaoProtocolSchema {
     obrigatorio: boolean;
   }>;
   dicas_praticas?: string[];
-  lista_compras_semanal?: string[];
+  lista_compras_semanal_legacy?: string[];
   proxima_avaliacao?: string;
 }
 
@@ -178,8 +265,10 @@ export interface MindsetProtocolSchema {
   proxima_avaliacao?: string;
 }
 
-// Validação simples sem dependência externa
-// Aceita formato 'treinos' com letras (novo) OU 'semanas' (legado)
+// ============================================================================
+// VALIDAÇÃO DE TREINO
+// ============================================================================
+
 export function validateTreinoProtocol(data: unknown): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   const protocol = data as Record<string, unknown>;
@@ -196,9 +285,7 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
   if (!protocol.objetivo || !["emagrecimento", "hipertrofia"].includes(protocol.objetivo as string)) {
     errors.push("objetivo deve ser emagrecimento ou hipertrofia");
   }
-  // local_treino é informativo, não bloqueia validação se vier diferente
 
-  // Aceita 'treinos' (novo com letras) OU 'semanas' (legado)
   const hasTreinos = protocol.treinos && Array.isArray(protocol.treinos) && protocol.treinos.length > 0;
   const hasSemanas = protocol.semanas && Array.isArray(protocol.semanas) && protocol.semanas.length > 0;
 
@@ -206,10 +293,8 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
     errors.push("treinos ou semanas é obrigatório e deve ter ao menos um item");
   }
 
-  // Validar formato 'treinos' com letras (novo - preferido)
   if (hasTreinos) {
     (protocol.treinos as Array<Record<string, unknown>>).forEach((treino, tIndex) => {
-      // Aceita tanto 'letra' quanto 'nome' para compatibilidade
       if (!treino.letra && !treino.nome && !treino.foco) {
         errors.push(`treino ${tIndex + 1}: letra ou foco é obrigatório`);
       }
@@ -218,7 +303,6 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
       } else {
         validateExercicios(treino.exercicios as Array<Record<string, unknown>>, errors, `treino ${tIndex + 1}`);
       }
-      // Validar duracao_minutos como número
       if (treino.duracao_minutos !== undefined && typeof treino.duracao_minutos !== "number") {
         const parsed = parseInt(String(treino.duracao_minutos));
         if (isNaN(parsed)) {
@@ -228,7 +312,6 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
     });
   }
 
-  // Validar formato 'semanas' (legado)
   if (hasSemanas && !hasTreinos) {
     (protocol.semanas as Array<Record<string, unknown>>).forEach((semana, sIndex) => {
       if (!semana.dias || !Array.isArray(semana.dias)) {
@@ -240,7 +323,6 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
           } else {
             validateExercicios(dia.exercicios as Array<Record<string, unknown>>, errors, `semana ${sIndex + 1}, dia ${dIndex + 1}`);
           }
-          // Validar duracao_minutos como número
           if (dia.duracao_minutos !== undefined && typeof dia.duracao_minutos !== "number") {
             const parsed = parseInt(String(dia.duracao_minutos));
             if (isNaN(parsed)) {
@@ -255,7 +337,6 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
   return { valid: errors.length === 0, errors };
 }
 
-// Helper para validar array de exercícios
 function validateExercicios(exercicios: Array<Record<string, unknown>>, errors: string[], context: string): void {
   exercicios.forEach((ex, eIndex) => {
     if (!ex.nome) errors.push(`${context}, exercício ${eIndex + 1}: nome é obrigatório`);
@@ -263,37 +344,182 @@ function validateExercicios(exercicios: Array<Record<string, unknown>>, errors: 
   });
 }
 
-export function validateNutricaoProtocol(data: unknown): { valid: boolean; errors: string[] } {
+// ============================================================================
+// VALIDAÇÃO DE NUTRIÇÃO EXPANDIDA
+// ============================================================================
+
+export interface NutricaoValidationResult {
+  valid: boolean;
+  errors: string[];
+  criteria: {
+    macros_diarios: boolean;
+    macros_por_refeicao: boolean;
+    pre_treino_presente: boolean;
+    pos_treino_presente: boolean;
+    pre_sono_presente: boolean;
+    hidratacao_definida: boolean;
+    dia_treino_vs_descanso: boolean;
+    lista_compras_gerada: boolean;
+    substituicoes_geradas: boolean;
+  };
+  failedCriteria: string[];
+}
+
+export function validateNutricaoProtocol(data: unknown): NutricaoValidationResult {
   const errors: string[] = [];
   const protocol = data as Record<string, unknown>;
+  
+  const criteria = {
+    macros_diarios: false,
+    macros_por_refeicao: false,
+    pre_treino_presente: false,
+    pos_treino_presente: false,
+    pre_sono_presente: false,
+    hidratacao_definida: false,
+    dia_treino_vs_descanso: false,
+    lista_compras_gerada: false,
+    substituicoes_geradas: false,
+  };
 
   if (!protocol.titulo || typeof protocol.titulo !== "string") {
     errors.push("titulo é obrigatório e deve ser string");
   }
-  if (!protocol.calorias_diarias || typeof protocol.calorias_diarias !== "number") {
-    errors.push("calorias_diarias é obrigatório e deve ser número");
+
+  // 1. Macros diários definidos
+  const macrosDiarios = protocol.macros_diarios as Record<string, unknown> | undefined;
+  if (macrosDiarios && typeof macrosDiarios === "object") {
+    if (typeof macrosDiarios.calorias === "number" && 
+        typeof macrosDiarios.proteina_g === "number" &&
+        typeof macrosDiarios.carboidrato_g === "number" && 
+        typeof macrosDiarios.gordura_g === "number") {
+      criteria.macros_diarios = true;
+    }
   }
-  if (!protocol.macros || typeof protocol.macros !== "object") {
-    errors.push("macros é obrigatório");
-  } else {
-    const macros = protocol.macros as Record<string, unknown>;
-    if (typeof macros.proteinas_g !== "number") errors.push("macros.proteinas_g deve ser número");
-    if (typeof macros.carboidratos_g !== "number") errors.push("macros.carboidratos_g deve ser número");
-    if (typeof macros.gorduras_g !== "number") errors.push("macros.gorduras_g deve ser número");
+  // Fallback: check legacy macros field
+  if (!criteria.macros_diarios) {
+    const macros = protocol.macros as Record<string, unknown> | undefined;
+    const cal = protocol.calorias_diarias;
+    if (macros && typeof cal === "number" && typeof macros.proteinas_g === "number") {
+      criteria.macros_diarios = true;
+    }
   }
-  if (!protocol.refeicoes || !Array.isArray(protocol.refeicoes) || protocol.refeicoes.length === 0) {
-    errors.push("refeicoes é obrigatório e deve ter ao menos uma refeição");
-  } else {
-    (protocol.refeicoes as Array<Record<string, unknown>>).forEach((refeicao, index) => {
-      if (!refeicao.nome) errors.push(`refeição ${index + 1}: nome é obrigatório`);
-      if (!refeicao.alimentos || !Array.isArray(refeicao.alimentos)) {
-        errors.push(`refeição ${index + 1}: alimentos é obrigatório`);
-      }
+  if (!criteria.macros_diarios) errors.push("macros_diarios é obrigatório com calorias, proteina_g, carboidrato_g, gordura_g");
+
+  // 2-4. Check plano_dia_treino and its meals
+  const planoDiaTreino = protocol.plano_dia_treino as Record<string, unknown> | undefined;
+  const planoDiaDescanso = protocol.plano_dia_descanso as Record<string, unknown> | undefined;
+
+  if (planoDiaTreino && Array.isArray(planoDiaTreino.refeicoes)) {
+    const refeicoes = planoDiaTreino.refeicoes as Array<Record<string, unknown>>;
+    
+    // Check macros por refeição
+    const allHaveMacros = refeicoes.every(r => {
+      const m = r.macros_refeicao as Record<string, unknown> | undefined;
+      return m && typeof m.proteinas_g === "number";
     });
+    if (allHaveMacros && refeicoes.length > 0) criteria.macros_por_refeicao = true;
+    
+    // Check pre/pos treino
+    criteria.pre_treino_presente = refeicoes.some(r => 
+      (r.tipo as string)?.includes("pre_treino") || 
+      (r.nome as string)?.toLowerCase().includes("pré-treino") ||
+      (r.nome as string)?.toLowerCase().includes("pre-treino") ||
+      (r.nome as string)?.toLowerCase().includes("pré treino")
+    );
+    criteria.pos_treino_presente = refeicoes.some(r => 
+      (r.tipo as string)?.includes("pos_treino") || 
+      (r.nome as string)?.toLowerCase().includes("pós-treino") ||
+      (r.nome as string)?.toLowerCase().includes("pos-treino") ||
+      (r.nome as string)?.toLowerCase().includes("pós treino")
+    );
+  }
+  // Fallback: check legacy refeicoes
+  if (!criteria.macros_por_refeicao && protocol.refeicoes && Array.isArray(protocol.refeicoes)) {
+    const refeicoes = protocol.refeicoes as Array<Record<string, unknown>>;
+    if (refeicoes.length > 0) {
+      criteria.macros_por_refeicao = refeicoes.every(r => {
+        const m = r.macros_refeicao as Record<string, unknown> | undefined;
+        return m && (typeof m.proteinas_g === "number" || typeof (m as any).proteinas === "string");
+      });
+    }
+    if (!criteria.pre_treino_presente) {
+      criteria.pre_treino_presente = refeicoes.some(r => 
+        (r.nome as string)?.toLowerCase().includes("pré-treino") || (r.nome as string)?.toLowerCase().includes("pre-treino")
+      );
+    }
+    if (!criteria.pos_treino_presente) {
+      criteria.pos_treino_presente = refeicoes.some(r => 
+        (r.nome as string)?.toLowerCase().includes("pós-treino") || (r.nome as string)?.toLowerCase().includes("pos-treino")
+      );
+    }
   }
 
-  return { valid: errors.length === 0, errors };
+  if (!criteria.macros_por_refeicao) errors.push("macros por refeição obrigatórios (proteinas_g, carboidratos_g, gorduras_g, calorias)");
+  if (!criteria.pre_treino_presente) errors.push("refeição pré-treino é obrigatória");
+  if (!criteria.pos_treino_presente) errors.push("refeição pós-treino é obrigatória");
+
+  // 5. Pre-sono
+  const preSono = protocol.refeicao_pre_sono as Record<string, unknown> | undefined;
+  if (preSono && Array.isArray(preSono.opcoes) && (preSono.opcoes as unknown[]).length >= 3) {
+    criteria.pre_sono_presente = true;
+  }
+  if (!criteria.pre_sono_presente) errors.push("refeição pré-sono com 3 opções é obrigatória");
+
+  // 6. Hidratação
+  const hidratacao = protocol.hidratacao as Record<string, unknown> | undefined;
+  if (hidratacao && typeof hidratacao === "object") {
+    if (typeof hidratacao.litros_dia === "number" || typeof hidratacao.quantidade === "string") {
+      criteria.hidratacao_definida = true;
+    }
+    if (Array.isArray(hidratacao.distribuicao) && (hidratacao.distribuicao as unknown[]).length >= 3) {
+      criteria.hidratacao_definida = true;
+    }
+  }
+  if (!criteria.hidratacao_definida) errors.push("hidratação calculada é obrigatória");
+
+  // 7. Dia treino vs descanso
+  if (planoDiaTreino && planoDiaDescanso && 
+      Array.isArray(planoDiaTreino.refeicoes) && Array.isArray(planoDiaDescanso.refeicoes) &&
+      (planoDiaTreino.refeicoes as unknown[]).length > 0 && (planoDiaDescanso.refeicoes as unknown[]).length > 0) {
+    criteria.dia_treino_vs_descanso = true;
+  }
+  if (!criteria.dia_treino_vs_descanso) errors.push("planos de dia de treino e dia de descanso são obrigatórios");
+
+  // 8. Lista de compras
+  const listaCompras = protocol.lista_compras_semanal as Record<string, unknown> | undefined;
+  if (listaCompras && typeof listaCompras === "object" && !Array.isArray(listaCompras)) {
+    const hasCategories = ["proteinas", "carboidratos", "gorduras"].some(cat => 
+      Array.isArray(listaCompras[cat]) && (listaCompras[cat] as unknown[]).length > 0
+    );
+    if (hasCategories) criteria.lista_compras_gerada = true;
+  }
+  // Fallback: accept array format
+  if (!criteria.lista_compras_gerada && Array.isArray(protocol.lista_compras_semanal) && (protocol.lista_compras_semanal as unknown[]).length > 0) {
+    criteria.lista_compras_gerada = true;
+  }
+  if (!criteria.lista_compras_gerada) errors.push("lista de compras semanal é obrigatória");
+
+  // 9. Substituições
+  if (Array.isArray(protocol.substituicoes) && (protocol.substituicoes as unknown[]).length > 0) {
+    criteria.substituicoes_geradas = true;
+  }
+  if (!criteria.substituicoes_geradas) errors.push("substituições equivalentes são obrigatórias");
+
+  const failedCriteria = Object.entries(criteria)
+    .filter(([_, v]) => !v)
+    .map(([k]) => k);
+
+  return { 
+    valid: failedCriteria.length === 0, 
+    errors, 
+    criteria,
+    failedCriteria 
+  };
 }
+
+// ============================================================================
+// VALIDAÇÃO DE MINDSET
+// ============================================================================
 
 export function validateMindsetProtocol(data: unknown): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -330,13 +556,14 @@ export function validateMindsetProtocol(data: unknown): { valid: boolean; errors
   return { valid: errors.length === 0, errors };
 }
 
-// Normalizar duracao_minutos para número (ambos formatos)
+// ============================================================================
+// NORMALIZAÇÃO
+// ============================================================================
+
 export function normalizeTreinoProtocol(data: Record<string, unknown>): void {
-  // Normalizar formato 'treinos' com letras (novo - preferido)
   if (data.treinos && Array.isArray(data.treinos)) {
     (data.treinos as Array<Record<string, unknown>>).forEach((treino) => {
       normalizeDuracaoMinutos(treino);
-      // Normalizar series em exercícios
       if (treino.exercicios && Array.isArray(treino.exercicios)) {
         (treino.exercicios as Array<Record<string, unknown>>).forEach((ex) => {
           normalizeSeriesField(ex);
@@ -345,13 +572,11 @@ export function normalizeTreinoProtocol(data: Record<string, unknown>): void {
     });
   }
 
-  // Normalizar formato 'semanas' (legado)
   if (data.semanas && Array.isArray(data.semanas)) {
     (data.semanas as Array<Record<string, unknown>>).forEach((semana) => {
       if (semana.dias && Array.isArray(semana.dias)) {
         (semana.dias as Array<Record<string, unknown>>).forEach((dia) => {
           normalizeDuracaoMinutos(dia);
-          // Normalizar series em exercícios
           if (dia.exercicios && Array.isArray(dia.exercicios)) {
             (dia.exercicios as Array<Record<string, unknown>>).forEach((ex) => {
               normalizeSeriesField(ex as Record<string, unknown>);
@@ -363,7 +588,6 @@ export function normalizeTreinoProtocol(data: Record<string, unknown>): void {
   }
 }
 
-// Helper para normalizar duracao_minutos
 function normalizeDuracaoMinutos(item: Record<string, unknown>): void {
   if (item.duracao_minutos !== undefined && typeof item.duracao_minutos !== "number") {
     const parsed = parseInt(String(item.duracao_minutos).replace(/\D/g, ""));
@@ -374,7 +598,6 @@ function normalizeDuracaoMinutos(item: Record<string, unknown>): void {
   }
 }
 
-// Helper para normalizar series em exercícios
 function normalizeSeriesField(ex: Record<string, unknown>): void {
   if (ex.series !== undefined && typeof ex.series !== "number") {
     const parsed = parseInt(String(ex.series).replace(/\D/g, ""));

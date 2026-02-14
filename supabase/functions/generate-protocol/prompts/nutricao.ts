@@ -1,22 +1,9 @@
 // ============================================================================
-// PROMPT DE NUTRIÇÃO - MÉTODO RENASCER
-// ============================================================================
-// REGRAS APLICADAS:
-// - Déficit/superávit calculado por peso, altura, sexo, idade, atividade e objetivo
-// - Proteína: 1.6-2.2 g/kg/dia para emagrecimento/hipertrofia, distribuída ao longo do dia
-// - Carboidratos e gorduras ajustados conforme preferência, tolerância e rotina
-// - NADA de estratégias extremas (jejum prolongado, cetogênica rígida) sem indicação
-// - Para Emagrecimento: déficit moderado 15-25% abaixo da manutenção
-// - Para Hipertrofia: leve superávit ou manutenção conforme % gordura
-// - Iniciante: estrutura simples (3-4 refeições), linguagem didática, hábitos básicos
-// - Intermediário: mais detalhes de macros, ajustes semanais
-// - Avançado: distribuição precisa, estratégias de refeição livre, ajustes finos
-// - Saída: número de refeições, exemplos de combinações, quantidades, substituições
-// - HORÁRIOS são calculados deterministicamente pela função buildMealSchedule
+// PROMPT DE NUTRIÇÃO - MÉTODO RENASCER (V2 - PRESCRIÇÃO COMPLETA)
 // ============================================================================
 
 // ============================================================================
-// MOTOR DETERMINÍSTICO DE HORÁRIOS - SEM IA INVENTAR HORÁRIOS
+// MOTOR DETERMINÍSTICO DE HORÁRIOS
 // ============================================================================
 
 interface MealSlot {
@@ -25,101 +12,59 @@ interface MealSlot {
   tipo: string;
 }
 
-/**
- * Calcula horários das refeições baseado na rotina do cliente.
- * Esta função é DETERMINÍSTICA - os mesmos inputs sempre geram os mesmos outputs.
- * A IA NÃO deve alterar esses horários, apenas preencher o conteúdo.
- */
 export function buildMealSchedule(
   horario_acorda: string,
   horario_treino: string,
   horario_dorme: string,
   refeicoes_por_dia: number = 5
 ): MealSlot[] {
-  // Parse HH:mm para minutos desde meia-noite
   const parseTime = (time: string): number => {
     if (!time || !time.includes(":")) return 0;
     const [h, m] = time.split(":").map(Number);
     return h * 60 + (m || 0);
   };
   
-  // Formatar minutos para HH:mm
   const formatTime = (minutes: number): string => {
-    // Handle overflow past midnight
     const normalizedMinutes = ((minutes % 1440) + 1440) % 1440;
     const h = Math.floor(normalizedMinutes / 60);
     const m = normalizedMinutes % 60;
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   };
   
-  // Defaults se não fornecidos
-  const acordar = parseTime(horario_acorda) || 6 * 60;  // 06:00
-  const treino = parseTime(horario_treino) || 18 * 60;  // 18:00
-  const dormir = parseTime(horario_dorme) || 22 * 60;   // 22:00
+  const acordar = parseTime(horario_acorda) || 6 * 60;
+  const treino = parseTime(horario_treino) || 18 * 60;
+  const dormir = parseTime(horario_dorme) || 22 * 60;
   
   console.log(`[buildMealSchedule] Input - acordar: ${formatTime(acordar)}, treino: ${formatTime(treino)}, dormir: ${formatTime(dormir)}, refeicoes: ${refeicoes_por_dia}`);
   
   const refeicoes: MealSlot[] = [];
   
-  // 1. Primeira refeição: 30 min após acordar
   const primeiraRefeicao = acordar + 30;
-  refeicoes.push({
-    nome: "Café da Manhã",
-    horario: formatTime(primeiraRefeicao),
-    tipo: "primeira_refeicao"
-  });
+  refeicoes.push({ nome: "Café da Manhã", horario: formatTime(primeiraRefeicao), tipo: "primeira_refeicao" });
   
-  // 2. Pré-treino: 90 min ANTES do treino
   const preTreino = treino - 90;
-  refeicoes.push({
-    nome: "Refeição Pré-Treino",
-    horario: formatTime(preTreino),
-    tipo: "pre_treino"
-  });
+  refeicoes.push({ nome: "Refeição Pré-Treino", horario: formatTime(preTreino), tipo: "pre_treino" });
   
-  // 3. Pós-treino: 60 min APÓS treino (considerando 1h de duração)
   const posTreino = treino + 90;
-  refeicoes.push({
-    nome: "Refeição Pós-Treino",
-    horario: formatTime(posTreino),
-    tipo: "pos_treino"
-  });
+  refeicoes.push({ nome: "Refeição Pós-Treino", horario: formatTime(posTreino), tipo: "pos_treino" });
   
-  // 4. Última refeição (ceia): 60 min antes de dormir
-  const ultimaRefeicao = dormir - 60;
-  refeicoes.push({
-    nome: "Ceia",
-    horario: formatTime(ultimaRefeicao),
-    tipo: "ultima_refeicao"
-  });
+  const preSono = dormir - 60;
+  refeicoes.push({ nome: "Refeição Pré-Sono", horario: formatTime(preSono), tipo: "pre_sono" });
   
-  // 5. Se precisar de mais refeições, adicionar lanches intermediários
   if (refeicoes_por_dia >= 5) {
-    // Calcular ponto médio entre café e pré-treino
     const meioManha = Math.round((primeiraRefeicao + preTreino) / 2);
-    // Só adicionar se houver espaço (mínimo 2h de diferença)
     if (preTreino - primeiraRefeicao >= 180) {
-      refeicoes.push({
-        nome: "Lanche da Manhã",
-        horario: formatTime(meioManha),
-        tipo: "lanche"
-      });
+      refeicoes.push({ nome: "Lanche da Manhã", horario: formatTime(meioManha), tipo: "lanche" });
     }
   }
   
   if (refeicoes_por_dia >= 6) {
-    // Calcular ponto médio entre pós-treino e ceia
-    const meioCeia = Math.round((posTreino + ultimaRefeicao) / 2);
-    if (ultimaRefeicao - posTreino >= 180) {
-      refeicoes.push({
-        nome: "Lanche da Tarde",
-        horario: formatTime(meioCeia),
-        tipo: "lanche"
-      });
+    const meioCeia = Math.round((posTreino + preSono) / 2);
+    if (preSono - posTreino >= 180) {
+      refeicoes.push({ nome: "Lanche da Tarde", horario: formatTime(meioCeia), tipo: "lanche" });
     }
   }
   
-  // Ordenar por horário
   refeicoes.sort((a, b) => parseTime(a.horario) - parseTime(b.horario));
   
   console.log(`[buildMealSchedule] Generated ${refeicoes.length} meals:`, refeicoes.map(r => `${r.nome}: ${r.horario}`).join(", "));
@@ -128,52 +73,64 @@ export function buildMealSchedule(
 }
 
 export function getNutricaoSystemPrompt(durationWeeks: number, weeksPerCycle: number): string {
-  return `Você é um Nutricionista Esportivo do Método Renascer. Crie um plano alimentar COMPLETO e PERSONALIZADO seguindo rigorosamente estas regras:
+  return `Você é um Nutricionista Esportivo de Elite do Método Renascer. Crie um plano alimentar COMPLETO, QUANTIFICADO e ESTRATÉGICO.
 
-### PRINCÍPIOS DO MÉTODO RENASCER ###
-- Base científica: déficit/superávit calculado, proteína adequada, aderência a longo prazo
-- Nada de estratégias extremas sem indicação (jejum prolongado, cetogênica rígida, etc.)
-- Foco em alimentos minimamente processados, fibras e saciedade
-- Plano prático e sustentável para o dia a dia
+### REGRAS ABSOLUTAS - NÃO VIOLAR ###
+1. TODOS os campos listados no JSON são OBRIGATÓRIOS
+2. Macros diários DEVEM ser calculados com valores numéricos exatos
+3. CADA refeição DEVE ter macros (proteinas_g, carboidratos_g, gorduras_g, calorias)
+4. DEVE existir refeição pré-treino (60-120min antes) e pós-treino (até 2h após)
+5. DEVE existir refeição pré-sono com EXATAMENTE 3 opções com macros
+6. DEVE existir hidratação calculada (35-45ml/kg)
+7. DEVE gerar DOIS planos: dia de treino e dia de descanso
+8. DEVE gerar lista de compras semanal por categoria
+9. DEVE gerar substituições equivalentes com quantidades
 
 ### CÁLCULOS BASE ###
-PROTEÍNA: 1.6-2.2 g/kg/dia (distribuída em todas as refeições principais)
-EMAGRECIMENTO/DEFINIÇÃO:
-- Déficit moderado: 15-25% abaixo da manutenção
-- NÃO fazer cortes agressivos (preservar massa magra e adesão)
-- Priorizar saciedade: fibras, vegetais, proteínas
+PROTEÍNA: 1.6-2.2 g/kg/dia
+EMAGRECIMENTO: déficit 15-25% abaixo da manutenção
+HIPERTROFIA: superávit 5-10% acima da manutenção
+ÁGUA: 35-45ml por kg de peso corporal
 
-HIPERTROFIA/SAÚDE:
-- Leve superávit ou manutenção (conforme % gordura atual)
-- Carboidratos adequados para energia no treino
-- Atenção à praticidade pós-treino, não regras rígidas
+### REFEIÇÃO PRÉ-TREINO (60-120min antes) ###
+- Proteína: 25-45g
+- Carboidrato: moderado/alto (digestão fácil)
+- Gordura: baixa/moderada
 
-### ESTRUTURA POR NÍVEL ###
-INICIANTE:
-- Estrutura simples: 3-4 refeições principais
-- Linguagem didática e clara
-- Foco em hábitos básicos: beber água, incluir proteína em todas refeições, vegetais
-- Instruções de substituição simples
+### REFEIÇÃO PÓS-TREINO (até 2h após) ###
+- Proteína: 30-50g (rápida absorção)
+- Carboidrato: moderado/alto (reposição glicogênio)
+- Gordura: baixa/moderada
 
-INTERMEDIÁRIO:
-- Pode receber mais detalhes de macros
-- Ajustes semanais conforme feedback
-- Opções de variação para evitar monotonia
+### REFEIÇÃO PRÉ-SONO (OBRIGATÓRIO) ###
+- Proteína: 25-40g (digestão lenta - caseína)
+- Carboidrato: baixo/moderado
+- Gordura: moderada
+- Fornecer EXATAMENTE 3 opções com macros calculados
 
-AVANÇADO:
-- Distribuição precisa de macros por refeição
-- Estratégias de refeição livre controlada
-- Ajustes finos semanais baseados em resposta
-- Periodização nutricional conforme fase do treino
+### DIA DE DESCANSO ###
+- Reduzir carboidratos em 15-30% vs dia de treino
+- Manter proteína IGUAL
+- Manter ou aumentar levemente gordura
+- Redistribuir calorias das refeições pré/pós treino
 
-### ESTRUTURA OBRIGATÓRIA DO PLANO ###
-1. Refeições com horários FIXOS (fornecidos abaixo - NÃO ALTERAR)
-2. Exemplos práticos de alimentos e porções
-3. Quantidades em medidas caseiras E gramas
-4. Instruções claras de substituição (ex: trocar arroz por batata, frango por peixe)
-5. Dicas de preparo e organização semanal
+### LISTA DE COMPRAS ###
+- Calcular: quantidade diária × 7 dias
+- Organizar por categorias: proteinas, carboidratos, gorduras, frutas, vegetais, outros
+- Cada item com nome e quantidade_semanal (ex: "1400g")
 
-O plano é para ${durationWeeks} semanas, ajustável a cada ${weeksPerCycle} semanas após fotos e feedback.
+### SUBSTITUIÇÕES ###
+- Equivalências numéricas (ex: "180g frango = 200g tilápia = 4 ovos")
+- Organizar por categoria: proteínas, carboidratos, gorduras
+- RESPEITAR restrições alimentares do cliente
+
+### ESTRATÉGIA ANTI-COMPULSÃO ###
+- Explicar importância da refeição pré-sono
+- Alta proteína + digestão lenta
+- Evitar açúcar isolado à noite
+- 3 opções práticas com macros
+
+O plano é para ${durationWeeks} semanas, ajustável a cada ${weeksPerCycle} semanas.
 
 RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
 {
@@ -182,58 +139,152 @@ RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
   "ciclo_atual": 1,
   "nivel": "iniciante|intermediario|avancado",
   "objetivo": "emagrecimento|hipertrofia",
-  "observacao_ajustes": "Este plano será ajustado a cada ${weeksPerCycle} semanas conforme seu progresso e envio de fotos.",
-  "calorias_diarias": 2000,
-  "deficit_ou_superavit": "-20% (déficit moderado para emagrecimento)",
-  "macros": {
-    "proteinas_g": 150,
-    "proteinas_por_kg": "2.0g/kg",
-    "carboidratos_g": 180,
-    "gorduras_g": 60
+  "observacao_ajustes": "...",
+  "macros_diarios": {
+    "calorias": 2000,
+    "proteina_g": 150,
+    "carboidrato_g": 200,
+    "gordura_g": 60,
+    "agua_litros": 3.0
   },
-  "distribuicao_proteina": "Dividida em 4 refeições (~35-40g por refeição)",
-  "refeicoes": [
-    {
-      "nome": "Café da manhã",
-      "horario": "07:00",
-      "alimentos": [
-        "3 ovos mexidos (150g)",
-        "2 fatias de pão integral (60g)",
-        "1 banana média (100g)"
-      ],
-      "calorias_aproximadas": 450,
-      "macros_refeicao": {
-        "proteinas": "25g",
-        "carboidratos": "45g",
-        "gorduras": "18g"
+  "deficit_ou_superavit": "-20% (déficit moderado)",
+  "hidratacao": {
+    "litros_dia": 3.0,
+    "calculo": "40ml x 75kg = 3.0L",
+    "distribuicao": [
+      "500ml ao acordar",
+      "500ml pela manhã",
+      "500ml pré-treino",
+      "500ml pós-treino",
+      "500ml à tarde",
+      "500ml à noite"
+    ]
+  },
+  "plano_dia_treino": {
+    "calorias_totais": 2000,
+    "refeicoes": [
+      {
+        "nome": "Café da Manhã",
+        "horario": "07:00",
+        "tipo": "primeira_refeicao",
+        "alimentos": ["3 ovos mexidos (150g)", "2 fatias pão integral (60g)", "1 banana (100g)"],
+        "macros_refeicao": {
+          "proteinas_g": 25,
+          "carboidratos_g": 45,
+          "gorduras_g": 18,
+          "calorias": 440
+        },
+        "substituicoes": ["Ovos → Queijo cottage 150g", "Pão → Tapioca 2un ou Aveia 40g"]
+      }
+    ]
+  },
+  "plano_dia_descanso": {
+    "calorias_totais": 1700,
+    "nota_ajuste": "Carboidratos reduzidos em 20% em relação ao dia de treino",
+    "refeicoes": [
+      {
+        "nome": "Café da Manhã",
+        "horario": "07:00",
+        "tipo": "primeira_refeicao",
+        "alimentos": ["3 ovos mexidos (150g)", "1 fatia pão integral (30g)", "1 banana (100g)"],
+        "macros_refeicao": {
+          "proteinas_g": 25,
+          "carboidratos_g": 30,
+          "gorduras_g": 18,
+          "calorias": 378
+        },
+        "substituicoes": ["Ovos → Queijo cottage 150g"]
+      }
+    ]
+  },
+  "refeicao_pre_sono": {
+    "explicacao": "Refeição essencial para evitar compulsão noturna e preservar massa muscular durante o sono",
+    "opcoes": [
+      {
+        "descricao": "Iogurte com whey e pasta de amendoim",
+        "alimentos": ["200g iogurte natural", "1 scoop whey", "15g pasta de amendoim"],
+        "macros": { "proteinas_g": 35, "carboidratos_g": 15, "gorduras_g": 12, "calorias": 308 }
       },
-      "substituicoes": [
-        "Ovos → Queijo cottage 150g ou Whey 1 scoop",
-        "Pão integral → Tapioca 2 unidades ou Aveia 40g",
-        "Banana → Maçã ou Mamão 100g"
+      {
+        "descricao": "Ovos com aveia",
+        "alimentos": ["3 ovos mexidos", "30g aveia"],
+        "macros": { "proteinas_g": 25, "carboidratos_g": 20, "gorduras_g": 15, "calorias": 315 }
+      },
+      {
+        "descricao": "Whey com leite e pasta de amendoim",
+        "alimentos": ["1 scoop whey", "200ml leite", "15g pasta de amendoim"],
+        "macros": { "proteinas_g": 30, "carboidratos_g": 12, "gorduras_g": 14, "calorias": 294 }
+      }
+    ]
+  },
+  "estrategia_anti_compulsao": {
+    "titulo": "Controle da Fome Noturna",
+    "orientacoes": [
+      "A refeição pré-sono é OBRIGATÓRIA - não pule",
+      "Priorize proteína de digestão lenta (caseína, ovos, iogurte)",
+      "Evite açúcar isolado à noite - causa pico de insulina e mais fome",
+      "Se sentir fome extra, beba água ou chá sem açúcar",
+      "Mantenha regularidade de horários para estabilizar o apetite"
+    ]
+  },
+  "lista_compras_semanal": {
+    "proteinas": [
+      { "nome": "Peito de frango", "quantidade_semanal": "1400g" },
+      { "nome": "Ovos", "quantidade_semanal": "28 unidades" }
+    ],
+    "carboidratos": [
+      { "nome": "Arroz integral", "quantidade_semanal": "1400g" }
+    ],
+    "gorduras": [
+      { "nome": "Pasta de amendoim", "quantidade_semanal": "200g" }
+    ],
+    "frutas": [
+      { "nome": "Banana", "quantidade_semanal": "14 unidades" }
+    ],
+    "vegetais": [
+      { "nome": "Brócolis", "quantidade_semanal": "700g" }
+    ],
+    "outros": [
+      { "nome": "Whey protein", "quantidade_semanal": "210g (7 scoops)" }
+    ]
+  },
+  "substituicoes": [
+    {
+      "categoria": "Proteínas",
+      "equivalencias": [
+        {
+          "original": "150g peito de frango",
+          "substituicoes": ["150g patinho", "180g tilápia", "4 ovos inteiros", "1.5 scoop whey"]
+        }
+      ]
+    },
+    {
+      "categoria": "Carboidratos",
+      "equivalencias": [
+        {
+          "original": "200g arroz cozido",
+          "substituicoes": ["250g batata cozida", "120g macarrão cozido", "80g aveia", "2 fatias pão integral"]
+        }
+      ]
+    },
+    {
+      "categoria": "Gorduras",
+      "equivalencias": [
+        {
+          "original": "10ml azeite",
+          "substituicoes": ["15g pasta de amendoim", "15g castanhas", "1 gema adicional"]
+        }
       ]
     }
   ],
-  "hidratacao": {
-    "quantidade": "35ml por kg de peso corporal (mínimo 2.5L/dia)",
-    "dicas": ["Beber água ao acordar", "Garrafa sempre por perto", "Água antes das refeições"]
-  },
   "suplementacao": [
-    {
-      "nome": "Whey Protein",
-      "quantidade": "1 scoop (30g)",
-      "quando": "Pós-treino ou entre refeições quando necessário",
-      "obrigatorio": false
-    }
+    { "nome": "Whey Protein", "quantidade": "1 scoop (30g)", "quando": "Pós-treino ou pré-sono", "obrigatorio": false }
   ],
   "dicas_praticas": [
-    "Prepare as proteínas da semana no domingo",
-    "Tenha vegetais já lavados e cortados na geladeira",
-    "Coma devagar, mastigue bem",
-    "Evite distrações (celular, TV) durante as refeições"
+    "Prepare proteínas da semana no domingo",
+    "Tenha vegetais lavados e cortados na geladeira"
   ],
-  "lista_compras_semanal": ["Ovos", "Frango", "Arroz integral", "Vegetais variados", "Frutas"],
-  "proxima_avaliacao": "Enviar fotos e feedback após semana ${weeksPerCycle} para ajustes"
+  "proxima_avaliacao": "Enviar fotos e feedback após semana ${weeksPerCycle}"
 }`;
 }
 
@@ -244,7 +295,6 @@ export function getNutricaoUserPrompt(
   weeksPerCycle: number,
   adjustments?: string
 ): string {
-  // Calcular schedule determinístico baseado na rotina do cliente
   const schedule = buildMealSchedule(
     (userContext.horario_acorda as string) || "06:00",
     (userContext.horario_treino as string) || "18:00",
@@ -254,9 +304,32 @@ export function getNutricaoUserPrompt(
   
   const scheduleText = schedule.map(r => `- ${r.nome}: ${r.horario} (${r.tipo})`).join("\n");
   
-  return `Crie um plano nutricional PERSONALIZADO para este cliente do Método Renascer:
+  // Extract key profile data for better prompting
+  const peso = userContext.weight || "não informado";
+  const altura = userContext.height || "não informado";
+  const idade = userContext.age || userContext.data_nascimento || "não informado";
+  const sexo = userContext.sexo || "não informado";
+  const restricoes = userContext.restricoes_alimentares || "nenhuma";
+  const condicoes = userContext.condicoes_saude || "nenhuma";
+  const medicamentos = userContext.toma_medicamentos ? "Sim" : "Não";
+  const objetivo = userContext.objetivo_principal || userContext.goals || "não informado";
+  const nivelEstresse = userContext.nivel_estresse || "não informado";
+
+  return `Crie um plano nutricional COMPLETO e QUANTIFICADO para este cliente:
 
 ### DADOS DO CLIENTE ###
+- Peso: ${peso} kg
+- Altura: ${altura} cm
+- Idade: ${idade}
+- Sexo: ${sexo}
+- Objetivo: ${objetivo}
+- Restrições alimentares: ${restricoes}
+- Condições de saúde: ${condicoes}
+- Medicamentos: ${medicamentos}
+- Nível de estresse: ${nivelEstresse}
+- Refeições por dia: ${userContext.refeicoes_por_dia || 5}
+
+### DADOS COMPLETOS ###
 ${JSON.stringify(userContext, null, 2)}
 
 ### PLANO ###
@@ -266,28 +339,33 @@ Tipo: ${planType || 'mensal'} (${durationWeeks} semanas)
 ${scheduleText}
 
 ⚠️ CRÍTICO: USE EXATAMENTE ESTES HORÁRIOS LISTADOS ACIMA.
-Cada refeição no JSON deve ter o "horario" exatamente igual ao listado.
-NÃO invente outros horários. Apenas defina O QUE COMER em cada horário.
+A refeição pré-sono DEVE estar na última posição.
 
-${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
+### CÁLCULOS OBRIGATÓRIOS ###
+1. Calcule TMB (Harris-Benedict ou Mifflin-St Jeor)
+2. Aplique fator de atividade (1.4-1.7 conforme treino)
+3. Aplique déficit/superávit conforme objetivo
+4. Calcule proteína: 1.6-2.2g/kg
+5. Distribua carboidratos: 40-55% das calorias restantes
+6. Distribua gordura: restante
+7. Calcule água: 35-45ml/kg (mostrar cálculo)
+8. Distribua macros por refeição (cada refeição PRECISA ter macros)
 
-### INSTRUÇÕES ###
-1. Calcule as calorias de manutenção baseado nos dados (peso, altura, idade, sexo, atividade)
-2. Aplique déficit ou superávit conforme o OBJETIVO (emagrecimento: -15 a -25%, hipertrofia: +5 a +10%)
-3. Calcule proteína entre 1.6-2.2g/kg, distribuída nas refeições
-4. Identifique o NÍVEL para ajustar complexidade do plano
-5. Considere restrições alimentares e preferências
-6. Use linguagem simples e prática
-7. Inclua opções de substituição em todas as refeições
-8. Foque em alimentos acessíveis e práticos para o dia a dia brasileiro
-9. A refeição PRÉ-TREINO deve ter carboidratos de fácil digestão + proteína moderada
-10. A refeição PÓS-TREINO deve ter proteína de rápida absorção + carboidratos para reposição
+### OBRIGATÓRIO GERAR ###
+- macros_diarios com TODOS os campos numéricos
+- plano_dia_treino com refeições + macros por refeição
+- plano_dia_descanso com carboidratos reduzidos 15-30%
+- refeicao_pre_sono com 3 opções e macros
+- estrategia_anti_compulsao
+- hidratacao com litros_dia, calculo e distribuicao
+- lista_compras_semanal por categorias com quantidades (diário × 7)
+- substituicoes por categoria com equivalências numéricas
 
-### CRÍTICO - PERSONALIZAÇÃO BASEADA NA ANAMNESE ###
-- ANALISE o campo "restricoes_alimentares" para EVITAR completamente alimentos que o cliente não pode/não gosta de comer
-- ANALISE o campo "condicoes_saude" para adaptar a dieta (ex: diabético = baixo índice glicêmico, hipertenso = baixo sódio)
-- ANALISE o campo "toma_medicamentos" e "medicamentos" - se o cliente toma medicamentos, considere interações alimentares conhecidas
-- NUNCA sugira alimentos que o cliente indicou como restrição ou intolerância
-- PRIORIZE alimentos que o cliente indicou gostar ou ter facilidade de acesso
-- Se houver condições de saúde específicas, ADAPTE macros e escolhas alimentares adequadamente`;
+### PERSONALIZAÇÃO ###
+- NÃO inclua alimentos que o cliente NÃO pode comer (${restricoes})
+- Adapte para condições de saúde (${condicoes})
+- Substitutos NÃO devem conter alimentos restritos
+- Use alimentos acessíveis e práticos para o dia a dia brasileiro
+
+${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}`;
 }

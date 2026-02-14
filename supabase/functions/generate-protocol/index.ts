@@ -8,7 +8,8 @@ import {
   validateTreinoProtocol, 
   validateNutricaoProtocol, 
   validateMindsetProtocol,
-  normalizeTreinoProtocol
+  normalizeTreinoProtocol,
+  type NutricaoValidationResult
 } from "./schemas.ts";
 import { 
   getClientIdentifier, 
@@ -382,26 +383,102 @@ serve(async (req) => {
     // P0 FIX: Validar schema do protocolo antes de salvar
     let validationResult: { valid: boolean; errors: string[] };
     if (tipo === "treino") {
-      // Normalizar campos numéricos antes de validar
       normalizeTreinoProtocol(protocolData);
       validationResult = validateTreinoProtocol(protocolData);
     } else if (tipo === "nutricao") {
-      validationResult = validateNutricaoProtocol(protocolData);
+      // Nutrition uses expanded validation with correction loop
+      const nutResult = validateNutricaoProtocol(protocolData);
+      validationResult = { valid: nutResult.valid, errors: nutResult.errors };
+      
+      if (!nutResult.valid && nutResult.failedCriteria.length > 0) {
+        console.log(`[nutrition-correction] Failed criteria: ${nutResult.failedCriteria.join(", ")}. Attempting auto-correction...`);
+        
+        let correctionAttempts = 0;
+        const maxCorrectionAttempts = 2;
+        let currentData = protocolData;
+        
+        while (correctionAttempts < maxCorrectionAttempts) {
+          correctionAttempts++;
+          console.log(`[nutrition-correction] Attempt ${correctionAttempts}/${maxCorrectionAttempts}`);
+          
+          const correctionPrompt = `O protocolo nutricional gerado FALHOU nos seguintes critérios obrigatórios:
+${nutResult.failedCriteria.map(c => `- ${c}`).join("\n")}
+
+Erros específicos:
+${nutResult.errors.map(e => `- ${e}`).join("\n")}
+
+PROTOCOLO ATUAL (corrija e retorne COMPLETO):
+${JSON.stringify(currentData, null, 2).substring(0, 15000)}
+
+INSTRUÇÕES:
+- Corrija TODOS os critérios que falharam
+- Mantenha todos os campos que já estavam corretos
+- Retorne o JSON COMPLETO corrigido, não apenas as correções
+- NÃO altere horários das refeições
+- Garanta que macros_diarios, plano_dia_treino, plano_dia_descanso, refeicao_pre_sono (3 opções), hidratacao, lista_compras_semanal e substituicoes estejam presentes`;
+
+          try {
+            const corrResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: correctionPrompt },
+                ],
+              }),
+            });
+
+            if (corrResp.ok) {
+              const corrData = await corrResp.json();
+              const corrContent = corrData.choices?.[0]?.message?.content || "";
+              const cleanCorrContent = corrContent.replace(/```json\n?|\n?```/g, "").trim();
+              const correctedData = JSON.parse(cleanCorrContent);
+              
+              const revalidation = validateNutricaoProtocol(correctedData);
+              console.log(`[nutrition-correction] Re-validation: ${revalidation.failedCriteria.length} criteria still failing`);
+              
+              if (revalidation.valid) {
+                protocolData = correctedData;
+                validationResult = { valid: true, errors: [] };
+                console.log(`[nutrition-correction] ✅ All criteria passed after correction ${correctionAttempts}`);
+                break;
+              } else {
+                currentData = correctedData;
+                protocolData = correctedData; // Use best version even if not perfect
+                validationResult = { valid: revalidation.valid, errors: revalidation.errors };
+              }
+            } else {
+              await corrResp.text();
+              console.warn(`[nutrition-correction] AI correction call failed`);
+            }
+          } catch (corrErr) {
+            console.error(`[nutrition-correction] Error in correction attempt:`, corrErr);
+          }
+        }
+        
+        if (!validationResult.valid) {
+          console.warn(`[nutrition-correction] ⚠️ Protocol still incomplete after ${correctionAttempts} corrections. Saving with warning.`);
+        }
+      }
     } else {
       validationResult = validateMindsetProtocol(protocolData);
     }
 
     if (!validationResult.valid) {
       console.error(`Schema validation failed for ${tipo}:`, validationResult.errors);
-      // Log os primeiros 3 erros para debugging
       console.error("First errors:", validationResult.errors.slice(0, 3));
-      // Continuar mesmo com erros menores, mas logar para análise
-      if (validationResult.errors.some(e => e.includes("é obrigatório"))) {
+      // For nutrition, allow saving with warning (correction loop already attempted)
+      if (tipo !== "nutricao" && validationResult.errors.some(e => e.includes("é obrigatório"))) {
         throw new Error(`Protocolo gerado com estrutura incompleta: ${validationResult.errors[0]}`);
       }
     }
     
-    console.log(`Schema validation passed for ${tipo}`);
+    console.log(`Schema validation ${validationResult.valid ? 'passed' : 'completed with warnings'} for ${tipo}`);
 
     // Função auxiliar para normalizar nomes de exercícios para matching
     const normalizeExerciseName = (name: string): string => {
