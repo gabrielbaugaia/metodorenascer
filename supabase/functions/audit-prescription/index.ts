@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AUDIT_CRITERIA = [
+const TREINO_CRITERIA = [
   "coherence_anamnese",
   "coherence_objective",
   "restriction_respect",
@@ -16,6 +16,19 @@ const AUDIT_CRITERIA = [
   "instruction_clarity",
   "mindset_quality",
   "safety_score",
+] as const;
+
+const NUTRICAO_CRITERIA = [
+  "macros_definidos",
+  "macros_por_refeicao",
+  "pre_treino_presente",
+  "pos_treino_presente",
+  "pre_sono_presente",
+  "hidratacao_presente",
+  "dia_treino_vs_descanso",
+  "lista_compras_gerada",
+  "substituicoes_geradas",
+  "compativel_anamnese",
 ] as const;
 
 function getClassification(score: number): string {
@@ -41,7 +54,6 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) throw new Error("Unauthorized");
 
-    // Verify admin role
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
@@ -56,25 +68,43 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const systemPrompt = `Você é um auditor especialista em fisiologia do exercício, ciência comportamental e prescrição de treino.
-Sua função é avaliar a qualidade, segurança e coerência de protocolos de treino e mindset.
+    const isNutricao = type === "nutricao";
+    const criteria = isNutricao ? NUTRICAO_CRITERIA : TREINO_CRITERIA;
 
+    const systemPrompt = isNutricao 
+      ? `Você é um auditor especialista em nutrição esportiva e prescrição alimentar.
+Avalie os seguintes 10 critérios (true = passou, false = falhou):
+
+1. macros_definidos - Macros diários definidos com valores numéricos (calorias, proteína, carboidrato, gordura)?
+2. macros_por_refeicao - Cada refeição tem macros detalhados (proteinas_g, carboidratos_g, gorduras_g, calorias)?
+3. pre_treino_presente - Existe refeição pré-treino com macros adequados (P 25-45g)?
+4. pos_treino_presente - Existe refeição pós-treino com macros adequados (P 30-50g)?
+5. pre_sono_presente - Existe refeição pré-sono com pelo menos 3 opções com macros?
+6. hidratacao_presente - Hidratação calculada por kg de peso (35-45ml/kg)?
+7. dia_treino_vs_descanso - Existem dois planos diferenciados (dia treino vs descanso)?
+8. lista_compras_gerada - Lista de compras semanal com quantidades por categoria?
+9. substituicoes_geradas - Substituições equivalentes com quantidades numéricas?
+10. compativel_anamnese - Protocolo respeita restrições, aversões e condições de saúde?
+
+Para cada critério que FALHOU, inclua uma descrição em "issues".
+Se o score < 80, inclua sugestões em "corrections_applied".
+IMPORTANTE: Responda APENAS com JSON.`
+      : `Você é um auditor especialista em fisiologia do exercício, ciência comportamental e prescrição de treino.
 Avalie os seguintes 9 critérios (true = passou, false = falhou):
 
 1. coherence_anamnese - O protocolo respeita as limitações, nível e rotina do cliente conforme a anamnese?
 2. coherence_objective - O protocolo está alinhado com o objetivo principal do cliente?
 3. restriction_respect - Todas as restrições, lesões e condições médicas foram respeitadas?
-4. weekly_volume - O volume semanal é adequado para o objetivo (nem insuficiente nem excessivo)?
-5. muscle_distribution - A distribuição dos grupamentos musculares está equilibrada e coerente?
-6. progression_defined - Existe progressão clara de carga, reps ou volume ao longo de 4 semanas?
-7. instruction_clarity - As instruções de execução são claras e completas?
-8. mindset_quality - O protocolo de mindset é personalizado (não genérico) e baseado em comportamento real?
-9. safety_score - A prescrição geral é segura, sem exercícios contraindicados?
+4. weekly_volume - O volume semanal é adequado (nem insuficiente nem excessivo)?
+5. muscle_distribution - Distribuição dos grupamentos musculares equilibrada?
+6. progression_defined - Progressão clara de carga, reps ou volume ao longo de 4 semanas?
+7. instruction_clarity - Instruções de execução claras e completas?
+8. mindset_quality - Protocolo de mindset personalizado e baseado em comportamento real?
+9. safety_score - Prescrição geral segura, sem exercícios contraindicados?
 
-Para cada critério que FALHOU, inclua uma descrição do problema em "issues".
-Se o score final for < 80, inclua sugestões de correção em "corrections_applied".
-
-IMPORTANTE: Responda APENAS com o JSON da auditoria, sem texto adicional.`;
+Para cada critério que FALHOU, inclua em "issues".
+Se o score < 80, inclua sugestões em "corrections_applied".
+IMPORTANTE: Responda APENAS com JSON.`;
 
     const anamneseContext = anamnese ? `
 DADOS DA ANAMNESE DO CLIENTE:
@@ -88,14 +118,19 @@ DADOS DA ANAMNESE DO CLIENTE:
 - Lesões/Restrições: ${anamnese.injuries || anamnese.restricoes_medicas || "Nenhuma"}
 - Condições de saúde: ${anamnese.condicoes_saude || "Nenhuma"}
 - Medicamentos: ${anamnese.toma_medicamentos ? "Sim" : "Não"}
+- Restrições alimentares: ${anamnese.restricoes_alimentares || "Nenhuma"}
 - Dias disponíveis: ${anamnese.dias_disponiveis || "N/A"}
 - Local de treino: ${anamnese.local_treino || "N/A"}
 - Horário treino: ${anamnese.horario_treino || "N/A"}
 - Qualidade sono: ${anamnese.qualidade_sono || "N/A"}
 - Nível estresse: ${anamnese.nivel_estresse || "N/A"}
-` : "ANAMNESE: Dados não disponíveis - avaliar apenas o protocolo em si.";
+` : "ANAMNESE: Dados não disponíveis.";
 
     const protocolStr = typeof protocol === "string" ? protocol : JSON.stringify(protocol, null, 2);
+
+    const criteriaList = isNutricao
+      ? NUTRICAO_CRITERIA.map(c => `"${c}": true/false`).join(",\n  ")
+      : TREINO_CRITERIA.map(c => `"${c}": true/false`).join(",\n  ");
 
     const userPrompt = `${anamneseContext}
 
@@ -104,15 +139,7 @@ ${protocolStr.substring(0, 15000)}
 
 Retorne o resultado da auditoria no formato JSON:
 {
-  "coherence_anamnese": true/false,
-  "coherence_objective": true/false,
-  "restriction_respect": true/false,
-  "weekly_volume": true/false,
-  "muscle_distribution": true/false,
-  "progression_defined": true/false,
-  "instruction_clarity": true/false,
-  "mindset_quality": true/false,
-  "safety_score": true/false,
+  ${criteriaList},
   "issues": ["problema 1", "problema 2"],
   "corrections_applied": ["correção 1"]
 }`;
@@ -120,11 +147,11 @@ Retorne o resultado da auditoria no formato JSON:
     let auditResult: any = null;
     let correctedProtocol = protocol;
     let attempts = 0;
-    const maxAttempts = 3; // 1 initial + 2 corrections
+    const maxAttempts = 3;
 
     while (attempts < maxAttempts) {
       attempts++;
-      console.log(`[audit-prescription] Attempt ${attempts}/${maxAttempts}`);
+      console.log(`[audit-prescription] Attempt ${attempts}/${maxAttempts} (type: ${type})`);
 
       const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -172,17 +199,10 @@ Retorne o resultado da auditoria no formato JSON.` },
       }
 
       if (!auditResult) {
-        // Create a default pass result if parsing fails
+        const defaultCriteria: Record<string, boolean> = {};
+        criteria.forEach(c => { defaultCriteria[c] = true; });
         auditResult = {
-          coherence_anamnese: true,
-          coherence_objective: true,
-          restriction_respect: true,
-          weekly_volume: true,
-          muscle_distribution: true,
-          progression_defined: true,
-          instruction_clarity: true,
-          mindset_quality: true,
-          safety_score: true,
+          ...defaultCriteria,
           issues: [],
           corrections_applied: ["Auditoria automática não pôde ser processada - aprovação padrão"],
         };
@@ -190,18 +210,18 @@ Retorne o resultado da auditoria no formato JSON.` },
 
       // Calculate score
       let passed = 0;
-      for (const criterion of AUDIT_CRITERIA) {
+      for (const criterion of criteria) {
         if (auditResult[criterion] === true) passed++;
       }
-      const finalScore = Math.round((passed / AUDIT_CRITERIA.length) * 100);
+      const finalScore = Math.round((passed / criteria.length) * 100);
       auditResult.final_score = finalScore;
       auditResult.classification = getClassification(finalScore);
       auditResult.audited_at = new Date().toISOString();
       auditResult.attempts = attempts;
+      auditResult.audit_type = type || "treino";
 
       console.log(`[audit-prescription] Score: ${finalScore}/100 (${auditResult.classification})`);
 
-      // If score >= 80 or we've exhausted correction attempts, stop
       if (finalScore >= 80 || attempts >= maxAttempts) {
         if (finalScore < 80 && attempts >= maxAttempts) {
           auditResult.warning = "Score abaixo de 80 após tentativas de correção. Revisão manual recomendada.";
@@ -209,7 +229,6 @@ Retorne o resultado da auditoria no formato JSON.` },
         break;
       }
 
-      // Score < 80: request AI to correct the protocol
       console.log(`[audit-prescription] Score < 80, requesting correction...`);
       const correctionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -249,7 +268,7 @@ Corrija os problemas e retorne o protocolo completo corrigido em JSON.` },
           console.error("Failed to parse corrected protocol");
         }
       } else {
-        await correctionResponse.text(); // consume body
+        await correctionResponse.text();
       }
     }
 

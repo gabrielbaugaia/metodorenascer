@@ -2,6 +2,7 @@ import { CheckCircle2, XCircle, AlertTriangle, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface AuditResult {
+  // Treino criteria
   coherence_anamnese?: boolean;
   coherence_objective?: boolean;
   restriction_respect?: boolean;
@@ -11,19 +12,33 @@ interface AuditResult {
   instruction_clarity?: boolean;
   mindset_quality?: boolean;
   safety_score?: boolean;
+  // Nutrição criteria
+  macros_definidos?: boolean;
+  macros_por_refeicao?: boolean;
+  pre_treino_presente?: boolean;
+  pos_treino_presente?: boolean;
+  pre_sono_presente?: boolean;
+  hidratacao_presente?: boolean;
+  dia_treino_vs_descanso?: boolean;
+  lista_compras_gerada?: boolean;
+  substituicoes_geradas?: boolean;
+  compativel_anamnese?: boolean;
+  // Common
   final_score?: number;
   classification?: string;
   issues?: string[];
   corrections_applied?: string[];
   audited_at?: string;
   warning?: string;
+  audit_type?: string;
 }
 
 interface Props {
   auditResult: AuditResult | null | undefined;
+  tipo?: string;
 }
 
-const CRITERIA_LABELS: Record<string, string> = {
+const TREINO_CRITERIA_LABELS: Record<string, string> = {
   coherence_anamnese: "Coerência com anamnese",
   coherence_objective: "Coerência com objetivo",
   restriction_respect: "Respeito às restrições/lesões",
@@ -33,6 +48,19 @@ const CRITERIA_LABELS: Record<string, string> = {
   instruction_clarity: "Clareza das instruções",
   mindset_quality: "Qualidade do protocolo de mindset",
   safety_score: "Segurança geral da prescrição",
+};
+
+const NUTRICAO_CRITERIA_LABELS: Record<string, string> = {
+  macros_definidos: "Macros diários definidos",
+  macros_por_refeicao: "Macros por refeição",
+  pre_treino_presente: "Refeição pré-treino presente",
+  pos_treino_presente: "Refeição pós-treino presente",
+  pre_sono_presente: "Refeição pré-sono (3 opções)",
+  hidratacao_presente: "Hidratação calculada",
+  dia_treino_vs_descanso: "Dia treino vs descanso",
+  lista_compras_gerada: "Lista de compras gerada",
+  substituicoes_geradas: "Substituições geradas",
+  compativel_anamnese: "Compatível com anamnese",
 };
 
 function getScoreColor(score: number): string {
@@ -48,18 +76,21 @@ function getScoreBadgeVariant(score: number): "default" | "secondary" | "destruc
   return "destructive";
 }
 
-export function PrescriptionAuditPanel({ auditResult }: Props) {
+export function PrescriptionAuditPanel({ auditResult, tipo }: Props) {
   if (!auditResult) return null;
 
   const score = auditResult.final_score ?? 0;
-  const criteria = Object.keys(CRITERIA_LABELS);
+  const auditType = auditResult.audit_type || tipo || "treino";
+  const isNutricao = auditType === "nutricao";
+  const criteriaLabels = isNutricao ? NUTRICAO_CRITERIA_LABELS : TREINO_CRITERIA_LABELS;
+  const criteria = Object.keys(criteriaLabels);
 
   return (
     <div className="border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50/50">
       <div className="flex items-center justify-between">
         <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500 flex items-center gap-2">
           <Shield className="h-4 w-4" />
-          Auditoria Interna de Qualidade
+          {isNutricao ? "Auditoria Nutricional" : "Auditoria Interna de Qualidade"}
         </h4>
         <div className="flex items-center gap-2">
           <span className={`text-2xl font-bold ${getScoreColor(score)}`}>
@@ -94,7 +125,7 @@ export function PrescriptionAuditPanel({ auditResult }: Props) {
               ) : (
                 <XCircle className="h-4 w-4 text-red-600 shrink-0" />
               )}
-              <span>{CRITERIA_LABELS[key]}</span>
+              <span>{criteriaLabels[key]}</span>
             </div>
           );
         })}
