@@ -1,148 +1,157 @@
 
-# Modo Auditor de Prescricao (Admin Only)
 
-Sistema de auditoria automatica que valida qualidade, seguranca e coerencia dos protocolos de treino e mindset antes da liberacao.
+# Anotar Cargas, Cronometro de Intervalo e Tempo de Treino
 
----
-
-## Visao Geral
-
-O auditor sera implementado como uma camada de validacao integrada ao fluxo de geracao de protocolos (tanto no fluxo Renascer quanto no MQO), executada por IA apos a geracao do protocolo. O resultado da auditoria e armazenado junto ao protocolo e visivel apenas para admins.
+Sistema completo de acompanhamento de treino em tempo real com registro de cargas, cronometro de descanso obrigatorio entre series e medicao do tempo total da sessao.
 
 ---
 
-## Fase 1: Estrutura de Dados
+## Visao Geral do Fluxo
 
-### Adicionar coluna na tabela `protocolos`
+Ao abrir um treino (WorkoutCard), o aluno entra em um "modo sessao ativa":
 
-| Coluna | Tipo | Default |
+1. Um timer global comeca a contar o tempo total do treino
+2. Para cada exercicio, o aluno registra a carga (kg) usada em cada serie
+3. Ao concluir uma serie, um cronometro decrescente de intervalo e acionado automaticamente
+4. O aluno NAO pode marcar a proxima serie como feita ate o cronometro zerar
+5. O aluno NAO pode marcar o treino como concluido ate completar todas as series de todos os exercicios
+6. Ao finalizar, o tempo total e exibido em um resumo e salvo para analises futuras
+
+---
+
+## Fase 1: Banco de Dados
+
+### Nova tabela `workout_set_logs`
+
+Registra cada serie individualmente com carga e tempo.
+
+| Coluna | Tipo | Descricao |
 |---|---|---|
-| audit_result | jsonb | null |
+| id | uuid PK | |
+| user_id | uuid | FK auth user |
+| workout_completion_id | uuid | FK workout_completions (preenchido apos conclusao) |
+| exercise_name | text | Nome do exercicio |
+| set_number | integer | Numero da serie (1, 2, 3...) |
+| weight_kg | numeric | Carga usada em kg |
+| reps_done | integer | Repeticoes realizadas |
+| rest_seconds | integer | Tempo de descanso prescrito |
+| rest_respected | boolean | Se o intervalo foi respeitado |
+| created_at | timestamptz | |
 
-### Adicionar coluna na tabela `mqo_protocols`
+RLS: usuarios podem inserir/ver/atualizar apenas seus proprios registros. Admins podem ver todos.
 
-| Coluna | Tipo | Default |
-|---|---|---|
-| audit_result | jsonb | null |
+### Alterar tabela `workout_completions`
 
-### Formato do `audit_result` (jsonb)
-
-```text
-{
-  "coherence_anamnese": true/false,
-  "coherence_objective": true/false,
-  "restriction_respect": true/false,
-  "weekly_volume": true/false,
-  "muscle_distribution": true/false,
-  "progression_defined": true/false,
-  "instruction_clarity": true/false,
-  "mindset_quality": true/false,
-  "safety_score": true/false,
-  "final_score": 88,
-  "classification": "Muito bom",
-  "issues": ["lista de problemas encontrados"],
-  "corrections_applied": ["lista de correcoes automaticas"],
-  "audited_at": "ISO timestamp"
-}
-```
+Adicionar coluna:
+- `total_duration_seconds` (integer, nullable) -- tempo real cronometrado da sessao
 
 ---
 
-## Fase 2: Edge Function `audit-prescription`
+## Fase 2: Hook `useWorkoutSession`
 
-Nova edge function dedicada que recebe o protocolo gerado + dados do cliente (anamnese) e executa a auditoria via IA.
+Novo hook dedicado ao controle da sessao ativa de treino.
 
-### Fluxo
+### Estado gerenciado
 
-1. Recebe: protocolo gerado (treino + mindset), dados da anamnese do cliente, tipo
-2. Envia para a IA com prompt de auditoria especifico
-3. IA retorna o objeto `prescription_audit` com os 9 criterios + score
-4. Se score < 80: a IA recebe instrucoes de correcao e regenera o protocolo corrigido
-5. Loop ate score >= 80 (maximo 2 tentativas de correcao)
-6. Retorna o protocolo (possivelmente corrigido) + resultado da auditoria
+- `sessionActive`: boolean -- sessao iniciada ou nao
+- `sessionStartTime`: Date -- quando o treino comecou
+- `elapsedSeconds`: number -- tempo total decorrido (timer crescente)
+- `exerciseProgress`: mapa de exercicio -> array de series completadas com carga
+- `restTimer`: objeto com { active, remainingSeconds, exerciseName, setNumber }
+- `allSetsCompleted`: boolean -- se todas as series de todos exercicios foram feitas
 
-### Criterios de avaliacao (9 itens, cada um vale ~11 pontos)
+### Funcoes expostas
 
-1. Coerencia com anamnese
-2. Coerencia com objetivo
-3. Respeito a restricoes/lesoes
-4. Volume semanal adequado
-5. Distribuicao de grupamentos musculares
-6. Progressao definida (4 semanas)
-7. Clareza das instrucoes
-8. Qualidade do protocolo de mindset
-9. Seguranca geral da prescricao
-
-### Score final
-
-- 90-100: Excelente
-- 80-89: Muito bom
-- 70-79: Aceitavel
-- <70: Requer correcao automatica
+- `startSession()` -- inicia o timer global
+- `logSet(exerciseName, setNumber, weightKg, repsDone, restSeconds)` -- registra serie e dispara cronometro
+- `skipRest()` -- NAO disponivel (intervalo obrigatorio)
+- `canLogNextSet(exerciseName)` -- retorna false se cronometro ativo
+- `canCompleteWorkout()` -- retorna true somente se todas series foram registradas E nenhum timer ativo
+- `finishSession()` -- para o timer, calcula tempo total, retorna resumo
+- `getExerciseLog(exerciseName)` -- retorna series ja registradas
 
 ---
 
-## Fase 3: Integracao no Fluxo de Geracao
+## Fase 3: Componentes Frontend
 
-### Fluxo Renascer (`generate-protocol`)
+### `WorkoutSessionManager` (novo)
 
-Apos gerar e salvar o protocolo, chamar a auditoria automaticamente:
+Wrapper que aparece quando o aluno clica "Iniciar Treino" no WorkoutCard. Substitui a visualizacao estatica por uma interativa.
 
-1. Protocolo de treino e gerado e salvo
-2. Chama `audit-prescription` com os dados do protocolo + anamnese
-3. Se score < 80, o protocolo e regenerado com as correcoes
-4. O `audit_result` e salvo na coluna do protocolo
-5. O protocolo final (possivelmente corrigido) e atualizado
+Exibe:
+- Timer global no topo (tempo decorrido)
+- Lista de exercicios com campos de carga por serie
+- Cronometro decrescente animado quando ativo
+- Botao de conclusao bloqueado ate tudo estar preenchido
 
-### Fluxo MQO (`mqo-generate-protocol`)
+### `ExerciseSetTracker` (novo)
 
-Mesmo processo: apos gerar, auditar e corrigir se necessario.
+Componente por exercicio que mostra:
+- Nome do exercicio
+- Para cada serie: campo de carga (kg) + campo de reps realizadas + botao "Concluir Serie"
+- Indicador visual de series completadas (check verde) vs pendentes
+- Campo de carga com valor padrao editavel
+
+### `RestCountdown` (novo)
+
+Overlay/modal com cronometro decrescente:
+- Circulo animado com contagem regressiva
+- Tempo restante em numeros grandes
+- Mensagem motivacional
+- SEM botao de pular -- obrigatorio esperar
+- Som/vibracao ao finalizar (opcional, via navigator.vibrate)
+
+### `WorkoutSummary` (novo)
+
+Tela exibida apos finalizar o treino:
+- Tempo total da sessao (formatado mm:ss)
+- Total de series completadas
+- Carga total levantada (soma de todas cargas x reps)
+- Exercicios concluidos
+- Botao "Salvar e Fechar"
+
+### Alteracoes em `WorkoutCard`
+
+- Adicionar botao "Iniciar Treino" que abre o WorkoutSessionManager
+- O botao "Marcar como Concluido" so aparece apos passar pelo fluxo completo
+- NAO e possivel concluir sem ter registrado todas as series
+
+### Alteracoes em `ExerciseTable`
+
+- Adicionar coluna "Carga" na visualizacao (exibe ultima carga usada se houver historico)
+- Indicador visual de series completadas na sessao atual
 
 ---
 
-## Fase 4: Frontend - Exibicao do Auditor (Admin Only)
+## Fase 4: Regras de Bloqueio
 
-### Componente `PrescriptionAuditPanel`
+### Intervalo obrigatorio
 
-Exibido apenas quando `useAdminCheck().isAdmin === true`.
+- Ao concluir uma serie, o cronometro decrescente inicia automaticamente com o tempo de descanso prescrito (campo `rest` do exercicio, ex: "60s", "90s")
+- Enquanto o cronometro esta ativo, os botoes de "Concluir Serie" de TODOS os exercicios ficam desabilitados
+- O cronometro e parseado do campo `rest` (ex: "60s" -> 60, "1:30" -> 90, "2min" -> 120)
 
-Mostra:
-- Titulo "AUDITORIA INTERNA DE QUALIDADE"
-- 9 criterios com icones de check verde ou X vermelho
-- Score final XX/100 com badge de classificacao colorida
-- Lista de problemas encontrados (se houver)
-- Lista de correcoes aplicadas (se houver)
+### Conclusao do treino
 
-### Locais de exibicao
-
-1. **Pagina de Treino do admin** (`AdminClienteDetalhes.tsx`): ao visualizar protocolos de um cliente, mostrar o painel de auditoria abaixo de cada protocolo
-2. **MQO Editor** (`MqoProtocolEditor.tsx`): mostrar auditoria de cada protocolo gerado no MQO
-
-### Visibilidade
-
-- Admin: mostra o painel completo de auditoria
-- Aluno: componente NAO e renderizado (condicional via `useAdminCheck`)
+- O botao "Marcar como Concluido" so fica habilitado quando:
+  1. Todas as series de todos os exercicios foram registradas
+  2. Nenhum cronometro de descanso esta ativo
+- Ao clicar, salva o tempo total no `workout_completions.total_duration_seconds`
 
 ---
 
-## Fase 5: PDF com Auditoria (Apenas Admin)
+## Fase 5: Salvamento e Historico
 
-### PDF do aluno (existente)
+### Ao finalizar o treino
 
-Nenhuma alteracao -- auditoria NAO aparece.
+1. Inserir registro em `workout_completions` com `total_duration_seconds`
+2. Inserir todos os registros de series em `workout_set_logs`
+3. Exibir WorkoutSummary com os dados
 
-### PDF admin (novo parametro)
+### Historico de cargas
 
-Adicionar parametro `includeAudit: boolean` nas funcoes de PDF:
-
-- `generateProtocolPdf`: adicionar secao final "AUDITORIA INTERNA DE QUALIDADE" quando `includeAudit = true`
-- `generateMqoProtocolPdf`: mesma logica
-
-A secao de auditoria no PDF mostra:
-- Tabela com os 9 criterios e status (Passou/Falhou)
-- Score final
-- Classificacao
-- Observacoes
+- Na proxima vez que o aluno abrir o mesmo exercicio, mostrar a ultima carga usada como sugestao
+- Query: buscar ultimo `workout_set_logs` para aquele `exercise_name` do usuario
 
 ---
 
@@ -150,36 +159,65 @@ A secao de auditoria no PDF mostra:
 
 | Arquivo | Descricao |
 |---|---|
-| `supabase/functions/audit-prescription/index.ts` | Edge function de auditoria com IA |
-| `src/components/admin/PrescriptionAuditPanel.tsx` | Componente visual do auditor |
+| `src/hooks/useWorkoutSession.ts` | Hook de controle da sessao ativa |
+| `src/components/treino/WorkoutSessionManager.tsx` | Tela de treino ativo |
+| `src/components/treino/ExerciseSetTracker.tsx` | Registro de series por exercicio |
+| `src/components/treino/RestCountdown.tsx` | Cronometro decrescente |
+| `src/components/treino/WorkoutSummary.tsx` | Resumo final |
 
 ## Arquivos a Modificar
 
 | Arquivo | Alteracao |
 |---|---|
-| `supabase/functions/generate-protocol/index.ts` | Chamar auditoria apos geracao, salvar audit_result |
-| `supabase/functions/mqo-generate-protocol/index.ts` | Chamar auditoria apos geracao no MQO |
-| `supabase/config.toml` | Registrar nova edge function |
-| `src/pages/admin/AdminClienteDetalhes.tsx` | Exibir PrescriptionAuditPanel nos protocolos |
-| `src/components/mqo/MqoProtocolEditor.tsx` | Exibir auditoria nos protocolos MQO |
-| `src/lib/generateProtocolPdf.ts` | Adicionar secao de auditoria para PDFs admin |
-| `src/lib/generateMqoProtocolPdf.ts` | Adicionar secao de auditoria para PDFs MQO admin |
+| `src/components/treino/WorkoutCard.tsx` | Adicionar botao "Iniciar Treino" e fluxo de sessao |
+| `src/components/treino/ExerciseTable.tsx` | Coluna de carga, indicador de series |
+| `src/hooks/useWorkoutTracking.ts` | Salvar `total_duration_seconds` |
 
 ## Migracao SQL
 
 ```text
-ALTER TABLE protocolos ADD COLUMN audit_result jsonb DEFAULT null;
-ALTER TABLE mqo_protocols ADD COLUMN audit_result jsonb DEFAULT null;
+-- Tabela de registro de series individuais
+CREATE TABLE public.workout_set_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  workout_completion_id uuid REFERENCES public.workout_completions(id),
+  exercise_name text NOT NULL,
+  set_number integer NOT NULL,
+  weight_kg numeric DEFAULT 0,
+  reps_done integer DEFAULT 0,
+  rest_seconds integer DEFAULT 60,
+  rest_respected boolean DEFAULT true,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.workout_set_logs ENABLE ROW LEVEL SECURITY;
+
+-- RLS
+CREATE POLICY "Users can insert own set logs"
+  ON public.workout_set_logs FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own set logs"
+  ON public.workout_set_logs FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view all set logs"
+  ON public.workout_set_logs FOR SELECT
+  USING (public.has_role(auth.uid(), 'admin'));
+
+-- Coluna de tempo total no workout_completions
+ALTER TABLE public.workout_completions
+  ADD COLUMN total_duration_seconds integer DEFAULT null;
 ```
 
 ---
 
 ## Secao Tecnica
 
-- A auditoria usa Lovable AI (`google/gemini-2.5-flash`) via tool calling para extrair o objeto estruturado de auditoria
-- O prompt de auditoria e independente dos prompts de geracao
-- A funcao `audit-prescription` valida JWT + role admin
-- O loop de correcao tem limite de 2 tentativas para evitar loops infinitos
-- Se apos 2 tentativas o score ainda for < 80, o protocolo e salvo com flag de alerta no audit_result
-- A verificacao de admin no frontend usa `useAdminCheck` (consulta server-side via `user_roles`), nunca localStorage
-- Nenhum dado de auditoria e exposto ao cliente via RLS (o campo `audit_result` so e lido por admins nas paginas admin)
+- O timer global usa `setInterval` com 1s de precisao, armazenando `startTime` em ref para evitar drift
+- O cronometro decrescente parseia o campo `rest` do exercicio (suporte a "60s", "1min", "1:30", "90s", "2min")
+- `workout_set_logs` permite analises futuras: progressao de carga por exercicio ao longo do tempo, volume total, etc.
+- O historico de cargas e carregado via query ao abrir a sessao (ultimo log por exercise_name)
+- Nenhuma alteracao nos fluxos admin/MQO -- funcionalidade exclusiva da area do aluno
+- RLS garante que cada aluno so ve seus proprios registros de series
+
