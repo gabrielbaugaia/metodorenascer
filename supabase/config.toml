@@ -108,3 +108,9 @@ verify_jwt = false
 
 [functions.audit-treino]
 verify_jwt = false
+
+[functions.mqo-analyze]
+verify_jwt = true
+
+[functions.mqo-generate-protocol]
+verify_jwt = true

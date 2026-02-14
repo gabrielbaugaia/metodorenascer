@@ -859,6 +859,176 @@ export type Database = {
           },
         ]
       }
+      mqo_clients: {
+        Row: {
+          attention_points: string | null
+          created_at: string
+          id: string
+          name: string
+          objectives: string | null
+          profile_id: string | null
+          strengths: string | null
+          suggested_strategy: string | null
+          summary: string | null
+          trainer_direction: string | null
+          updated_at: string
+        }
+        Insert: {
+          attention_points?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          objectives?: string | null
+          profile_id?: string | null
+          strengths?: string | null
+          suggested_strategy?: string | null
+          summary?: string | null
+          trainer_direction?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attention_points?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          objectives?: string | null
+          profile_id?: string | null
+          strengths?: string | null
+          suggested_strategy?: string | null
+          summary?: string | null
+          trainer_direction?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mqo_clients_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mqo_materials: {
+        Row: {
+          client_id: string
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mqo_materials_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "mqo_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mqo_protocol_versions: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          protocol_id: string
+          status: string
+          version_number: number
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          protocol_id: string
+          status: string
+          version_number: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          protocol_id?: string
+          status?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mqo_protocol_versions_protocol_id_fkey"
+            columns: ["protocol_id"]
+            isOneToOne: false
+            referencedRelation: "mqo_protocols"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mqo_protocols: {
+        Row: {
+          client_id: string
+          content: Json
+          created_at: string
+          generation_options: Json | null
+          id: string
+          published_at: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          content?: Json
+          created_at?: string
+          generation_options?: Json | null
+          id?: string
+          published_at?: string | null
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          content?: Json
+          created_at?: string
+          generation_options?: Json | null
+          id?: string
+          published_at?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mqo_protocols_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "mqo_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_logs: {
         Row: {
           created_at: string
