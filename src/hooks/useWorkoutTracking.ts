@@ -212,7 +212,9 @@ export function useWorkoutTracking() {
     exercisesCompleted: number,
     durationMinutes?: number,
     caloriesBurned?: number,
-    notes?: string
+    notes?: string,
+    totalDurationSeconds?: number,
+    sessionId?: string
   ) => {
     if (!user) return false;
 
@@ -230,7 +232,7 @@ export function useWorkoutTracking() {
         return false;
       }
 
-      const { error } = await supabase.from("workout_completions").insert({
+      const insertData: Record<string, unknown> = {
         user_id: user.id,
         workout_date: today,
         workout_name: workoutName,
@@ -238,7 +240,16 @@ export function useWorkoutTracking() {
         duration_minutes: durationMinutes,
         calories_burned: caloriesBurned,
         notes: notes,
-      });
+      };
+
+      if (totalDurationSeconds !== undefined) {
+        insertData.total_duration_seconds = totalDurationSeconds;
+      }
+      if (sessionId) {
+        insertData.session_id = sessionId;
+      }
+
+      const { error } = await supabase.from("workout_completions").insert(insertData as any);
 
       if (error) throw error;
 

@@ -7,10 +7,11 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, Clock, CheckCircle, Flame, Dumbbell } from "lucide-react";
+import { ChevronDown, Clock, CheckCircle, Flame, Dumbbell, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExerciseTable } from "./ExerciseTable";
 import { ExerciseVideoModal } from "./ExerciseVideoModal";
+import { WorkoutSessionManager } from "./WorkoutSessionManager";
 
 interface Exercise {
   name: string;
@@ -30,7 +31,7 @@ interface WorkoutCardProps {
   completed: boolean;
   calories?: number;
   index: number;
-  onComplete?: () => void;
+  onComplete?: (durationSeconds?: number, sessionId?: string) => void;
   todayCompleted?: boolean;
 }
 
@@ -48,6 +49,7 @@ export function WorkoutCard({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [sessionMode, setSessionMode] = useState(false);
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(exercise);
@@ -59,6 +61,25 @@ export function WorkoutCard({
   const progressPercent = safeExercises.length > 0 
     ? (completedCount / safeExercises.length) * 100 
     : 0;
+
+  const handleSessionComplete = (durationSeconds: number, sessionId: string) => {
+    setSessionMode(false);
+    if (onComplete) {
+      onComplete(durationSeconds, sessionId);
+    }
+  };
+
+  // Session mode - full screen workout tracker
+  if (sessionMode) {
+    return (
+      <WorkoutSessionManager
+        workoutName={`${day} — ${focus}`}
+        exercises={safeExercises}
+        onComplete={handleSessionComplete}
+        onCancel={() => setSessionMode(false)}
+      />
+    );
+  }
 
   return (
     <>
@@ -168,11 +189,11 @@ export function WorkoutCard({
                   size="lg"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onComplete();
+                    setSessionMode(true);
                   }}
                 >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Marcar como Concluído
+                  <Play className="w-4 h-4 mr-2" />
+                  Iniciar Treino
                 </Button>
               )}
               {todayCompleted && !completed && (

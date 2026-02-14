@@ -47,6 +47,39 @@ export type Database = {
         }
         Relationships: []
       }
+      active_workout_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          started_at: string
+          status: string
+          total_duration_seconds: number | null
+          user_id: string
+          workout_name: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_duration_seconds?: number | null
+          user_id: string
+          workout_name: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_duration_seconds?: number | null
+          user_id?: string
+          workout_name?: string
+        }
+        Relationships: []
+      }
       admin_support_alerts: {
         Row: {
           alert_type: string
@@ -1870,6 +1903,8 @@ export type Database = {
           exercises_completed: number | null
           id: string
           notes: string | null
+          session_id: string | null
+          total_duration_seconds: number | null
           user_id: string
           workout_date: string
           workout_name: string | null
@@ -1881,6 +1916,8 @@ export type Database = {
           exercises_completed?: number | null
           id?: string
           notes?: string | null
+          session_id?: string | null
+          total_duration_seconds?: number | null
           user_id: string
           workout_date?: string
           workout_name?: string | null
@@ -1892,11 +1929,21 @@ export type Database = {
           exercises_completed?: number | null
           id?: string
           notes?: string | null
+          session_id?: string | null
+          total_duration_seconds?: number | null
           user_id?: string
           workout_date?: string
           workout_name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "workout_completions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "active_workout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workout_sessions: {
         Row: {
@@ -1947,6 +1994,53 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_set_logs: {
+        Row: {
+          created_at: string
+          exercise_name: string
+          id: string
+          reps_done: number
+          rest_respected: boolean
+          rest_seconds: number
+          session_id: string
+          set_number: number
+          user_id: string
+          weight_kg: number
+        }
+        Insert: {
+          created_at?: string
+          exercise_name: string
+          id?: string
+          reps_done?: number
+          rest_respected?: boolean
+          rest_seconds?: number
+          session_id: string
+          set_number: number
+          user_id: string
+          weight_kg?: number
+        }
+        Update: {
+          created_at?: string
+          exercise_name?: string
+          id?: string
+          reps_done?: number
+          rest_respected?: boolean
+          rest_seconds?: number
+          session_id?: string
+          set_number?: number
+          user_id?: string
+          weight_kg?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_set_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "active_workout_sessions"
             referencedColumns: ["id"]
           },
         ]
