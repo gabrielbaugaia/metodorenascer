@@ -1,223 +1,194 @@
 
+# Prescrição Nutricional Completa + Lista de Compras + Substituições
 
-# Anotar Cargas, Cronometro de Intervalo e Tempo de Treino
-
-Sistema completo de acompanhamento de treino em tempo real com registro de cargas, cronometro de descanso obrigatorio entre series e medicao do tempo total da sessao.
-
----
-
-## Visao Geral do Fluxo
-
-Ao abrir um treino (WorkoutCard), o aluno entra em um "modo sessao ativa":
-
-1. Um timer global comeca a contar o tempo total do treino
-2. Para cada exercicio, o aluno registra a carga (kg) usada em cada serie
-3. Ao concluir uma serie, um cronometro decrescente de intervalo e acionado automaticamente
-4. O aluno NAO pode marcar a proxima serie como feita ate o cronometro zerar
-5. O aluno NAO pode marcar o treino como concluido ate completar todas as series de todos os exercicios
-6. Ao finalizar, o tempo total e exibido em um resumo e salvo para analises futuras
+Upgrade massivo no sistema de geração nutricional para produzir protocolos quantificados, estratégicos e completos, com lista de compras automatica e sistema de substituições equivalentes.
 
 ---
 
-## Fase 1: Banco de Dados
+## O Que Muda
 
-### Nova tabela `workout_set_logs`
-
-Registra cada serie individualmente com carga e tempo.
-
-| Coluna | Tipo | Descricao |
-|---|---|---|
-| id | uuid PK | |
-| user_id | uuid | FK auth user |
-| workout_completion_id | uuid | FK workout_completions (preenchido apos conclusao) |
-| exercise_name | text | Nome do exercicio |
-| set_number | integer | Numero da serie (1, 2, 3...) |
-| weight_kg | numeric | Carga usada em kg |
-| reps_done | integer | Repeticoes realizadas |
-| rest_seconds | integer | Tempo de descanso prescrito |
-| rest_respected | boolean | Se o intervalo foi respeitado |
-| created_at | timestamptz | |
-
-RLS: usuarios podem inserir/ver/atualizar apenas seus proprios registros. Admins podem ver todos.
-
-### Alterar tabela `workout_completions`
-
-Adicionar coluna:
-- `total_duration_seconds` (integer, nullable) -- tempo real cronometrado da sessao
+O prompt de nutrição atual gera dietas incompletas: sem macros por refeição obrigatórios, sem diferenciação dia de treino vs descanso, sem refeição pré-sono obrigatória, sem lista de compras estruturada e sem substituições equivalentes detalhadas. Este upgrade transforma a geração em uma prescrição profissional completa.
 
 ---
 
-## Fase 2: Hook `useWorkoutSession`
+## Fase 1 -- Atualizar o Schema de Nutrição
 
-Novo hook dedicado ao controle da sessao ativa de treino.
+**Arquivo:** `supabase/functions/generate-protocol/schemas.ts`
 
-### Estado gerenciado
+Expandir a interface `NutricaoProtocolSchema` para incluir os novos campos obrigatórios:
 
-- `sessionActive`: boolean -- sessao iniciada ou nao
-- `sessionStartTime`: Date -- quando o treino comecou
-- `elapsedSeconds`: number -- tempo total decorrido (timer crescente)
-- `exerciseProgress`: mapa de exercicio -> array de series completadas com carga
-- `restTimer`: objeto com { active, remainingSeconds, exerciseName, setNumber }
-- `allSetsCompleted`: boolean -- se todas as series de todos exercicios foram feitas
+- `macros_diarios` com calorias, proteina_g, carboidrato_g, gordura_g, agua_litros
+- `hidratacao_pratica` (array de distribuição: "500ml ao acordar", etc.)
+- `plano_dia_treino` com refeições completas (cada uma com macros obrigatórios por refeição)
+- `plano_dia_descanso` com refeições ajustadas (carbs reduzidos 15-30%)
+- `refeicao_pre_sono` com 3 opções fixas com macros
+- `estrategia_anti_compulsao` (seção textual obrigatória)
+- `lista_compras_semanal` estruturada por categorias (proteinas, carboidratos, gorduras, frutas, vegetais, outros), cada item com nome e quantidade semanal
+- `substituicoes` por categoria (proteínas, carboidratos, gorduras) com equivalências numéricas
+- `substituicoes_por_refeicao` (para cada refeição, lista de trocas possíveis)
 
-### Funcoes expostas
+Atualizar `validateNutricaoProtocol` para verificar **obrigatoriamente**:
 
-- `startSession()` -- inicia o timer global
-- `logSet(exerciseName, setNumber, weightKg, repsDone, restSeconds)` -- registra serie e dispara cronometro
-- `skipRest()` -- NAO disponivel (intervalo obrigatorio)
-- `canLogNextSet(exerciseName)` -- retorna false se cronometro ativo
-- `canCompleteWorkout()` -- retorna true somente se todas series foram registradas E nenhum timer ativo
-- `finishSession()` -- para o timer, calcula tempo total, retorna resumo
-- `getExerciseLog(exerciseName)` -- retorna series ja registradas
+1. Macros diários definidos (calorias, P, C, G)
+2. Macros por refeição em cada refeição
+3. Existência de refeição pré-treino
+4. Existência de refeição pós-treino
+5. Existência de refeição pré-sono com 3 opções
+6. Hidratação definida (litros + distribuição)
+7. Dois planos: dia de treino e dia de descanso
+8. Lista de compras gerada
+9. Substituições geradas
 
----
-
-## Fase 3: Componentes Frontend
-
-### `WorkoutSessionManager` (novo)
-
-Wrapper que aparece quando o aluno clica "Iniciar Treino" no WorkoutCard. Substitui a visualizacao estatica por uma interativa.
-
-Exibe:
-- Timer global no topo (tempo decorrido)
-- Lista de exercicios com campos de carga por serie
-- Cronometro decrescente animado quando ativo
-- Botao de conclusao bloqueado ate tudo estar preenchido
-
-### `ExerciseSetTracker` (novo)
-
-Componente por exercicio que mostra:
-- Nome do exercicio
-- Para cada serie: campo de carga (kg) + campo de reps realizadas + botao "Concluir Serie"
-- Indicador visual de series completadas (check verde) vs pendentes
-- Campo de carga com valor padrao editavel
-
-### `RestCountdown` (novo)
-
-Overlay/modal com cronometro decrescente:
-- Circulo animado com contagem regressiva
-- Tempo restante em numeros grandes
-- Mensagem motivacional
-- SEM botao de pular -- obrigatorio esperar
-- Som/vibracao ao finalizar (opcional, via navigator.vibrate)
-
-### `WorkoutSummary` (novo)
-
-Tela exibida apos finalizar o treino:
-- Tempo total da sessao (formatado mm:ss)
-- Total de series completadas
-- Carga total levantada (soma de todas cargas x reps)
-- Exercicios concluidos
-- Botao "Salvar e Fechar"
-
-### Alteracoes em `WorkoutCard`
-
-- Adicionar botao "Iniciar Treino" que abre o WorkoutSessionManager
-- O botao "Marcar como Concluido" so aparece apos passar pelo fluxo completo
-- NAO e possivel concluir sem ter registrado todas as series
-
-### Alteracoes em `ExerciseTable`
-
-- Adicionar coluna "Carga" na visualizacao (exibe ultima carga usada se houver historico)
-- Indicador visual de series completadas na sessao atual
+Se algum critério falhar, o protocolo é rejeitado e a IA deve corrigir automaticamente (loop de correção no edge function).
 
 ---
 
-## Fase 4: Regras de Bloqueio
+## Fase 2 -- Reescrever o Prompt de Nutrição
 
-### Intervalo obrigatorio
+**Arquivo:** `supabase/functions/generate-protocol/prompts/nutricao.ts`
 
-- Ao concluir uma serie, o cronometro decrescente inicia automaticamente com o tempo de descanso prescrito (campo `rest` do exercicio, ex: "60s", "90s")
-- Enquanto o cronometro esta ativo, os botoes de "Concluir Serie" de TODOS os exercicios ficam desabilitados
-- O cronometro e parseado do campo `rest` (ex: "60s" -> 60, "1:30" -> 90, "2min" -> 120)
+Reescrever `getNutricaoSystemPrompt` para incluir:
 
-### Conclusao do treino
+- Instrução explícita de calcular macros diários e mostrar em formato tabular
+- Regra de hidratação: 35-45ml/kg, distribuída em 6 momentos do dia
+- Instrução de criar 2 planos: dia de treino (carbs altos pré/pós) e dia de descanso (carbs -15/30%)
+- Refeição pré-treino obrigatória (60-120min antes): P 25-45g, C alto, G baixa
+- Refeição pós-treino obrigatória (até 2h após): P 30-50g, C alto, G baixa
+- Refeição pré-sono obrigatória: P 25-40g, C baixo, G moderada, 3 opções com macros
+- Seção anti-compulsão noturna obrigatória
+- Macros por refeição obrigatórios (P, C, G, kcal em cada refeição)
+- Substituições equivalentes por categoria com quantidades (ex: 180g frango = 200g tilápia)
+- Substituições por refeição
+- Lista de compras semanal por categoria com quantidades calculadas (diário x 7)
+- Respeitar restrições alimentares, aversões e condições de saúde da anamnese
 
-- O botao "Marcar como Concluido" so fica habilitado quando:
-  1. Todas as series de todos os exercicios foram registradas
-  2. Nenhum cronometro de descanso esta ativo
-- Ao clicar, salva o tempo total no `workout_completions.total_duration_seconds`
+Atualizar o JSON de retorno esperado para o novo formato expandido.
+
+Atualizar `getNutricaoUserPrompt` para incluir dados adicionais do perfil: peso, medicações, condições de saúde, aversões.
 
 ---
 
-## Fase 5: Salvamento e Historico
+## Fase 3 -- Validação com Loop de Correção no Edge Function
 
-### Ao finalizar o treino
+**Arquivo:** `supabase/functions/generate-protocol/index.ts`
 
-1. Inserir registro em `workout_completions` com `total_duration_seconds`
-2. Inserir todos os registros de series em `workout_set_logs`
-3. Exibir WorkoutSummary com os dados
+No bloco `tipo === "nutricao"`, após parsear o JSON:
 
-### Historico de cargas
+1. Rodar `validateNutricaoProtocol` expandido com os 9 critérios
+2. Se falhar em algum critério obrigatório, fazer uma segunda chamada à IA com prompt de correção específico: "O protocolo falhou nos seguintes critérios: X, Y, Z. Corrija e retorne o JSON completo."
+3. Máximo 2 tentativas de correção (3 chamadas total)
+4. Se ainda falhar após 3 tentativas, salvar com warning no audit_result
 
-- Na proxima vez que o aluno abrir o mesmo exercicio, mostrar a ultima carga usada como sugestao
-- Query: buscar ultimo `workout_set_logs` para aquele `exercise_name` do usuario
+---
+
+## Fase 4 -- Atualizar Auditoria Nutricional
+
+**Arquivo:** `supabase/functions/audit-prescription/index.ts`
+
+Quando `type === "nutricao"`, usar critérios de auditoria específicos para nutrição:
+
+- `macros_definidos` -- macros diários presentes com valores numéricos
+- `macros_por_refeicao` -- cada refeição tem P, C, G, kcal
+- `pre_treino_presente` -- refeição pré-treino existe com macros adequados
+- `pos_treino_presente` -- refeição pós-treino existe
+- `pre_sono_presente` -- refeição pré-sono com 3 opções
+- `hidratacao_presente` -- hidratação calculada por kg
+- `dia_treino_vs_descanso` -- dois planos diferenciados existem
+- `lista_compras_gerada` -- lista de compras com quantidades
+- `substituicoes_geradas` -- substituições equivalentes presentes
+- `compativel_anamnese` -- respeita restrições, aversões e condições
+
+Score: cada critério vale 10 pontos (total 100).
+
+---
+
+## Fase 5 -- Atualizar Frontend (Página Nutrição do Aluno)
+
+**Arquivo:** `src/pages/Nutricao.tsx`
+
+Expandir para exibir:
+
+1. **Cards de macros diários** (já existem parcialmente, melhorar com água)
+2. **Tabs "Dia de Treino" / "Dia de Descanso"** para alternar entre os dois planos
+3. **Macros por refeição** exibidos dentro de cada card de refeição (P, C, G, kcal)
+4. **Seção pré-sono** destacada com as 3 opções e macros
+5. **Card de hidratação** com distribuição visual ao longo do dia
+6. **Seção "Lista de Compras"** colapsável, organizada por categoria
+7. **Seção "Substituições"** colapsável, organizada por categoria
+8. **Seção anti-compulsão** como card informativo
+
+---
+
+## Fase 6 -- Atualizar PDF de Nutrição
+
+**Arquivo:** `src/lib/generateProtocolPdf.ts`
+
+Na função `generateNutricaoPdf`, adicionar seções:
+
+1. Tabela de macros diários completa (incluindo água)
+2. Seção "Plano Dia de Treino" com todas as refeições e macros
+3. Seção "Plano Dia de Descanso" com refeições ajustadas
+4. Seção "Refeição Pré-Sono" com 3 opções
+5. Seção "Hidratação" com distribuição
+6. Seção "Lista de Compras Semanal" por categoria
+7. Seção "Substituições Equivalentes" por categoria
+8. Seção "Controle da Fome Noturna" com orientações
+9. Seção de auditoria (admin only, com `includeAudit`)
+
+---
+
+## Fase 7 -- Atualizar Editor Admin de Nutrição
+
+**Arquivo:** `src/components/admin/NutritionProtocolEditor.tsx`
+
+Adicionar campos editáveis para:
+
+- Macros diários (já existe parcialmente)
+- Hidratação (litros + distribuição)
+- Toggle dia treino/descanso para editar ambos os planos
+- Editor de substituições
+- Visualização da lista de compras
+- Seção pré-sono editável
+
+---
+
+## Fase 8 -- Painel de Auditoria Nutricional (Admin)
+
+**Arquivo:** `src/components/admin/PrescriptionAuditPanel.tsx`
+
+Expandir para reconhecer critérios nutricionais quando `tipo === "nutricao"`:
+
+- Mostrar checklist dos 10 critérios nutricionais (em vez dos 9 de treino)
+- Score final XX/100
+- Itens falhados em destaque
 
 ---
 
 ## Arquivos a Criar
 
-| Arquivo | Descricao |
-|---|---|
-| `src/hooks/useWorkoutSession.ts` | Hook de controle da sessao ativa |
-| `src/components/treino/WorkoutSessionManager.tsx` | Tela de treino ativo |
-| `src/components/treino/ExerciseSetTracker.tsx` | Registro de series por exercicio |
-| `src/components/treino/RestCountdown.tsx` | Cronometro decrescente |
-| `src/components/treino/WorkoutSummary.tsx` | Resumo final |
+Nenhum arquivo novo necessário. Toda a implementação se encaixa nos arquivos existentes.
 
 ## Arquivos a Modificar
 
-| Arquivo | Alteracao |
+| Arquivo | Alteração |
 |---|---|
-| `src/components/treino/WorkoutCard.tsx` | Adicionar botao "Iniciar Treino" e fluxo de sessao |
-| `src/components/treino/ExerciseTable.tsx` | Coluna de carga, indicador de series |
-| `src/hooks/useWorkoutTracking.ts` | Salvar `total_duration_seconds` |
-
-## Migracao SQL
-
-```text
--- Tabela de registro de series individuais
-CREATE TABLE public.workout_set_logs (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  workout_completion_id uuid REFERENCES public.workout_completions(id),
-  exercise_name text NOT NULL,
-  set_number integer NOT NULL,
-  weight_kg numeric DEFAULT 0,
-  reps_done integer DEFAULT 0,
-  rest_seconds integer DEFAULT 60,
-  rest_respected boolean DEFAULT true,
-  created_at timestamptz DEFAULT now()
-);
-
-ALTER TABLE public.workout_set_logs ENABLE ROW LEVEL SECURITY;
-
--- RLS
-CREATE POLICY "Users can insert own set logs"
-  ON public.workout_set_logs FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can view own set logs"
-  ON public.workout_set_logs FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Admins can view all set logs"
-  ON public.workout_set_logs FOR SELECT
-  USING (public.has_role(auth.uid(), 'admin'));
-
--- Coluna de tempo total no workout_completions
-ALTER TABLE public.workout_completions
-  ADD COLUMN total_duration_seconds integer DEFAULT null;
-```
+| `supabase/functions/generate-protocol/schemas.ts` | Expandir interface e validação de nutrição |
+| `supabase/functions/generate-protocol/prompts/nutricao.ts` | Reescrever prompt completo |
+| `supabase/functions/generate-protocol/index.ts` | Adicionar loop de correção para nutrição |
+| `supabase/functions/audit-prescription/index.ts` | Critérios de auditoria específicos para nutrição |
+| `src/pages/Nutricao.tsx` | UI expandida com tabs, macros por refeição, lista de compras, substituições |
+| `src/lib/generateProtocolPdf.ts` | Novas seções no PDF |
+| `src/components/admin/NutritionProtocolEditor.tsx` | Campos de edição expandidos |
+| `src/components/admin/PrescriptionAuditPanel.tsx` | Critérios nutricionais |
 
 ---
 
-## Secao Tecnica
+## Seção Técnica
 
-- O timer global usa `setInterval` com 1s de precisao, armazenando `startTime` em ref para evitar drift
-- O cronometro decrescente parseia o campo `rest` do exercicio (suporte a "60s", "1min", "1:30", "90s", "2min")
-- `workout_set_logs` permite analises futuras: progressao de carga por exercicio ao longo do tempo, volume total, etc.
-- O historico de cargas e carregado via query ao abrir a sessao (ultimo log por exercise_name)
-- Nenhuma alteracao nos fluxos admin/MQO -- funcionalidade exclusiva da area do aluno
-- RLS garante que cada aluno so ve seus proprios registros de series
-
+- O novo formato JSON de nutrição mantém retrocompatibilidade: o campo `refeicoes` continua existindo para protocolos antigos. Novos protocolos terão `plano_dia_treino.refeicoes` e `plano_dia_descanso.refeicoes`.
+- A página Nutricao.tsx detecta automaticamente o formato (legado vs novo) e renderiza conforme disponível.
+- O loop de correção no edge function faz no máximo 2 chamadas adicionais. Se o protocolo ainda falhar, ele é salvo com um `audit_result.warning` para revisão manual do admin.
+- A lista de compras é calculada pela IA com base nas quantidades diárias x 7 dias. Não há cálculo no frontend.
+- As substituições respeitam obrigatoriamente as restrições da anamnese (se o cliente não come peixe, peixe não aparece nas substituições).
+- Nenhuma alteração nos fluxos MQO/admin de geração. Apenas o prompt de nutrição e sua validação são afetados.
+- Não há alteração de schema no banco de dados. Os novos campos ficam dentro do JSONB `conteudo` da tabela `protocolos`.
