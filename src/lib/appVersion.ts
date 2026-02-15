@@ -1,6 +1,6 @@
 // App version - update this when deploying new builds
-export const APP_VERSION = "1.0.0";
-export const BUILD_DATE = "2025-01-27";
+export const APP_VERSION = "1.1.0";
+export const BUILD_DATE = "2026-02-15";
 
 // Get Service Worker cache version
 export const getSWVersion = (): string => {
