@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,23 +7,22 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { supabase } from "@/integrations/supabase/client";
+import { captureUtmParameters } from "@/hooks/useAnalytics";
+import { useAnalytics } from "@/hooks/useAnalytics";
+
+const STRIPE_TRIAL_LINK = "https://buy.stripe.com/9B67sKeMW4ru2sp7Gy2B201";
 
 export default function Oferta() {
-  const [isLoading, setIsLoading] = useState(false);
+  const { trackEvent } = useAnalytics();
 
-  const handleCheckout = async () => {
-    setIsLoading(true);
-    try {
-      const { data } = await supabase.functions.invoke("create-checkout", {
-        body: { price_id: "price_1ScZqTCuFZvf5xFdZuOBMzpt" }
-      });
-      if (data?.url) window.location.href = data.url;
-    } catch (error) {
-      console.error("Checkout error:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  useEffect(() => {
+    captureUtmParameters();
+    trackEvent("oferta_page_view", "oferta");
+  }, []);
+
+  const handleCheckout = () => {
+    trackEvent("trial_cta_clicked", "oferta");
+    window.open(STRIPE_TRIAL_LINK, "_blank");
   };
 
   const included = [
@@ -49,12 +48,16 @@ export default function Oferta() {
   ];
 
   const steps = [
-    { number: "1", title: "Assine", description: "Faça sua assinatura de forma segura" },
+    { number: "1", title: "Ative seu trial", description: "Cadastre seu cartão e comece grátis" },
     { number: "2", title: "Preencha a anamnese", description: "Conte sobre você, seus objetivos e rotina" },
     { number: "3", title: "Receba seu protocolo", description: "Treino e dieta personalizados em até 48h" }
   ];
 
   const faqs = [
+    {
+      question: "Vou ser cobrado nos 7 dias grátis?",
+      answer: "Não. Se cancelar antes do término do período, não será cobrado."
+    },
     {
       question: "Posso cancelar quando quiser?",
       answer: "Sim. Não existe fidelidade. Você pode cancelar a qualquer momento diretamente pela plataforma."
@@ -79,7 +82,6 @@ export default function Oferta() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header próprio */}
       <header className="py-6 px-4 border-b border-gray-800">
         <div className="max-w-4xl mx-auto text-center">
           <span className="text-xl font-bold tracking-tight">Método Renascer</span>
@@ -90,22 +92,21 @@ export default function Oferta() {
       <section className="py-16 md:py-24 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-3xl md:text-5xl font-black leading-tight mb-6">
-            PARE DE TENTAR SOZINHO.
+            TESTE 7 DIAS GRÁTIS.
           </h1>
           <p className="text-xl md:text-2xl text-gray-300 mb-8">
-            COMECE HOJE COM ACOMPANHAMENTO REAL POR R$49,90.
+            Experimente o Método Renascer sem compromisso. Cancele quando quiser.
           </p>
           <Button
             onClick={handleCheckout}
-            disabled={isLoading}
             className="bg-orange-500 hover:bg-orange-600 text-white text-lg px-8 py-6 h-auto font-bold rounded-lg"
           >
-            {isLoading ? "Carregando..." : "Quero começar agora por R$49,90"}
+            Começar meus 7 dias grátis
           </Button>
           <div className="flex flex-wrap justify-center gap-4 md:gap-8 mt-6 text-sm text-gray-400">
-            <span>✔ Acesso imediato</span>
-            <span>✔ Sem fidelidade</span>
-            <span>✔ Cancele quando quiser</span>
+            <span>✔ 7 dias grátis</span>
+            <span>✔ Sem compromisso</span>
+            <span>✔ Cancele antes e não paga nada</span>
           </div>
         </div>
       </section>
@@ -145,7 +146,6 @@ export default function Oferta() {
       <section className="py-16 px-4 border-t border-gray-800">
         <div className="max-w-4xl mx-auto">
           <div className="grid md:grid-cols-2 gap-8 md:gap-12">
-            {/* Para quem é */}
             <div>
               <h3 className="text-xl font-bold mb-6 text-orange-500">PARA QUEM É</h3>
               <ul className="space-y-3">
@@ -157,7 +157,6 @@ export default function Oferta() {
                 ))}
               </ul>
             </div>
-            {/* Para quem não é */}
             <div>
               <h3 className="text-xl font-bold mb-6 text-gray-500">PARA QUEM NÃO É</h3>
               <ul className="space-y-3">
@@ -198,21 +197,26 @@ export default function Oferta() {
       {/* Card de preço */}
       <section className="py-16 px-4 border-t border-gray-800">
         <div className="max-w-md mx-auto">
-          <div className="border border-gray-700 rounded-xl p-8 text-center">
-            <h3 className="text-xl font-bold mb-2">Plano Inicial</h3>
-            <div className="mb-6">
-              <span className="text-4xl md:text-5xl font-black">R$49,90</span>
-              <span className="text-gray-400">/mês</span>
+          <div className="text-center mb-4">
+            <span className="inline-block bg-orange-500 text-white text-sm font-bold px-4 py-1 rounded-full uppercase tracking-wider">
+              Grátis
+            </span>
+          </div>
+          <div className="border-2 border-orange-500 rounded-xl p-8 text-center">
+            <h3 className="text-xl font-bold mb-2">7 Dias Grátis</h3>
+            <div className="mb-2">
+              <span className="text-4xl md:text-5xl font-black">R$0</span>
+              <span className="text-gray-400 ml-2">por 7 dias</span>
             </div>
+            <p className="text-sm text-gray-400 mb-6">Depois R$49,90/mês</p>
             <Button
               onClick={handleCheckout}
-              disabled={isLoading}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white text-lg py-6 h-auto font-bold rounded-lg"
             >
-              {isLoading ? "Carregando..." : "Começar agora"}
+              Ativar meus 7 dias grátis
             </Button>
             <p className="text-sm text-gray-500 mt-4">
-              Cancele quando quiser. Sem surpresas.
+              Cancele antes dos 7 dias e não paga nada.
             </p>
           </div>
         </div>
@@ -254,18 +258,16 @@ export default function Oferta() {
           </p>
           <Button
             onClick={handleCheckout}
-            disabled={isLoading}
             className="bg-orange-500 hover:bg-orange-600 text-white text-lg px-8 py-6 h-auto font-bold rounded-lg"
           >
-            {isLoading ? "Carregando..." : "Quero começar por R$49,90/mês"}
+            Quero meus 7 dias grátis
           </Button>
         </div>
       </section>
 
-      {/* Footer próprio */}
       <footer className="py-8 px-4 border-t border-gray-800">
         <div className="max-w-4xl mx-auto text-center text-gray-500 text-sm">
-          Método Renascer © 2025
+          Método Renascer © 2026
         </div>
       </footer>
     </div>
