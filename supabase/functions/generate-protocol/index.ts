@@ -10,7 +10,8 @@ import {
   validateMindsetProtocol,
   normalizeTreinoProtocol,
   type NutricaoValidationResult,
-  type TreinoValidationResult
+  type TreinoValidationResult,
+  type MindsetValidationResult
 } from "./schemas.ts";
 import { 
   getClientIdentifier, 
@@ -558,7 +559,92 @@ INSTRUÇÕES:
         }
       }
     } else {
-      validationResult = validateMindsetProtocol(protocolData);
+      // Mindset uses structured validation with correction loop
+      const mindsetResult = validateMindsetProtocol(protocolData);
+      validationResult = { valid: mindsetResult.valid, errors: mindsetResult.errors };
+      
+      if (!mindsetResult.valid && mindsetResult.failedCriteria.length > 0) {
+        console.log(`[mindset-correction] Failed criteria: ${mindsetResult.failedCriteria.join(", ")}. Attempting auto-correction...`);
+        
+        let correctionAttempts = 0;
+        const maxCorrectionAttempts = 3;
+        let currentData = protocolData;
+        
+        while (correctionAttempts < maxCorrectionAttempts) {
+          correctionAttempts++;
+          console.log(`[mindset-correction] Attempt ${correctionAttempts}/${maxCorrectionAttempts}`);
+          
+          const correctionPrompt = `O protocolo de mindset gerado FALHOU nos seguintes critérios obrigatórios:
+${mindsetResult.failedCriteria.map(c => `- ${c}`).join("\n")}
+
+Erros específicos:
+${mindsetResult.errors.map(e => `- ${e}`).join("\n")}
+
+PROTOCOLO ATUAL (corrija e retorne COMPLETO):
+${JSON.stringify(currentData, null, 2).substring(0, 15000)}
+
+INSTRUÇÕES DE CORREÇÃO:
+- Corrija TODOS os critérios que falharam
+- Mantenha todos os campos que já estavam corretos
+- Retorne o JSON COMPLETO corrigido
+- OBRIGATÓRIO: rotina_manha com praticas array (>= 2 práticas)
+- OBRIGATÓRIO: rotina_noite com praticas array (>= 2 práticas)
+- OBRIGATÓRIO: crencas_limitantes com >= 2 itens, cada um com crenca_original, reformulacao, acao_pratica
+- OBRIGATÓRIO: afirmacoes_personalizadas com >= 2 itens
+- OBRIGATÓRIO: mentalidade_necessaria com titulo e descricao
+- OBRIGATÓRIO: tarefas_semanais com >= 1 tarefa rastreável`;
+
+          try {
+            const corrResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: correctionPrompt },
+                ],
+              }),
+            });
+
+            if (corrResp.ok) {
+              const corrData = await corrResp.json();
+              const corrContent = corrData.choices?.[0]?.message?.content || "";
+              const cleanCorrContent = corrContent.replace(/```json\n?|\n?```/g, "").trim();
+              try {
+                const correctedData = JSON.parse(cleanCorrContent);
+                const revalidation = validateMindsetProtocol(correctedData);
+                console.log(`[mindset-correction] Re-validation: ${revalidation.failedCriteria.length} criteria still failing`);
+                
+                if (revalidation.valid) {
+                  protocolData = correctedData;
+                  validationResult = { valid: true, errors: [] };
+                  console.log(`[mindset-correction] ✅ All criteria passed after correction ${correctionAttempts}`);
+                  break;
+                } else {
+                  currentData = correctedData;
+                  protocolData = correctedData;
+                  validationResult = { valid: revalidation.valid, errors: revalidation.errors };
+                }
+              } catch (parseErr) {
+                console.error(`[mindset-correction] JSON parse error:`, parseErr);
+              }
+            } else {
+              await corrResp.text();
+              console.warn(`[mindset-correction] AI correction call failed`);
+            }
+          } catch (corrErr) {
+            console.error(`[mindset-correction] Error in correction attempt:`, corrErr);
+          }
+        }
+        
+        if (!validationResult.valid) {
+          console.warn(`[mindset-correction] ⚠️ Protocol still incomplete after ${correctionAttempts} corrections. Saving with warning.`);
+        }
+      }
     }
 
     if (!validationResult.valid) {
@@ -683,12 +769,17 @@ INSTRUÇÕES:
       const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
       if (LOVABLE_API_KEY) {
         const isNutricaoAudit = tipo === "nutricao";
+        const isMindsetAudit = tipo === "mindset";
         const auditCriteria = isNutricaoAudit 
           ? ["macros_definidos","macros_por_refeicao","pre_treino_presente","pos_treino_presente","pre_sono_presente","hidratacao_presente","dia_treino_vs_descanso","lista_compras_gerada","substituicoes_geradas","compativel_anamnese"]
+          : isMindsetAudit
+          ? ["rotina_manha_presente","rotina_noite_presente","crencas_com_reformulacao","afirmacoes_comportamentais","tarefas_rastreaveis","mentalidade_definida"]
           : ["coherence_anamnese","coherence_objective","restriction_respect","weekly_volume","muscle_distribution","progression_defined","instruction_clarity","mindset_quality","safety_score","estrutura_semanal_presente","exercicios_completos","volume_detalhado_presente","progressao_4sem_presente","justificativa_presente"];
         
         const auditSystemPrompt = isNutricaoAudit
           ? `Você é um auditor especialista em nutrição esportiva. Avalie os 10 critérios (true/false): ${auditCriteria.join(", ")}. Inclua issues[] e corrections_applied[]. Responda APENAS com JSON.`
+          : isMindsetAudit
+          ? `Você é um auditor especialista em psicologia comportamental e mindset esportivo. Avalie os 6 critérios (true/false): rotina_manha_presente (rotina matinal com >= 2 práticas claras), rotina_noite_presente (rotina noturna com >= 2 práticas), crencas_com_reformulacao (>= 2 crenças com crenca_original + reformulacao + acao_pratica), afirmacoes_comportamentais (>= 2 afirmações personalizadas), tarefas_rastreaveis (tarefas semanais com metas), mentalidade_definida (seção mentalidade com titulo e descricao). Inclua issues[] e corrections_applied[]. Responda APENAS com JSON.`
           : `Você é um auditor especialista em fisiologia do exercício. Avalie os 14 critérios (true/false): ${auditCriteria.join(", ")}. Os 5 novos critérios verificam: estrutura_semanal_presente (dias da semana mapeados), exercicios_completos (carga_inicial + instrucao_tecnica em cada exercício), volume_detalhado_presente (séries numéricas por grupo), progressao_4sem_presente (4 semanas com DELOAD), justificativa_presente (volume, divisao, progressao). Inclua issues[] e corrections_applied[]. Responda APENAS com JSON.`;
 
         const auditUserPrompt = `ANAMNESE: ${JSON.stringify({
