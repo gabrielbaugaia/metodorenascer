@@ -1,58 +1,60 @@
 
-# Converter Pagina /oferta para "7 Dias Gratis"
 
-## O Que Muda
+# Ativar Modo de Geracao Deterministica Perfeita
 
-A pagina `/oferta` atual vende o Plano Inicial a R$49,90/mes com checkout direto. Sera convertida para uma pagina focada no **trial de 7 dias gratis**, usando o link Stripe Trial ja existente (`https://buy.stripe.com/9B67sKeMW4ru2sp7Gy2B201`). A pessoa cadastra o cartao e tem 7 dias gratis antes de ser cobrada.
+## Estado Atual
+
+O sistema ja implementa validacao rigorosa e auto-correcao para Treino (5 criterios obrigatorios + loop de correcao) e Nutricao (9 criterios + loop de correcao). O Mindset tem validacao basica (campos presentes) mas sem criterios estruturados nem loop de auto-correcao.
+
+A regra solicitada exige que os 3 blocos (Treino, Nutricao, Mindset) passem por validacao completa e auto-correcao automatica antes de serem finalizados.
 
 ---
 
-## Alteracoes no `src/pages/Oferta.tsx`
+## O Que Precisa Mudar
 
-### 1. Checkout -- Trocar para link Stripe Trial
+### 1. Validacao Estruturada do Mindset (schemas.ts)
 
-Substituir a chamada `create-checkout` pelo redirecionamento direto ao link Stripe Trial:
+Converter `validateMindsetProtocol` para retornar resultado com criterios detalhados (igual treino/nutricao):
 
-```text
-De:  supabase.functions.invoke("create-checkout", { body: { price_id: "..." } })
-Para: window.open("https://buy.stripe.com/9B67sKeMW4ru2sp7Gy2B201", "_blank")
-```
+| Criterio | Descricao |
+|---|---|
+| `rotina_manha_presente` | Rotina da manha com passos claros (praticas array >= 2) |
+| `rotina_noite_presente` | Rotina da noite com passos claros (praticas array >= 2) |
+| `crencas_limitantes_completas` | 2+ crencas com crenca_original + reformulacao + acao_pratica |
+| `afirmacoes_presentes` | Array de afirmacoes personalizadas (>= 2) |
+| `mentalidade_necessaria` | Secao mentalidade com titulo e descricao |
+| `tarefas_semanais_presentes` | Tarefas rastreavéis definidas |
 
-Isso simplifica o fluxo e usa o mesmo link Trial que ja funciona em PricingSection, UpgradeModal e Assinatura.
+Criar nova interface `MindsetValidationResult` com `criteria`, `failedCriteria` e `errors`.
 
-### 2. Captura UTM automatica
+### 2. Loop de Auto-Correcao para Mindset (index.ts)
 
-Ao carregar a pagina, capturar os parametros UTM da URL (utm_source, utm_medium, utm_content, fbclid) e salvar no `sessionStorage` para rastreamento. Reutilizar funcoes existentes de `useAnalytics`.
+Adicionar bloco de auto-correcao para mindset identico ao de treino e nutricao:
 
-### 3. Textos -- Reescrever para foco em Trial
+- Se validacao falhar, enviar prompt de correcao especifico
+- Maximo 3 tentativas
+- Salvar com warning se nao atingir 100%
 
-| Secao | Atual | Novo |
-|---|---|---|
-| Hero H1 | "PARE DE TENTAR SOZINHO." | "TESTE 7 DIAS GRATIS." |
-| Hero subtitulo | "COMECE HOJE COM ACOMPANHAMENTO REAL POR R$49,90." | "Experimente o Metodo Renascer sem compromisso. Cancele quando quiser." |
-| CTA principal | "Quero comecar agora por R$49,90" | "Comecar meus 7 dias gratis" |
-| Badges | "Acesso imediato / Sem fidelidade / Cancele quando quiser" | "7 dias gratis / Sem compromisso / Cancele antes e nao paga nada" |
-| Card de preco titulo | "Plano Inicial" | "7 Dias Gratis" |
-| Card de preco valor | "R$49,90 /mes" | "R$0 por 7 dias" + subtexto "Depois R$49,90/mes" |
-| Card CTA | "Comecar agora" | "Ativar meus 7 dias gratis" |
-| Card rodape | "Cancele quando quiser. Sem surpresas." | "Cancele antes dos 7 dias e nao paga nada." |
-| CTA final | "Quero comecar por R$49,90/mes" | "Quero meus 7 dias gratis" |
-| Problema | manter | manter |
-| Incluido | manter | manter |
-| Para quem e/nao e | manter | manter |
-| Como funciona | Step 1: "Assine" | Step 1: "Ative seu trial" com descricao "Cadastre seu cartao e comece gratis" |
-| FAQ | adicionar | Nova pergunta: "Vou ser cobrado nos 7 dias gratis?" -> "Nao. Se cancelar antes do termino do periodo, nao sera cobrado." |
+### 3. Auditoria do Mindset (audit-prescription/index.ts)
 
-### 4. Secao do Card de Preco -- Destaque visual
+Quando `tipo === "mindset"`, usar criterios especificos de mindset na auditoria:
 
-- Adicionar badge "GRATIS" acima do card
-- Texto principal: "R$0" em destaque grande
-- Subtexto: "por 7 dias, depois R$49,90/mes"
-- Borda laranja no card (border-orange-500) para destaque
+- `rotina_manha_presente`
+- `rotina_noite_presente`
+- `crencas_com_reformulacao`
+- `afirmacoes_comportamentais`
+- `tarefas_rastreavéis`
+- `mentalidade_definida`
 
-### 5. Footer -- atualizar ano
+Score: cada criterio vale ~16.7 pontos (6 criterios, total 100).
 
-De "2025" para "2026"
+### 4. Painel de Auditoria Admin (PrescriptionAuditPanel.tsx)
+
+Expandir para reconhecer criterios de mindset quando `tipo === "mindset"`:
+
+- Mostrar checklist dos 6 criterios de mindset
+- Score final XX/100
+- Itens falhados em destaque
 
 ---
 
@@ -60,6 +62,17 @@ De "2025" para "2026"
 
 | Arquivo | Alteracao |
 |---|---|
-| `src/pages/Oferta.tsx` | Reescrever textos, trocar checkout para link Trial, adicionar captura UTM |
+| `supabase/functions/generate-protocol/schemas.ts` | Nova interface `MindsetValidationResult`, reescrever `validateMindsetProtocol` com criterios estruturados |
+| `supabase/functions/generate-protocol/index.ts` | Adicionar loop de auto-correcao para mindset (linhas ~561) |
+| `supabase/functions/audit-prescription/index.ts` | Criterios de auditoria especificos para mindset |
+| `src/components/admin/PrescriptionAuditPanel.tsx` | Exibir criterios de mindset no painel admin |
 
-Nenhum arquivo novo necessario. Nenhuma alteracao no banco de dados.
+---
+
+## Secao Tecnica
+
+- A validacao de mindset atualmente retorna `{ valid, errors }` sem `failedCriteria`. Sera expandida para `MindsetValidationResult` com `criteria` e `failedCriteria` (mesmo padrao de treino/nutricao).
+- O loop de auto-correcao segue o mesmo padrao ja implementado: maximo 3 tentativas, prompt de correcao com criterios falhados, revalidacao apos cada tentativa.
+- Os 3 tipos (treino, nutricao, mindset) passarao pelo mesmo pipeline: gerar -> validar -> corrigir automaticamente -> auditar.
+- Nenhuma alteracao no banco de dados. Os dados de auditoria continuam no campo `audit_result` (JSONB) da tabela `protocolos`.
+- Os prompts de treino e nutricao ja estao completos e nao precisam de alteracao. Apenas o pipeline de validacao do mindset precisa ser nivelado.
