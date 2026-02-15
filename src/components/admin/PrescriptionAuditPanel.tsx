@@ -48,6 +48,11 @@ const TREINO_CRITERIA_LABELS: Record<string, string> = {
   instruction_clarity: "Clareza das instruções",
   mindset_quality: "Qualidade do protocolo de mindset",
   safety_score: "Segurança geral da prescrição",
+  estrutura_semanal_presente: "Estrutura semanal (dias → treinos)",
+  exercicios_completos: "Exercícios com carga e instrução técnica",
+  volume_detalhado_presente: "Volume detalhado por grupo muscular",
+  progressao_4sem_presente: "Progressão 4 semanas com DELOAD",
+  justificativa_presente: "Justificativa do protocolo",
 };
 
 const NUTRICAO_CRITERIA_LABELS: Record<string, string> = {
@@ -64,15 +69,15 @@ const NUTRICAO_CRITERIA_LABELS: Record<string, string> = {
 };
 
 function getScoreColor(score: number): string {
-  if (score >= 90) return "text-green-600";
-  if (score >= 80) return "text-blue-600";
-  if (score >= 70) return "text-yellow-600";
+  if (score >= 95) return "text-green-600";
+  if (score >= 85) return "text-blue-600";
+  if (score >= 75) return "text-yellow-600";
   return "text-red-600";
 }
 
 function getScoreBadgeVariant(score: number): "default" | "secondary" | "destructive" | "outline" {
-  if (score >= 80) return "default";
-  if (score >= 70) return "secondary";
+  if (score >= 95) return "default";
+  if (score >= 85) return "secondary";
   return "destructive";
 }
 

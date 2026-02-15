@@ -16,6 +16,11 @@ const TREINO_CRITERIA = [
   "instruction_clarity",
   "mindset_quality",
   "safety_score",
+  "estrutura_semanal_presente",
+  "exercicios_completos",
+  "volume_detalhado_presente",
+  "progressao_4sem_presente",
+  "justificativa_presente",
 ] as const;
 
 const NUTRICAO_CRITERIA = [
@@ -32,9 +37,9 @@ const NUTRICAO_CRITERIA = [
 ] as const;
 
 function getClassification(score: number): string {
-  if (score >= 90) return "Excelente";
-  if (score >= 80) return "Muito bom";
-  if (score >= 70) return "Aceitável";
+  if (score >= 95) return "Excelente";
+  if (score >= 85) return "Muito bom";
+  if (score >= 75) return "Aceitável";
   return "Requer correção";
 }
 
@@ -90,7 +95,7 @@ Para cada critério que FALHOU, inclua uma descrição em "issues".
 Se o score < 80, inclua sugestões em "corrections_applied".
 IMPORTANTE: Responda APENAS com JSON.`
       : `Você é um auditor especialista em fisiologia do exercício, ciência comportamental e prescrição de treino.
-Avalie os seguintes 9 critérios (true = passou, false = falhou):
+Avalie os seguintes 14 critérios (true = passou, false = falhou):
 
 1. coherence_anamnese - O protocolo respeita as limitações, nível e rotina do cliente conforme a anamnese?
 2. coherence_objective - O protocolo está alinhado com o objetivo principal do cliente?
@@ -101,9 +106,14 @@ Avalie os seguintes 9 critérios (true = passou, false = falhou):
 7. instruction_clarity - Instruções de execução claras e completas?
 8. mindset_quality - Protocolo de mindset personalizado e baseado em comportamento real?
 9. safety_score - Prescrição geral segura, sem exercícios contraindicados?
+10. estrutura_semanal_presente - Existe campo "estrutura_semanal" com mapeamento de dias da semana para treinos?
+11. exercicios_completos - Cada exercício tem nome, series, repeticoes, descanso, carga_inicial E instrucao_tecnica?
+12. volume_detalhado_presente - Existe "volume_semanal_detalhado" com séries numéricas por grupo muscular?
+13. progressao_4sem_presente - Existe "progressao_4_semanas" com 4 semanas incluindo DELOAD na semana 4?
+14. justificativa_presente - Existe "justificativa" com campos volume, divisao e progressao?
 
 Para cada critério que FALHOU, inclua em "issues".
-Se o score < 80, inclua sugestões em "corrections_applied".
+Se o score < 95, inclua sugestões em "corrections_applied".
 IMPORTANTE: Responda APENAS com JSON.`;
 
     const anamneseContext = anamnese ? `
@@ -222,14 +232,14 @@ Retorne o resultado da auditoria no formato JSON.` },
 
       console.log(`[audit-prescription] Score: ${finalScore}/100 (${auditResult.classification})`);
 
-      if (finalScore >= 80 || attempts >= maxAttempts) {
-        if (finalScore < 80 && attempts >= maxAttempts) {
-          auditResult.warning = "Score abaixo de 80 após tentativas de correção. Revisão manual recomendada.";
+      if (finalScore >= 95 || attempts >= maxAttempts) {
+        if (finalScore < 95 && attempts >= maxAttempts) {
+          auditResult.warning = "Score abaixo de 95 após tentativas de correção. Revisão manual recomendada.";
         }
         break;
       }
 
-      console.log(`[audit-prescription] Score < 80, requesting correction...`);
+      console.log(`[audit-prescription] Score < 95, requesting correction...`);
       const correctionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -275,8 +285,8 @@ Corrija os problemas e retorne o protocolo completo corrigido em JSON.` },
     return new Response(JSON.stringify({
       success: true,
       audit: auditResult,
-      correctedProtocol: auditResult.final_score < 80 ? null : correctedProtocol,
-      wasCorreted: attempts > 1,
+      correctedProtocol: auditResult.final_score < 95 ? null : correctedProtocol,
+      wasCorrected: attempts > 1,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

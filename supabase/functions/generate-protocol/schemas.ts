@@ -8,6 +8,8 @@ export interface ExercicioSchema {
   series: number;
   repeticoes: string;
   descanso: string;
+  carga_inicial?: string;
+  instrucao_tecnica?: string;
   video_url?: string;
   dicas?: string;
 }
@@ -64,6 +66,11 @@ export interface TreinoProtocolSchema {
   semanas?: SemanaSchema[];
   observacoes_gerais?: string;
   proxima_avaliacao?: string;
+  // 5 itens obrigatórios
+  estrutura_semanal?: Record<string, string>;
+  volume_semanal_detalhado?: Record<string, number>;
+  progressao_4_semanas?: Array<{ semana: number; foco: string; instrucao: string }>;
+  justificativa?: { volume: string; divisao: string; progressao: string };
 }
 
 // ============================================================================
@@ -269,9 +276,30 @@ export interface MindsetProtocolSchema {
 // VALIDAÇÃO DE TREINO
 // ============================================================================
 
-export function validateTreinoProtocol(data: unknown): { valid: boolean; errors: string[] } {
+export interface TreinoValidationResult {
+  valid: boolean;
+  errors: string[];
+  criteria: {
+    estrutura_semanal: boolean;
+    exercicios_completos: boolean;
+    volume_semanal_detalhado: boolean;
+    progressao_4_semanas: boolean;
+    justificativa: boolean;
+  };
+  failedCriteria: string[];
+}
+
+export function validateTreinoProtocol(data: unknown): TreinoValidationResult {
   const errors: string[] = [];
   const protocol = data as Record<string, unknown>;
+
+  const criteria = {
+    estrutura_semanal: false,
+    exercicios_completos: false,
+    volume_semanal_detalhado: false,
+    progressao_4_semanas: false,
+    justificativa: false,
+  };
 
   if (!protocol.titulo || typeof protocol.titulo !== "string") {
     errors.push("titulo é obrigatório e deve ser string");
@@ -293,6 +321,20 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
     errors.push("treinos ou semanas é obrigatório e deve ter ao menos um item");
   }
 
+  // ITEM 1: Estrutura semanal
+  const estrutura = protocol.estrutura_semanal as Record<string, string> | undefined;
+  if (estrutura && typeof estrutura === "object" && !Array.isArray(estrutura)) {
+    const dias = Object.keys(estrutura);
+    if (dias.length >= 5) {
+      criteria.estrutura_semanal = true;
+    }
+  }
+  if (!criteria.estrutura_semanal) errors.push("estrutura_semanal é obrigatório (mapeamento de dias da semana para treinos)");
+
+  // ITEM 2: Exercícios com estrutura completa (carga_inicial + instrucao_tecnica)
+  let totalExercicios = 0;
+  let exerciciosCompletos = 0;
+  
   if (hasTreinos) {
     (protocol.treinos as Array<Record<string, unknown>>).forEach((treino, tIndex) => {
       if (!treino.letra && !treino.nome && !treino.foco) {
@@ -301,7 +343,17 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
       if (!treino.exercicios || !Array.isArray(treino.exercicios)) {
         errors.push(`treino ${tIndex + 1}: exercicios é obrigatório`);
       } else {
-        validateExercicios(treino.exercicios as Array<Record<string, unknown>>, errors, `treino ${tIndex + 1}`);
+        (treino.exercicios as Array<Record<string, unknown>>).forEach((ex, eIndex) => {
+          totalExercicios++;
+          if (!ex.nome) errors.push(`treino ${tIndex + 1}, exercício ${eIndex + 1}: nome é obrigatório`);
+          if (typeof ex.series !== "number") errors.push(`treino ${tIndex + 1}, exercício ${eIndex + 1}: series deve ser número`);
+          
+          const hasCarga = !!ex.carga_inicial;
+          const hasInstrucao = !!ex.instrucao_tecnica;
+          if (hasCarga && hasInstrucao && ex.nome && typeof ex.series === "number") {
+            exerciciosCompletos++;
+          }
+        });
       }
       if (treino.duracao_minutos !== undefined && typeof treino.duracao_minutos !== "number") {
         const parsed = parseInt(String(treino.duracao_minutos));
@@ -321,20 +373,63 @@ export function validateTreinoProtocol(data: unknown): { valid: boolean; errors:
           if (!dia.exercicios || !Array.isArray(dia.exercicios)) {
             errors.push(`semana ${sIndex + 1}, dia ${dIndex + 1}: exercicios é obrigatório`);
           } else {
+            (dia.exercicios as Array<Record<string, unknown>>).forEach((ex) => {
+              totalExercicios++;
+              const hasCarga = !!(ex as Record<string, unknown>).carga_inicial;
+              const hasInstrucao = !!(ex as Record<string, unknown>).instrucao_tecnica;
+              if (hasCarga && hasInstrucao) exerciciosCompletos++;
+            });
             validateExercicios(dia.exercicios as Array<Record<string, unknown>>, errors, `semana ${sIndex + 1}, dia ${dIndex + 1}`);
-          }
-          if (dia.duracao_minutos !== undefined && typeof dia.duracao_minutos !== "number") {
-            const parsed = parseInt(String(dia.duracao_minutos));
-            if (isNaN(parsed)) {
-              errors.push(`semana ${sIndex + 1}, dia ${dIndex + 1}: duracao_minutos deve ser número`);
-            }
           }
         });
       }
     });
   }
 
-  return { valid: errors.length === 0, errors };
+  if (totalExercicios > 0 && exerciciosCompletos / totalExercicios >= 0.8) {
+    criteria.exercicios_completos = true;
+  }
+  if (!criteria.exercicios_completos) errors.push("exercícios devem ter carga_inicial e instrucao_tecnica (mínimo 80% dos exercícios)");
+
+  // ITEM 3: Volume semanal detalhado
+  const volumeDetalhado = protocol.volume_semanal_detalhado as Record<string, number> | undefined;
+  if (volumeDetalhado && typeof volumeDetalhado === "object" && !Array.isArray(volumeDetalhado)) {
+    const grupos = Object.keys(volumeDetalhado);
+    const allNumbers = grupos.every(g => typeof volumeDetalhado[g] === "number");
+    if (grupos.length >= 4 && allNumbers) {
+      criteria.volume_semanal_detalhado = true;
+    }
+  }
+  if (!criteria.volume_semanal_detalhado) errors.push("volume_semanal_detalhado é obrigatório (séries por grupo muscular como objeto numérico)");
+
+  // ITEM 4: Progressão 4 semanas
+  const progressao = protocol.progressao_4_semanas as Array<Record<string, unknown>> | undefined;
+  if (Array.isArray(progressao) && progressao.length >= 4) {
+    const hasDeload = progressao.some(p => 
+      String(p.foco || "").toLowerCase().includes("deload") || 
+      String(p.instrucao || "").toLowerCase().includes("deload") ||
+      String(p.instrucao || "").toLowerCase().includes("reduzir volume")
+    );
+    if (hasDeload) {
+      criteria.progressao_4_semanas = true;
+    }
+  }
+  if (!criteria.progressao_4_semanas) errors.push("progressao_4_semanas é obrigatório (4 semanas com DELOAD na semana 4)");
+
+  // ITEM 5: Justificativa
+  const justificativa = protocol.justificativa as Record<string, string> | undefined;
+  if (justificativa && typeof justificativa === "object") {
+    if (justificativa.volume && justificativa.divisao && justificativa.progressao) {
+      criteria.justificativa = true;
+    }
+  }
+  if (!criteria.justificativa) errors.push("justificativa é obrigatório (volume, divisao, progressao)");
+
+  const failedCriteria = Object.entries(criteria)
+    .filter(([_, v]) => !v)
+    .map(([k]) => k);
+
+  return { valid: failedCriteria.length === 0, errors, criteria, failedCriteria };
 }
 
 function validateExercicios(exercicios: Array<Record<string, unknown>>, errors: string[], context: string): void {
