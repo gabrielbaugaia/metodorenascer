@@ -9,7 +9,8 @@ import {
   validateNutricaoProtocol, 
   validateMindsetProtocol,
   normalizeTreinoProtocol,
-  type NutricaoValidationResult
+  type NutricaoValidationResult,
+  type TreinoValidationResult
 } from "./schemas.ts";
 import { 
   getClientIdentifier, 
@@ -384,7 +385,95 @@ serve(async (req) => {
     let validationResult: { valid: boolean; errors: string[] };
     if (tipo === "treino") {
       normalizeTreinoProtocol(protocolData);
-      validationResult = validateTreinoProtocol(protocolData);
+      const treinoResult = validateTreinoProtocol(protocolData);
+      validationResult = { valid: treinoResult.valid, errors: treinoResult.errors };
+      
+      // Auto-correction loop for treino (similar to nutrition)
+      if (!treinoResult.valid && treinoResult.failedCriteria.length > 0) {
+        console.log(`[treino-correction] Failed criteria: ${treinoResult.failedCriteria.join(", ")}. Attempting auto-correction...`);
+        
+        let correctionAttempts = 0;
+        const maxCorrectionAttempts = 3;
+        let currentData = protocolData;
+        
+        while (correctionAttempts < maxCorrectionAttempts) {
+          correctionAttempts++;
+          console.log(`[treino-correction] Attempt ${correctionAttempts}/${maxCorrectionAttempts}`);
+          
+          const correctionPrompt = `O protocolo de treino gerado FALHOU nos seguintes critérios obrigatórios:
+${treinoResult.failedCriteria.map(c => `- ${c}`).join("\n")}
+
+Erros específicos:
+${treinoResult.errors.map(e => `- ${e}`).join("\n")}
+
+PROTOCOLO ATUAL (corrija e retorne COMPLETO):
+${JSON.stringify(currentData, null, 2).substring(0, 15000)}
+
+INSTRUÇÕES DE CORREÇÃO:
+- Corrija TODOS os critérios que falharam
+- Mantenha todos os campos que já estavam corretos
+- Retorne o JSON COMPLETO corrigido
+- OBRIGATÓRIO: estrutura_semanal (dias da semana mapeados para treinos)
+- OBRIGATÓRIO: carga_inicial e instrucao_tecnica em CADA exercício
+- OBRIGATÓRIO: volume_semanal_detalhado (séries por grupo muscular como números)
+- OBRIGATÓRIO: progressao_4_semanas (4 semanas, semana 4 = DELOAD com redução 30-40%)
+- OBRIGATÓRIO: justificativa com campos volume, divisao, progressao
+
+CORREÇÃO AUTOMÁTICA APLICADA:
+- Liste as correções feitas`;
+
+          try {
+            const corrResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash",
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: correctionPrompt },
+                ],
+              }),
+            });
+
+            if (corrResp.ok) {
+              const corrData = await corrResp.json();
+              const corrContent = corrData.choices?.[0]?.message?.content || "";
+              const cleanCorrContent = corrContent.replace(/```json\n?|\n?```/g, "").trim();
+              try {
+                const correctedData = JSON.parse(cleanCorrContent);
+                normalizeTreinoProtocol(correctedData);
+                const revalidation = validateTreinoProtocol(correctedData);
+                console.log(`[treino-correction] Re-validation: ${revalidation.failedCriteria.length} criteria still failing`);
+                
+                if (revalidation.valid) {
+                  protocolData = correctedData;
+                  validationResult = { valid: true, errors: [] };
+                  console.log(`[treino-correction] ✅ All criteria passed after correction ${correctionAttempts}`);
+                  break;
+                } else {
+                  currentData = correctedData;
+                  protocolData = correctedData;
+                  validationResult = { valid: revalidation.valid, errors: revalidation.errors };
+                }
+              } catch (parseErr) {
+                console.error(`[treino-correction] JSON parse error:`, parseErr);
+              }
+            } else {
+              await corrResp.text();
+              console.warn(`[treino-correction] AI correction call failed`);
+            }
+          } catch (corrErr) {
+            console.error(`[treino-correction] Error in correction attempt:`, corrErr);
+          }
+        }
+        
+        if (!validationResult.valid) {
+          console.warn(`[treino-correction] ⚠️ Protocol still incomplete after ${correctionAttempts} corrections. Saving with warning.`);
+        }
+      }
     } else if (tipo === "nutricao") {
       // Nutrition uses expanded validation with correction loop
       const nutResult = validateNutricaoProtocol(protocolData);
@@ -394,7 +483,7 @@ serve(async (req) => {
         console.log(`[nutrition-correction] Failed criteria: ${nutResult.failedCriteria.join(", ")}. Attempting auto-correction...`);
         
         let correctionAttempts = 0;
-        const maxCorrectionAttempts = 2;
+        const maxCorrectionAttempts = 3;
         let currentData = protocolData;
         
         while (correctionAttempts < maxCorrectionAttempts) {
@@ -437,20 +526,23 @@ INSTRUÇÕES:
               const corrData = await corrResp.json();
               const corrContent = corrData.choices?.[0]?.message?.content || "";
               const cleanCorrContent = corrContent.replace(/```json\n?|\n?```/g, "").trim();
-              const correctedData = JSON.parse(cleanCorrContent);
-              
-              const revalidation = validateNutricaoProtocol(correctedData);
-              console.log(`[nutrition-correction] Re-validation: ${revalidation.failedCriteria.length} criteria still failing`);
-              
-              if (revalidation.valid) {
-                protocolData = correctedData;
-                validationResult = { valid: true, errors: [] };
-                console.log(`[nutrition-correction] ✅ All criteria passed after correction ${correctionAttempts}`);
-                break;
-              } else {
-                currentData = correctedData;
-                protocolData = correctedData; // Use best version even if not perfect
-                validationResult = { valid: revalidation.valid, errors: revalidation.errors };
+              try {
+                const correctedData = JSON.parse(cleanCorrContent);
+                const revalidation = validateNutricaoProtocol(correctedData);
+                console.log(`[nutrition-correction] Re-validation: ${revalidation.failedCriteria.length} criteria still failing`);
+                
+                if (revalidation.valid) {
+                  protocolData = correctedData;
+                  validationResult = { valid: true, errors: [] };
+                  console.log(`[nutrition-correction] ✅ All criteria passed after correction ${correctionAttempts}`);
+                  break;
+                } else {
+                  currentData = correctedData;
+                  protocolData = correctedData;
+                  validationResult = { valid: revalidation.valid, errors: revalidation.errors };
+                }
+              } catch (parseErr) {
+                console.error(`[nutrition-correction] JSON parse error:`, parseErr);
               }
             } else {
               await corrResp.text();
@@ -472,10 +564,6 @@ INSTRUÇÕES:
     if (!validationResult.valid) {
       console.error(`Schema validation failed for ${tipo}:`, validationResult.errors);
       console.error("First errors:", validationResult.errors.slice(0, 3));
-      // For nutrition, allow saving with warning (correction loop already attempted)
-      if (tipo !== "nutricao" && validationResult.errors.some(e => e.includes("é obrigatório"))) {
-        throw new Error(`Protocolo gerado com estrutura incompleta: ${validationResult.errors[0]}`);
-      }
     }
     
     console.log(`Schema validation ${validationResult.valid ? 'passed' : 'completed with warnings'} for ${tipo}`);
@@ -594,7 +682,14 @@ INSTRUÇÕES:
 
       const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
       if (LOVABLE_API_KEY) {
-        const auditSystemPrompt = `Você é um auditor especialista em fisiologia do exercício. Avalie os 9 critérios (true/false): coherence_anamnese, coherence_objective, restriction_respect, weekly_volume, muscle_distribution, progression_defined, instruction_clarity, mindset_quality, safety_score. Inclua issues[] e corrections_applied[]. Responda APENAS com JSON.`;
+        const isNutricaoAudit = tipo === "nutricao";
+        const auditCriteria = isNutricaoAudit 
+          ? ["macros_definidos","macros_por_refeicao","pre_treino_presente","pos_treino_presente","pre_sono_presente","hidratacao_presente","dia_treino_vs_descanso","lista_compras_gerada","substituicoes_geradas","compativel_anamnese"]
+          : ["coherence_anamnese","coherence_objective","restriction_respect","weekly_volume","muscle_distribution","progression_defined","instruction_clarity","mindset_quality","safety_score","estrutura_semanal_presente","exercicios_completos","volume_detalhado_presente","progressao_4sem_presente","justificativa_presente"];
+        
+        const auditSystemPrompt = isNutricaoAudit
+          ? `Você é um auditor especialista em nutrição esportiva. Avalie os 10 critérios (true/false): ${auditCriteria.join(", ")}. Inclua issues[] e corrections_applied[]. Responda APENAS com JSON.`
+          : `Você é um auditor especialista em fisiologia do exercício. Avalie os 14 critérios (true/false): ${auditCriteria.join(", ")}. Os 5 novos critérios verificam: estrutura_semanal_presente (dias da semana mapeados), exercicios_completos (carga_inicial + instrucao_tecnica em cada exercício), volume_detalhado_presente (séries numéricas por grupo), progressao_4sem_presente (4 semanas com DELOAD), justificativa_presente (volume, divisao, progressao). Inclua issues[] e corrections_applied[]. Responda APENAS com JSON.`;
 
         const auditUserPrompt = `ANAMNESE: ${JSON.stringify({
           full_name: anamneseData?.full_name,
@@ -631,13 +726,12 @@ INSTRUÇÕES:
             const auditMatch = auditContent.match(/\{[\s\S]*\}/);
             if (auditMatch) {
               auditResult = JSON.parse(auditMatch[0]);
-              // Calculate score
-              const criteria = ["coherence_anamnese","coherence_objective","restriction_respect","weekly_volume","muscle_distribution","progression_defined","instruction_clarity","mindset_quality","safety_score"];
               let passed = 0;
-              for (const c of criteria) { if (auditResult[c] === true) passed++; }
-              auditResult.final_score = Math.round((passed / criteria.length) * 100);
-              auditResult.classification = auditResult.final_score >= 90 ? "Excelente" : auditResult.final_score >= 80 ? "Muito bom" : auditResult.final_score >= 70 ? "Aceitável" : "Requer correção";
+              for (const c of auditCriteria) { if (auditResult[c] === true) passed++; }
+              auditResult.final_score = Math.round((passed / auditCriteria.length) * 100);
+              auditResult.classification = auditResult.final_score >= 95 ? "Excelente" : auditResult.final_score >= 85 ? "Muito bom" : auditResult.final_score >= 75 ? "Aceitável" : "Requer correção";
               auditResult.audited_at = new Date().toISOString();
+              auditResult.audit_type = tipo;
 
               // Save audit result
               await supabaseClient

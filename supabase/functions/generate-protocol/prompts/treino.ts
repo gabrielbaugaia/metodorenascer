@@ -120,6 +120,39 @@ Cada sessão deve ter:
 2. Bloco principal (exercícios com séries, reps, descanso)
 3. Finalização opcional (alongamento, aeróbio leve)
 
+### ⚠️ 5 ITENS OBRIGATÓRIOS DO PROTOCOLO ⚠️ ###
+SEM ESTES 5 ITENS, O PROTOCOLO É CONSIDERADO INVÁLIDO:
+
+1) ESTRUTURA SEMANAL CLARA ("estrutura_semanal"):
+   Mapeamento de dias da semana para os treinos por letra.
+   Exemplo: {"segunda": "Treino A", "terca": "Treino B", "quarta": "Treino C", "quinta": "Descanso", "sexta": "Treino D", "sabado": "Cardio leve", "domingo": "Descanso"}
+
+2) EXERCÍCIOS COM ESTRUTURA COMPLETA:
+   Cada exercício DEVE ter: nome, series, repeticoes, descanso, carga_inicial, instrucao_tecnica
+   - carga_inicial: sugestão de intensidade (ex: "moderada (RIR 2)", "leve", "pesada (RIR 1)")
+   - instrucao_tecnica: instrução breve de execução técnica
+
+3) VOLUME SEMANAL POR GRUPAMENTO ("volume_semanal_detalhado"):
+   Objeto com séries semanais por grupo muscular.
+   Exemplo: {"peito": 12, "costas": 14, "quadriceps": 10, "posterior": 10, "ombros": 8, "biceps": 6, "triceps": 6, "abdomen": 6}
+
+4) PROGRESSÃO OBRIGATÓRIA DE 4 SEMANAS ("progressao_4_semanas"):
+   Array com 4 objetos, um para cada semana:
+   [
+     {"semana": 1, "foco": "Base técnica", "instrucao": "RIR 2-3, foco em técnica e conexão mente-músculo"},
+     {"semana": 2, "foco": "Progressão leve", "instrucao": "+1 repetição por série OU +2-5% de carga"},
+     {"semana": 3, "foco": "Progressão moderada", "instrucao": "+1 repetição OU +2-5% carga, buscar RIR 1-2"},
+     {"semana": 4, "foco": "DELOAD", "instrucao": "Reduzir volume 30-40%, manter carga, recuperação ativa"}
+   ]
+
+5) JUSTIFICATIVA DO PROTOCOLO ("justificativa"):
+   Objeto com 3 campos explicando as decisões:
+   {
+     "volume": "Explicação de por que esse volume foi escolhido",
+     "divisao": "Explicação de por que essa divisão foi escolhida",
+     "progressao": "Explicação de por que essa progressão foi escolhida"
+   }
+
 ### CAMPOS OBRIGATÓRIOS ###
 - duracao_minutos: DEVE SER UM NÚMERO INTEIRO (ex: 45, não "45 min")
 - series: DEVE SER UM NÚMERO INTEIRO (ex: 3, não "3 séries")
@@ -138,6 +171,36 @@ RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
   "observacao_ajustes": "Este protocolo será ajustado após o envio das fotos e feedback a cada ${weeksPerCycle} semanas.",
   "aquecimento": "5-10 min de cardio leve (caminhada, polichinelos) + mobilidade articular",
   "alongamento": "5-10 min de alongamento estático ao final",
+  "estrutura_semanal": {
+    "segunda": "Treino A - Peito, Ombro e Tríceps",
+    "terca": "Treino B - Costas e Bíceps",
+    "quarta": "Treino C - Pernas",
+    "quinta": "Descanso ou cardio leve",
+    "sexta": "Treino D - Ombros e Abdômen",
+    "sabado": "Cardio leve / ativo",
+    "domingo": "Descanso"
+  },
+  "volume_semanal_detalhado": {
+    "peito": 12,
+    "costas": 14,
+    "quadriceps": 10,
+    "posterior": 10,
+    "ombros": 8,
+    "biceps": 6,
+    "triceps": 6,
+    "abdomen": 6
+  },
+  "progressao_4_semanas": [
+    {"semana": 1, "foco": "Base técnica", "instrucao": "RIR 2-3, foco em técnica"},
+    {"semana": 2, "foco": "Progressão leve", "instrucao": "+1 rep ou +2-5% carga"},
+    {"semana": 3, "foco": "Progressão moderada", "instrucao": "+1 rep ou +2-5% carga, RIR 1-2"},
+    {"semana": 4, "foco": "DELOAD", "instrucao": "Reduzir volume 30-40%"}
+  ],
+  "justificativa": {
+    "volume": "Explicação do volume escolhido baseado no nível e objetivo",
+    "divisao": "Explicação da divisão muscular escolhida",
+    "progressao": "Explicação da estratégia de progressão"
+  },
   "treinos": [
     {
       "letra": "A",
@@ -149,6 +212,8 @@ RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
           "series": 3,
           "repeticoes": "12-15",
           "descanso": "60s",
+          "carga_inicial": "moderada (RIR 2)",
+          "instrucao_tecnica": "Mantenha os cotovelos a 45 graus, desça controlado até o peito",
           "video_url": "",
           "dicas": "Mantenha os cotovelos a 45 graus, desça controlado"
         }
@@ -194,5 +259,12 @@ ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
 8. Divida os treinos por LETRAS (A, B, C, D) e não por dias da semana
 9. VERIFIQUE o campo "sexo" do cliente:
    - Se HOMEM (masculino): NÃO prescreva Glute Bridge, Hip Thrust, Extensão de Quadril, Elevação Pélvica - use Agachamento, Afundo, Leg Press, Stiff para trabalho indireto de glúteos
-   - Se MULHER (feminino): pode incluir exercícios específicos de glúteo conforme objetivo`;
+   - Se MULHER (feminino): pode incluir exercícios específicos de glúteo conforme objetivo
+
+### ⚠️ OBRIGATÓRIO - OS 5 ITENS ABAIXO DEVEM ESTAR NO JSON ⚠️ ###
+10. INCLUA "estrutura_semanal" com mapeamento de cada dia da semana para o treino correspondente
+11. CADA EXERCÍCIO deve ter "carga_inicial" (ex: "moderada (RIR 2)") e "instrucao_tecnica"
+12. INCLUA "volume_semanal_detalhado" com séries semanais por grupo muscular (objeto numérico)
+13. INCLUA "progressao_4_semanas" com array de 4 objetos (semana 1-4, incluindo DELOAD na semana 4)
+14. INCLUA "justificativa" com campos "volume", "divisao" e "progressao" explicando as decisões`;
 }
