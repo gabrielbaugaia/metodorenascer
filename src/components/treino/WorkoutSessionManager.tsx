@@ -6,6 +6,7 @@ import { useWorkoutSession, SessionSummary } from "@/hooks/useWorkoutSession";
 import { ExerciseSetTracker } from "./ExerciseSetTracker";
 import { RestCountdown } from "./RestCountdown";
 import { WorkoutSummary } from "./WorkoutSummary";
+import { ExerciseVideoModal } from "./ExerciseVideoModal";
 import { cn } from "@/lib/utils";
 
 interface Exercise {
@@ -40,6 +41,18 @@ export function WorkoutSessionManager({
   const session = useWorkoutSession(exercises);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [started, setStarted] = useState(false);
+
+  // Modal state for exercise GIF + inline tracking
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleExerciseClick = (exerciseName: string) => {
+    const ex = exercises.find((e) => e.name === exerciseName);
+    if (ex) {
+      setSelectedExercise(ex);
+      setModalOpen(true);
+    }
+  };
 
   const handleStart = async () => {
     await session.startSession(workoutName);
@@ -116,10 +129,14 @@ export function WorkoutSessionManager({
   }
 
   // Active session
+  const selectedRestSeconds = selectedExercise
+    ? session.parseRest(selectedExercise.rest)
+    : 60;
+
   return (
     <div className="space-y-4">
-      {/* Rest countdown overlay */}
-      {session.restTimer.active && (
+      {/* Rest countdown overlay — only when modal is NOT open */}
+      {session.restTimer.active && !modalOpen && (
         <RestCountdown
           remainingSeconds={session.restTimer.remainingSeconds}
           totalSeconds={
@@ -167,6 +184,7 @@ export function WorkoutSessionManager({
             lastWeight={session.lastWeights[exercise.name] || 0}
             canLog={session.canLogSet()}
             onLogSet={session.logSet}
+            onExerciseClick={handleExerciseClick}
           />
         ))}
       </div>
@@ -186,6 +204,28 @@ export function WorkoutSessionManager({
         )}
         Concluir Treino
       </Button>
+
+      {/* Exercise Video Modal with inline session tracking */}
+      <ExerciseVideoModal
+        exercise={selectedExercise}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        sessionActive={true}
+        completedSets={
+          selectedExercise
+            ? session.getCompletedSets(selectedExercise.name)
+            : []
+        }
+        lastWeight={
+          selectedExercise
+            ? session.lastWeights[selectedExercise.name] || 0
+            : 0
+        }
+        canLog={session.canLogSet()}
+        onLogSet={session.logSet}
+        restTimer={session.restTimer}
+        restTotalSeconds={selectedRestSeconds}
+      />
     </div>
   );
 }

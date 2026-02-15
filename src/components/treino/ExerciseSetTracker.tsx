@@ -36,6 +36,7 @@ interface ExerciseSetTrackerProps {
     repsDone: number,
     restSeconds: number
   ) => void;
+  onExerciseClick?: (exerciseName: string) => void;
 }
 
 export function ExerciseSetTracker({
@@ -48,6 +49,7 @@ export function ExerciseSetTracker({
   lastWeight,
   canLog,
   onLogSet,
+  onExerciseClick,
 }: ExerciseSetTrackerProps) {
   const [isOpen, setIsOpen] = useState(true);
   const nextSet = completedSets.length + 1;
@@ -90,7 +92,7 @@ export function ExerciseSetTracker({
         )}
       >
         <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between p-3 cursor-pointer select-none">
+          <div className="flex items-center justify-between p-3 cursor-pointer select-none" onClick={(e) => { if (onExerciseClick) { e.stopPropagation(); onExerciseClick(exerciseName); } }}>
             <div className="flex items-center gap-2 min-w-0">
               {allDone ? (
                 <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
