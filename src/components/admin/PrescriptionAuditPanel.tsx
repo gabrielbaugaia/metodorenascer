@@ -23,6 +23,13 @@ interface AuditResult {
   lista_compras_gerada?: boolean;
   substituicoes_geradas?: boolean;
   compativel_anamnese?: boolean;
+  // Mindset criteria
+  rotina_manha_presente?: boolean;
+  rotina_noite_presente?: boolean;
+  crencas_com_reformulacao?: boolean;
+  afirmacoes_comportamentais?: boolean;
+  tarefas_rastreaveis?: boolean;
+  mentalidade_definida?: boolean;
   // Common
   final_score?: number;
   classification?: string;
@@ -68,6 +75,15 @@ const NUTRICAO_CRITERIA_LABELS: Record<string, string> = {
   compativel_anamnese: "Compatível com anamnese",
 };
 
+const MINDSET_CRITERIA_LABELS: Record<string, string> = {
+  rotina_manha_presente: "Rotina da manhã (2+ práticas)",
+  rotina_noite_presente: "Rotina da noite (2+ práticas)",
+  crencas_com_reformulacao: "Crenças com reformulação e ação",
+  afirmacoes_comportamentais: "Afirmações personalizadas",
+  tarefas_rastreaveis: "Tarefas semanais rastreáveis",
+  mentalidade_definida: "Mentalidade definida (título + descrição)",
+};
+
 function getScoreColor(score: number): string {
   if (score >= 95) return "text-green-600";
   if (score >= 85) return "text-blue-600";
@@ -87,7 +103,8 @@ export function PrescriptionAuditPanel({ auditResult, tipo }: Props) {
   const score = auditResult.final_score ?? 0;
   const auditType = auditResult.audit_type || tipo || "treino";
   const isNutricao = auditType === "nutricao";
-  const criteriaLabels = isNutricao ? NUTRICAO_CRITERIA_LABELS : TREINO_CRITERIA_LABELS;
+  const isMindset = auditType === "mindset";
+  const criteriaLabels = isNutricao ? NUTRICAO_CRITERIA_LABELS : isMindset ? MINDSET_CRITERIA_LABELS : TREINO_CRITERIA_LABELS;
   const criteria = Object.keys(criteriaLabels);
 
   return (
@@ -95,7 +112,7 @@ export function PrescriptionAuditPanel({ auditResult, tipo }: Props) {
       <div className="flex items-center justify-between">
         <h4 className="font-bold text-sm uppercase tracking-wider text-gray-500 flex items-center gap-2">
           <Shield className="h-4 w-4" />
-          {isNutricao ? "Auditoria Nutricional" : "Auditoria Interna de Qualidade"}
+          {isNutricao ? "Auditoria Nutricional" : isMindset ? "Auditoria de Mindset" : "Auditoria Interna de Qualidade"}
         </h4>
         <div className="flex items-center gap-2">
           <span className={`text-2xl font-bold ${getScoreColor(score)}`}>

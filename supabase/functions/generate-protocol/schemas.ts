@@ -613,42 +613,100 @@ export function validateNutricaoProtocol(data: unknown): NutricaoValidationResul
 }
 
 // ============================================================================
-// VALIDAÇÃO DE MINDSET
+// VALIDAÇÃO DE MINDSET ESTRUTURADA
 // ============================================================================
 
-export function validateMindsetProtocol(data: unknown): { valid: boolean; errors: string[] } {
+export interface MindsetValidationResult {
+  valid: boolean;
+  errors: string[];
+  criteria: {
+    rotina_manha_presente: boolean;
+    rotina_noite_presente: boolean;
+    crencas_limitantes_completas: boolean;
+    afirmacoes_presentes: boolean;
+    mentalidade_necessaria: boolean;
+    tarefas_semanais_presentes: boolean;
+  };
+  failedCriteria: string[];
+}
+
+export function validateMindsetProtocol(data: unknown): MindsetValidationResult {
   const errors: string[] = [];
   const protocol = data as Record<string, unknown>;
+
+  const criteria = {
+    rotina_manha_presente: false,
+    rotina_noite_presente: false,
+    crencas_limitantes_completas: false,
+    afirmacoes_presentes: false,
+    mentalidade_necessaria: false,
+    tarefas_semanais_presentes: false,
+  };
 
   if (!protocol.titulo || typeof protocol.titulo !== "string") {
     errors.push("titulo é obrigatório e deve ser string");
   }
-  if (!protocol.mentalidade_necessaria || typeof protocol.mentalidade_necessaria !== "object") {
-    errors.push("mentalidade_necessaria é obrigatório");
-  } else {
-    const mentalidade = protocol.mentalidade_necessaria as Record<string, unknown>;
-    if (!mentalidade.titulo) errors.push("mentalidade_necessaria.titulo é obrigatório");
-    if (!mentalidade.descricao) errors.push("mentalidade_necessaria.descricao é obrigatório");
-  }
-  if (!protocol.rotina_manha || typeof protocol.rotina_manha !== "object") {
-    errors.push("rotina_manha é obrigatório");
-  } else {
-    const rotina = protocol.rotina_manha as Record<string, unknown>;
-    if (!rotina.praticas || !Array.isArray(rotina.praticas)) {
-      errors.push("rotina_manha.praticas é obrigatório");
+
+  // 1. Rotina da manhã com >= 2 práticas
+  const rotinaManha = protocol.rotina_manha as Record<string, unknown> | undefined;
+  if (rotinaManha && typeof rotinaManha === "object") {
+    const praticas = rotinaManha.praticas;
+    if (Array.isArray(praticas) && praticas.length >= 2) {
+      criteria.rotina_manha_presente = true;
     }
   }
-  if (!protocol.rotina_noite || typeof protocol.rotina_noite !== "object") {
-    errors.push("rotina_noite é obrigatório");
-  }
-  if (!protocol.crencas_limitantes || !Array.isArray(protocol.crencas_limitantes)) {
-    errors.push("crencas_limitantes é obrigatório");
-  }
-  if (!protocol.afirmacoes_personalizadas || !Array.isArray(protocol.afirmacoes_personalizadas)) {
-    errors.push("afirmacoes_personalizadas é obrigatório");
-  }
+  if (!criteria.rotina_manha_presente) errors.push("rotina_manha com pelo menos 2 práticas é obrigatória");
 
-  return { valid: errors.length === 0, errors };
+  // 2. Rotina da noite com >= 2 práticas
+  const rotinaNoite = protocol.rotina_noite as Record<string, unknown> | undefined;
+  if (rotinaNoite && typeof rotinaNoite === "object") {
+    const praticas = rotinaNoite.praticas;
+    if (Array.isArray(praticas) && praticas.length >= 2) {
+      criteria.rotina_noite_presente = true;
+    }
+  }
+  if (!criteria.rotina_noite_presente) errors.push("rotina_noite com pelo menos 2 práticas é obrigatória");
+
+  // 3. Crenças limitantes completas (2+ com reformulação + ação prática)
+  const crencas = protocol.crencas_limitantes;
+  if (Array.isArray(crencas) && crencas.length >= 2) {
+    const completas = (crencas as Array<Record<string, unknown>>).filter(c =>
+      c.crenca_original && c.reformulacao && c.acao_pratica
+    );
+    if (completas.length >= 2) {
+      criteria.crencas_limitantes_completas = true;
+    }
+  }
+  if (!criteria.crencas_limitantes_completas) errors.push("crencas_limitantes: mínimo 2 crenças com crenca_original, reformulacao e acao_pratica");
+
+  // 4. Afirmações personalizadas (>= 2)
+  const afirmacoes = protocol.afirmacoes_personalizadas;
+  if (Array.isArray(afirmacoes) && afirmacoes.length >= 2) {
+    criteria.afirmacoes_presentes = true;
+  }
+  if (!criteria.afirmacoes_presentes) errors.push("afirmacoes_personalizadas com pelo menos 2 itens é obrigatória");
+
+  // 5. Mentalidade necessária com título e descrição
+  const mentalidade = protocol.mentalidade_necessaria as Record<string, unknown> | undefined;
+  if (mentalidade && typeof mentalidade === "object") {
+    if (mentalidade.titulo && mentalidade.descricao) {
+      criteria.mentalidade_necessaria = true;
+    }
+  }
+  if (!criteria.mentalidade_necessaria) errors.push("mentalidade_necessaria com titulo e descricao é obrigatória");
+
+  // 6. Tarefas semanais rastreáveis
+  const tarefas = protocol.tarefas_semanais;
+  if (Array.isArray(tarefas) && tarefas.length > 0) {
+    criteria.tarefas_semanais_presentes = true;
+  }
+  if (!criteria.tarefas_semanais_presentes) errors.push("tarefas_semanais com pelo menos 1 tarefa é obrigatória");
+
+  const failedCriteria = Object.entries(criteria)
+    .filter(([_, v]) => !v)
+    .map(([k]) => k);
+
+  return { valid: failedCriteria.length === 0, errors, criteria, failedCriteria };
 }
 
 // ============================================================================

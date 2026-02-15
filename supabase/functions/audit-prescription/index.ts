@@ -36,6 +36,15 @@ const NUTRICAO_CRITERIA = [
   "compativel_anamnese",
 ] as const;
 
+const MINDSET_CRITERIA = [
+  "rotina_manha_presente",
+  "rotina_noite_presente",
+  "crencas_com_reformulacao",
+  "afirmacoes_comportamentais",
+  "tarefas_rastreaveis",
+  "mentalidade_definida",
+] as const;
+
 function getClassification(score: number): string {
   if (score >= 95) return "Excelente";
   if (score >= 85) return "Muito bom";
@@ -74,7 +83,8 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const isNutricao = type === "nutricao";
-    const criteria = isNutricao ? NUTRICAO_CRITERIA : TREINO_CRITERIA;
+    const isMindset = type === "mindset";
+    const criteria = isNutricao ? NUTRICAO_CRITERIA : isMindset ? MINDSET_CRITERIA : TREINO_CRITERIA;
 
     const systemPrompt = isNutricao 
       ? `Você é um auditor especialista em nutrição esportiva e prescrição alimentar.
@@ -90,6 +100,20 @@ Avalie os seguintes 10 critérios (true = passou, false = falhou):
 8. lista_compras_gerada - Lista de compras semanal com quantidades por categoria?
 9. substituicoes_geradas - Substituições equivalentes com quantidades numéricas?
 10. compativel_anamnese - Protocolo respeita restrições, aversões e condições de saúde?
+
+Para cada critério que FALHOU, inclua uma descrição em "issues".
+Se o score < 80, inclua sugestões em "corrections_applied".
+IMPORTANTE: Responda APENAS com JSON.`
+      : isMindset
+      ? `Você é um auditor especialista em psicologia comportamental, mindset esportivo e ciência do hábito.
+Avalie os seguintes 6 critérios (true = passou, false = falhou):
+
+1. rotina_manha_presente - Rotina da manhã com pelo menos 2 práticas claras e detalhadas?
+2. rotina_noite_presente - Rotina da noite com pelo menos 2 práticas claras e detalhadas?
+3. crencas_com_reformulacao - Pelo menos 2 crenças limitantes com crenca_original, reformulacao e acao_pratica?
+4. afirmacoes_comportamentais - Pelo menos 2 afirmações personalizadas baseadas no perfil do cliente?
+5. tarefas_rastreaveis - Tarefas semanais rastreáveis com metas mensuráveis definidas?
+6. mentalidade_definida - Seção mentalidade_necessaria com titulo e descricao personalizados?
 
 Para cada critério que FALHOU, inclua uma descrição em "issues".
 Se o score < 80, inclua sugestões em "corrections_applied".
@@ -140,6 +164,8 @@ DADOS DA ANAMNESE DO CLIENTE:
 
     const criteriaList = isNutricao
       ? NUTRICAO_CRITERIA.map(c => `"${c}": true/false`).join(",\n  ")
+      : isMindset
+      ? MINDSET_CRITERIA.map(c => `"${c}": true/false`).join(",\n  ")
       : TREINO_CRITERIA.map(c => `"${c}": true/false`).join(",\n  ");
 
     const userPrompt = `${anamneseContext}
