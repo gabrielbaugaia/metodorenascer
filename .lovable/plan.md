@@ -1,78 +1,99 @@
+# Integrar Controle de Carga e Timer no Modal do Exercicio
 
+## Problema Atual
 
-# Ativar Modo de Geracao Deterministica Perfeita
+Hoje o fluxo do treino ativo usa 3 telas separadas:
 
-## Estado Atual
+1. **ExerciseSetTracker** - lista de exercicios com inputs de carga/reps (tela principal da sessao)
+2. **ExerciseVideoModal** - modal com GIF do exercicio (apenas visualizacao, sem interacao de carga)
+3. **RestCountdown** - overlay fullscreen do timer de descanso
 
-O sistema ja implementa validacao rigorosa e auto-correcao para Treino (5 criterios obrigatorios + loop de correcao) e Nutricao (9 criterios + loop de correcao). O Mindset tem validacao basica (campos presentes) mas sem criterios estruturados nem loop de auto-correcao.
+O aluno precisa navegar entre essas telas, perdendo agilidade e controle durante o treino.
 
-A regra solicitada exige que os 3 blocos (Treino, Nutricao, Mindset) passem por validacao completa e auto-correcao automatica antes de serem finalizados.
+## Solucao
+
+Transformar o **ExerciseVideoModal** em um hub completo durante a sessao ativa. Quando o modal abrir durante uma sessao de treino, ele mostra:
+
+- GIF do exercicio (como ja faz)
+- Inputs de carga (kg) e reps para a serie atual
+- Botao "OK" para registrar a serie
+- Timer de descanso integrado (inline, nao fullscreen)
+- Progresso das series (1/3, 2/3, etc)
+
+Quando NAO ha sessao ativa, o modal funciona normalmente (apenas GIF + info).
 
 ---
 
-## O Que Precisa Mudar
+## Alteracoes
 
-### 1. Validacao Estruturada do Mindset (schemas.ts)
+### 1. Expandir `ExerciseVideoModal` com props condicionais de sessao
 
-Converter `validateMindsetProtocol` para retornar resultado com criterios detalhados (igual treino/nutricao):
+Adicionar props opcionais para modo de sessao ativa:
 
-| Criterio | Descricao |
-|---|---|
-| `rotina_manha_presente` | Rotina da manha com passos claros (praticas array >= 2) |
-| `rotina_noite_presente` | Rotina da noite com passos claros (praticas array >= 2) |
-| `crencas_limitantes_completas` | 2+ crencas com crenca_original + reformulacao + acao_pratica |
-| `afirmacoes_presentes` | Array de afirmacoes personalizadas (>= 2) |
-| `mentalidade_necessaria` | Secao mentalidade com titulo e descricao |
-| `tarefas_semanais_presentes` | Tarefas rastreavéis definidas |
+- `sessionActive: boolean` - se ha sessao em andamento
+- `completedSets: SetLog[]` - series ja completadas
+- `lastWeight: number` - ultima carga usada
+- `canLog: boolean` - se pode registrar (sem descanso ativo)
+- `onLogSet: (weight, reps) => void` - callback ao registrar serie
+- `restTimer: { active, remainingSeconds, totalSeconds }` - estado do timer
 
-Criar nova interface `MindsetValidationResult` com `criteria`, `failedCriteria` e `errors`.
+Quando `sessionActive=true`, o modal exibe abaixo do GIF:
 
-### 2. Loop de Auto-Correcao para Mindset (index.ts)
+- Progresso: "Serie 2/3"
+- Input de carga (kg) pre-preenchido com ultima carga
+- Input de reps pre-preenchido com reps prescritas
+- Botao "OK" para registrar
+- Se timer ativo: circular progress inline (compacto, nao fullscreen)
+- Series completadas com check (ex: "Serie 1: 30kg x 8 reps")
 
-Adicionar bloco de auto-correcao para mindset identico ao de treino e nutricao:
+### 2. Modificar `WorkoutSessionManager`
 
-- Se validacao falhar, enviar prompt de correcao especifico
-- Maximo 3 tentativas
-- Salvar com warning se nao atingir 100%
+Passar as props de sessao para o `ExerciseVideoModal` que ja e aberto ao clicar no exercicio. O modal receberao os dados de sessao para permitir registro inline.
 
-### 3. Auditoria do Mindset (audit-prescription/index.ts)
+### 3. Adaptar `RestCountdown` para modo inline
 
-Quando `tipo === "mindset"`, usar criterios especificos de mindset na auditoria:
+Criar uma variante compacta do timer que funciona dentro do modal (nao fullscreen). O timer fullscreen continua existindo como fallback quando o modal nao esta aberto.
 
-- `rotina_manha_presente`
-- `rotina_noite_presente`
-- `crencas_com_reformulacao`
-- `afirmacoes_comportamentais`
-- `tarefas_rastreavéis`
-- `mentalidade_definida`
+---
 
-Score: cada criterio vale ~16.7 pontos (6 criterios, total 100).
+## Fluxo do Usuario (Novo)
 
-### 4. Painel de Auditoria Admin (PrescriptionAuditPanel.tsx)
-
-Expandir para reconhecer criterios de mindset quando `tipo === "mindset"`:
-
-- Mostrar checklist dos 6 criterios de mindset
-- Score final XX/100
-- Itens falhados em destaque
+```text
+1. Aluno inicia treino
+2. Clica no exercicio -> abre modal com GIF
+3. No mesmo modal, ve inputs de carga e reps
+4. Digita 30kg x 8 reps -> clica OK
+5. Timer de descanso aparece DENTRO do modal (inline)
+6. Timer termina -> inputs da proxima serie aparecem
+7. Completa todas as series -> modal mostra "Concluido"
+8. Fecha modal ou vai para proximo exercicio
+```
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Alteracao |
-|---|---|
-| `supabase/functions/generate-protocol/schemas.ts` | Nova interface `MindsetValidationResult`, reescrever `validateMindsetProtocol` com criterios estruturados |
-| `supabase/functions/generate-protocol/index.ts` | Adicionar loop de auto-correcao para mindset (linhas ~561) |
-| `supabase/functions/audit-prescription/index.ts` | Criterios de auditoria especificos para mindset |
-| `src/components/admin/PrescriptionAuditPanel.tsx` | Exibir criterios de mindset no painel admin |
+
+| Arquivo                                           | Alteracao                                                                           |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `src/components/treino/ExerciseVideoModal.tsx`    | Adicionar modo sessao com inputs de carga, reps, timer inline e progresso de series |
+| `src/components/treino/WorkoutSessionManager.tsx` | Passar props de sessao para o ExerciseVideoModal                                    |
+| `src/components/treino/RestCountdown.tsx`         | Adicionar variante `inline` compacta para uso dentro do modal                       |
+
+
+Nenhum arquivo novo. Nenhuma alteracao no banco de dados.
 
 ---
 
 ## Secao Tecnica
 
-- A validacao de mindset atualmente retorna `{ valid, errors }` sem `failedCriteria`. Sera expandida para `MindsetValidationResult` com `criteria` e `failedCriteria` (mesmo padrao de treino/nutricao).
-- O loop de auto-correcao segue o mesmo padrao ja implementado: maximo 3 tentativas, prompt de correcao com criterios falhados, revalidacao apos cada tentativa.
-- Os 3 tipos (treino, nutricao, mindset) passarao pelo mesmo pipeline: gerar -> validar -> corrigir automaticamente -> auditar.
-- Nenhuma alteracao no banco de dados. Os dados de auditoria continuam no campo `audit_result` (JSONB) da tabela `protocolos`.
-- Os prompts de treino e nutricao ja estao completos e nao precisam de alteracao. Apenas o pipeline de validacao do mindset precisa ser nivelado.
+- O `ExerciseVideoModal` recebe props opcionais (`sessionActive`, `completedSets`, `onLogSet`, `restTimer`). Quando `sessionActive=false` (ou ausente), funciona identicamente ao atual.
+- O timer inline usa o mesmo componente `RestCountdown` com uma prop `variant="inline"` que renderiza em tamanho compacto (w-20 h-20) sem overlay fullscreen.
+- Os inputs de carga/reps reutilizam a mesma logica do `ExerciseSetTracker`: pre-preenchem com ultima carga e reps prescritas.
+- O `WorkoutSessionManager` abre o modal ao clicar em um exercicio e passa `session.getCompletedSets()`, `session.canLogSet()`, `session.logSet`, e `session.restTimer` como props.
+- O `ExerciseSetTracker` continua existindo como visao de lista (para quem prefere ver todos os exercicios de uma vez), mas o registro principal acontece no modal.  
+  
+  
+  
+
+  sEMPRE QUE ATUALIZAR LEMBRE QUE O CLIENTE USA NO CELULAR 99,9% DAS VEZES . ENTÃO Precisa que tudo seja  para facilidade o uso do cliente na tela de treino 
