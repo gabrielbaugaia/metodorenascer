@@ -1,144 +1,182 @@
 
-# Plugin HealthKit para Renascer Connect
+# Evolucao do Plugin HealthKit — Fase 2 (Resting HR, HRV, Workouts)
 
 ## Resumo
 
-Criar o plugin nativo iOS (Swift) para Capacitor que le metricas do Apple HealthKit (passos, calorias ativas, sono) e integrar no fluxo TypeScript existente com fallback automatico para dados mock quando HealthKit nao estiver disponivel.
+Expandir o plugin HealthKit e o fluxo de sync para incluir Resting Heart Rate, HRV (SDNN) e Workouts reais das ultimas 24h, com deduplicacao de workouts via coluna `external_id` no banco e atualizacao do calculo de prontidao.
 
 ---
 
-## Arquivos Nativos iOS (criados manualmente pelo dev no Xcode)
+## 1. Migracao de Banco (pequena e segura)
 
-Estes arquivos NAO podem ser criados pelo Lovable — devem ser criados localmente apos `git pull`. Serao documentados no guia.
+Adicionar coluna nullable `external_id` na tabela `health_workouts` e criar um indice unico parcial para deduplicacao:
 
-### `ios/App/App/Plugins/HealthKitPlugin/HealthKitPlugin.swift`
-
-Plugin Swift com 3 metodos:
-- `isAvailable()` — retorna `{ available: Bool }` via `HKHealthStore.isHealthDataAvailable()`
-- `requestPermissions()` — solicita leitura de stepCount, activeEnergyBurned, sleepAnalysis; retorna `{ granted: Bool }`
-- `getTodayMetrics()` — retorna `{ date, steps, activeCalories, sleepMinutes }` usando queries HKStatisticsQuery (steps/calories) e HKSampleQuery (sleep)
-
-### `ios/App/App/Plugins/HealthKitPlugin/HealthKitPlugin.m`
-
-Arquivo Objective-C bridge para registrar o plugin no Capacitor:
 ```text
-#import <Capacitor/Capacitor.h>
-CAP_PLUGIN(HealthKitPlugin, "HealthKitPlugin",
-  CAP_PLUGIN_METHOD(isAvailable, CAPPluginReturnPromise);
-  CAP_PLUGIN_METHOD(requestPermissions, CAPPluginReturnPromise);
-  CAP_PLUGIN_METHOD(getTodayMetrics, CAPPluginReturnPromise);
-)
+ALTER TABLE health_workouts ADD COLUMN external_id text;
+CREATE UNIQUE INDEX idx_health_workouts_external_id 
+  ON health_workouts (user_id, external_id) 
+  WHERE external_id IS NOT NULL;
 ```
 
-### `ios/App/App/Info.plist`
-
-Adicionar manualmente:
-- `NSHealthShareUsageDescription`: "O MQO/Renascer precisa ler seus dados de saude (passos, calorias e sono) para calcular sua prontidao e personalizar seu treino."
-- `NSHealthUpdateUsageDescription`: "O app nao escreve dados; apenas leitura."
-
-### Xcode Capabilities
-
-Habilitar "HealthKit" em Signing & Capabilities no target App.
+Isso nao quebra inserts antigos (external_id sera null para registros existentes). O indice unico parcial ignora nulls, entao workouts sem external_id continuam funcionando normalmente.
 
 ---
 
-## Arquivos a Modificar (Lovable)
+## 2. Edge Function `health-sync` (atualizar)
 
-### 1. `src/services/healthkit.ts`
+Modificar a secao de insercao de workouts para:
+- Aceitar `external_id` opcional no payload de cada workout
+- Se `external_id` estiver presente, verificar existencia antes de inserir (query por user_id + external_id)
+- Inserir apenas workouts cujo external_id nao exista ainda
+- Se `external_id` nao estiver presente, inserir normalmente (comportamento atual)
 
-Reescrever completamente para:
-- Importar `registerPlugin` de `@capacitor/core`
-- Registrar `HealthKitPlugin` como plugin Capacitor
-- Detectar se esta em ambiente nativo (`isNative()`)
-- Se nativo: chamar plugin real (`HealthKit.isAvailable()`, `requestPermissions()`, `getTodayMetrics()`)
-- Se web ou plugin falhar: usar fallback mock (funcoes randomBetween existentes)
-- Exportar funcoes compatíveis com a API atual para nao quebrar `healthSync.ts`:
-  - `requestPermissions()` -> tenta plugin, fallback mock
-  - `getTodaySteps()` -> tenta plugin, fallback mock
-  - `getTodayActiveCalories()` -> tenta plugin, fallback mock
-  - `getTodaySleepMinutes()` -> tenta plugin, fallback mock
-  - `getTodayRestingHR()` -> mock (nao implementado nesta fase)
-  - `getTodayHRV()` -> mock (nao implementado nesta fase)
-  - `getWorkoutsLast24h()` -> mock (nao implementado nesta fase)
-- Nova funcao exportada: `healthkitIsAvailable(): Promise<boolean>`
-- Nova funcao exportada: `healthkitGetTodayMetrics(): Promise<TodayMetrics | null>` (retorna null se falhar)
+Fluxo:
+```text
+Para cada workout no array:
+  Se w.external_id existe:
+    SELECT count(*) FROM health_workouts WHERE user_id = X AND external_id = Y
+    Se > 0: pular (ja existe)
+  Inserir workout com external_id
+```
 
-Estrategia de cache: ao chamar `getTodayMetrics()` com sucesso, armazenar resultado em variavel do modulo para que `getTodaySteps()`, `getTodayActiveCalories()` e `getTodaySleepMinutes()` usem o mesmo resultado sem chamadas duplicadas ao plugin.
+Alternativa mais eficiente: usar `upsert` com `onConflict` no indice unico, mas como o indice e parcial, usar a abordagem de filtro pre-insert.
 
-### 2. `src/services/healthSync.ts`
+---
 
-Ajuste minimo:
-- Importar `healthkitGetTodayMetrics` do healthkit.ts
-- Antes do `Promise.all` dos mocks, tentar `healthkitGetTodayMetrics()`
-- Se retornar dados reais: usar `steps`, `activeCalories`, `sleepMinutes` e `source: "apple"`
-- Se retornar null: cair no fluxo mock existente com `source: "apple_health"` (mock)
-- Manter `resting_hr`, `hrv_ms` e `workouts` vindos dos mocks como antes
+## 3. TypeScript Bridge — `src/services/healthkit.ts`
 
-### 3. `src/pages/connect/ConnectDashboard.tsx`
+Atualizar tipos e funcoes:
 
-Adicionar:
-- Estado `healthPermission`: `"unknown" | "granted" | "denied" | "unavailable"`
-- No `useEffect` de init: chamar `healthkitIsAvailable()` para verificar disponibilidade
-- Novo card/botao "Conectar Apple Health" (entre StatusCard e SyncButton):
-  - Se `unavailable`: texto "Apple Health nao disponivel neste dispositivo" (cinza, desabilitado)
-  - Se `unknown`: botao verde "Conectar Apple Health" que chama `requestPermissions()` e atualiza estado
-  - Se `granted`: badge verde "Apple Health conectado"
-  - Se `denied`: texto amarelo "Permissao negada. Ative em Ajustes > Saude > Acesso de dados."
-- Remover texto "Dados mock" quando `healthPermission === "granted"`
-- Salvar estado de permissao em Preferences/localStorage (chave `renascer_health_permission`)
+**Novos tipos:**
+```text
+TodayMetrics += restingHr: number | null, hrvMs: number | null
 
-### 4. `src/pages/admin/AdminConectorMobileDocs.tsx`
+Workout = {
+  startTime: string (ISO UTC)
+  endTime: string (ISO UTC)
+  type: string
+  calories: number | null
+  source: "apple"
+  externalId: string
+}
 
-Atualizar documentacao:
-- Adicionar nova secao "Plugin HealthKit (iOS)" com:
-  - Estrutura dos arquivos Swift
-  - Instrucoes para habilitar capability no Xcode
-  - Chaves do Info.plist
-  - Codigo completo do HealthKitPlugin.swift e .m para copiar
-- Atualizar checklist: marcar Fase 2 items "Implementar requestPermissions" e "Implementar leitura HealthKit" como disponiveis (nao checked — dev precisa criar no Xcode)
-- Adicionar nota: "Os arquivos Swift devem ser criados manualmente no Xcode apos git pull"
+HealthKitPluginInterface += getWorkoutsLast24h(): Promise<{ workouts: Workout[] }>
+```
+
+**Funcoes atualizadas:**
+- `healthkitGetTodayMetrics()` — retorna restingHr e hrvMs do plugin (ou null no mock)
+- `getTodayRestingHR()` — usa cache do plugin se disponivel, senao mock
+- `getTodayHRV()` — usa cache do plugin se disponivel, senao mock
+
+**Nova funcao:**
+- `healthkitGetWorkoutsLast24h(): Promise<Workout[]>` — chama plugin nativo, fallback para mock com externalId gerado
+
+**Registrar novo metodo no plugin bridge** (o `.m` nativo precisa ser atualizado manualmente pelo dev).
+
+---
+
+## 4. Sync Logic — `src/services/healthSync.ts`
+
+Atualizar `syncHealthData()`:
+
+```text
+1. Tentar healthkitGetTodayMetrics()
+2. Se sucesso:
+   - steps, activeCalories, sleepMinutes do plugin
+   - restingHr e hrvMs do plugin (podem ser null)
+   - source = "apple"
+3. Se falha: mock para tudo, source = "apple_health"
+
+4. Tentar healthkitGetWorkoutsLast24h()
+5. Se sucesso: usar workouts reais com external_id
+6. Se falha: usar mock (sem external_id)
+
+7. Montar payload incluindo external_id nos workouts
+```
+
+---
+
+## 5. Calculo de Prontidao — `src/hooks/useHealthData.ts`
+
+Refinar `calculateReadiness()`:
+
+Adicoes:
+- Se houve workout de alta intensidade (type in: hiit, running, cycling) E sono < 360 min (6h): -10 extra
+- Manter penalizacoes existentes para resting_hr e hrv_ms (ja implementadas)
+- Passar `recentWorkouts` (com tipo) para a funcao em vez de apenas `hasRecentWorkout: boolean`
+
+---
+
+## 6. Documentacao Admin — `src/pages/admin/AdminConectorMobileDocs.tsx`
+
+Atualizar:
+- Secao do plugin Swift: adicionar codigo para `getWorkoutsLast24h`, restingHeartRate e HRV
+- Atualizar o `.m` bridge para incluir o novo metodo
+- Atualizar checklist Fase 2: marcar restingHR, HRV e workouts como "implementado (TS + backend), pendente config nativa"
+- Adicionar nota sobre external_id e deduplicacao
+
+---
+
+## Arquivos a Modificar
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/services/healthkit.ts` | Novos tipos, restingHr/hrvMs no TodayMetrics, getWorkoutsLast24h real, fallback mock |
+| `src/services/healthSync.ts` | Incluir restingHr/hrvMs do plugin, workouts reais com external_id |
+| `src/hooks/useHealthData.ts` | Refinar readiness com tipo de workout + sono |
+| `supabase/functions/health-sync/index.ts` | Aceitar external_id, dedup antes de inserir |
+| `src/pages/admin/AdminConectorMobileDocs.tsx` | Codigo Swift atualizado, checklist, nota dedup |
+| Migracao SQL | Adicionar coluna external_id + indice unico parcial |
 
 ---
 
 ## Detalhes Tecnicos
 
-### healthkit.ts — Logica de deteccao e fallback
+### health-sync edge function — dedup logic
 
 ```text
-1. isNative() verifica window.Capacitor
-2. Se nativo, registerPlugin('HealthKitPlugin')
-3. Cada funcao publica tenta plugin primeiro
-4. Se plugin lanca erro ou nao esta disponivel, retorna mock
-5. getTodayMetrics() cacheia resultado para evitar 3 chamadas separadas ao plugin
+// Filtrar workouts novos
+const newWorkouts = [];
+for (const w of workouts) {
+  if (w.external_id) {
+    const { count } = await supabase
+      .from("health_workouts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("external_id", w.external_id);
+    if (count && count > 0) continue; // ja existe
+  }
+  newWorkouts.push({ ...row, external_id: w.external_id || null });
+}
+// Insert apenas newWorkouts
 ```
 
-### healthSync.ts — Fluxo atualizado
+### healthkit.ts — Mock externalId
+
+Para mocks, gerar externalId determinístico:
+```text
+externalId = btoa(`${startISO}|${endISO}|${type}|mock`).replace(/=/g, '')
+```
+
+### useHealthData.ts — Readiness refinado
 
 ```text
-1. Tentar healthkitGetTodayMetrics()
-2. Se sucesso:
-   - daily.steps = metrics.steps
-   - daily.active_calories = metrics.activeCalories
-   - daily.sleep_minutes = metrics.sleepMinutes
-   - daily.source = "apple"
-   - daily.resting_hr = mock (getTodayRestingHR)
-   - daily.hrv_ms = mock (getTodayHRV)
-3. Se falha:
-   - Usar todos os mocks como antes
-   - daily.source = "apple_health"
-4. workouts = mock (getWorkoutsLast24h) — inalterado
+// Existente (manter):
+if (hasRecentWorkout) score -= 10;
+
+// Novo:
+const highIntensityTypes = ['hiit', 'running', 'cycling'];
+const hasHighIntensityRecent = recentWorkouts.some(w => 
+  highIntensityTypes.includes(w.type)
+);
+if (hasHighIntensityRecent && today.sleep_minutes < 360) score -= 10;
 ```
-
-### ConnectDashboard.tsx — Novo card HealthKit
-
-Posicionado entre StatusCard e SyncButton. Usa icone Apple (ou Heart com badge). Estados visuais claros para cada permissao. Persiste estado localmente para nao perguntar toda vez.
 
 ---
 
 ## O que NAO sera feito
 
-- Backend e Edge Functions permanecem inalterados
-- /dados-corpo nao sera modificado
-- HRV, FC repouso, workouts reais nao serao implementados
-- Background sync nao sera implementado
-- Nenhuma tabela de banco criada ou modificada
+- Background sync
+- Novos campos no health_daily (schema ja suporta resting_hr e hrv_ms)
+- Alteracoes em /dados-corpo UI (ja consome os dados existentes)
+- Plugin Swift real (criado manualmente pelo dev no Xcode — apenas documentado)
