@@ -58,6 +58,7 @@ const AdminCommercialPlans = lazy(() => import("./pages/admin/AdminCommercialPla
 const AdminTrialCampaigns = lazy(() => import("./pages/admin/AdminTrialCampaigns"));
 const Mqo = lazy(() => import("./pages/Mqo"));
 const DadosCorpo = lazy(() => import("./pages/DadosCorpo"));
+const AdminConectorMobileDocs = lazy(() => import("./pages/admin/AdminConectorMobileDocs"));
 
 const queryClient = new QueryClient();
 
@@ -130,6 +131,7 @@ const App = () => (
               <Route path="/admin/commercial-plans" element={<AdminCommercialPlans />} />
               <Route path="/admin/trial-campaigns" element={<AdminTrialCampaigns />} />
               <Route path="/mqo" element={<Mqo />} />
+              <Route path="/admin/docs/conector-mobile" element={<AdminConectorMobileDocs />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
