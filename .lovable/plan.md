@@ -1,99 +1,137 @@
-# Integrar Controle de Carga e Timer no Modal do Exercicio
 
-## Problema Atual
 
-Hoje o fluxo do treino ativo usa 3 telas separadas:
+# MVP "Dados do Corpo" - Health Metrics para Renascer
 
-1. **ExerciseSetTracker** - lista de exercicios com inputs de carga/reps (tela principal da sessao)
-2. **ExerciseVideoModal** - modal com GIF do exercicio (apenas visualizacao, sem interacao de carga)
-3. **RestCountdown** - overlay fullscreen do timer de descanso
+## Resumo
 
-O aluno precisa navegar entre essas telas, perdendo agilidade e controle durante o treino.
-
-## Solucao
-
-Transformar o **ExerciseVideoModal** em um hub completo durante a sessao ativa. Quando o modal abrir durante uma sessao de treino, ele mostra:
-
-- GIF do exercicio (como ja faz)
-- Inputs de carga (kg) e reps para a serie atual
-- Botao "OK" para registrar a serie
-- Timer de descanso integrado (inline, nao fullscreen)
-- Progresso das series (1/3, 2/3, etc)
-
-Quando NAO ha sessao ativa, o modal funciona normalmente (apenas GIF + info).
+Criar um sistema completo de metricas de saude integrado ao app Renascer, com sincronizacao via conector mobile (Apple HealthKit / Health Connect), armazenamento seguro, painel visual e calculo de score de prontidao.
 
 ---
 
-## Alteracoes
+## 1. Banco de Dados (Migracoes SQL)
 
-### 1. Expandir `ExerciseVideoModal` com props condicionais de sessao
+### Tabela `health_daily`
+- Armazena 1 registro por usuario por dia (upsert)
+- Campos: steps, active_calories, sleep_minutes, resting_hr, hrv_ms, source
+- Constraint UNIQUE(user_id, date)
+- Indice em (user_id, date DESC)
+- Trigger para atualizar `updated_at` automaticamente
 
-Adicionar props opcionais para modo de sessao ativa:
+### Tabela `health_workouts`
+- Multiplos treinos por dia
+- Campos: start_time, end_time, type, calories, source
+- Indice em (user_id, start_time DESC)
 
-- `sessionActive: boolean` - se ha sessao em andamento
-- `completedSets: SetLog[]` - series ja completadas
-- `lastWeight: number` - ultima carga usada
-- `canLog: boolean` - se pode registrar (sem descanso ativo)
-- `onLogSet: (weight, reps) => void` - callback ao registrar serie
-- `restTimer: { active, remainingSeconds, totalSeconds }` - estado do timer
+### RLS (Row Level Security)
+- SELECT/INSERT/UPDATE/DELETE: somente `auth.uid() = user_id`
+- Admins: acesso total via `has_role(auth.uid(), 'admin')`
 
-Quando `sessionActive=true`, o modal exibe abaixo do GIF:
-
-- Progresso: "Serie 2/3"
-- Input de carga (kg) pre-preenchido com ultima carga
-- Input de reps pre-preenchido com reps prescritas
-- Botao "OK" para registrar
-- Se timer ativo: circular progress inline (compacto, nao fullscreen)
-- Series completadas com check (ex: "Serie 1: 30kg x 8 reps")
-
-### 2. Modificar `WorkoutSessionManager`
-
-Passar as props de sessao para o `ExerciseVideoModal` que ja e aberto ao clicar no exercicio. O modal receberao os dados de sessao para permitir registro inline.
-
-### 3. Adaptar `RestCountdown` para modo inline
-
-Criar uma variante compacta do timer que funciona dentro do modal (nao fullscreen). O timer fullscreen continua existindo como fallback quando o modal nao esta aberto.
+**Nota importante**: As foreign keys referenciam `profiles(id)` seguindo a arquitetura do projeto (conforme memoria `database/user-referencing-architecture`).
 
 ---
 
-## Fluxo do Usuario (Novo)
+## 2. Edge Function `health-sync`
 
+Endpoint POST para o conector mobile enviar dados:
+
+- Valida JWT do usuario (Authorization Bearer)
+- Forca `user_id = auth.uid()` (ignora qualquer user_id enviado pelo cliente)
+- Faz UPSERT em `health_daily` por (user_id, date)
+- Insere workouts em lote em `health_workouts`
+- Evita duplicacao de workouts por (user_id, start_time, type)
+- Retorna `{ ok: true, daily_upserted: true, workouts_inserted: N }`
+
+Payload esperado:
 ```text
-1. Aluno inicia treino
-2. Clica no exercicio -> abre modal com GIF
-3. No mesmo modal, ve inputs de carga e reps
-4. Digita 30kg x 8 reps -> clica OK
-5. Timer de descanso aparece DENTRO do modal (inline)
-6. Timer termina -> inputs da proxima serie aparecem
-7. Completa todas as series -> modal mostra "Concluido"
-8. Fecha modal ou vai para proximo exercicio
+POST /functions/v1/health-sync
+{
+  "date": "YYYY-MM-DD",
+  "daily": { steps, active_calories, sleep_minutes, resting_hr, hrv_ms, source },
+  "workouts": [{ start_time, end_time, type, calories, source }]
+}
 ```
 
 ---
 
+## 3. Novas Telas no App
+
+### Rota: `/dados-corpo`
+
+Protegida por SubscriptionGuard. Adicionada ao menu lateral (sidebar) com icone de coracao/pulso.
+
+### 3 Abas internas:
+
+**A) Conectar Relogio**
+- Instrucoes para sincronizar Apple Watch / Android Watch
+- Status da ultima sincronizacao (data + fonte)
+- Botoes "Ver instrucoes iPhone" e "Ver instrucoes Android"
+
+**B) Painel (Hoje + 7 dias)**
+- Cards do dia atual: Passos, Calorias Ativas, Sono (formato h:min), FC Repouso, HRV
+- Lista dos ultimos 7 dias em cards compactos
+- Estado vazio com CTA "Conectar relogio" se sem dados
+
+**C) Prontidao (Score 0-100)**
+- Calculo baseado nos ultimos 7 dias:
+  - Base 100 pontos
+  - Sono < 6h: -20 | Sono < 5h: -35
+  - FC repouso > baseline + 5: -15
+  - HRV < baseline * 0.85: -15
+  - Passos < 4000: -5
+  - Treino nas ultimas 24h: -10
+- Exibicao visual do score (circular)
+- Recomendacao do dia:
+  - >= 80: "Treino normal"
+  - 60-79: "Reduzir volume em 20%"
+  - 40-59: "Treino leve + tecnica"
+  - < 40: "Mobilidade + caminhada leve"
+
+---
+
+## 4. Feature Flag
+
+Constante `ENABLE_HEALTH_METRICS = true` em arquivo de configuracao.
+- Se false: esconde menu e rota
+- Se true: mostra tudo
+
+---
+
+## 5. Botao de Dados de Teste
+
+Visivel apenas para admins: "Inserir dados de exemplo"
+- Preenche 7 dias de `health_daily` com dados plausíveis
+- Insere 1 workout no dia anterior
+- Permite testar UI e score sem conector real
+
+---
+
+## Arquivos a Criar
+
+| Arquivo | Descricao |
+|---|---|
+| `src/pages/DadosCorpo.tsx` | Pagina principal com 3 abas |
+| `src/components/health/HealthConnectTab.tsx` | Aba "Conectar Relogio" |
+| `src/components/health/HealthDashboardTab.tsx` | Aba "Painel" com cards e historico |
+| `src/components/health/HealthReadinessTab.tsx` | Aba "Prontidao" com score e recomendacao |
+| `src/hooks/useHealthData.ts` | Hook para queries de health_daily e health_workouts |
+| `src/lib/healthConfig.ts` | Feature flag e constantes |
+| `supabase/functions/health-sync/index.ts` | Edge function de sincronizacao |
+
 ## Arquivos a Modificar
 
-
-| Arquivo                                           | Alteracao                                                                           |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `src/components/treino/ExerciseVideoModal.tsx`    | Adicionar modo sessao com inputs de carga, reps, timer inline e progresso de series |
-| `src/components/treino/WorkoutSessionManager.tsx` | Passar props de sessao para o ExerciseVideoModal                                    |
-| `src/components/treino/RestCountdown.tsx`         | Adicionar variante `inline` compacta para uso dentro do modal                       |
-
-
-Nenhum arquivo novo. Nenhuma alteracao no banco de dados.
+| Arquivo | Alteracao |
+|---|---|
+| `src/App.tsx` | Adicionar rota `/dados-corpo` com lazy loading e SubscriptionGuard |
+| `src/components/layout/ClientSidebar.tsx` | Adicionar item "Dados do Corpo" no menu do cliente |
+| `supabase/config.toml` | Adicionar configuracao da edge function `health-sync` |
 
 ---
 
 ## Secao Tecnica
 
-- O `ExerciseVideoModal` recebe props opcionais (`sessionActive`, `completedSets`, `onLogSet`, `restTimer`). Quando `sessionActive=false` (ou ausente), funciona identicamente ao atual.
-- O timer inline usa o mesmo componente `RestCountdown` com uma prop `variant="inline"` que renderiza em tamanho compacto (w-20 h-20) sem overlay fullscreen.
-- Os inputs de carga/reps reutilizam a mesma logica do `ExerciseSetTracker`: pre-preenchem com ultima carga e reps prescritas.
-- O `WorkoutSessionManager` abre o modal ao clicar em um exercicio e passa `session.getCompletedSets()`, `session.canLogSet()`, `session.logSet`, e `session.restTimer` como props.
-- O `ExerciseSetTracker` continua existindo como visao de lista (para quem prefere ver todos os exercicios de uma vez), mas o registro principal acontece no modal.  
-  
-  
-  
-
-  sEMPRE QUE ATUALIZAR LEMBRE QUE O CLIENTE USA NO CELULAR 99,9% DAS VEZES . ENTÃO Precisa que tudo seja  para facilidade o uso do cliente na tela de treino 
+- As tabelas `daily_activity` e `workout_sessions` ja existentes NAO serao alteradas. As novas tabelas `health_daily` e `health_workouts` sao independentes e dedicadas ao fluxo de metricas de saude do conector mobile.
+- O hook `useHealthData` faz 2 queries otimizadas: (1) ultimos 7 dias de `health_daily` e (2) workouts das ultimas 24h de `health_workouts`.
+- O score de prontidao e calculado inteiramente no frontend (sem edge function adicional) para simplicidade do MVP.
+- A edge function `health-sync` usa `verify_jwt = false` no config.toml e valida JWT no codigo via `getClaims()` conforme padrao do projeto.
+- O botao de dados de teste usa inserção direta via Supabase client (respeitando RLS, pois o admin tem policy ALL).
+- Layout mobile-first: cards empilhados, texto minimo, score grande e visível.
