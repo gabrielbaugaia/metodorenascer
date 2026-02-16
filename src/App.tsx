@@ -57,6 +57,7 @@ const Oferta = lazy(() => import("./pages/Oferta"));
 const AdminCommercialPlans = lazy(() => import("./pages/admin/AdminCommercialPlans"));
 const AdminTrialCampaigns = lazy(() => import("./pages/admin/AdminTrialCampaigns"));
 const Mqo = lazy(() => import("./pages/Mqo"));
+const DadosCorpo = lazy(() => import("./pages/DadosCorpo"));
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,7 @@ const App = () => (
             <Route path="/indicacoes" element={<SubscriptionGuard><Indicacoes /></SubscriptionGuard>} />
             <Route path="/assinatura" element={<SubscriptionGuard><Assinatura /></SubscriptionGuard>} />
             <Route path="/configuracoes" element={<SubscriptionGuard><Configuracoes /></SubscriptionGuard>} />
+            <Route path="/dados-corpo" element={<SubscriptionGuard><DadosCorpo /></SubscriptionGuard>} />
 
             {/* ROTAS ADMIN (verificação de admin é feita internamente) */}
             <Route path="/admin" element={<AdminDashboard />} />
