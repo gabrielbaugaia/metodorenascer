@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Smartphone, Shield, Server, Activity, Apple, MonitorSmartphone, CheckSquare, FlaskConical, Lock, CircleDot } from "lucide-react";
+import { Smartphone, Shield, Server, Activity, Apple, MonitorSmartphone, CheckSquare, FlaskConical, Lock, CircleDot, Download, Link2 } from "lucide-react";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -374,10 +374,78 @@ HKWorkoutType.workoutType()`}</CodeBlock>
             </AccordionContent>
           </AccordionItem>
 
-          {/* SEÇÃO 10 */}
+          {/* SEÇÃO 10 — Guia de Instalação */}
+          <AccordionItem value="instalacao" className="border rounded-lg px-1">
+            <AccordionTrigger className="hover:no-underline">
+              <SectionIcon icon={Download} label="10. Guia de Instalação (Capacitor)" />
+            </AccordionTrigger>
+            <AccordionContent>
+              <Card className="border-0 shadow-none">
+                <CardContent className="pt-2 space-y-4 text-sm text-muted-foreground">
+                  <p>Siga os passos abaixo para configurar o projeto nativo localmente:</p>
+                  <CodeBlock title="Passo a passo">{`# 1) Exportar para GitHub e clonar
+git pull
+
+# 2) Instalar dependências
+npm install
+
+# 3) Instalar Capacitor CLI (dev)
+npm install -D @capacitor/cli
+
+# 4) Inicializar Capacitor (apenas uma vez)
+npx cap init "Renascer Connect" "com.renascer.connect"
+
+# 5) Adicionar plataforma iOS
+npm install @capacitor/ios
+npx cap add ios
+
+# 6) Build + Sync
+npm run build
+npx cap sync
+
+# 7) Abrir no Xcode / Rodar
+npx cap open ios
+# ou
+npx cap run ios`}</CodeBlock>
+                  <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2 text-xs">
+                    <p className="font-semibold text-amber-700 dark:text-amber-400">⚠ Observações importantes:</p>
+                    <ul className="list-disc list-inside space-y-1 text-amber-600 dark:text-amber-400">
+                      <li>Requer <strong>Mac + Xcode 15+</strong> para compilar e rodar no iOS.</li>
+                      <li><code>server.url</code> no <code>capacitor.config.ts</code> aponta para o WebView do Lovable <strong>apenas para MVP</strong> (login + sync mock).</li>
+                      <li>HealthKit real exigirá plugin nativo — <strong>não implementar agora</strong>.</li>
+                      <li>Rodar <code>npx cap sync</code> após cada <code>git pull</code>.</li>
+                      <li><code>cleartext: false</code> — apenas HTTPS é permitido.</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* SEÇÃO 11 — Deep Links (Futuro) */}
+          <AccordionItem value="deeplinks" className="border rounded-lg px-1">
+            <AccordionTrigger className="hover:no-underline">
+              <SectionIcon icon={Link2} label="11. Deep Links (Futuro)" />
+            </AccordionTrigger>
+            <AccordionContent>
+              <Card className="border-0 shadow-none">
+                <CardContent className="pt-2 space-y-4 text-sm text-muted-foreground">
+                  <Badge variant="secondary" className="text-xs">🔮 Planejamento — Não implementado</Badge>
+                  <p>Para futuras integrações, os seguintes deep links serão utilizados para retornar ao app principal após a sincronização:</p>
+                  <div className="bg-muted rounded-lg p-3 space-y-2 font-mono text-xs">
+                    <p><strong>Sucesso:</strong> <code>renascer://connect/success</code></p>
+                    <p><strong>Erro:</strong> <code>renascer://connect/error</code></p>
+                  </div>
+                  <p className="text-xs">Esses deep links permitirão que o app nativo redirecione o usuário de volta após o fluxo de sincronização, melhorando a experiência mobile.</p>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* SEÇÃO 12 — Status */}
           <AccordionItem value="status" className="border rounded-lg px-1">
             <AccordionTrigger className="hover:no-underline">
-              <SectionIcon icon={CircleDot} label="10. Status do Projeto" />
+              <SectionIcon icon={CircleDot} label="12. Status do Projeto" />
             </AccordionTrigger>
             <AccordionContent>
               <Card className="border-0 shadow-none">
@@ -392,7 +460,7 @@ HKWorkoutType.workoutType()`}</CodeBlock>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Conector mobile</span>
-                    <Badge variant="destructive">❌ Pendente</Badge>
+                    <Badge className="bg-amber-500 hover:bg-amber-500 text-white">🔄 MVP em validação</Badge>
                   </div>
                 </CardContent>
               </Card>
