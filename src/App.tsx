@@ -61,6 +61,7 @@ const DadosCorpo = lazy(() => import("./pages/DadosCorpo"));
 const AdminConectorMobileDocs = lazy(() => import("./pages/admin/AdminConectorMobileDocs"));
 const ConnectLogin = lazy(() => import("./pages/connect/ConnectLogin"));
 const ConnectDashboard = lazy(() => import("./pages/connect/ConnectDashboard"));
+const ConnectSync = lazy(() => import("./pages/connect/ConnectSync"));
 
 const queryClient = new QueryClient();
 
@@ -138,6 +139,7 @@ const App = () => (
               {/* ROTAS RENASCER CONNECT (mobile) */}
               <Route path="/connect/login" element={<ConnectLogin />} />
               <Route path="/connect/dashboard" element={<ConnectDashboard />} />
+              <Route path="/connect/sync" element={<ConnectSync />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
