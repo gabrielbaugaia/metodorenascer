@@ -59,6 +59,8 @@ const AdminTrialCampaigns = lazy(() => import("./pages/admin/AdminTrialCampaigns
 const Mqo = lazy(() => import("./pages/Mqo"));
 const DadosCorpo = lazy(() => import("./pages/DadosCorpo"));
 const AdminConectorMobileDocs = lazy(() => import("./pages/admin/AdminConectorMobileDocs"));
+const ConnectLogin = lazy(() => import("./pages/connect/ConnectLogin"));
+const ConnectDashboard = lazy(() => import("./pages/connect/ConnectDashboard"));
 
 const queryClient = new QueryClient();
 
@@ -132,6 +134,10 @@ const App = () => (
               <Route path="/admin/trial-campaigns" element={<AdminTrialCampaigns />} />
               <Route path="/mqo" element={<Mqo />} />
               <Route path="/admin/docs/conector-mobile" element={<AdminConectorMobileDocs />} />
+
+              {/* ROTAS RENASCER CONNECT (mobile) */}
+              <Route path="/connect/login" element={<ConnectLogin />} />
+              <Route path="/connect/dashboard" element={<ConnectDashboard />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
