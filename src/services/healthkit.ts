@@ -1,40 +1,136 @@
-// TODO: substituir por HealthKit nativo (iOS) / Health Connect (Android)
-// Atualmente retorna dados simulados para validação do fluxo auth + sync
+import { registerPlugin } from '@capacitor/core';
+
+// ============================================================
+// HealthKit Plugin Bridge (Capacitor) + Mock Fallback
+// ============================================================
+
+export type TodayMetrics = {
+  date: string;
+  steps: number;
+  activeCalories: number;
+  sleepMinutes: number;
+};
+
+interface HealthKitPluginInterface {
+  isAvailable(): Promise<{ available: boolean }>;
+  requestPermissions(): Promise<{ granted: boolean }>;
+  getTodayMetrics(): Promise<TodayMetrics>;
+}
+
+// ---------- helpers ----------
+
+function isNative(): boolean {
+  return typeof (window as any)?.Capacitor !== 'undefined';
+}
 
 function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export async function requestPermissions(): Promise<boolean> {
-  // TODO: substituir por HealthKit nativo
-  console.log('[HealthKit Mock] Permissions granted (mock)');
-  return true;
+// ---------- plugin registration (lazy) ----------
+
+let _plugin: HealthKitPluginInterface | null = null;
+
+function getPlugin(): HealthKitPluginInterface | null {
+  if (!isNative()) return null;
+  if (!_plugin) {
+    try {
+      _plugin = registerPlugin<HealthKitPluginInterface>('HealthKitPlugin');
+    } catch {
+      _plugin = null;
+    }
+  }
+  return _plugin;
 }
 
+// ---------- module-level cache ----------
+
+let _cachedMetrics: TodayMetrics | null = null;
+let _cacheTimestamp = 0;
+const CACHE_TTL_MS = 30_000; // 30 s
+
+function isCacheValid(): boolean {
+  return _cachedMetrics !== null && Date.now() - _cacheTimestamp < CACHE_TTL_MS;
+}
+
+// ---------- public API ----------
+
+/** Check if HealthKit is available on this device */
+export async function healthkitIsAvailable(): Promise<boolean> {
+  const plugin = getPlugin();
+  if (!plugin) return false;
+  try {
+    const { available } = await plugin.isAvailable();
+    return available;
+  } catch {
+    return false;
+  }
+}
+
+/** Request HealthKit permissions. Returns true if granted (or mock). */
+export async function requestPermissions(): Promise<boolean> {
+  const plugin = getPlugin();
+  if (!plugin) {
+    console.log('[HealthKit Mock] Permissions granted (mock)');
+    return true;
+  }
+  try {
+    const { granted } = await plugin.requestPermissions();
+    return granted;
+  } catch {
+    console.warn('[HealthKit] requestPermissions failed, using mock fallback');
+    return true; // fallback mock
+  }
+}
+
+/**
+ * Fetch all three metrics in a single native call.
+ * Returns null when HealthKit is unavailable or on error (caller should use mock).
+ */
+export async function healthkitGetTodayMetrics(): Promise<TodayMetrics | null> {
+  if (isCacheValid()) return _cachedMetrics;
+
+  const plugin = getPlugin();
+  if (!plugin) return null;
+
+  try {
+    const metrics = await plugin.getTodayMetrics();
+    _cachedMetrics = metrics;
+    _cacheTimestamp = Date.now();
+    return metrics;
+  } catch (err) {
+    console.warn('[HealthKit] getTodayMetrics failed:', err);
+    return null;
+  }
+}
+
+// ---------- individual metric helpers (backward-compatible) ----------
+
 export async function getTodaySteps(): Promise<number> {
-  // TODO: substituir por HealthKit nativo
-  return randomBetween(4000, 12000);
+  const m = await healthkitGetTodayMetrics();
+  return m ? m.steps : randomBetween(4000, 12000);
 }
 
 export async function getTodayActiveCalories(): Promise<number> {
-  // TODO: substituir por HealthKit nativo
-  return randomBetween(200, 700);
+  const m = await healthkitGetTodayMetrics();
+  return m ? m.activeCalories : randomBetween(200, 700);
 }
 
 export async function getTodaySleepMinutes(): Promise<number> {
-  // TODO: substituir por HealthKit nativo
-  return randomBetween(300, 480);
+  const m = await healthkitGetTodayMetrics();
+  return m ? m.sleepMinutes : randomBetween(300, 480);
 }
 
+// Not implemented in this phase — always mock
 export async function getTodayRestingHR(): Promise<number> {
-  // TODO: substituir por HealthKit nativo
   return randomBetween(55, 70);
 }
 
 export async function getTodayHRV(): Promise<number> {
-  // TODO: substituir por HealthKit nativo
   return randomBetween(40, 80);
 }
+
+// ---------- workouts (mock — not in this phase) ----------
 
 export interface MockWorkout {
   start_time: string;
@@ -45,7 +141,6 @@ export interface MockWorkout {
 }
 
 export async function getWorkoutsLast24h(): Promise<MockWorkout[]> {
-  // TODO: substituir por HealthKit nativo
   const count = randomBetween(0, 2);
   const workouts: MockWorkout[] = [];
   const types = ['strength_training', 'running', 'cycling', 'yoga'];

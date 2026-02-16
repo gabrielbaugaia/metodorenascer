@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Smartphone, Shield, Server, Activity, Apple, MonitorSmartphone, CheckSquare, FlaskConical, Lock, CircleDot, Download, Link2 } from "lucide-react";
+import { Smartphone, Shield, Server, Activity, Apple, MonitorSmartphone, CheckSquare, FlaskConical, Lock, CircleDot, Download, Link2, Code2 } from "lucide-react";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -37,6 +37,9 @@ const checklist = {
     "Salvar JWT com segurança",
   ],
   fase2: [
+    "Criar HealthKitPlugin.swift + .m no Xcode",
+    "Habilitar HealthKit capability no Xcode",
+    "Adicionar chaves Info.plist",
     "Solicitar permissões HealthKit",
     "Ler steps",
     "Ler active calories",
@@ -322,7 +325,7 @@ HKWorkoutType.workoutType()`}</CodeBlock>
                   {Object.entries(checklist).map(([fase, items], fi) => (
                     <div key={fase}>
                       <p className="font-medium text-foreground mb-2">
-                        Fase {fi + 1} — {["Base do Projeto", "HealthKit", "Sync", "UI Mínima"][fi]}
+                        Fase {fi + 1} — {["Base do Projeto", "HealthKit (Nativo)", "Sync", "UI Mínima"][fi]}
                       </p>
                       <div className="space-y-2">
                         {items.map((item, i) => {
@@ -425,7 +428,7 @@ npx cap run ios`}</CodeBlock>
                     <ul className="list-disc list-inside space-y-1 text-amber-600 dark:text-amber-400">
                       <li>Requer <strong>Mac + Xcode 15+</strong> para compilar e rodar no iOS.</li>
                       <li><code>server.url</code> no <code>capacitor.config.ts</code> aponta para o WebView do Lovable <strong>apenas para MVP</strong> (login + sync mock).</li>
-                      <li>HealthKit real exigirá plugin nativo — <strong>não implementar agora</strong>.</li>
+                      <li>O bridge TS (<code>src/services/healthkit.ts</code>) já detecta HealthKit nativo e faz fallback automático para mock na web.</li>
                       <li>Rodar <code>npx cap sync</code> após cada <code>git pull</code>.</li>
                       <li><code>cleartext: false</code> — apenas HTTPS é permitido.</li>
                     </ul>
@@ -435,10 +438,189 @@ npx cap run ios`}</CodeBlock>
             </AccordionContent>
           </AccordionItem>
 
-          {/* SEÇÃO 11 — Deep Links (Futuro) */}
+          {/* SEÇÃO 11 — Plugin HealthKit (iOS) */}
+          <AccordionItem value="healthkit-plugin" className="border rounded-lg px-1">
+            <AccordionTrigger className="hover:no-underline">
+              <SectionIcon icon={Code2} label="11. Plugin HealthKit (iOS) — Guia Nativo" />
+            </AccordionTrigger>
+            <AccordionContent>
+              <Card className="border-0 shadow-none">
+                <CardContent className="pt-2 space-y-4 text-sm text-muted-foreground">
+                  <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-xs">
+                    <p className="font-semibold text-amber-700 dark:text-amber-400 mb-1">⚠ Estes arquivos devem ser criados manualmente no Xcode após git pull</p>
+                    <p className="text-amber-600 dark:text-amber-400">O Lovable não pode criar arquivos nativos Swift. Copie o código abaixo para os caminhos indicados.</p>
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-foreground mb-2">Estrutura de arquivos:</p>
+                    <CodeBlock>{`ios/App/App/Plugins/HealthKitPlugin/
+  ├── HealthKitPlugin.swift
+  └── HealthKitPlugin.m`}</CodeBlock>
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-foreground mb-2">Pré-requisitos no Xcode:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-xs">
+                      <li>Abrir <code className="bg-muted px-1 py-0.5 rounded">ios/App/App.xcodeproj</code> no Xcode</li>
+                      <li>Target App → Signing & Capabilities → <strong>+ Capability → HealthKit</strong></li>
+                      <li>Confirmar iOS Deployment Target ≥ 15.0</li>
+                    </ol>
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-foreground mb-2">Info.plist — Adicionar:</p>
+                    <CodeBlock title="Info.plist keys">{`<key>NSHealthShareUsageDescription</key>
+<string>O MQO/Renascer precisa ler seus dados de saúde (passos, calorias e sono) para calcular sua prontidão e personalizar seu treino.</string>
+
+<key>NSHealthUpdateUsageDescription</key>
+<string>O app não escreve dados; apenas leitura.</string>`}</CodeBlock>
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-foreground mb-2">HealthKitPlugin.m (Objective-C bridge)</p>
+                    <CodeBlock title="ios/App/App/Plugins/HealthKitPlugin/HealthKitPlugin.m">{`#import <Capacitor/Capacitor.h>
+
+CAP_PLUGIN(HealthKitPlugin, "HealthKitPlugin",
+  CAP_PLUGIN_METHOD(isAvailable, CAPPluginReturnPromise);
+  CAP_PLUGIN_METHOD(requestPermissions, CAPPluginReturnPromise);
+  CAP_PLUGIN_METHOD(getTodayMetrics, CAPPluginReturnPromise);
+)`}</CodeBlock>
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-foreground mb-2">HealthKitPlugin.swift</p>
+                    <CodeBlock title="ios/App/App/Plugins/HealthKitPlugin/HealthKitPlugin.swift">{`import Capacitor
+import HealthKit
+
+@objc(HealthKitPlugin)
+public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "HealthKitPlugin"
+    public let jsName = "HealthKitPlugin"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "isAvailable", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestPermissions", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getTodayMetrics", returnType: CAPPluginReturnPromise),
+    ]
+
+    private let healthStore = HKHealthStore()
+
+    // MARK: - isAvailable
+    @objc func isAvailable(_ call: CAPPluginCall) {
+        call.resolve(["available": HKHealthStore.isHealthDataAvailable()])
+    }
+
+    // MARK: - requestPermissions
+    @objc func requestPermissions(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.resolve(["granted": false])
+            return
+        }
+
+        var readTypes = Set<HKObjectType>()
+        if let steps = HKQuantityType.quantityType(forIdentifier: .stepCount) { readTypes.insert(steps) }
+        if let cal = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) { readTypes.insert(cal) }
+        if let sleep = HKCategoryType.categoryType(forIdentifier: .sleepAnalysis) { readTypes.insert(sleep) }
+
+        healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
+            call.resolve(["granted": success && error == nil])
+        }
+    }
+
+    // MARK: - getTodayMetrics
+    @objc func getTodayMetrics(_ call: CAPPluginCall) {
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfDay = calendar.startOfDay(for: now)
+
+        let group = DispatchGroup()
+        var steps: Int = 0
+        var activeCalories: Int = 0
+        var sleepMinutes: Int = 0
+
+        // Steps
+        group.enter()
+        querySum(.stepCount, unit: HKUnit.count(), start: startOfDay, end: now) { val in
+            steps = Int(val)
+            group.leave()
+        }
+
+        // Active Calories
+        group.enter()
+        querySum(.activeEnergyBurned, unit: HKUnit.kilocalorie(), start: startOfDay, end: now) { val in
+            activeCalories = Int(val)
+            group.leave()
+        }
+
+        // Sleep (previous night window: yesterday 18:00 to today now)
+        group.enter()
+        let sleepStart = calendar.date(byAdding: .hour, value: -30, to: now) ?? startOfDay
+        querySleep(start: sleepStart, end: now) { mins in
+            sleepMinutes = mins
+            group.leave()
+        }
+
+        group.notify(queue: .main) {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            formatter.timeZone = TimeZone.current
+
+            call.resolve([
+                "date": formatter.string(from: now),
+                "steps": steps,
+                "activeCalories": activeCalories,
+                "sleepMinutes": sleepMinutes
+            ])
+        }
+    }
+
+    // MARK: - Helpers
+    private func querySum(_ identifier: HKQuantityTypeIdentifier, unit: HKUnit, start: Date, end: Date, completion: @escaping (Double) -> Void) {
+        guard let quantityType = HKQuantityType.quantityType(forIdentifier: identifier) else {
+            completion(0)
+            return
+        }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+        let query = HKStatisticsQuery(quantityType: quantityType, quantitySamplesPredicate: predicate, options: .cumulativeSum) { _, result, _ in
+            let value = result?.sumQuantity()?.doubleValue(for: unit) ?? 0
+            completion(value)
+        }
+        healthStore.execute(query)
+    }
+
+    private func querySleep(start: Date, end: Date, completion: @escaping (Int) -> Void) {
+        guard let sleepType = HKCategoryType.categoryType(forIdentifier: .sleepAnalysis) else {
+            completion(0)
+            return
+        }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+        let query = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
+            var totalMinutes = 0.0
+            for sample in (samples as? [HKCategorySample]) ?? [] {
+                // Only count asleep categories (not inBed)
+                if sample.value != HKCategoryValueSleepAnalysis.inBed.rawValue {
+                    totalMinutes += sample.endDate.timeIntervalSince(sample.startDate) / 60.0
+                }
+            }
+            completion(Int(totalMinutes))
+        }
+        healthStore.execute(query)
+    }
+}`}</CodeBlock>
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-foreground mb-2">Bridge TypeScript (já configurado):</p>
+                    <p className="text-xs">O arquivo <code className="bg-muted px-1 py-0.5 rounded">src/services/healthkit.ts</code> já registra o plugin via <code className="bg-muted px-1 py-0.5 rounded">registerPlugin('HealthKitPlugin')</code> e faz fallback automático para mock quando executado na web.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* SEÇÃO 12 — Deep Links (Futuro) */}
           <AccordionItem value="deeplinks" className="border rounded-lg px-1">
             <AccordionTrigger className="hover:no-underline">
-              <SectionIcon icon={Link2} label="11. Deep Links (Futuro)" />
+              <SectionIcon icon={Link2} label="12. Deep Links (Futuro)" />
             </AccordionTrigger>
             <AccordionContent>
               <Card className="border-0 shadow-none">
@@ -458,7 +640,7 @@ npx cap run ios`}</CodeBlock>
           {/* SEÇÃO 12 — Status */}
           <AccordionItem value="status" className="border rounded-lg px-1">
             <AccordionTrigger className="hover:no-underline">
-              <SectionIcon icon={CircleDot} label="12. Status do Projeto" />
+              <SectionIcon icon={CircleDot} label="13. Status do Projeto" />
             </AccordionTrigger>
             <AccordionContent>
               <Card className="border-0 shadow-none">
