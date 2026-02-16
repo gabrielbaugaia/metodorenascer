@@ -1,141 +1,125 @@
 
-
-# Projeto Mobile "Renascer Connect" — Capacitor + iOS
+# Ajuste do Capacitor e Guia do Renascer Connect
 
 ## Resumo
 
-Adicionar o Capacitor ao projeto existente e criar as paginas, servicos e componentes exclusivos do app mobile conector. O app tera rotas dedicadas (`/connect/*`) para nao interferir no webapp existente.
+Corrigir a configuracao do Capacitor (arquivo inexistente), adicionar rota `/connect/sync` faltante, e atualizar a documentacao tecnica com guia de instalacao robusto e secao de deep links futuros.
 
 ---
 
-## Estrutura de Arquivos a Criar
+## Arquivos a Criar
 
-### Paginas Mobile
+### 1. `capacitor.config.ts`
 
-| Arquivo | Descricao |
-|---|---|
-| `src/pages/connect/ConnectLogin.tsx` | Tela de login com email/senha via Supabase Auth |
-| `src/pages/connect/ConnectDashboard.tsx` | Tela principal com status e botao sincronizar |
+Arquivo de configuracao do Capacitor na raiz do projeto:
 
-### Servicos
+```typescript
+import type { CapacitorConfig } from '@capacitor/cli';
 
-| Arquivo | Descricao |
-|---|---|
-| `src/services/healthkit.ts` | Mock do HealthKit — retorna dados simulados |
-| `src/services/healthSync.ts` | Monta payload e envia POST para health-sync |
+const config: CapacitorConfig = {
+  appId: 'com.renascer.connect',
+  appName: 'Renascer Connect',
+  webDir: 'dist',
+  server: {
+    url: 'https://a75d46a2-4cbd-4416-81c4-9988ca4fb176.lovableproject.com/connect/login?forceHideBadge=true',
+    cleartext: false
+  }
+};
 
-### Componentes
+export default config;
+```
 
-| Arquivo | Descricao |
-|---|---|
-| `src/components/connect/SyncButton.tsx` | Botao "Sincronizar agora" com loading state |
-| `src/components/connect/StatusCard.tsx` | Card mostrando status da conexao e ultima sync |
+### 2. `src/pages/connect/ConnectSync.tsx`
 
-### Store
-
-| Arquivo | Descricao |
-|---|---|
-| `src/services/authStore.ts` | Gerencia token via Capacitor Preferences (get/set/clear) |
+Pagina dedicada de sincronizacao (`/connect/sync`) que:
+- Verifica token ao montar (redireciona para `/connect/login` se ausente)
+- Executa sync automaticamente ao carregar
+- Mostra progresso e resultado (sucesso/erro)
+- Botoes: "Sincronizar novamente" e "Voltar ao Dashboard"
+- Layout autonomo (sem sidebar)
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Alteracao |
-|---|---|
-| `src/App.tsx` | Adicionar rotas `/connect/login` e `/connect/dashboard` |
+### 3. `src/App.tsx`
 
----
+- Adicionar lazy import para `ConnectSync`
+- Adicionar rota: `/connect/sync`
 
-## Configuracao Capacitor
+### 4. `src/pages/admin/AdminConectorMobileDocs.tsx`
 
-Apos criar os arquivos, o usuario devera executar localmente:
+Atualizar a documentacao com:
 
-```text
-npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/preferences
-npx cap init "Renascer Connect" "com.renascer.connect"
-npx cap add ios
-```
+**Substituir/adicionar na Secao 1 (Visao Geral) ou criar nova secao "Guia de Instalacao":**
+- Guia de instalacao passo a passo completo (git pull, npm install, cap init, cap add ios, build, sync, open ios)
+- Notas sobre requisitos (Mac + Xcode)
+- Nota sobre server.url ser apenas para MVP
+- Nota sobre HealthKit real exigir plugin nativo
 
-O `capacitor.config.ts` devera apontar para a URL de preview do sandbox durante desenvolvimento:
+**Adicionar nova secao "Deep Links (Futuro)":**
+- Documentar `renascer://connect/success` e `renascer://connect/error`
+- Marcar como "nao implementado — planejamento futuro"
 
-```text
-appId: com.renascer.connect
-appName: Renascer Connect
-server.url: https://a75d46a2-4cbd-4416-81c4-9988ca4fb176.lovableproject.com/connect/login?forceHideBadge=true
-server.cleartext: true
-```
+**Atualizar Secao 10 (Status):**
+- Alterar "Conector mobile" de "Pendente" para "MVP em validacao" (refletindo que a estrutura base esta pronta)
 
 ---
 
 ## Detalhes Tecnicos
 
-### ConnectLogin.tsx
-- Campos email e senha com validacao basica
-- Chama `supabase.auth.signInWithPassword`
-- Salva token via `authStore.saveToken()`
-- Redireciona para `/connect/dashboard`
-- Layout mobile-first, tela cheia, sem header/sidebar do webapp
+### ConnectSync.tsx
+- Usa `getToken()` do authStore para verificar autenticacao
+- Chama `syncHealthData(token)` automaticamente no `useEffect`
+- Mostra estados: "Sincronizando...", "Sucesso", "Erro" com mensagens claras
+- Redireciona para `/connect/login` se token ausente
+- Botao voltar navega para `/connect/dashboard`
 
-### ConnectDashboard.tsx
-- Mostra StatusCard com estado (conectado/desconectado) e timestamp da ultima sync
-- Mostra SyncButton que chama `syncHealthData()`
-- Botao de logout
-- Layout autonomo sem ClientLayout
-
-### healthkit.ts (Mock)
-- `requestPermissions()` → retorna true
-- `getTodaySteps()` → numero aleatorio 4000-12000
-- `getTodayActiveCalories()` → 200-700
-- `getTodaySleepMinutes()` → 300-480
-- `getTodayRestingHR()` → 55-70
-- `getTodayHRV()` → 40-80
-- `getWorkoutsLast24h()` → array com 0-2 workouts mock
-- Todos com comentario `// TODO: substituir por HealthKit nativo`
-
-### healthSync.ts
-- `syncHealthData(token: string)` → chama todos os getters do healthkit.ts
-- Monta payload `{ date, daily, workouts }`
-- POST para `${VITE_SUPABASE_URL}/functions/v1/health-sync`
-- Retorna resultado ou lanca erro
-
-### authStore.ts
-- Usa `@capacitor/preferences` com fallback para localStorage (para funcionar no browser tambem)
-- `saveToken(token)`, `getToken()`, `clearToken()`
-
-### SyncButton.tsx
-- Botao com icone RefreshCw, estado loading com spinner
-- Chama callback `onSync` passado por prop
-- Desabilitado durante sincronizacao
-
-### StatusCard.tsx
-- Recebe props: `connected`, `lastSync`, `syncResult`
-- Exibe badge verde/vermelho, timestamp formatado
-
----
-
-## Fluxo Completo
+### AdminConectorMobileDocs.tsx — Guia de Instalacao
+O conteudo do novo accordion "Guia de Instalacao" incluira blocos de codigo com:
 
 ```text
-1. Usuario abre app iOS
-2. Rota /connect/login carrega
-3. Digita email + senha
-4. supabase.auth.signInWithPassword
-5. Token salvo via Preferences/localStorage
-6. Redireciona para /connect/dashboard
-7. Toca "Sincronizar agora"
-8. healthkit.ts retorna dados mock
-9. healthSync.ts monta payload e POST
-10. Resultado exibido no StatusCard
-11. Dados aparecem em /dados-corpo no webapp
+# 1) Exportar para GitHub e clonar
+git pull
+
+# 2) Instalar dependencias
+npm install
+
+# 3) Instalar Capacitor CLI (dev)
+npm install -D @capacitor/cli
+
+# 4) Inicializar Capacitor (apenas uma vez)
+npx cap init "Renascer Connect" "com.renascer.connect"
+
+# 5) iOS
+npm install @capacitor/ios
+npx cap add ios
+
+# 6) Build + Sync
+npm run build
+npx cap sync
+
+# 7) Abrir no Xcode
+npx cap open ios
 ```
+
+Observacoes claras:
+- Requer Mac + Xcode 15+ para iOS
+- server.url aponta para WebView do Lovable apenas para MVP
+- HealthKit real exigira plugin nativo (nao implementar agora)
+- Rodar `npx cap sync` apos cada `git pull`
+
+### AdminConectorMobileDocs.tsx — Deep Links
+Novo accordion com documentacao de planejamento:
+- `renascer://connect/success` — retorno apos sync bem-sucedido
+- `renascer://connect/error` — retorno apos falha
+- Status: nao implementado, apenas planejamento
 
 ---
 
 ## O que NAO sera feito
 
 - Nenhuma funcionalidade existente sera alterada
-- HealthKit nativo NAO sera implementado (apenas mock)
+- HealthKit nativo NAO sera implementado
 - Nenhuma tabela de banco criada ou modificada
-- A edge function health-sync permanece inalterada
-
+- Edge function health-sync permanece inalterada
