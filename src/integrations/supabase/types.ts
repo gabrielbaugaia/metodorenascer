@@ -773,6 +773,56 @@ export type Database = {
           },
         ]
       }
+      health_daily: {
+        Row: {
+          active_calories: number | null
+          created_at: string | null
+          date: string
+          hrv_ms: number | null
+          id: string
+          resting_hr: number | null
+          sleep_minutes: number | null
+          source: string | null
+          steps: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active_calories?: number | null
+          created_at?: string | null
+          date: string
+          hrv_ms?: number | null
+          id?: string
+          resting_hr?: number | null
+          sleep_minutes?: number | null
+          source?: string | null
+          steps?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active_calories?: number | null
+          created_at?: string | null
+          date?: string
+          hrv_ms?: number | null
+          id?: string
+          resting_hr?: number | null
+          sleep_minutes?: number | null
+          source?: string | null
+          steps?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_daily_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_goals: {
         Row: {
           created_at: string | null
@@ -806,6 +856,47 @@ export type Database = {
             foreignKeyName: "health_goals_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      health_workouts: {
+        Row: {
+          calories: number | null
+          created_at: string | null
+          end_time: string
+          id: string
+          source: string | null
+          start_time: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          created_at?: string | null
+          end_time: string
+          id?: string
+          source?: string | null
+          start_time: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          source?: string | null
+          start_time?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_workouts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

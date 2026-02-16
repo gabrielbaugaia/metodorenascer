@@ -35,8 +35,10 @@ import {
   Target,
   Camera,
   Settings,
-  PenSquare
+  PenSquare,
+  HeartPulse
 } from "lucide-react";
+import { ENABLE_HEALTH_METRICS } from "@/lib/healthConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -53,6 +55,7 @@ const clientMenuItems = [
   { title: "Suporte", url: "/suporte", icon: MessageCircle },
   { title: "Assinatura", url: "/assinatura", icon: CreditCard },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
+  ...(ENABLE_HEALTH_METRICS ? [{ title: "Dados do Corpo", url: "/dados-corpo", icon: HeartPulse }] : []),
 ];
 
 const adminMenuItems = [

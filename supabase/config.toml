@@ -117,3 +117,6 @@ verify_jwt = true
 
 [functions.audit-prescription]
 verify_jwt = true
+
+[functions.health-sync]
+verify_jwt = false
