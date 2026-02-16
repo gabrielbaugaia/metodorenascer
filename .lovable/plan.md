@@ -1,125 +1,120 @@
 
-# Ajuste do Capacitor e Guia do Renascer Connect
+# Ajuste de Robustez no Fluxo /connect
 
 ## Resumo
 
-Corrigir a configuracao do Capacitor (arquivo inexistente), adicionar rota `/connect/sync` faltante, e atualizar a documentacao tecnica com guia de instalacao robusto e secao de deep links futuros.
-
----
-
-## Arquivos a Criar
-
-### 1. `capacitor.config.ts`
-
-Arquivo de configuracao do Capacitor na raiz do projeto:
-
-```typescript
-import type { CapacitorConfig } from '@capacitor/cli';
-
-const config: CapacitorConfig = {
-  appId: 'com.renascer.connect',
-  appName: 'Renascer Connect',
-  webDir: 'dist',
-  server: {
-    url: 'https://a75d46a2-4cbd-4416-81c4-9988ca4fb176.lovableproject.com/connect/login?forceHideBadge=true',
-    cleartext: false
-  }
-};
-
-export default config;
-```
-
-### 2. `src/pages/connect/ConnectSync.tsx`
-
-Pagina dedicada de sincronizacao (`/connect/sync`) que:
-- Verifica token ao montar (redireciona para `/connect/login` se ausente)
-- Executa sync automaticamente ao carregar
-- Mostra progresso e resultado (sucesso/erro)
-- Botoes: "Sincronizar novamente" e "Voltar ao Dashboard"
-- Layout autonomo (sem sidebar)
+Corrigir duplo-sync causado pelo React StrictMode, melhorar `getToken()` para usar a sessao real do Supabase, e atualizar o checklist da documentacao admin.
 
 ---
 
 ## Arquivos a Modificar
 
-### 3. `src/App.tsx`
+### 1. `src/pages/connect/ConnectSync.tsx`
 
-- Adicionar lazy import para `ConnectSync`
-- Adicionar rota: `/connect/sync`
+Problemas atuais:
+- `getToken()` e chamado 2x (uma no useEffect, outra dentro de `runSync`)
+- Sem guard contra dupla execucao do StrictMode
+- Botao "Sincronizar novamente" chama `runSync()` sem token
 
-### 4. `src/pages/admin/AdminConectorMobileDocs.tsx`
+Correcoes:
+- Adicionar `useRef` (`hasRunRef`) para impedir dupla execucao no mount
+- Guardar token em `useState` ao montar
+- `runSync(token: string)` recebe token como argumento, sem chamar `getToken()` internamente
+- useEffect busca token 1 unica vez, valida, guarda no state, e chama `runSync(token)`
+- Botao "Sincronizar novamente" busca token fresco via `getToken()`, valida, e chama `runSync(token)`
+- Botao "Voltar ao Dashboard" ja esta correto (mantido)
 
-Atualizar a documentacao com:
+### 2. `src/services/authStore.ts`
 
-**Substituir/adicionar na Secao 1 (Visao Geral) ou criar nova secao "Guia de Instalacao":**
-- Guia de instalacao passo a passo completo (git pull, npm install, cap init, cap add ios, build, sync, open ios)
-- Notas sobre requisitos (Mac + Xcode)
-- Nota sobre server.url ser apenas para MVP
-- Nota sobre HealthKit real exigir plugin nativo
+Problema atual:
+- `getToken()` busca de localStorage/Preferences mas nao do Supabase Auth — pode estar dessincronizado
 
-**Adicionar nova secao "Deep Links (Futuro)":**
-- Documentar `renascer://connect/success` e `renascer://connect/error`
-- Marcar como "nao implementado — planejamento futuro"
+Correcao:
+- Reimplementar `getToken()` para usar `supabase.auth.getSession()` como fonte primaria
+- Se houver sessao ativa, retorna `session.access_token`
+- Se nao, tenta fallback do Preferences/localStorage (para contexto nativo sem Supabase client)
+- Se nenhum, retorna `null`
+- Manter `saveToken()`, `clearToken()`, `saveLastSync()`, `getLastSync()` inalterados
 
-**Atualizar Secao 10 (Status):**
-- Alterar "Conector mobile" de "Pendente" para "MVP em validacao" (refletindo que a estrutura base esta pronta)
+### 3. `src/pages/admin/AdminConectorMobileDocs.tsx`
+
+Atualizar o checklist (Secao 7) para refletir itens concluidos:
+- Fase 1: marcar como pre-checked os itens ja feitos (Criar projeto Capacitor, Implementar tela Login, Integrar Supabase Auth, Salvar JWT)
+- Fase 3: marcar "Implementar POST health-sync" e "Implementar funcao montar payload" como concluidos
+- Fase 4: marcar todos como concluidos (Tela status, Botao sincronizar, Mostrar ultima sync)
+- Fase 2 (HealthKit): manter todos pendentes
+
+Implementacao: alterar o estado inicial de `checked` para incluir as chaves pre-marcadas.
 
 ---
 
 ## Detalhes Tecnicos
 
-### ConnectSync.tsx
-- Usa `getToken()` do authStore para verificar autenticacao
-- Chama `syncHealthData(token)` automaticamente no `useEffect`
-- Mostra estados: "Sincronizando...", "Sucesso", "Erro" com mensagens claras
-- Redireciona para `/connect/login` se token ausente
-- Botao voltar navega para `/connect/dashboard`
+### ConnectSync.tsx — Codigo refatorado
 
-### AdminConectorMobileDocs.tsx — Guia de Instalacao
-O conteudo do novo accordion "Guia de Instalacao" incluira blocos de codigo com:
+```typescript
+const hasRunRef = useRef(false);
+const [token, setToken] = useState<string | null>(null);
 
-```text
-# 1) Exportar para GitHub e clonar
-git pull
+const runSync = async (syncToken: string) => {
+  setState("syncing");
+  setErrorMsg("");
+  try {
+    await syncHealthData(syncToken);
+    setState("success");
+  } catch (err: any) {
+    setState("error");
+    setErrorMsg(err?.message || "Erro desconhecido");
+  }
+};
 
-# 2) Instalar dependencias
-npm install
+useEffect(() => {
+  if (hasRunRef.current) return;
+  hasRunRef.current = true;
+  (async () => {
+    const t = await getToken();
+    if (!t) { navigate("/connect/login", { replace: true }); return; }
+    setToken(t);
+    runSync(t);
+  })();
+}, []);
 
-# 3) Instalar Capacitor CLI (dev)
-npm install -D @capacitor/cli
-
-# 4) Inicializar Capacitor (apenas uma vez)
-npx cap init "Renascer Connect" "com.renascer.connect"
-
-# 5) iOS
-npm install @capacitor/ios
-npx cap add ios
-
-# 6) Build + Sync
-npm run build
-npx cap sync
-
-# 7) Abrir no Xcode
-npx cap open ios
+// Botao "Sincronizar novamente":
+const handleRetry = async () => {
+  const t = await getToken();
+  if (!t) { navigate("/connect/login", { replace: true }); return; }
+  setToken(t);
+  runSync(t);
+};
 ```
 
-Observacoes claras:
-- Requer Mac + Xcode 15+ para iOS
-- server.url aponta para WebView do Lovable apenas para MVP
-- HealthKit real exigira plugin nativo (nao implementar agora)
-- Rodar `npx cap sync` apos cada `git pull`
+### authStore.ts — getToken melhorado
 
-### AdminConectorMobileDocs.tsx — Deep Links
-Novo accordion com documentacao de planejamento:
-- `renascer://connect/success` — retorno apos sync bem-sucedido
-- `renascer://connect/error` — retorno apos falha
-- Status: nao implementado, apenas planejamento
+```typescript
+import { supabase } from "@/integrations/supabase/client";
+
+export async function getToken(): Promise<string | null> {
+  // Fonte primaria: sessao Supabase ativa
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) {
+      return data.session.access_token;
+    }
+  } catch {}
+  // Fallback: Preferences/localStorage (contexto nativo)
+  if (isNative()) {
+    const { value } = await Preferences.get({ key: TOKEN_KEY });
+    return value;
+  }
+  return localStorage.getItem(TOKEN_KEY);
+}
+```
 
 ---
 
-## O que NAO sera feito
+## O que NAO sera alterado
 
-- Nenhuma funcionalidade existente sera alterada
-- HealthKit nativo NAO sera implementado
-- Nenhuma tabela de banco criada ou modificada
-- Edge function health-sync permanece inalterada
+- Nenhuma outra pagina ou componente
+- Edge functions permanecem inalteradas
+- Banco de dados nao sera modificado
+- Rotas /connect/login e /connect/dashboard permanecem como estao
