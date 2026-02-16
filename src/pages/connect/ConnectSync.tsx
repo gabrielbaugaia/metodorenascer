@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { RefreshCw, CheckCircle2, XCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,36 +12,42 @@ const ConnectSync = () => {
   const navigate = useNavigate();
   const [state, setState] = useState<SyncState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const hasRunRef = useRef(false);
 
-  const runSync = async () => {
+  const runSync = useCallback(async (syncToken: string) => {
     setState("syncing");
     setErrorMsg("");
     try {
-      const token = await getToken();
-      if (!token) {
-        navigate("/connect/login", { replace: true });
-        return;
-      }
-      await syncHealthData(token);
+      await syncHealthData(syncToken);
       setState("success");
     } catch (err: any) {
       setState("error");
       setErrorMsg(err?.message || "Erro desconhecido ao sincronizar.");
     }
-  };
+  }, []);
 
   useEffect(() => {
-    // Check auth then auto-sync on mount
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
+
     (async () => {
       const token = await getToken();
       if (!token) {
         navigate("/connect/login", { replace: true });
         return;
       }
-      runSync();
+      runSync(token);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigate, runSync]);
+
+  const handleRetry = async () => {
+    const token = await getToken();
+    if (!token) {
+      navigate("/connect/login", { replace: true });
+      return;
+    }
+    runSync(token);
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
@@ -73,7 +79,7 @@ const ConnectSync = () => {
 
           {state !== "syncing" && (
             <div className="space-y-3">
-              <Button onClick={runSync} className="w-full gap-2">
+              <Button onClick={handleRetry} className="w-full gap-2">
                 <RefreshCw className="h-4 w-4" />
                 Sincronizar novamente
               </Button>

@@ -61,7 +61,20 @@ const checklist = {
 const AdminConectorMobileDocs = () => {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [checked, setChecked] = useState<Record<string, boolean>>({
+    // Fase 1 — Base do Projeto (concluídos)
+    "fase1-0": true, // Criar projeto Capacitor
+    "fase1-1": true, // Implementar tela Login
+    "fase1-2": true, // Integrar Supabase Auth
+    "fase1-3": true, // Salvar JWT
+    // Fase 3 — Sync (concluídos)
+    "fase3-0": true, // Implementar função montar payload
+    "fase3-1": true, // Implementar POST health-sync
+    // Fase 4 — UI Mínima (concluídos)
+    "fase4-0": true, // Tela status
+    "fase4-1": true, // Botão sincronizar agora
+    "fase4-2": true, // Mostrar última sync
+  });
 
   const toggle = (key: string) => setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
 
