@@ -79,24 +79,46 @@ Deno.serve(async (req) => {
       dailyUpserted = true;
     }
 
-    // Insert workouts
+    // Insert workouts with dedup via external_id
     let workoutsInserted = 0;
     if (Array.isArray(workouts) && workouts.length > 0) {
-      const rows = workouts.map((w: any) => ({
-        user_id: userId,
-        start_time: w.start_time,
-        end_time: w.end_time,
-        type: w.type,
-        calories: w.calories ?? null,
-        source: w.source ?? "unknown",
-      }));
+      const newRows = [];
 
-      const { data: inserted, error } = await supabase
-        .from("health_workouts")
-        .insert(rows)
-        .select("id");
-      if (error) throw error;
-      workoutsInserted = inserted?.length ?? 0;
+      for (const w of workouts) {
+        const externalId = w.external_id || null;
+
+        // Dedup: if external_id exists, check if already inserted
+        if (externalId) {
+          const { count } = await supabase
+            .from("health_workouts")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", userId)
+            .eq("external_id", externalId);
+
+          if (count && count > 0) {
+            continue; // already exists, skip
+          }
+        }
+
+        newRows.push({
+          user_id: userId,
+          start_time: w.start_time,
+          end_time: w.end_time,
+          type: w.type,
+          calories: w.calories ?? null,
+          source: w.source ?? "unknown",
+          external_id: externalId,
+        });
+      }
+
+      if (newRows.length > 0) {
+        const { data: inserted, error } = await supabase
+          .from("health_workouts")
+          .insert(newRows)
+          .select("id");
+        if (error) throw error;
+        workoutsInserted = inserted?.length ?? 0;
+      }
     }
 
     return new Response(

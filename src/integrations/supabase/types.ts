@@ -866,6 +866,7 @@ export type Database = {
           calories: number | null
           created_at: string | null
           end_time: string
+          external_id: string | null
           id: string
           source: string | null
           start_time: string
@@ -876,6 +877,7 @@ export type Database = {
           calories?: number | null
           created_at?: string | null
           end_time: string
+          external_id?: string | null
           id?: string
           source?: string | null
           start_time: string
@@ -886,6 +888,7 @@ export type Database = {
           calories?: number | null
           created_at?: string | null
           end_time?: string
+          external_id?: string | null
           id?: string
           source?: string | null
           start_time?: string

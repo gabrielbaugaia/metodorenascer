@@ -33,7 +33,7 @@ function formatSleep(minutes: number): string {
 
 function calculateReadiness(
   data: HealthDaily[],
-  hasRecentWorkout: boolean
+  recentWorkouts: HealthWorkout[]
 ): { score: number; recommendation: string } {
   if (data.length === 0) return { score: 0, recommendation: "Sem dados suficientes" };
 
@@ -62,7 +62,16 @@ function calculateReadiness(
   }
 
   if (today.steps < 4000) score -= 5;
+
+  const hasRecentWorkout = recentWorkouts.length > 0;
   if (hasRecentWorkout) score -= 10;
+
+  // High-intensity workout + low sleep penalty
+  const highIntensityTypes = ['hiit', 'running', 'cycling'];
+  const hasHighIntensityRecent = recentWorkouts.some((w) =>
+    highIntensityTypes.includes(w.type)
+  );
+  if (hasHighIntensityRecent && today.sleep_minutes < 360) score -= 10;
 
   score = Math.max(0, Math.min(100, score));
 
@@ -115,8 +124,8 @@ export function useHealthData() {
 
   const dailyData = dailyQuery.data || [];
   const todayData = dailyData.find((d) => d.date === today) || null;
-  const hasRecentWorkout = (workoutsQuery.data || []).length > 0;
-  const readiness = calculateReadiness(dailyData, hasRecentWorkout);
+  const recentWorkouts = workoutsQuery.data || [];
+  const readiness = calculateReadiness(dailyData, recentWorkouts);
 
   // Last sync info
   const lastSync = dailyData.length > 0
