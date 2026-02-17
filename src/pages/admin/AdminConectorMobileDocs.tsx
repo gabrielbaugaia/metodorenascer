@@ -203,7 +203,8 @@ Content-Type: application/json`}</CodeBlock>
       "end_time": "2026-02-16T11:00:00Z",
       "type": "strength_training",
       "calories": 320,
-      "source": "apple"
+      "source": "apple",
+      "external_id": "base64_deterministic_id"
     }
   ]
 }`}</CodeBlock>
@@ -238,11 +239,12 @@ Content-Type: application/json`}</CodeBlock>
                   </div>
                   <div>
                     <p className="font-medium text-foreground mb-2">Workouts</p>
-                    <div className="bg-muted rounded-lg p-3 space-y-1 font-mono text-xs text-muted-foreground">
+                     <div className="bg-muted rounded-lg p-3 space-y-1 font-mono text-xs text-muted-foreground">
                       <p>start_time → ISO string</p>
                       <p>end_time → ISO string</p>
                       <p>type → string</p>
                       <p>calories → integer <Badge variant="secondary" className="text-[10px] ml-1">opcional</Badge></p>
+                      <p>external_id → string <Badge variant="secondary" className="text-[10px] ml-1">dedup</Badge></p>
                     </div>
                   </div>
                 </CardContent>
@@ -484,13 +486,15 @@ CAP_PLUGIN(HealthKitPlugin, "HealthKitPlugin",
   CAP_PLUGIN_METHOD(isAvailable, CAPPluginReturnPromise);
   CAP_PLUGIN_METHOD(requestPermissions, CAPPluginReturnPromise);
   CAP_PLUGIN_METHOD(getTodayMetrics, CAPPluginReturnPromise);
+  CAP_PLUGIN_METHOD(getWorkoutsLast24h, CAPPluginReturnPromise);
 )`}</CodeBlock>
                   </div>
 
                   <div>
-                    <p className="font-medium text-foreground mb-2">HealthKitPlugin.swift</p>
+                    <p className="font-medium text-foreground mb-2">HealthKitPlugin.swift (Fase 2 — com restingHR, HRV e Workouts)</p>
                     <CodeBlock title="ios/App/App/Plugins/HealthKitPlugin/HealthKitPlugin.swift">{`import Capacitor
 import HealthKit
+import CommonCrypto
 
 @objc(HealthKitPlugin)
 public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -500,6 +504,7 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "isAvailable", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "requestPermissions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getTodayMetrics", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getWorkoutsLast24h", returnType: CAPPluginReturnPromise),
     ]
 
     private let healthStore = HKHealthStore()
@@ -520,6 +525,9 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         if let steps = HKQuantityType.quantityType(forIdentifier: .stepCount) { readTypes.insert(steps) }
         if let cal = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) { readTypes.insert(cal) }
         if let sleep = HKCategoryType.categoryType(forIdentifier: .sleepAnalysis) { readTypes.insert(sleep) }
+        if let rhr = HKQuantityType.quantityType(forIdentifier: .restingHeartRate) { readTypes.insert(rhr) }
+        if let hrv = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) { readTypes.insert(hrv) }
+        readTypes.insert(HKObjectType.workoutType())
 
         healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
             call.resolve(["granted": success && error == nil])
@@ -536,6 +544,8 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         var steps: Int = 0
         var activeCalories: Int = 0
         var sleepMinutes: Int = 0
+        var restingHr: NSNumber? = nil
+        var hrvMs: NSNumber? = nil
 
         // Steps
         group.enter()
@@ -559,18 +569,76 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
             group.leave()
         }
 
+        // Resting Heart Rate
+        group.enter()
+        queryAverage(.restingHeartRate, unit: HKUnit.count().unitDivided(by: .minute()), start: startOfDay, end: now) { avg in
+            if let avg = avg {
+                restingHr = NSNumber(value: Int(avg.rounded()))
+            }
+            group.leave()
+        }
+
+        // HRV (SDNN) — read in ms
+        group.enter()
+        queryAverage(.heartRateVariabilitySDNN, unit: HKUnit.secondUnit(with: .milli), start: startOfDay, end: now) { avg in
+            if let avg = avg {
+                hrvMs = NSNumber(value: (avg * 10).rounded() / 10) // 1 decimal
+            }
+            group.leave()
+        }
+
         group.notify(queue: .main) {
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd"
             formatter.timeZone = TimeZone.current
 
-            call.resolve([
+            var result: [String: Any] = [
                 "date": formatter.string(from: now),
                 "steps": steps,
                 "activeCalories": activeCalories,
                 "sleepMinutes": sleepMinutes
-            ])
+            ]
+            result["restingHr"] = restingHr ?? NSNull()
+            result["hrvMs"] = hrvMs ?? NSNull()
+
+            call.resolve(result)
         }
+    }
+
+    // MARK: - getWorkoutsLast24h
+    @objc func getWorkoutsLast24h(_ call: CAPPluginCall) {
+        let now = Date()
+        let yesterday = Date(timeIntervalSinceNow: -86400)
+        let predicate = HKQuery.predicateForSamples(withStart: yesterday, end: now, options: .strictStartDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+
+        let query = HKSampleQuery(sampleType: HKObjectType.workoutType(), predicate: predicate, limit: 50, sortDescriptors: [sortDescriptor]) { _, samples, _ in
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime]
+
+            var workouts: [[String: Any]] = []
+            for sample in (samples as? [HKWorkout]) ?? [] {
+                let type = self.mapWorkoutType(sample.workoutActivityType)
+                let startISO = formatter.string(from: sample.startDate)
+                let endISO = formatter.string(from: sample.endDate)
+                let calories = sample.totalEnergyBurned?.doubleValue(for: HKUnit.kilocalorie())
+
+                let externalId = self.generateExternalId(start: startISO, end: endISO, type: type)
+
+                var entry: [String: Any] = [
+                    "startTime": startISO,
+                    "endTime": endISO,
+                    "type": type,
+                    "source": "apple",
+                    "externalId": externalId
+                ]
+                entry["calories"] = calories != nil ? NSNumber(value: Int(calories!)) : NSNull()
+                workouts.append(entry)
+            }
+
+            call.resolve(["workouts": workouts])
+        }
+        healthStore.execute(query)
     }
 
     // MARK: - Helpers
@@ -587,6 +655,23 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         healthStore.execute(query)
     }
 
+    private func queryAverage(_ identifier: HKQuantityTypeIdentifier, unit: HKUnit, start: Date, end: Date, completion: @escaping (Double?) -> Void) {
+        guard let quantityType = HKQuantityType.quantityType(forIdentifier: identifier) else {
+            completion(nil)
+            return
+        }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+        let query = HKSampleQuery(sampleType: quantityType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
+            guard let quantitySamples = samples as? [HKQuantitySample], !quantitySamples.isEmpty else {
+                completion(nil)
+                return
+            }
+            let sum = quantitySamples.reduce(0.0) { $0 + $1.quantity.doubleValue(for: unit) }
+            completion(sum / Double(quantitySamples.count))
+        }
+        healthStore.execute(query)
+    }
+
     private func querySleep(start: Date, end: Date, completion: @escaping (Int) -> Void) {
         guard let sleepType = HKCategoryType.categoryType(forIdentifier: .sleepAnalysis) else {
             completion(0)
@@ -596,7 +681,6 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         let query = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
             var totalMinutes = 0.0
             for sample in (samples as? [HKCategorySample]) ?? [] {
-                // Only count asleep categories (not inBed)
                 if sample.value != HKCategoryValueSleepAnalysis.inBed.rawValue {
                     totalMinutes += sample.endDate.timeIntervalSince(sample.startDate) / 60.0
                 }
@@ -604,6 +688,27 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
             completion(Int(totalMinutes))
         }
         healthStore.execute(query)
+    }
+
+    private func mapWorkoutType(_ type: HKWorkoutActivityType) -> String {
+        switch type {
+        case .running: return "running"
+        case .walking: return "walking"
+        case .cycling: return "cycling"
+        case .traditionalStrengthTraining: return "strength_training"
+        case .functionalStrengthTraining: return "functional_training"
+        case .yoga: return "yoga"
+        case .highIntensityIntervalTraining: return "hiit"
+        case .swimming: return "swimming"
+        case .dance: return "dance"
+        case .crossTraining: return "cross_training"
+        default: return "other"
+        }
+    }
+
+    private func generateExternalId(start: String, end: String, type: String) -> String {
+        let raw = "\\(start)|\\(end)|\\(type)|apple"
+        return Data(raw.utf8).base64EncodedString().replacingOccurrences(of: "=", with: "")
     }
 }`}</CodeBlock>
                   </div>

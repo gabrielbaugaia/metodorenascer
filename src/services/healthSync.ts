@@ -1,5 +1,6 @@
 import {
   healthkitGetTodayMetrics,
+  healthkitGetWorkoutsLast24h,
   getTodayRestingHR,
   getTodayHRV,
   getWorkoutsLast24h,
@@ -27,6 +28,8 @@ export async function syncHealthData(token: string): Promise<SyncResult> {
     let steps: number;
     let activeCalories: number;
     let sleepMinutes: number;
+    let restingHr: number | null;
+    let hrvMs: number | null;
     let source: 'apple' | 'apple_health';
     let date: string;
 
@@ -35,25 +38,51 @@ export async function syncHealthData(token: string): Promise<SyncResult> {
       steps = realMetrics.steps;
       activeCalories = realMetrics.activeCalories;
       sleepMinutes = realMetrics.sleepMinutes;
+      restingHr = realMetrics.restingHr;
+      hrvMs = realMetrics.hrvMs;
       source = 'apple';
       date = realMetrics.date;
     } else {
       // Fallback to mock data
-      [steps, activeCalories, sleepMinutes] = await Promise.all([
+      const [mockSteps, mockCal, mockSleep, mockHr, mockHrv] = await Promise.all([
         getTodaySteps(),
         getTodayActiveCalories(),
         getTodaySleepMinutes(),
+        getTodayRestingHR(),
+        getTodayHRV(),
       ]);
+      steps = mockSteps;
+      activeCalories = mockCal;
+      sleepMinutes = mockSleep;
+      restingHr = mockHr;
+      hrvMs = mockHrv;
       source = 'apple_health';
       date = now.toISOString().split('T')[0];
     }
 
-    // 2. These remain mock for now (not in this phase)
-    const [restingHr, hrvMs, workouts] = await Promise.all([
-      getTodayRestingHR(),
-      getTodayHRV(),
-      getWorkoutsLast24h(),
-    ]);
+    // 2. Try real workouts, fallback to mock
+    let workouts: any[];
+    const realWorkouts = await healthkitGetWorkoutsLast24h();
+    if (realWorkouts.length > 0) {
+      workouts = realWorkouts.map((w) => ({
+        start_time: w.startTime,
+        end_time: w.endTime,
+        type: w.type,
+        calories: w.calories ?? undefined,
+        source: 'apple',
+        external_id: w.externalId,
+      }));
+    } else {
+      const mockWorkouts = await getWorkoutsLast24h();
+      workouts = mockWorkouts.map((w) => ({
+        start_time: w.start_time,
+        end_time: w.end_time,
+        type: w.type,
+        calories: w.calories || undefined,
+        source: w.source,
+        external_id: w.external_id || undefined,
+      }));
+    }
 
     const payload = {
       date,
@@ -61,8 +90,8 @@ export async function syncHealthData(token: string): Promise<SyncResult> {
         steps,
         active_calories: activeCalories,
         sleep_minutes: sleepMinutes,
-        resting_hr: restingHr,
-        hrv_ms: hrvMs,
+        resting_hr: restingHr ?? undefined,
+        hrv_ms: hrvMs ?? undefined,
         source,
       },
       workouts,

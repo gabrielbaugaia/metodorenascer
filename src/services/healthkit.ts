@@ -9,12 +9,24 @@ export type TodayMetrics = {
   steps: number;
   activeCalories: number;
   sleepMinutes: number;
+  restingHr: number | null;
+  hrvMs: number | null;
 };
+
+export interface HealthKitWorkout {
+  startTime: string;
+  endTime: string;
+  type: string;
+  calories: number | null;
+  source: 'apple';
+  externalId: string;
+}
 
 interface HealthKitPluginInterface {
   isAvailable(): Promise<{ available: boolean }>;
   requestPermissions(): Promise<{ granted: boolean }>;
   getTodayMetrics(): Promise<TodayMetrics>;
+  getWorkoutsLast24h(): Promise<{ workouts: HealthKitWorkout[] }>;
 }
 
 // ---------- helpers ----------
@@ -25,6 +37,10 @@ function isNative(): boolean {
 
 function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateExternalId(startTime: string, endTime: string, type: string, source: string): string {
+  return btoa(`${startTime}|${endTime}|${type}|${source}`).replace(/=/g, '');
 }
 
 // ---------- plugin registration (lazy) ----------
@@ -84,7 +100,7 @@ export async function requestPermissions(): Promise<boolean> {
 }
 
 /**
- * Fetch all three metrics in a single native call.
+ * Fetch all metrics in a single native call (includes restingHr and hrvMs).
  * Returns null when HealthKit is unavailable or on error (caller should use mock).
  */
 export async function healthkitGetTodayMetrics(): Promise<TodayMetrics | null> {
@@ -101,6 +117,23 @@ export async function healthkitGetTodayMetrics(): Promise<TodayMetrics | null> {
   } catch (err) {
     console.warn('[HealthKit] getTodayMetrics failed:', err);
     return null;
+  }
+}
+
+/**
+ * Fetch workouts from the last 24h via native plugin.
+ * Returns empty array on failure (caller should use mock).
+ */
+export async function healthkitGetWorkoutsLast24h(): Promise<HealthKitWorkout[]> {
+  const plugin = getPlugin();
+  if (!plugin) return [];
+
+  try {
+    const result = await plugin.getWorkoutsLast24h();
+    return result.workouts || [];
+  } catch (err) {
+    console.warn('[HealthKit] getWorkoutsLast24h failed:', err);
+    return [];
   }
 }
 
@@ -121,16 +154,17 @@ export async function getTodaySleepMinutes(): Promise<number> {
   return m ? m.sleepMinutes : randomBetween(300, 480);
 }
 
-// Not implemented in this phase — always mock
-export async function getTodayRestingHR(): Promise<number> {
-  return randomBetween(55, 70);
+export async function getTodayRestingHR(): Promise<number | null> {
+  const m = await healthkitGetTodayMetrics();
+  return m ? m.restingHr : randomBetween(55, 70);
 }
 
-export async function getTodayHRV(): Promise<number> {
-  return randomBetween(40, 80);
+export async function getTodayHRV(): Promise<number | null> {
+  const m = await healthkitGetTodayMetrics();
+  return m ? m.hrvMs : randomBetween(40, 80);
 }
 
-// ---------- workouts (mock — not in this phase) ----------
+// ---------- workouts ----------
 
 export interface MockWorkout {
   start_time: string;
@@ -138,9 +172,24 @@ export interface MockWorkout {
   type: string;
   calories: number;
   source: string;
+  external_id?: string;
 }
 
 export async function getWorkoutsLast24h(): Promise<MockWorkout[]> {
+  // Try real workouts first
+  const realWorkouts = await healthkitGetWorkoutsLast24h();
+  if (realWorkouts.length > 0) {
+    return realWorkouts.map((w) => ({
+      start_time: w.startTime,
+      end_time: w.endTime,
+      type: w.type,
+      calories: w.calories ?? 0,
+      source: 'apple',
+      external_id: w.externalId,
+    }));
+  }
+
+  // Mock fallback
   const count = randomBetween(0, 2);
   const workouts: MockWorkout[] = [];
   const types = ['strength_training', 'running', 'cycling', 'yoga'];
@@ -151,13 +200,15 @@ export async function getWorkoutsLast24h(): Promise<MockWorkout[]> {
     const start = new Date();
     start.setHours(startHour, 0, 0, 0);
     const end = new Date(start.getTime() + durationMin * 60000);
+    const type = types[randomBetween(0, types.length - 1)];
 
     workouts.push({
       start_time: start.toISOString(),
       end_time: end.toISOString(),
-      type: types[randomBetween(0, types.length - 1)],
+      type,
       calories: randomBetween(150, 500),
       source: 'apple_health',
+      external_id: generateExternalId(start.toISOString(), end.toISOString(), type, 'mock'),
     });
   }
 
