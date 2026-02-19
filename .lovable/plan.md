@@ -1,182 +1,174 @@
 
-# Evolucao do Plugin HealthKit — Fase 2 (Resting HR, HRV, Workouts)
+# Correção de Dois Bugs Críticos: PDF Nutrição e Persistência de Treino
 
-## Resumo
+## Diagnóstico Confirmado
 
-Expandir o plugin HealthKit e o fluxo de sync para incluir Resting Heart Rate, HRV (SDNN) e Workouts reais das ultimas 24h, com deduplicacao de workouts via coluna `external_id` no banco e atualizacao do calculo de prontidao.
+### Bug 1: PDF de Nutrição incompleto
+
+**Causa raiz:** A função `generateNutricaoPdf()` em `src/lib/generateProtocolPdf.ts` só conhece o **formato legado** do protocolo:
+- `conteudo.refeicoes`
+- `conteudo.macros`
+- `conteudo.calorias_diarias`
+- `conteudo.suplementacao`
+
+A tela `Nutricao.tsx` já renderiza corretamente o **formato expandido** (gerado pelos protocolos mais recentes):
+- `conteudo.plano_dia_treino.refeicoes[]`
+- `conteudo.plano_dia_descanso.refeicoes[]`
+- `conteudo.macros_diarios`
+- `conteudo.refeicao_pre_sono.opcoes[]`
+- `conteudo.hidratacao.distribuicao[]`
+- `conteudo.lista_compras_semanal`
+- `conteudo.substituicoes[]`
+- `conteudo.estrategia_anti_compulsao`
+
+O PDF pula tudo isso. Quando não há campos legados, o documento sai quase vazio ou com apenas suplementação.
 
 ---
 
-## 1. Migracao de Banco (pequena e segura)
+### Bug 2: Perda de progresso no treino ao sair do app
 
-Adicionar coluna nullable `external_id` na tabela `health_workouts` e criar um indice unico parcial para deduplicacao:
+**Causa raiz:** Todo o estado do treino vive apenas em memória React (`useState` dentro de `useWorkoutSession`). O iOS Safari pode descartar o contexto JS ao colocar a aba em background. Ao retornar, o componente remonta com estado zerado.
 
-```text
-ALTER TABLE health_workouts ADD COLUMN external_id text;
-CREATE UNIQUE INDEX idx_health_workouts_external_id 
-  ON health_workouts (user_id, external_id) 
-  WHERE external_id IS NOT NULL;
+O banco de dados **já persiste corretamente** cada série registrada em `workout_set_logs` e o `active_workout_sessions` com `status: "active"`. Mas não existe lógica de **rehydration** — o app não tenta recuperar uma sessão em andamento ao montar.
+
+Adicionalmente:
+- O `sessionStartRef` é perdido → o cronômetro reinicia do zero
+- O `restTimer.endsAt` é perdido → o cronômetro de descanso some
+- Os `logs[]` são perdidos → as séries marcadas desaparecem visualmente
+
+---
+
+## Plano de Implementação
+
+### Fix 1: PDF Nutrição — Suporte ao Formato Expandido
+
+**Arquivo:** `src/lib/generateProtocolPdf.ts`
+
+Reescrever a função `generateNutricaoPdf()` para detectar o formato do protocolo e renderizar corretamente:
+
+**Lógica de detecção:**
+```
+isExpandedFormat = conteudo.plano_dia_treino || conteudo.macros_diarios existem
 ```
 
-Isso nao quebra inserts antigos (external_id sera null para registros existentes). O indice unico parcial ignora nulls, entao workouts sem external_id continuam funcionando normalmente.
+**Estrutura do PDF expandido (mesma ordem da tela):**
 
----
+1. **Resumo Macros Diários** — ler de `macros_diarios` (calorias, proteína, carboidrato, gordura, água)
+2. **Plano Dia de Treino** — iterar `plano_dia_treino.refeicoes[]`, com alimentos, horário, macros por refeição e substituições
+3. **Plano Dia de Descanso** — iterar `plano_dia_descanso.refeicoes[]`, com nota de ajuste se existir
+4. **Refeição Pré-Sono** — iterar `refeicao_pre_sono.opcoes[]` com alimentos e macros de cada opção
+5. **Hidratação** — ler `hidratacao.calculo`, `hidratacao.litros_dia`, e lista `distribuicao` ou `dicas`
+6. **Lista de Compras Semanal** — iterar `lista_compras_semanal` (proteínas, carboidratos, gorduras, frutas, vegetais, outros)
+7. **Substituições** — iterar `substituicoes[]` por categoria com equivalências
+8. **Estratégia Anti-Compulsão** — exibir orientações se existir
+9. **Suplementação** — manter lógica existente (já funciona)
+10. **Dicas** — manter lógica existente
 
-## 2. Edge Function `health-sync` (atualizar)
+**Para protocolo legado** (sem campos expandidos): manter exatamente o comportamento atual.
 
-Modificar a secao de insercao de workouts para:
-- Aceitar `external_id` opcional no payload de cada workout
-- Se `external_id` estiver presente, verificar existencia antes de inserir (query por user_id + external_id)
-- Inserir apenas workouts cujo external_id nao exista ainda
-- Se `external_id` nao estiver presente, inserir normalmente (comportamento atual)
-
-Fluxo:
-```text
-Para cada workout no array:
-  Se w.external_id existe:
-    SELECT count(*) FROM health_workouts WHERE user_id = X AND external_id = Y
-    Se > 0: pular (ja existe)
-  Inserir workout com external_id
+**Função helper auxiliar** para renderizar um bloco de refeição no PDF:
+```
+renderMealBlockPdf(refeicao, helpers) →
+  subsectionTitle com nome + horário + calorias
+  lista de alimentos
+  macros por refeição (badge compacto)
+  substituições em itálico
 ```
 
-Alternativa mais eficiente: usar `upsert` com `onConflict` no indice unico, mas como o indice e parcial, usar a abordagem de filtro pre-insert.
-
 ---
 
-## 3. TypeScript Bridge — `src/services/healthkit.ts`
+### Fix 2: Persistência de Sessão de Treino
 
-Atualizar tipos e funcoes:
+**Problema central:** Estado efêmero em memória. Solução: salvar e restaurar do banco de dados ao montar.
 
-**Novos tipos:**
-```text
-TodayMetrics += restingHr: number | null, hrvMs: number | null
+#### Parte A — Persistência incremental por série (já implementada)
 
-Workout = {
-  startTime: string (ISO UTC)
-  endTime: string (ISO UTC)
-  type: string
-  calories: number | null
-  source: "apple"
-  externalId: string
+Cada série já é salva em `workout_set_logs` no momento do `logSet()`. Isso é correto. O que falta é **não salvar só no `finishSession()`**, mas **também ler de volta** ao montar.
+
+#### Parte B — Hook `useWorkoutSession.ts`: Adicionar rehydration
+
+Ao montar, se existir uma sessão `active` no banco para o usuário:
+1. Buscar `active_workout_sessions` com `status = 'active'` e `workout_name = workoutName`
+2. Buscar todos os `workout_set_logs` com esse `session_id`
+3. Restaurar: `sessionId`, `logs[]`, `sessionStartRef.current` (a partir de `started_at`)
+4. `sessionActive = true` automaticamente → retomar o cronômetro onde parou
+
+**Lógica de rehydration:**
+```typescript
+// Ao montar useWorkoutSession:
+const existingSession = await supabase
+  .from("active_workout_sessions")
+  .select("id, started_at")
+  .eq("user_id", user.id)
+  .eq("status", "active")
+  .eq("workout_name", workoutName)
+  .maybeSingle();
+
+if (existingSession) {
+  const existingLogs = await supabase
+    .from("workout_set_logs")
+    .select("*")
+    .eq("session_id", existingSession.id)
+    .order("created_at");
+  
+  // Restaurar estado
+  setSessionId(existingSession.id);
+  sessionStartRef.current = new Date(existingSession.started_at);
+  setLogs(existingLogs.map(...)); // mapear para SetLog[]
+  setSessionActive(true);
 }
-
-HealthKitPluginInterface += getWorkoutsLast24h(): Promise<{ workouts: Workout[] }>
 ```
 
-**Funcoes atualizadas:**
-- `healthkitGetTodayMetrics()` — retorna restingHr e hrvMs do plugin (ou null no mock)
-- `getTodayRestingHR()` — usa cache do plugin se disponivel, senao mock
-- `getTodayHRV()` — usa cache do plugin se disponivel, senao mock
+#### Parte C — WorkoutSessionManager.tsx: Detectar sessão recuperada
 
-**Nova funcao:**
-- `healthkitGetWorkoutsLast24h(): Promise<Workout[]>` — chama plugin nativo, fallback para mock com externalId gerado
+Atualmente o componente tem uma tela "pré-início" e só mostra o treino ativo após `handleStart()`. Com rehydration, se o hook retornar com `sessionActive = true` no mount, o componente deve **pular** a tela de pré-início e mostrar diretamente o treino ativo.
 
-**Registrar novo metodo no plugin bridge** (o `.m` nativo precisa ser atualizado manualmente pelo dev).
+Adicionar prop/estado `isRecovering` que é `true` enquanto o hook verifica se existe sessão ativa, e `false` após. Durante `isRecovering`, mostrar um spinner de "Verificando sessão anterior...".
 
----
+#### Parte D — Salvar série no banco em tempo real (complemento)
 
-## 4. Sync Logic — `src/services/healthSync.ts`
+Atualmente o `logSet()` só salva em memória (`setLogs(...)`). O `finishSession()` faz o insert em batch no final.
 
-Atualizar `syncHealthData()`:
+Adicionar insert incremental: ao chamar `logSet()`, além de atualizar o estado local, fazer um `supabase.from("workout_set_logs").insert(...)` assíncrono (fire-and-forget com try/catch silencioso). Isso garante que mesmo se o app for fechado no meio, os sets já estarão no banco para rehydration.
 
-```text
-1. Tentar healthkitGetTodayMetrics()
-2. Se sucesso:
-   - steps, activeCalories, sleepMinutes do plugin
-   - restingHr e hrvMs do plugin (podem ser null)
-   - source = "apple"
-3. Se falha: mock para tudo, source = "apple_health"
-
-4. Tentar healthkitGetWorkoutsLast24h()
-5. Se sucesso: usar workouts reais com external_id
-6. Se falha: usar mock (sem external_id)
-
-7. Montar payload incluindo external_id nos workouts
-```
-
----
-
-## 5. Calculo de Prontidao — `src/hooks/useHealthData.ts`
-
-Refinar `calculateReadiness()`:
-
-Adicoes:
-- Se houve workout de alta intensidade (type in: hiit, running, cycling) E sono < 360 min (6h): -10 extra
-- Manter penalizacoes existentes para resting_hr e hrv_ms (ja implementadas)
-- Passar `recentWorkouts` (com tipo) para a funcao em vez de apenas `hasRecentWorkout: boolean`
-
----
-
-## 6. Documentacao Admin — `src/pages/admin/AdminConectorMobileDocs.tsx`
-
-Atualizar:
-- Secao do plugin Swift: adicionar codigo para `getWorkoutsLast24h`, restingHeartRate e HRV
-- Atualizar o `.m` bridge para incluir o novo metodo
-- Atualizar checklist Fase 2: marcar restingHR, HRV e workouts como "implementado (TS + backend), pendente config nativa"
-- Adicionar nota sobre external_id e deduplicacao
+Quando `finishSession()` rodar, pular o insert se os logs já existirem (verificar por `session_id` + `set_number` + `exercise_name` — ou usar `upsert` com conflict target).
 
 ---
 
 ## Arquivos a Modificar
 
-| Arquivo | Mudanca |
+| Arquivo | Mudança |
 |---------|---------|
-| `src/services/healthkit.ts` | Novos tipos, restingHr/hrvMs no TodayMetrics, getWorkoutsLast24h real, fallback mock |
-| `src/services/healthSync.ts` | Incluir restingHr/hrvMs do plugin, workouts reais com external_id |
-| `src/hooks/useHealthData.ts` | Refinar readiness com tipo de workout + sono |
-| `supabase/functions/health-sync/index.ts` | Aceitar external_id, dedup antes de inserir |
-| `src/pages/admin/AdminConectorMobileDocs.tsx` | Codigo Swift atualizado, checklist, nota dedup |
-| Migracao SQL | Adicionar coluna external_id + indice unico parcial |
+| `src/lib/generateProtocolPdf.ts` | Reescrever `generateNutricaoPdf()` para suportar formato expandido |
+| `src/hooks/useWorkoutSession.ts` | Adicionar rehydration de sessão ativa ao montar + insert incremental por série |
+| `src/components/treino/WorkoutSessionManager.tsx` | Detectar sessão recuperada, pular tela de pré-início, mostrar spinner de rehydration |
 
 ---
 
-## Detalhes Tecnicos
+## Detalhes Técnicos Importantes
 
-### health-sync edge function — dedup logic
+### PDF — Segurança contra campos ausentes
 
-```text
-// Filtrar workouts novos
-const newWorkouts = [];
-for (const w of workouts) {
-  if (w.external_id) {
-    const { count } = await supabase
-      .from("health_workouts")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("external_id", w.external_id);
-    if (count && count > 0) continue; // ja existe
-  }
-  newWorkouts.push({ ...row, external_id: w.external_id || null });
-}
-// Insert apenas newWorkouts
-```
+Cada seção do PDF expandido só é renderizada se o campo existir. Nenhuma seção lança erro se o campo estiver `undefined` ou `null`. Isso garante compatibilidade tanto com protocolos legados quanto expandidos.
 
-### healthkit.ts — Mock externalId
+### Treino — Race condition no insert incremental
 
-Para mocks, gerar externalId determinístico:
-```text
-externalId = btoa(`${startISO}|${endISO}|${type}|mock`).replace(/=/g, '')
-```
+O insert por série é `fire-and-forget`. O `finishSession()` usa `upsert` com `onConflict: "session_id,exercise_name,set_number"` para evitar duplicatas caso a série já tenha sido salva incrementalmente. Se o DB não tiver esse índice, usar um check simples antes do batch insert do `finishSession`.
 
-### useHealthData.ts — Readiness refinado
+### Treino — Cronômetro de descanso após rehydration
 
-```text
-// Existente (manter):
-if (hasRecentWorkout) score -= 10;
+O `restTimer.endsAt` não é persistido no banco (seria complexo e de curta duração). Ao recuperar a sessão, o rest timer sempre começa inativo. O usuário pode registrar a próxima série normalmente.
 
-// Novo:
-const highIntensityTypes = ['hiit', 'running', 'cycling'];
-const hasHighIntensityRecent = recentWorkouts.some(w => 
-  highIntensityTypes.includes(w.type)
-);
-if (hasHighIntensityRecent && today.sleep_minutes < 360) score -= 10;
-```
+### Treino — Segurança de múltiplas sessões ativas
+
+Se houver mais de uma sessão `active` para o mesmo usuário + workout_name, usar a mais recente (`order("started_at", { ascending: false }).limit(1)`). Ao iniciar nova sessão, marcar sessões anteriores como `abandoned` antes.
 
 ---
 
-## O que NAO sera feito
+## O que NÃO será feito
 
-- Background sync
-- Novos campos no health_daily (schema ja suporta resting_hr e hrv_ms)
-- Alteracoes em /dados-corpo UI (ja consome os dados existentes)
-- Plugin Swift real (criado manualmente pelo dev no Xcode — apenas documentado)
+- Nenhuma alteração no banco de dados (schema já suporta tudo)
+- Nenhuma alteração em Edge Functions
+- Nenhum Service Worker ou cache offline complexo
+- Sem alterar a tela `/dados-corpo`
+- Sem alterar o formato de geração de protocolos
