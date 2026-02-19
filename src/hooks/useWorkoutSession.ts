@@ -61,6 +61,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
   const { user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionActive, setSessionActive] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(true); // true while checking for active session
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [logs, setLogs] = useState<SetLog[]>([]);
   const [restTimer, setRestTimer] = useState<RestTimer>({
@@ -76,6 +77,8 @@ export function useWorkoutSession(exercises: Exercise[]) {
   const sessionStartRef = useRef<Date | null>(null);
   const elapsedIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const restIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Track which set logs have already been persisted to DB (to avoid duplicates on finishSession)
+  const persistedLogKeysRef = useRef<Set<string>>(new Set());
 
   // Load last weights for exercises
   const loadLastWeights = useCallback(async () => {
@@ -103,6 +106,74 @@ export function useWorkoutSession(exercises: Exercise[]) {
     }
   }, [user, exercises]);
 
+  // Attempt to rehydrate an active session from DB on mount
+  const rehydrateSession = useCallback(async (workoutName: string) => {
+    if (!user) {
+      setIsRecovering(false);
+      return false;
+    }
+    try {
+      // Find the most recent active session for this workout
+      const { data: existing, error } = await supabase
+        .from("active_workout_sessions")
+        .select("id, started_at, workout_name")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .eq("workout_name", workoutName)
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error || !existing) {
+        setIsRecovering(false);
+        return false;
+      }
+
+      // Load set logs for this session
+      const { data: existingLogs, error: logsError } = await supabase
+        .from("workout_set_logs")
+        .select("*")
+        .eq("session_id", existing.id)
+        .order("created_at", { ascending: true });
+
+      if (logsError) {
+        console.error("[WorkoutSession] Error loading logs:", logsError);
+        setIsRecovering(false);
+        return false;
+      }
+
+      // Map DB rows to SetLog[]
+      const recovered: SetLog[] = (existingLogs || []).map((row: any) => ({
+        exerciseName: row.exercise_name,
+        setNumber: row.set_number,
+        weightKg: Number(row.weight_kg),
+        repsDone: row.reps_done,
+        restSeconds: row.rest_seconds,
+        restRespected: row.rest_respected,
+        completedAt: new Date(row.created_at),
+      }));
+
+      // Mark all recovered logs as already persisted
+      recovered.forEach((l) => {
+        persistedLogKeysRef.current.add(`${existing.id}:${l.exerciseName}:${l.setNumber}`);
+      });
+
+      // Restore state
+      setSessionId(existing.id);
+      sessionStartRef.current = new Date(existing.started_at);
+      setLogs(recovered);
+      setSessionActive(true);
+      setIsRecovering(false);
+
+      console.log(`[WorkoutSession] Recovered session ${existing.id} with ${recovered.length} sets`);
+      return true;
+    } catch (err) {
+      console.error("[WorkoutSession] Rehydration error:", err);
+      setIsRecovering(false);
+      return false;
+    }
+  }, [user]);
+
   useEffect(() => {
     loadLastWeights();
   }, [loadLastWeights]);
@@ -110,6 +181,13 @@ export function useWorkoutSession(exercises: Exercise[]) {
   // Elapsed timer based on start time (drift-proof)
   useEffect(() => {
     if (sessionActive && sessionStartRef.current) {
+      // Initialize elapsed immediately to avoid 0 flash after recovery
+      const now = new Date();
+      const diff = Math.floor(
+        (now.getTime() - sessionStartRef.current!.getTime()) / 1000
+      );
+      setElapsedSeconds(diff);
+
       elapsedIntervalRef.current = setInterval(() => {
         const now = new Date();
         const diff = Math.floor(
@@ -151,6 +229,14 @@ export function useWorkoutSession(exercises: Exercise[]) {
     async (workoutName: string) => {
       if (!user) return;
       try {
+        // Abandon any previous active sessions for this user + workout
+        await supabase
+          .from("active_workout_sessions")
+          .update({ status: "abandoned" })
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .eq("workout_name", workoutName);
+
         const { data, error } = await supabase
           .from("active_workout_sessions")
           .insert({
@@ -163,6 +249,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
 
         if (error) throw error;
 
+        persistedLogKeysRef.current.clear();
         setSessionId(data.id);
         sessionStartRef.current = new Date(data.started_at);
         setSessionActive(true);
@@ -193,34 +280,58 @@ export function useWorkoutSession(exercises: Exercise[]) {
         completedAt: new Date(),
       };
 
-      setLogs((prev) => [...prev, newLog]);
+      setLogs((prev) => {
+        const updatedLogs = [...prev, newLog];
 
-      // Check if this is the last set of the last exercise - no rest needed
-      const exerciseObj = exercises.find((e) => e.name === exerciseName);
-      const isLastSetOfExercise = exerciseObj
-        ? setNumber >= exerciseObj.sets
-        : true;
+        // Check if all sets of all exercises are done
+        const allDone = exercises.every((ex) => {
+          const exLogs = updatedLogs.filter((l) => l.exerciseName === ex.name);
+          return exLogs.length >= ex.sets;
+        });
 
-      // Check if all sets of all exercises are done after this log
-      const updatedLogs = [...logs, newLog];
-      const allDone = exercises.every((ex) => {
-        const exLogs = updatedLogs.filter((l) => l.exerciseName === ex.name);
-        return exLogs.length >= ex.sets;
+        // Start rest timer only if not all done
+        if (!allDone && restSeconds > 0) {
+          const endsAt = new Date(Date.now() + restSeconds * 1000);
+          setRestTimer({
+            active: true,
+            remainingSeconds: restSeconds,
+            endsAt,
+            exerciseName,
+            setNumber,
+          });
+        }
+
+        return updatedLogs;
       });
 
-      // Start rest timer only if not all done
-      if (!allDone && restSeconds > 0) {
-        const endsAt = new Date(Date.now() + restSeconds * 1000);
-        setRestTimer({
-          active: true,
-          remainingSeconds: restSeconds,
-          endsAt,
-          exerciseName,
-          setNumber,
-        });
+      // Persist this set to DB immediately (fire-and-forget) if session is active
+      if (sessionId && user) {
+        const logKey = `${sessionId}:${exerciseName}:${setNumber}`;
+        if (!persistedLogKeysRef.current.has(logKey)) {
+          persistedLogKeysRef.current.add(logKey);
+          supabase
+            .from("workout_set_logs")
+            .insert({
+              user_id: user.id,
+              session_id: sessionId,
+              exercise_name: exerciseName,
+              set_number: setNumber,
+              weight_kg: weightKg,
+              reps_done: repsDone,
+              rest_seconds: restSeconds,
+              rest_respected: true,
+            })
+            .then(({ error }) => {
+              if (error) {
+                // Remove from persisted set so finishSession will retry
+                persistedLogKeysRef.current.delete(logKey);
+                console.error("[WorkoutSession] Error persisting set:", error);
+              }
+            });
+        }
       }
     },
-    [exercises, logs]
+    [exercises, sessionId, user]
   );
 
   const canLogSet = useCallback(() => {
@@ -261,9 +372,14 @@ export function useWorkoutSession(exercises: Exercise[]) {
         })
         .eq("id", sessionId);
 
-      // Insert all set logs
-      if (logs.length > 0) {
-        const setLogRows = logs.map((l) => ({
+      // Only insert logs that were NOT already persisted incrementally
+      const unpersisted = logs.filter((l) => {
+        const key = `${sessionId}:${l.exerciseName}:${l.setNumber}`;
+        return !persistedLogKeysRef.current.has(key);
+      });
+
+      if (unpersisted.length > 0) {
+        const setLogRows = unpersisted.map((l) => ({
           user_id: user.id,
           session_id: sessionId,
           exercise_name: l.exerciseName,
@@ -309,6 +425,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
   return {
     sessionId,
     sessionActive,
+    isRecovering,
     elapsedSeconds,
     logs,
     restTimer,
@@ -317,6 +434,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
     allSetsCompleted,
     canCompleteWorkout,
     startSession,
+    rehydrateSession,
     logSet,
     canLogSet,
     getCompletedSets,

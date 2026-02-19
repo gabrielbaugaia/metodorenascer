@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Clock, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import { Clock, ArrowLeft, CheckCircle, Loader2, RotateCcw } from "lucide-react";
 import { useWorkoutSession, SessionSummary } from "@/hooks/useWorkoutSession";
 import { ExerciseSetTracker } from "./ExerciseSetTracker";
 import { RestCountdown } from "./RestCountdown";
@@ -41,10 +41,23 @@ export function WorkoutSessionManager({
   const session = useWorkoutSession(exercises);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [started, setStarted] = useState(false);
+  const [recovered, setRecovered] = useState(false);
 
   // Modal state for exercise GIF + inline tracking
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Attempt to rehydrate active session on mount
+  useEffect(() => {
+    session.rehydrateSession(workoutName).then((found) => {
+      if (found) {
+        setStarted(true);
+        setRecovered(true);
+      }
+    });
+    // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleExerciseClick = (exerciseName: string) => {
     const ex = exercises.find((e) => e.name === exerciseName);
@@ -84,7 +97,25 @@ export function WorkoutSessionManager({
     );
   }
 
-  // Pre-start screen
+  // Recovering / checking for active session
+  if (session.isRecovering) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onCancel}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h2 className="text-lg font-bold text-foreground uppercase">{workoutName}</h2>
+        </div>
+        <Card className="p-8 text-center space-y-3">
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Verificando sessão anterior...</p>
+        </Card>
+      </div>
+    );
+  }
+
+  // Pre-start screen (only if no recovered session)
   if (!started) {
     return (
       <div className="space-y-4">
@@ -160,6 +191,12 @@ export function WorkoutSessionManager({
             <h2 className="text-sm font-bold text-foreground uppercase">
               {workoutName}
             </h2>
+            {recovered && (
+              <p className="text-xs text-primary flex items-center gap-1">
+                <RotateCcw className="w-3 h-3" />
+                Sessão recuperada
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
