@@ -1,269 +1,93 @@
-# Arquitetura Final Renascer (Aluno) -- Navegacao Premium + Source Transparency
+
+
+# Indicadores Premium no Topo da Pagina "Dados do Corpo"
 
 ## Resumo
 
-Reorganizar a navegacao do aluno para ficar limpa e premium, mover "Dados do Corpo" para dentro de Configuracoes como "Conectar Dispositivos", e adicionar transparencia de fonte nos cards de metricas.
+Adicionar 3 indicadores compactos (Consistencia, Recuperacao, Capacidade Atual) acima das abas na pagina Dados do Corpo. Eles combinam dados de `health_daily` e `manual_day_logs` dos ultimos 7 dias em uma unica query unificada.
 
 ---
 
-## 1. Menu lateral do aluno (ClientSidebar)
+## 1. Funcao utilitaria: computeBodyIndicators
 
-**Arquivo:** `src/components/layout/ClientSidebar.tsx`
+**Arquivo novo:** `src/lib/bodyIndicators.ts`
 
-Atualizar `clientMenuItems` para a estrutura final:
+Recebe logs unificados dos ultimos 7 dias (cada dia com campos opcionais: sleep_hours, stress_level, energy_focus, trained_today, steps, active_calories, resting_hr, hrv_ms) e retorna:
 
 ```text
-Hoje           /renascer      Flame
-Evolucao       /evolucao      Camera
-Treino         /treino        Dumbbell
-Nutricao       /nutricao      Apple
-Mindset        /mindset       Brain
-Meu Perfil     /meu-perfil    User
-Configuracoes  /configuracoes Settings
-Suporte        /suporte       MessageCircle
-Assinatura     /assinatura    CreditCard
+{
+  consistencyPercent: number | null   // null se < 3 dias
+  recoveryTrendLabel: string | null   // "estavel", "em alta", "em queda", "oscilando"
+  recoveryTrendArrow: string          // "arrow-up", "arrow-down", "minus", "activity"
+  capacityLabel: string | null        // "baixa", "moderada", "alta"
+  hasEnoughData: boolean
+}
 ```
 
-Remover: Dashboard (/dashboard), Receitas (/receitas), Dados do Corpo (foi para Configuracoes).
+**Calculos:**
+
+- **Consistencia**: dias com pelo menos 1 campo valido / 7 * 100, arredondado. Se < 3 dias, retorna null.
+- **Recovery score diario** (0-100): normaliza sono (7-9h = 100, <5h = 20), stress (invertido), energy (1-5 mapeado para 20-100), resting_hr e hrv quando disponiveis. Media dos campos presentes.
+- **Trend**: media recovery ultimos 3 dias vs 3 anteriores. Delta > +3 = "em alta", < -3 = "em queda", variancia alta = "oscilando", senao "estavel".
+- **Capacidade**: media recovery ultimos 3 dias. < 45 = "baixa", 45-74 = "moderada", >= 75 = "alta".
 
 ---
 
-## 2. BottomNav (mobile)
+## 2. Hook para buscar dados unificados
 
-**Arquivo:** `src/components/navigation/BottomNav.tsx`
+**Dentro do componente** (ou inline no DadosCorpo): reutilizar o `useHealthData` ja existente (que traz `health_daily` dos ultimos 7 dias) e adicionar uma query para `manual_day_logs` dos ultimos 7 dias. Unificar por data, priorizando dados automaticos quando ambos existem.
 
-Manter os 5 itens atuais (ja esta com "Hoje"). Sem alteracao necessaria.
-
----
-
-## 3. "Dados do Corpo" vira secao dentro de Configuracoes
-
-**Arquivo:** `src/pages/Configuracoes.tsx`
-
-Adicionar um novo Card "Conectar Dispositivos" com:
-
-- Icone Smartphone
-- Status: "Nao conectado" (badge neutra)
-- Dois botoes lado a lado: "Android (Health Connect)" e "Apple (HealthKit)"
-- Ambos abrem um Dialog informativo explicando que a integracao estara disponivel em breve
-- Nao navega para /dados-corpo; tudo inline na pagina de Configuracoes
-
-A rota /dados-corpo continua existindo (nao quebra nada), mas nao aparece no menu.
+A query de `manual_day_logs` sera adicionada diretamente no componente `BodyPremiumIndicators` para manter o DadosCorpo.tsx limpo.
 
 ---
 
-## 4. Link "Painel Avancado" no Renascer
+## 3. Componente BodyPremiumIndicators
 
-**Arquivo:** `src/pages/Renascer.tsx`
+**Arquivo novo:** `src/components/health/BodyPremiumIndicators.tsx`
 
-O link ja existe apontando para /dados-corpo. Manter como esta -- funciona como acesso secundario para quem precisa.
+- Recebe `userId: string`
+- Faz 2 queries: `health_daily` (ultimos 7 dias) + `manual_day_logs` (ultimos 7 dias)
+- Unifica por data em array de 7 posicoes
+- Chama `computeBodyIndicators()`
+- Renderiza 3 chips em `grid grid-cols-3` (desktop) e `grid-cols-1` (mobile)
 
----
+Cada chip:
 
-## 5. Source Transparency nos cards de metricas
+```text
++---------------------------+
+| [icone] Consistencia      |
+|        82%                |
+|   ultimos 7 dias          |
++---------------------------+
+```
 
-**Arquivo:** `src/components/health/HealthDashboardTab.tsx`
-
-Modificar o `MetricCard` para suportar fonte e valor nulo:
-
-- Adicionar props opcionais: `source?: "manual" | "auto" | "estimado" | "indisponivel"` e `emptyValue?: boolean`
-- Se `emptyValue` for true, mostrar "--" em vez de 0
-- Renderizar badge pequena abaixo do valor com o texto da fonte
-- Cores das badges: todas neutras (bg-muted text-muted-foreground), sem vermelho
-- Texto em caps minusculo, tamanho text-[10px]
-
-Logica de exibicao no `HealthDashboardTab`:
-
-- Passos: se `todayData.steps === 0` e source nao e "auto" -> mostrar "--" com badge "indisponivel" e subtexto "Fonte: indisponivel"
-- Calorias: se 0 e nao auto -> "--" com "Estimativa disponivel apos registrar treinos ou conectar dispositivo"
-- Sono: se valor > 0 e source e manual -> badge "manual"
-- FC/HRV: manter como esta (ja condicional)
-
-Determinar source: verificar campo `source` do `todayData` (ja existe no schema health_daily). Se `source === "manual"`, badge manual. Se auto, badge automatico. Se null/undefined, badge indisponivel.
+- Fundo: card dark padrao (`bg-card border border-border/50`)
+- Valor principal: `text-primary` (laranja Renascer) quando tem dado, `text-muted-foreground` quando "--"
+- Icone discreto: CheckCircle (consistencia), TrendingUp (recuperacao), Zap (capacidade)
+- Loading: 3 Skeleton retangulares
+- Empty state (< 3 dias): valor "--" e legenda "complete 3 dias para ativar"
 
 ---
 
-## 6. Rotas -- sem quebrar nada
+## 4. Integracao na pagina DadosCorpo
 
-- /dashboard continua existindo no App.tsx (apenas sai do menu)
-- /dados-corpo continua existindo (acessivel via link "Painel Avancado")
-- /receitas continua existindo (pode ser acessado via URL direta)
-- Nenhuma rota e removida do App.tsx
+**Arquivo:** `src/pages/DadosCorpo.tsx`
+
+Inserir `<BodyPremiumIndicators userId={user.id} />` entre o header e as Tabs. O componente fica fixo independente da aba selecionada.
 
 ---
 
-## Arquivos a modificar
+## Arquivos a criar/modificar
 
-
-| Arquivo                                        | Mudanca                                      |
-| ---------------------------------------------- | -------------------------------------------- |
-| `src/components/layout/ClientSidebar.tsx`      | Remover Dashboard, Receitas do menu do aluno |
-| `src/pages/Configuracoes.tsx`                  | Adicionar card "Conectar Dispositivos"       |
-| `src/components/health/HealthDashboardTab.tsx` | Source badges + tratar valores zero          |
-
+| Arquivo | Acao |
+|---------|------|
+| `src/lib/bodyIndicators.ts` | Criar funcao computeBodyIndicators |
+| `src/components/health/BodyPremiumIndicators.tsx` | Criar componente com queries + render |
+| `src/pages/DadosCorpo.tsx` | Inserir componente acima das tabs |
 
 ## Sem alteracoes
 
-- Banco de dados
-- Score engine
-- App.tsx (rotas)
-- BottomNav (ja correto)  
-  
-  
-+  
-  
+- Banco de dados (RLS ja cobre ambas as tabelas)
+- Rotas
+- Outros componentes
 
-  REFATORAÇÃO PROFISSIONAL COMPLETA DO RENASCER APP
-  Objetivo: transformar o Renascer em um produto com consistência visual, lógica precisa e padrão premium equivalente a Apple, Whoop e Tesla.
-  NÃO alterar banco de dados existente.
-  NÃO quebrar funcionalidades existentes.
-  Refatorar apenas UI, lógica de exibição e regras de consistência.
-  ====================================================
-  PILAR 1 — DESIGN SYSTEM GLOBAL UNIFICADO
-  ====================================================
-  Problema atual:
-  Cada página usa espaçamento, tamanho e hierarquia diferentes.
-  Criar Design Tokens globais:
-  spacing scale:
-  xs: 4px
-  sm: 8px
-  md: 16px
-  lg: 24px
-  xl: 32px
-  card padrão:
-  background: #0F172A
-  border: 1px solid rgba(255,255,255,0.06)
-  border-radius: 12px
-  padding: 16px
-  gap interno: 8px
-  tipografia global:
-  H1: 28px semibold
-  H2: 20px semibold
-  H3: 16px medium
-  body: 14px regular
-  caption: 12px muted
-  NÃO usar múltiplas fontes.
-  Fonte única: Inter.
-  Aplicar isso em TODAS as páginas:
-  - Dashboard
-  - Evolução
-  - Treino
-  - Nutrição
-  - Dados do Corpo
-  ====================================================
-  PILAR 2 — REFATORAÇÃO COMPLETA DA TELA EVOLUÇÃO
-  ====================================================
-  Problema:
-  Cards gigantes, pouco informativo, desperdício de espaço.
-  Nova estrutura:
-  Fotos Iniciais:
-  layout horizontal compacto
-  cards menores
-  altura máxima: 160px
-  Fotos de Evolução:
-  grid responsivo
-  cards menores
-  mostrar data como badge superior
-  Timeline:
-  layout vertical compacto
-  cada entry máximo 56px altura
-  mostrar:
-  data
-  peso
-  status
-  badge “Análise disponível”
-  NÃO usar containers excessivamente grandes.
-  ====================================================
-  PILAR 3 — INTERVALOS INTELIGENTES POR PERFIL
-  ====================================================
-  Problema atual:
-  intervalos fixos incorretos.
-  Criar lógica dinâmica baseada no perfil:
-  se nível == iniciante:
-  musculo pequeno: 45s
-  musculo grande: 60s
-  se nível == intermediario:
-  musculo pequeno: 30s
-  musculo grande: 60s
-  se nível == avancado:
-  musculo pequeno: 30s
-  musculo grande: 60–90s dependendo intensidade
-  Classificação de músculos grandes:
-  peito
-  costas
-  pernas
-  músculos pequenos:
-  bíceps
-  tríceps
-  ombro
-  panturrilha
-  Aplicar automaticamente ao gerar treino.
-  ====================================================
-  PILAR 4 — CORREÇÃO COMPLETA DO MOTOR DE NUTRIÇÃO (CRÍTICO)
-  ====================================================
-  Problema:
-  horários não respeitam anamnese.
-  Regra obrigatória:
-  Usar os dados reais do perfil:
-  wake_time
-  training_time
-  sleep_time
-  Gerar refeições baseado nesses horários:
-  pre-treino:
-  60–90 minutos antes do treino
-  pós-treino:
-  até 60 minutos após treino
-  pré-sono:
-  30–60 minutos antes do sleep_time
-  Exemplo correto:
-  treino: 15:00
-  pre-treino: 13:30–14:00
-  pós-treino: 16:00
-  pré-sono: baseado no sleep_time real
-  NÃO usar horários fixos hardcoded.
-  ====================================================
-  PILAR 5 — CORREÇÃO COMPLETA DO PDF DE NUTRIÇÃO
-  ====================================================
-  Problema:
-  múltiplas fontes e desalinhamento.
-  Padronizar:
-  Fonte única: Inter
-  hierarquia:
-  Título:
-  16px semibold
-  Subtítulo:
-  14px medium
-  Texto:
-  12px regular
-  Macros:
-  11px medium
-  Espaçamento consistente.
-  Remover qualquer mistura de fontes.
-  Garantir alinhamento vertical correto.
-  ====================================================
-  PILAR 6 — CORREÇÃO CRÍTICA DO TIMER DE INTERVALO (BUG)
-  ====================================================
-  Problema:
-  timer quebra ao sair e voltar.
-  Implementar persistência usando:
-  localStorage ou banco:
-  interval_started_at
-  interval_duration
-  Quando usuário retorna:
-  recalcular tempo restante baseado em timestamp real
-  Nunca resetar timer ao sair da tela.
-  ====================================================
-  CRITÉRIO DE ACEITE FINAL
-  ====================================================
-  Todas páginas devem:
-  usar o mesmo sistema visual
-  mesmo spacing
-  mesma tipografia
-  mesma lógica
-  Resultado esperado:
-  aparência equivalente a produto premium global
-  consistência total
-  comportamento previsível e confiável
-  FIM  
-    
-  ajuste agora  incluindo esse final que coloquei agora 
