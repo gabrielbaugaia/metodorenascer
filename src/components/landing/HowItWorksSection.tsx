@@ -2,11 +2,11 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { ClipboardCheck, FileText, Play, TrendingUp, Settings } from "lucide-react";
 
 const steps = [
-  { icon: ClipboardCheck, label: "Análise" },
-  { icon: FileText, label: "Prescrição" },
-  { icon: Play, label: "Execução" },
-  { icon: TrendingUp, label: "Evolução" },
-  { icon: Settings, label: "Ajuste" },
+  { icon: ClipboardCheck, label: "Análise", animation: "iconBounce 3s ease-in-out infinite" },
+  { icon: FileText, label: "Prescrição", animation: "iconSwing 4s ease-in-out infinite" },
+  { icon: Play, label: "Execução", animation: "iconPulse 3.5s ease-in-out infinite" },
+  { icon: TrendingUp, label: "Evolução", animation: "iconFloat 4s ease-in-out infinite" },
+  { icon: Settings, label: "Ajuste", animation: "iconSpin 8s linear infinite" },
 ];
 
 export function HowItWorksSection() {
@@ -36,7 +36,13 @@ export function HowItWorksSection() {
             {steps.map((step, index) => (
               <div key={step.label} className="flex items-center gap-4 md:gap-6">
                 <div className="flex flex-col items-center gap-2">
-                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div
+                    className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary/10 flex items-center justify-center"
+                    style={{
+                      animation: isVisible ? step.animation : 'none',
+                      animationDelay: `${index * 0.15}s`,
+                    }}
+                  >
                     <step.icon className="w-7 h-7 md:w-8 md:h-8 text-primary" />
                   </div>
                   <span className="font-display text-sm md:text-base">
@@ -46,7 +52,15 @@ export function HowItWorksSection() {
                 
                 {/* Arrow connector (not on last item) */}
                 {index < steps.length - 1 && (
-                  <div className="hidden md:block text-primary text-2xl font-bold">→</div>
+                  <div
+                    className="hidden md:block text-primary text-2xl font-bold"
+                    style={{
+                      animation: isVisible ? 'arrowSlide 2.5s ease-in-out infinite' : 'none',
+                      animationDelay: `${index * 0.3}s`,
+                    }}
+                  >
+                    →
+                  </div>
                 )}
               </div>
             ))}
