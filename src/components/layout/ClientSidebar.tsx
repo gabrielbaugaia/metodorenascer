@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -12,22 +11,19 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { 
-  Home, 
-  Dumbbell, 
-  Apple, 
-  Brain, 
-  ChefHat, 
-  MessageCircle, 
-  User, 
+import {
+  Home,
+  Dumbbell,
+  Apple,
+  Brain,
+  ChefHat,
+  MessageCircle,
+  User,
   CreditCard,
   LogOut,
   Shield,
   Flame,
   FileText,
-  HelpCircle,
-  Bell,
-  Gift,
   Video,
   ImageIcon,
   Mail,
@@ -36,13 +32,18 @@ import {
   Camera,
   Settings,
   PenSquare,
-  HeartPulse
+  HeartPulse,
+  Gift,
+  Bell,
+  BookOpen,
 } from "lucide-react";
 import { ENABLE_HEALTH_METRICS } from "@/lib/healthConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { cn } from "@/lib/utils";
+
+const ICON_STROKE = 1.5;
 
 const clientMenuItems = [
   { title: "Renascer", url: "/renascer", icon: Flame },
@@ -59,22 +60,49 @@ const clientMenuItems = [
   ...(ENABLE_HEALTH_METRICS ? [{ title: "Dados do Corpo", url: "/dados-corpo", icon: HeartPulse }] : []),
 ];
 
-const adminMenuItems = [
-  { title: "Dashboard Admin", url: "/admin", icon: Shield },
-  { title: "Clientes", url: "/admin/clientes", icon: User },
-  { title: "Criar Cliente", url: "/admin/criar-cliente", icon: User },
-  { title: "Enviar Convite", url: "/admin/convites", icon: Mail },
-  { title: "Leads", url: "/admin/leads", icon: Target },
-  { title: "Protocolos", url: "/admin/planos", icon: FileText },
-  { title: "Planos de Venda", url: "/admin/planos-venda", icon: CreditCard },
-  { title: "Blog", url: "/admin/blog", icon: PenSquare },
-  { title: "Banco de Vídeos", url: "/admin/videos", icon: Video },
-  { title: "Banco de GIFs", url: "/admin/gifs", icon: ImageIcon },
-  { title: "Métricas", url: "/admin/metricas", icon: BarChart3 },
-  { title: "Mensagens Auto", url: "/admin/mensagens", icon: Bell },
-  { title: "Suporte Chats", url: "/admin/suporte", icon: MessageCircle },
-  { title: "Planos Comerciais", url: "/admin/commercial-plans", icon: CreditCard },
-  { title: "Campanhas Trial", url: "/admin/trial-campaigns", icon: Gift },
+interface AdminSection {
+  label: string;
+  items: { title: string; url: string; icon: typeof Home }[];
+}
+
+const adminSections: AdminSection[] = [
+  {
+    label: "CLIENTES",
+    items: [
+      { title: "Dashboard", url: "/admin", icon: Shield },
+      { title: "Clientes", url: "/admin/clientes", icon: User },
+      { title: "Leads", url: "/admin/leads", icon: Target },
+    ],
+  },
+  {
+    label: "CONTEÚDO",
+    items: [
+      { title: "Biblioteca de Vídeos", url: "/admin/videos", icon: Video },
+      { title: "Biblioteca de GIFs", url: "/admin/gifs", icon: ImageIcon },
+      { title: "Blog", url: "/admin/blog", icon: PenSquare },
+    ],
+  },
+  {
+    label: "VENDAS",
+    items: [
+      { title: "Planos", url: "/admin/commercial-plans", icon: CreditCard },
+      { title: "Campanhas Trial", url: "/admin/trial-campaigns", icon: Gift },
+      { title: "Métricas", url: "/admin/metricas", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "AUTOMAÇÕES",
+    items: [
+      { title: "Mensagens Automáticas", url: "/admin/mensagens", icon: Bell },
+    ],
+  },
+  {
+    label: "SUPORTE",
+    items: [
+      { title: "Chats", url: "/admin/suporte", icon: MessageCircle },
+      { title: "Documentação", url: "/admin/conector-mobile", icon: BookOpen },
+    ],
+  },
 ];
 
 export function ClientSidebar() {
@@ -95,55 +123,59 @@ export function ClientSidebar() {
   return (
     <Sidebar
       className={cn(
-        "border-r border-border/50 bg-background/95 backdrop-blur-sm transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        "border-r border-border bg-background transition-all duration-200",
+        collapsed ? "w-16" : "w-[260px]"
       )}
       collapsible="icon"
     >
-      {/* Header only visible on desktop */}
-      <div className="hidden md:flex h-16 items-center justify-between border-b border-border/50 px-4">
+      {/* Desktop header */}
+      <div className="hidden md:flex h-14 items-center justify-between border-b border-border px-4">
         {!collapsed && (
-          <div className="flex items-center gap-2">
-            <Flame className="h-6 w-6 text-primary" />
-            <span className="font-display text-lg text-gradient">RENASCER</span>
+          <div className="flex items-center gap-2.5">
+            <Flame className="h-5 w-5 text-primary" strokeWidth={ICON_STROKE} />
+            <span className="font-display text-sm tracking-wide text-foreground">
+              {isAdmin ? "Painel Admin" : "RENASCER"}
+            </span>
           </div>
         )}
         <SidebarTrigger className="ml-auto" />
       </div>
+
       {/* Mobile header inside sheet */}
-      <div className="md:hidden flex h-14 items-center border-b border-border/50 px-4">
-        <div className="flex items-center gap-2">
-          <Flame className="h-6 w-6 text-primary" />
-          <span className="font-display text-lg text-gradient">RENASCER</span>
+      <div className="md:hidden flex h-14 items-center border-b border-border px-4">
+        <div className="flex items-center gap-2.5">
+          <Flame className="h-5 w-5 text-primary" strokeWidth={ICON_STROKE} />
+          <span className="font-display text-sm tracking-wide text-foreground">
+            {isAdmin ? "Painel Admin" : "RENASCER"}
+          </span>
         </div>
       </div>
 
-      <SidebarContent className="px-2 py-4">
-        {/* Menu do Cliente - apenas para não-admins */}
+      <SidebarContent className="px-2 py-3">
+        {/* Client menu */}
         {!isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel className={cn(collapsed && "sr-only")}>
-              Menu Principal
+            <SidebarGroupLabel className={cn("text-[10px] tracking-widest text-muted-foreground font-medium", collapsed && "sr-only")}>
+              MENU
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {clientMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(item.url)}
-                      tooltip={item.title}
-                    >
-                      <NavLink 
+                    <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                      <NavLink
                         to={item.url}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                          isActive(item.url) 
-                            ? "bg-primary/20 text-primary" 
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                          isActive(item.url)
+                            ? "bg-muted text-foreground"
+                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                         )}
                       >
-                        <item.icon className="h-5 w-5 shrink-0" />
+                        {isActive(item.url) && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-r" />
+                        )}
+                        <item.icon className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -154,31 +186,30 @@ export function ClientSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Menu Admin - apenas para admins */}
-        {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel className={cn(collapsed && "sr-only")}>
-              Painel Administrativo
+        {/* Admin menu with sections */}
+        {isAdmin && adminSections.map((section) => (
+          <SidebarGroup key={section.label}>
+            <SidebarGroupLabel className={cn("text-[10px] tracking-widest text-muted-foreground font-medium mt-2", collapsed && "sr-only")}>
+              {section.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminMenuItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(item.url)}
-                      tooltip={item.title}
-                    >
-                      <NavLink 
+                {section.items.map((item) => (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                      <NavLink
                         to={item.url}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
-                          isActive(item.url) 
-                            ? "bg-primary/20 text-primary" 
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                          isActive(item.url)
+                            ? "bg-muted text-foreground"
+                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                         )}
                       >
-                        <item.icon className="h-5 w-5 shrink-0" />
+                        {isActive(item.url) && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-r" />
+                        )}
+                        <item.icon className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -187,9 +218,10 @@ export function ClientSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        )}
+        ))}
 
-        <div className="mt-auto pt-4 border-t border-border/50">
+        {/* Logout */}
+        <div className="mt-auto pt-3 border-t border-border">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -197,8 +229,8 @@ export function ClientSidebar() {
                 tooltip="Sair"
                 className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               >
-                <LogOut className="h-5 w-5 shrink-0" />
-                {!collapsed && <span>Sair</span>}
+                <LogOut className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} />
+                {!collapsed && <span className="text-sm">Sair</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

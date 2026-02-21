@@ -26,7 +26,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -40,22 +40,22 @@ export function ClientLayout({ children }: ClientLayoutProps) {
       <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
         <ClientSidebar />
         <main className="flex-1 overflow-x-hidden overflow-y-auto min-w-0">
-          {/* Mobile Header with menu trigger */}
-          <header className="md:hidden sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border/50 bg-background/95 backdrop-blur-sm px-4">
+          {/* Mobile Header */}
+          <header className="md:hidden sticky top-0 z-40 flex h-12 items-center justify-between border-b border-border bg-background px-4">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="h-9 w-9">
-                <Menu className="h-5 w-5" />
+              <SidebarTrigger className="h-8 w-8">
+                <Menu className="h-4 w-4" strokeWidth={1.5} />
               </SidebarTrigger>
               <div className="flex items-center gap-2">
-                <Flame className="h-5 w-5 text-primary" />
-                <span className="font-display text-lg text-gradient">RENASCER</span>
+                <Flame className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                <span className="font-display text-sm text-foreground">RENASCER</span>
               </div>
             </div>
             {isAdmin && <AdminSupportNotifications />}
           </header>
           {/* Desktop admin notifications */}
           {isAdmin && (
-            <div className="hidden md:flex absolute top-4 right-6 z-50">
+            <div className="hidden md:flex absolute top-3 right-5 z-50">
               <AdminSupportNotifications />
             </div>
           )}
@@ -63,7 +63,6 @@ export function ClientLayout({ children }: ClientLayoutProps) {
             {children}
           </div>
         </main>
-        {/* Bottom navigation for mobile - only for clients */}
         {!isAdmin && <BottomNav />}
       </div>
     </SidebarProvider>
