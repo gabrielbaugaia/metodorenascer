@@ -32,6 +32,7 @@ import {
 import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
 import { AdminAccessControlSection } from "@/components/admin/AdminAccessControlSection";
+import { AdminRenascerSection } from "@/components/admin/AdminRenascerSection";
 import {
   Dialog,
   DialogContent,
@@ -1424,6 +1425,9 @@ export default function AdminClienteDetalhes() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Renascer Mode */}
+        {id && <AdminRenascerSection clientId={id} />}
 
         {/* Observações */}
         <Card>

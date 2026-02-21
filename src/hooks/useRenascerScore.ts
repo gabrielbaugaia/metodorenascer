@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, subDays } from "date-fns";
+import { calcScore, classify, getRecommendation } from "@/lib/renascerScoreCalc";
 
 interface DayLog {
   date: string;
@@ -22,53 +23,6 @@ export interface RenascerScore {
   todayLog: DayLog | null;
   scores7d: { date: string; score: number }[];
   isLoading: boolean;
-}
-
-function calcScore(log: DayLog, yesterdayLog: DayLog | null): number {
-  let s = 100;
-  const sleep = log.sleep_hours ?? 7;
-  if (sleep < 5) s -= 35;
-  else if (sleep < 6) s -= 20;
-  else if (sleep < 7) s -= 10;
-
-  const stress = log.stress_level ?? 30;
-  if (stress > 80) s -= 20;
-  else if (stress > 60) s -= 10;
-
-  const energy = log.energy_focus ?? 3;
-  if (energy === 1) s -= 25;
-  else if (energy === 2) s -= 15;
-  else if (energy === 3) s -= 5;
-  else if (energy === 5) s += 5;
-
-  if (yesterdayLog?.trained_today) {
-    const rpe = yesterdayLog.rpe ?? 5;
-    if (rpe >= 8) s -= 15;
-    else if (rpe >= 5) s -= 10;
-    else s -= 5;
-  }
-
-  return Math.max(0, Math.min(100, s));
-}
-
-function classify(score: number) {
-  if (score >= 85) return { classification: "ELITE" as const, statusText: "PRONTO PARA EVOLUIR" };
-  if (score >= 65) return { classification: "ALTO" as const, statusText: "TREINAR COM CONTROLE" };
-  if (score >= 40) return { classification: "MODERADO" as const, statusText: "RECUPERAR" };
-  return { classification: "RISCO" as const, statusText: "REDUZIR CARGA" };
-}
-
-function getRecommendation(classification: string): string[] {
-  switch (classification) {
-    case "ELITE":
-      return ["Treino intenso", "Volume: 100% do programado", "RPE até 9 — pode buscar falha"];
-    case "ALTO":
-      return ["Treino moderado", "Volume: 80% do programado", "RPE até 7 — evitar falha"];
-    case "MODERADO":
-      return ["Treino leve + técnica", "Volume: 50-60%", "RPE até 5 — foco em execução"];
-    default:
-      return ["Recuperação ativa", "Mobilidade + caminhada leve", "Sem carga — priorize descanso"];
-  }
 }
 
 export function useRenascerScore(): RenascerScore {
