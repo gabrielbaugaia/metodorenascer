@@ -18,12 +18,12 @@ export const CTASection = forwardRef<HTMLElement>((_, forwardedRef) => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center flex flex-col items-center gap-8">
           {/* Reinforcement Block */}
-          <div className="flex flex-col items-center gap-4 text-muted-foreground text-base md:text-lg leading-relaxed max-w-2xl">
-            <p>
+          <div className="flex flex-col items-center gap-4 text-muted-foreground text-base md:text-lg leading-relaxed max-w-2xl mx-auto text-center">
+            <p className="text-center">
               O Método Renascer não é um desafio de 21 dias.<br />
               É um sistema contínuo de prescrição e ajuste.
             </p>
-            <p>
+            <p className="text-center">
               Você não está comprando acesso a um app.<br />
               Está entrando em um processo.
             </p>
