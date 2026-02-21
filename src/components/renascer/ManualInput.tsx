@@ -22,9 +22,10 @@ interface ManualInputProps {
     trained_today: boolean | null;
     rpe: number | null;
   } | null;
+  onSaveSuccess?: () => void;
 }
 
-export function ManualInput({ dataMode, todayLog }: ManualInputProps) {
+export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputProps) {
   const { user } = useAuth();
   const { isConnected } = useWearables(user?.id);
   const queryClient = useQueryClient();
@@ -75,6 +76,7 @@ export function ManualInput({ dataMode, todayLog }: ManualInputProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
       toast.success("Dia registrado. Seu Score foi atualizado.");
+      onSaveSuccess?.();
     },
     onError: () => toast.error("Erro ao salvar. Tente novamente."),
   });

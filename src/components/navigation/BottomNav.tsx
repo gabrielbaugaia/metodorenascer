@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 const ICON_STROKE = 1.5;
 
 const navItems = [
-  { icon: Flame, label: "Renascer", href: "/renascer" },
+  { icon: Flame, label: "Hoje", href: "/renascer" },
   { icon: Dumbbell, label: "Treino", href: "/treino" },
   { icon: Apple, label: "Nutrição", href: "/nutricao" },
   { icon: MessageCircle, label: "Suporte", href: "/suporte" },
