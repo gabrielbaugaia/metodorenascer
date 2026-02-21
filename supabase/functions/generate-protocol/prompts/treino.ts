@@ -69,6 +69,21 @@ MULHERES:
 - Pode incluir exercícios específicos de glúteo conforme objetivo
 - Hip Thrust, Glute Bridge, Elevação Pélvica, Kickback são permitidos
 ${exerciseList}
+### INTERVALOS DE DESCANSO POR NÍVEL E GRUPO MUSCULAR ###
+REGRA OBRIGATÓRIA: O intervalo de descanso DEVE variar conforme o nível do cliente e o grupo muscular:
+
+Músculos GRANDES (peito, costas, pernas/quadríceps/posterior):
+- Iniciante: 60s
+- Intermediário: 60s
+- Avançado: 60-90s (conforme intensidade)
+
+Músculos PEQUENOS (bíceps, tríceps, ombro, panturrilha, abdômen):
+- Iniciante: 45s
+- Intermediário: 30s
+- Avançado: 30s
+
+NÃO USE intervalos fixos iguais para todos os exercícios. O campo "descanso" de cada exercício DEVE refletir esta lógica.
+
 ### CLASSIFICAÇÃO POR NÍVEL ###
 INICIANTE (nunca treinou ou parado há +6 meses):
 - Frequência: 3-4 sessões/semana

@@ -47,16 +47,14 @@ const ICON_STROKE = 1.5;
 
 const clientMenuItems = [
   { title: "Hoje", url: "/renascer", icon: Flame },
-  { title: "Dashboard", url: "/dashboard", icon: Home },
-  { title: "Meu Perfil", url: "/meu-perfil", icon: User },
   { title: "Evolução", url: "/evolucao", icon: Camera },
   { title: "Treino", url: "/treino", icon: Dumbbell },
   { title: "Nutrição", url: "/nutricao", icon: Apple },
   { title: "Mindset", url: "/mindset", icon: Brain },
-  { title: "Receitas", url: "/receitas", icon: ChefHat },
+  { title: "Meu Perfil", url: "/meu-perfil", icon: User },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
   { title: "Suporte", url: "/suporte", icon: MessageCircle },
   { title: "Assinatura", url: "/assinatura", icon: CreditCard },
-  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
 interface AdminSection {

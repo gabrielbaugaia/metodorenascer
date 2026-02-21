@@ -517,21 +517,20 @@ export default function Evolucao() {
           </Card>
         )}
 
-        {/* Fotos Iniciais da Anamnese */}
+        {/* Fotos Iniciais da Anamnese — Compacto */}
         <Card>
-          <CardHeader className="pb-2 sm:pb-4 px-3 sm:px-6">
-            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-              <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          <CardHeader className="pb-2 px-3 sm:px-6 py-3">
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <ImageIcon className="h-4 w-4 text-primary" />
               Fotos Iniciais
             </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">Referência do início do programa</CardDescription>
           </CardHeader>
-          <CardContent className="px-3 sm:px-6">
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <CardContent className="px-3 sm:px-6 pb-3">
+            <div className="grid grid-cols-3 gap-2">
               {photoTypes.map(({ key, label }) => {
                 const fotoSrc = anamnesePhotoSrc[key];
                 return (
-                  <div key={key} className="relative aspect-[3/4] rounded-md sm:rounded-lg bg-muted overflow-hidden">
+                  <div key={key} className="relative aspect-[3/4] rounded-md bg-muted overflow-hidden" style={{ maxHeight: 160 }}>
                     {fotoSrc ? (
                       <img
                         src={fotoSrc}
@@ -541,22 +540,19 @@ export default function Evolucao() {
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                        <Camera className="h-5 w-5 sm:h-8 sm:w-8 mb-1 sm:mb-2" />
-                        <span className="text-[9px] sm:text-xs">{label}</span>
+                        <Camera className="h-4 w-4 mb-1" />
+                        <span className="text-[9px]">{label}</span>
                       </div>
                     )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 sm:p-1 text-center">
-                      <span className="text-[9px] sm:text-xs font-medium">{label}</span>
-                    </div>
-                    <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
-                      <Lock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 text-center">
+                      <span className="text-[9px] font-medium">{label}</span>
                     </div>
                   </div>
                 );
               })}
             </div>
             {profile?.created_at && (
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-2 sm:mt-4 text-center">
+              <p className="text-[10px] text-muted-foreground mt-2 text-center">
                 Registrado em {format(new Date(profile.created_at), "dd/MM/yyyy", { locale: ptBR })}
               </p>
             )}
