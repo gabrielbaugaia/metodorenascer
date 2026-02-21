@@ -57,7 +57,6 @@ const clientMenuItems = [
   { title: "Suporte", url: "/suporte", icon: MessageCircle },
   { title: "Assinatura", url: "/assinatura", icon: CreditCard },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
-  ...(ENABLE_HEALTH_METRICS ? [{ title: "Dados do Corpo", url: "/dados-corpo", icon: HeartPulse }] : []),
 ];
 
 interface AdminSection {
