@@ -1,6 +1,7 @@
 import { Footprints, Flame, Moon, HeartPulse, Activity, Watch } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { HealthDaily } from "@/hooks/useHealthData";
@@ -12,12 +13,43 @@ interface HealthDashboardTabProps {
   onConnectClick: () => void;
 }
 
-function MetricCard({ icon: Icon, label, value, unit, color }: {
+type SourceType = "manual" | "auto" | "estimado" | "indisponivel";
+
+function resolveSource(source: string | null | undefined): SourceType {
+  if (!source) return "indisponivel";
+  if (source === "manual") return "manual";
+  if (source === "healthkit" || source === "health_connect" || source === "auto") return "auto";
+  return "indisponivel";
+}
+
+function SourceBadge({ source, subtitle }: { source: SourceType; subtitle?: string }) {
+  const labels: Record<SourceType, string> = {
+    manual: "manual",
+    auto: "automático",
+    estimado: "estimado",
+    indisponivel: "indisponível",
+  };
+  return (
+    <div className="mt-0.5">
+      <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal text-muted-foreground border-border/50">
+        {labels[source]}
+      </Badge>
+      {subtitle && (
+        <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{subtitle}</p>
+      )}
+    </div>
+  );
+}
+
+function MetricCard({ icon: Icon, label, value, unit, color, source, subtitle, emptyValue }: {
   icon: React.ElementType;
   label: string;
   value: string | number;
   unit?: string;
   color: string;
+  source?: SourceType;
+  subtitle?: string;
+  emptyValue?: boolean;
 }) {
   return (
     <Card>
@@ -25,12 +57,13 @@ function MetricCard({ icon: Icon, label, value, unit, color }: {
         <div className={`p-2 rounded-lg ${color}`}>
           <Icon className="h-5 w-5" />
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-xs text-muted-foreground">{label}</p>
           <p className="text-lg font-bold">
-            {value}
-            {unit && <span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span>}
+            {emptyValue ? "—" : value}
+            {!emptyValue && unit && <span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span>}
           </p>
+          {source && <SourceBadge source={source} subtitle={subtitle} />}
         </div>
       </CardContent>
     </Card>
@@ -51,6 +84,14 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
     );
   }
 
+  const src = resolveSource(todayData?.source);
+  const isAuto = src === "auto";
+
+  const stepsEmpty = !isAuto && (todayData?.steps === 0 || !todayData?.steps);
+  const calEmpty = !isAuto && (todayData?.active_calories === 0 || !todayData?.active_calories);
+  const sleepVal = todayData?.sleep_minutes ?? 0;
+  const sleepSrc = sleepVal > 0 ? src : "indisponivel";
+
   return (
     <div className="space-y-6">
       {/* Cards do dia */}
@@ -58,14 +99,38 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
         <h3 className="text-sm font-medium text-muted-foreground mb-3">Hoje</h3>
         {todayData ? (
           <div className="grid grid-cols-2 gap-3">
-            <MetricCard icon={Footprints} label="Passos" value={todayData.steps.toLocaleString("pt-BR")} color="bg-blue-500/10 text-blue-500" />
-            <MetricCard icon={Flame} label="Calorias Ativas" value={todayData.active_calories} unit="kcal" color="bg-orange-500/10 text-orange-500" />
-            <MetricCard icon={Moon} label="Sono" value={formatSleep(todayData.sleep_minutes)} color="bg-indigo-500/10 text-indigo-500" />
+            <MetricCard
+              icon={Footprints}
+              label="Passos"
+              value={todayData.steps.toLocaleString("pt-BR")}
+              color="bg-blue-500/10 text-blue-500"
+              emptyValue={stepsEmpty}
+              source={stepsEmpty ? "indisponivel" : src}
+              subtitle={stepsEmpty ? "Fonte: indisponível" : undefined}
+            />
+            <MetricCard
+              icon={Flame}
+              label="Calorias Ativas"
+              value={todayData.active_calories}
+              unit="kcal"
+              color="bg-orange-500/10 text-orange-500"
+              emptyValue={calEmpty}
+              source={calEmpty ? "indisponivel" : src}
+              subtitle={calEmpty ? "Estimativa disponível após registrar treinos ou conectar dispositivo" : undefined}
+            />
+            <MetricCard
+              icon={Moon}
+              label="Sono"
+              value={formatSleep(sleepVal)}
+              color="bg-indigo-500/10 text-indigo-500"
+              emptyValue={sleepVal === 0}
+              source={sleepSrc}
+            />
             {todayData.resting_hr && (
-              <MetricCard icon={HeartPulse} label="FC Repouso" value={todayData.resting_hr} unit="bpm" color="bg-red-500/10 text-red-500" />
+              <MetricCard icon={HeartPulse} label="FC Repouso" value={todayData.resting_hr} unit="bpm" color="bg-red-500/10 text-red-500" source={src} />
             )}
             {todayData.hrv_ms && (
-              <MetricCard icon={Activity} label="HRV" value={Number(todayData.hrv_ms).toFixed(0)} unit="ms" color="bg-green-500/10 text-green-500" />
+              <MetricCard icon={Activity} label="HRV" value={Number(todayData.hrv_ms).toFixed(0)} unit="ms" color="bg-green-500/10 text-green-500" source={src} />
             )}
           </div>
         ) : (

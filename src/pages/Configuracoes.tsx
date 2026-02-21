@@ -5,7 +5,9 @@ import { NotificationSettings } from "@/components/notifications/NotificationSet
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
-import { Settings, Globe, Palette, Moon, Sun, Monitor, RefreshCw, Info } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Settings, Globe, Palette, Moon, Sun, Monitor, RefreshCw, Info, Smartphone, Wifi, WifiOff } from "lucide-react";
 import { useTheme } from "next-themes";
 import { APP_VERSION, getSWVersion, forceAppUpdate } from "@/lib/appVersion";
 import { toast } from "@/hooks/use-toast";
@@ -21,6 +23,8 @@ export default function Configuracoes() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [deviceDialogOpen, setDeviceDialogOpen] = useState(false);
+  const [deviceDialogType, setDeviceDialogType] = useState<"android" | "apple">("android");
 
   useEffect(() => {
     setMounted(true);
@@ -64,6 +68,77 @@ export default function Configuracoes() {
             Personalize suas preferências do aplicativo
           </p>
         </div>
+
+        {/* Conectar Dispositivos */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Smartphone className="h-5 w-5" />
+              Conectar Dispositivos
+            </CardTitle>
+            <CardDescription>
+              Sincronize dados de saúde do seu relógio ou celular
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <WifiOff className="h-5 w-5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Status</p>
+                <p className="text-xs text-muted-foreground">Nenhum dispositivo conectado</p>
+              </div>
+              <Badge variant="outline" className="text-xs text-muted-foreground">
+                Não conectado
+              </Badge>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                className="h-auto py-3 flex flex-col items-center gap-1.5"
+                onClick={() => { setDeviceDialogType("android"); setDeviceDialogOpen(true); }}
+              >
+                <Smartphone className="h-5 w-5" />
+                <span className="text-xs font-medium">Android</span>
+                <span className="text-[10px] text-muted-foreground">Health Connect</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-auto py-3 flex flex-col items-center gap-1.5"
+                onClick={() => { setDeviceDialogType("apple"); setDeviceDialogOpen(true); }}
+              >
+                <Smartphone className="h-5 w-5" />
+                <span className="text-xs font-medium">Apple</span>
+                <span className="text-[10px] text-muted-foreground">HealthKit</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Dialog open={deviceDialogOpen} onOpenChange={setDeviceDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {deviceDialogType === "android" ? "Android — Health Connect" : "Apple — HealthKit"}
+              </DialogTitle>
+              <DialogDescription>
+                {deviceDialogType === "android"
+                  ? "A integração com o Health Connect do Android estará disponível em breve. Você poderá sincronizar automaticamente passos, calorias, sono e frequência cardíaca."
+                  : "A integração com o Apple HealthKit estará disponível em breve. Você poderá sincronizar automaticamente passos, calorias, sono e frequência cardíaca."
+                }
+              </DialogDescription>
+            </DialogHeader>
+            <div className="p-4 rounded-lg bg-muted/50 text-center space-y-2">
+              <Wifi className="h-8 w-8 mx-auto text-primary" />
+              <p className="text-sm font-medium">Em breve</p>
+              <p className="text-xs text-muted-foreground">
+                Estamos preparando esta integração para você. Por enquanto, use o registro manual no Painel Avançado.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => setDeviceDialogOpen(false)}>
+              Entendi
+            </Button>
+          </DialogContent>
+        </Dialog>
 
         {/* Notificações */}
         <NotificationSettings />

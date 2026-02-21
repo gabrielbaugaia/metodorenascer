@@ -143,7 +143,7 @@ export function EvolutionTimeline({
           {/* Timeline line */}
           <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
 
-          <div className="space-y-6">
+          <div className="space-y-3">
             {checkins.map((checkin, index) => {
               const signed = checkinPhotoSrc[checkin.id];
               const isExpanded = expandedCheckins.has(checkin.id);
@@ -157,12 +157,12 @@ export function EvolutionTimeline({
                 : null;
 
               return (
-                <div key={checkin.id} className="relative pl-8 sm:pl-10">
+                <div key={checkin.id} className="relative pl-8">
                   {/* Timeline dot */}
-                  <div className="absolute left-1.5 sm:left-2.5 top-1.5 w-3 h-3 rounded-full bg-primary ring-4 ring-background" />
+                  <div className="absolute left-1.5 top-2 w-3 h-3 rounded-full bg-primary ring-4 ring-background" />
 
                   <Collapsible open={isExpanded} onOpenChange={() => toggleExpand(checkin.id)}>
-                    <div className="p-3 sm:p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors">
+                    <div className="py-2 px-3 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors">
                       {/* Header */}
                       <CollapsibleTrigger asChild>
                         <button className="w-full text-left">
