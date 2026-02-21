@@ -45,6 +45,7 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { cn } from "@/lib/utils";
 
 const clientMenuItems = [
+  { title: "Renascer", url: "/renascer", icon: Flame },
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Meu Perfil", url: "/meu-perfil", icon: User },
   { title: "Evolução", url: "/evolucao", icon: Camera },

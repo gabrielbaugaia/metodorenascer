@@ -1,9 +1,9 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, Dumbbell, Apple, MessageCircle, User } from "lucide-react";
+import { Flame, Dumbbell, Apple, MessageCircle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { icon: Home, label: "Início", href: "/dashboard" },
+  { icon: Flame, label: "Renascer", href: "/renascer" },
   { icon: Dumbbell, label: "Treino", href: "/treino" },
   { icon: Apple, label: "Nutrição", href: "/nutricao" },
   { icon: MessageCircle, label: "Suporte", href: "/suporte" },
