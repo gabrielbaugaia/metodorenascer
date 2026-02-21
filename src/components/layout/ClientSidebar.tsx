@@ -97,7 +97,7 @@ const adminSections: AdminSection[] = [
     label: "SUPORTE",
     items: [
       { title: "Chats", url: "/admin/suporte", icon: MessageCircle },
-      { title: "Documentação", url: "/admin/conector-mobile", icon: BookOpen },
+      { title: "Documentação", url: "/admin/docs/conector-mobile", icon: BookOpen },
     ],
   },
 ];
