@@ -935,6 +935,45 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_day_logs: {
+        Row: {
+          created_at: string | null
+          date: string
+          energy_focus: number | null
+          id: string
+          rpe: number | null
+          sleep_hours: number | null
+          stress_level: number | null
+          trained_today: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          energy_focus?: number | null
+          id?: string
+          rpe?: number | null
+          sleep_hours?: number | null
+          stress_level?: number | null
+          trained_today?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          energy_focus?: number | null
+          id?: string
+          rpe?: number | null
+          sleep_hours?: number | null
+          stress_level?: number | null
+          trained_today?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       message_sends: {
         Row: {
           clicked_at: string | null
@@ -1294,6 +1333,7 @@ export type Database = {
           condicoes_saude: string | null
           consome_alcool: string | null
           created_at: string | null
+          data_mode: string | null
           data_nascimento: string | null
           dias_disponiveis: string | null
           email: string | null
@@ -1349,6 +1389,7 @@ export type Database = {
           condicoes_saude?: string | null
           consome_alcool?: string | null
           created_at?: string | null
+          data_mode?: string | null
           data_nascimento?: string | null
           dias_disponiveis?: string | null
           email?: string | null
@@ -1404,6 +1445,7 @@ export type Database = {
           condicoes_saude?: string | null
           consome_alcool?: string | null
           created_at?: string | null
+          data_mode?: string | null
           data_nascimento?: string | null
           dias_disponiveis?: string | null
           email?: string | null

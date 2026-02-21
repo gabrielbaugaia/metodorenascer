@@ -62,6 +62,7 @@ const AdminConectorMobileDocs = lazy(() => import("./pages/admin/AdminConectorMo
 const ConnectLogin = lazy(() => import("./pages/connect/ConnectLogin"));
 const ConnectDashboard = lazy(() => import("./pages/connect/ConnectDashboard"));
 const ConnectSync = lazy(() => import("./pages/connect/ConnectSync"));
+const Renascer = lazy(() => import("./pages/Renascer"));
 
 const queryClient = new QueryClient();
 
@@ -113,6 +114,7 @@ const App = () => (
             <Route path="/assinatura" element={<SubscriptionGuard><Assinatura /></SubscriptionGuard>} />
             <Route path="/configuracoes" element={<SubscriptionGuard><Configuracoes /></SubscriptionGuard>} />
             <Route path="/dados-corpo" element={<SubscriptionGuard><DadosCorpo /></SubscriptionGuard>} />
+            <Route path="/renascer" element={<SubscriptionGuard><Renascer /></SubscriptionGuard>} />
 
             {/* ROTAS ADMIN (verificação de admin é feita internamente) */}
             <Route path="/admin" element={<AdminDashboard />} />
