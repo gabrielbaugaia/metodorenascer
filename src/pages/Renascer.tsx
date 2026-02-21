@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRenascerScore } from "@/hooks/useRenascerScore";
@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
+import { MiniConfetti } from "@/components/renascer/MiniConfetti";
 import { StatusBadge } from "@/components/renascer/StatusBadge";
 import { TrendIndicator } from "@/components/renascer/TrendIndicator";
 import { DayRecommendation } from "@/components/renascer/DayRecommendation";
@@ -19,6 +20,10 @@ import { ExternalLink } from "lucide-react";
 export default function Renascer() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [celebrating, setCelebrating] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+
   const {
     score,
     classification,
@@ -30,6 +35,23 @@ export default function Renascer() {
     scores7d,
     isLoading: scoreLoading,
   } = useRenascerScore();
+
+  const handleSaveSuccess = useCallback(() => {
+    // Always trigger ring celebration
+    setCelebrating(true);
+    setShowFeedback(true);
+    setTimeout(() => setCelebrating(false), 900);
+    setTimeout(() => setShowFeedback(false), 2500);
+
+    // Confetti only first 7 times
+    const key = "renascer_celebrations_count";
+    const count = parseInt(localStorage.getItem(key) ?? "0", 10);
+    if (count < 7) {
+      setShowConfetti(true);
+      localStorage.setItem(key, String(count + 1));
+      setTimeout(() => setShowConfetti(false), 1200);
+    }
+  }, []);
 
   // Fetch data_mode from profile
   const { data: profile } = useQuery({
@@ -80,9 +102,15 @@ export default function Renascer() {
         </div>
 
         {/* Score Ring + Badge */}
-        <div className="rounded-xl border border-border/50 bg-card p-6 flex flex-col items-center gap-4">
-          <ScoreRing score={score} classification={classification} />
+        <div className="rounded-xl border border-border/50 bg-card p-6 flex flex-col items-center gap-4 relative">
+          <MiniConfetti active={showConfetti} />
+          <ScoreRing score={score} classification={classification} celebrate={celebrating} />
           <StatusBadge classification={classification} statusText={statusText} />
+          {showFeedback && (
+            <p className="text-xs text-muted-foreground animate-fade-in transition-opacity">
+              Atualizado. Continue no controle.
+            </p>
+          )}
         </div>
 
         {/* Trend + Sparkline */}
@@ -109,7 +137,7 @@ export default function Renascer() {
         </div>
 
         {/* Manual Input / Auto placeholder */}
-        <ManualInput dataMode={dataMode} todayLog={todayLog} />
+        <ManualInput dataMode={dataMode} todayLog={todayLog} onSaveSuccess={handleSaveSuccess} />
 
         {/* Advanced panel link */}
         <div className="text-center pt-2">

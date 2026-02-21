@@ -287,3 +287,16 @@
   0%, 100% { transform: translateX(0); }
   50% { transform: translateX(4px); }
 }
+@keyframes scoreGlow {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
+  50% { transform: scale(1.03); filter: drop-shadow(0 0 16px var(--glow-color, hsl(14 100% 62%))); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
+}
+@keyframes confettiFall {
+  0% { opacity: 1; transform: translateY(0) translateX(0) rotate(0deg); }
+  20% { opacity: 1; transform: translateY(-18px) translateX(var(--x-drift, 0px)) rotate(90deg); }
+  100% { opacity: 0; transform: translateY(55px) translateX(var(--x-drift, 0px)) rotate(270deg); }
+}
+.animate-scoreGlow {
+  animation: scoreGlow 800ms ease-in-out;
+}
