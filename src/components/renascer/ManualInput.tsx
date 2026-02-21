@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { WearableModal } from "./WearableModal";
+import { useWearables } from "@/lib/wearables/useWearables";
 
 interface ManualInputProps {
   dataMode: string;
@@ -25,6 +26,7 @@ interface ManualInputProps {
 
 export function ManualInput({ dataMode, todayLog }: ManualInputProps) {
   const { user } = useAuth();
+  const { isConnected } = useWearables(user?.id);
   const queryClient = useQueryClient();
   const [wearableOpen, setWearableOpen] = useState(false);
 
@@ -77,7 +79,7 @@ export function ManualInput({ dataMode, todayLog }: ManualInputProps) {
     onError: () => toast.error("Erro ao salvar. Tente novamente."),
   });
 
-  if (dataMode === "auto") {
+  if (dataMode === "auto" && isConnected) {
     return (
       <div className="rounded-xl border border-border/50 bg-card p-5 space-y-4">
         <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
