@@ -11,6 +11,7 @@ import { HealthConnectTab } from "@/components/health/HealthConnectTab";
 import { HealthDashboardTab } from "@/components/health/HealthDashboardTab";
 import { HealthReadinessTab } from "@/components/health/HealthReadinessTab";
 import { HeartPulse, Loader2 } from "lucide-react";
+import { BodyPremiumIndicators } from "@/components/health/BodyPremiumIndicators";
 
 function DadosCorpo() {
   const [activeTab, setActiveTab] = useState("painel");
@@ -90,6 +91,8 @@ function DadosCorpo() {
             </Button>
           )}
         </div>
+
+        {user?.id && <BodyPremiumIndicators userId={user.id} />}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full">
