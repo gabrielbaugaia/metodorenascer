@@ -7,57 +7,21 @@ import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useAchievements } from "@/hooks/useAchievements";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
-import { Target, Utensils, Brain, BookOpen, MessageCircle, Trophy, ClipboardCheck, CreditCard, Lock, Camera, AlertTriangle } from "lucide-react";
+import { Target, Utensils, TrendingUp, Heart, CreditCard, Lock, Camera, AlertTriangle, Dumbbell, ClipboardCheck, Flame, ArrowRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { STRIPE_PRICE_IDS } from "@/lib/planConstants";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
 import { PlanSelectionGrid } from "@/components/dashboard/PlanSelectionGrid";
-import { DashboardCardsGrid } from "@/components/dashboard/DashboardCardsGrid";
-import { SubscriptionStatusCard } from "@/components/dashboard/SubscriptionStatusCard";
-import { StreakDisplay } from "@/components/gamification/StreakDisplay";
-import { AchievementsGrid } from "@/components/gamification/AchievementsGrid";
 import { WeeklyCheckinModal } from "@/components/checkin/WeeklyCheckinModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-
-const DASHBOARD_CARDS = [
-  {
-    icon: Target,
-    title: "Treino",
-    description: "Seu plano de treino personalizado da semana",
-    color: "from-orange-500 to-red-500",
-    href: "/treino",
-  },
-  {
-    icon: Utensils,
-    title: "Nutricao",
-    description: "Cardapio e orientacoes nutricionais",
-    color: "from-green-500 to-emerald-500",
-    href: "/nutricao",
-  },
-  {
-    icon: Brain,
-    title: "Mindset",
-    description: "Materiais de desenvolvimento mental",
-    color: "from-purple-500 to-violet-500",
-    href: "/mindset",
-  },
-  {
-    icon: BookOpen,
-    title: "Receitas",
-    description: "Biblioteca completa de receitas fitness",
-    color: "from-blue-500 to-cyan-500",
-    href: "/receitas",
-  },
-  {
-    icon: MessageCircle,
-    title: "Fale com Mentor",
-    description: "Tire suas dúvidas com seu mentor 24h",
-    color: "from-primary to-orange-600",
-    href: "/suporte",
-  },
-];
+import { ScoreRing } from "@/components/renascer/ScoreRing";
+import { StatusBadge } from "@/components/renascer/StatusBadge";
+import { useRenascerScore } from "@/hooks/useRenascerScore";
+import { computeBodyIndicators, type DayLog } from "@/lib/bodyIndicators";
+import { useQuery } from "@tanstack/react-query";
+import { format, subDays } from "date-fns";
 
 const SUBSCRIPTION_PLANS = [
   {
@@ -110,12 +74,11 @@ export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const { subscribed, loading: subLoading, createCheckout, openCustomerPortal, subscriptionEnd } = useSubscription();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
-  const { achievements, userAchievements, streak, totalPoints, loading: achievementsLoading } = useAchievements();
+  const { streak } = useAchievements();
+  const renascer = useRenascerScore();
   useActivityTracker();
   const navigate = useNavigate();
   const [checkingAnamnese, setCheckingAnamnese] = useState(true);
-  const [userName, setUserName] = useState<string>("");
-  const [showAchievements, setShowAchievements] = useState(false);
   const [showWeeklyCheckin, setShowWeeklyCheckin] = useState(false);
   const [canDoWeeklyCheckin, setCanDoWeeklyCheckin] = useState(false);
   const [pendingPaymentInfo, setPendingPaymentInfo] = useState<{ planType: string; planName: string; priceId?: string } | null>(null);
@@ -123,29 +86,70 @@ export default function Dashboard() {
   const [needsEvolutionPhotos, setNeedsEvolutionPhotos] = useState(false);
   const [daysSinceLastProtocol, setDaysSinceLastProtocol] = useState(0);
 
+  // Fetch consistency data
+  const { data: consistencyData } = useQuery({
+    queryKey: ["dashboard-consistency", user?.id],
+    enabled: !!user?.id && subscribed,
+    queryFn: async () => {
+      const today = format(new Date(), "yyyy-MM-dd");
+      const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
+
+      const { data: manualLogs } = await supabase
+        .from("manual_day_logs")
+        .select("date, sleep_hours, stress_level, energy_focus, trained_today, rpe")
+        .eq("user_id", user!.id)
+        .gte("date", sevenDaysAgo)
+        .lte("date", today);
+
+      const logs: DayLog[] = (manualLogs || []).map((l) => ({
+        date: l.date,
+        sleep_hours: l.sleep_hours,
+        stress_level: l.stress_level,
+        energy_focus: l.energy_focus,
+        trained_today: l.trained_today,
+      }));
+
+      return computeBodyIndicators(logs);
+    },
+  });
+
+  // Fetch weight evolution
+  const { data: weightDelta } = useQuery({
+    queryKey: ["dashboard-weight-delta", user?.id],
+    enabled: !!user?.id && subscribed,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("weekly_checkins")
+        .select("current_weight, created_at")
+        .eq("user_id", user!.id)
+        .not("current_weight", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(2);
+
+      if (!data || data.length < 2) return null;
+      return Number((data[0].current_weight! - data[1].current_weight!).toFixed(1));
+    },
+  });
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
 
-  // Redirecionar admins diretamente para o painel admin
   useEffect(() => {
     if (!authLoading && !adminLoading && isAdmin) {
       navigate("/admin");
     }
   }, [isAdmin, authLoading, adminLoading, navigate]);
 
-  // Check if user can do weekly checkin
   useEffect(() => {
     const checkWeeklyCheckin = async () => {
       if (!user) return;
-      
       const now = new Date();
       const startOfYear = new Date(now.getFullYear(), 0, 1);
       const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
       const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-      
       const { data } = await supabase
         .from("weekly_checkins")
         .select("id")
@@ -153,20 +157,15 @@ export default function Dashboard() {
         .eq("week_number", weekNumber)
         .eq("year", now.getFullYear())
         .single();
-      
       setCanDoWeeklyCheckin(!data);
     };
-
     checkWeeklyCheckin();
   }, [user, showWeeklyCheckin]);
 
-  // Check if user needs to submit evolution photos
   useEffect(() => {
     const checkEvolutionPhotosNeeded = async () => {
       if (!user || !subscribed) return;
-      
       try {
-        // Get last protocol date
         const { data: lastProtocol } = await supabase
           .from("protocolos")
           .select("created_at")
@@ -174,22 +173,12 @@ export default function Dashboard() {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        
-        if (!lastProtocol) return; // No protocol yet, no need for evolution photos
-        
+        if (!lastProtocol) return;
         const protocolDate = new Date(lastProtocol.created_at);
         const now = new Date();
         const daysSince = Math.floor((now.getTime() - protocolDate.getTime()) / (1000 * 60 * 60 * 24));
-        
         setDaysSinceLastProtocol(daysSince);
-        
-        // If less than 30 days since last protocol, no need for photos yet
-        if (daysSince < 30) {
-          setNeedsEvolutionPhotos(false);
-          return;
-        }
-        
-        // Check if user submitted evolution photos after last protocol
+        if (daysSince < 30) { setNeedsEvolutionPhotos(false); return; }
         const { data: recentCheckin } = await supabase
           .from("checkins")
           .select("id, foto_url")
@@ -198,30 +187,18 @@ export default function Dashboard() {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        
-        const hasSubmittedPhotos = recentCheckin && recentCheckin.foto_url;
-        setNeedsEvolutionPhotos(!hasSubmittedPhotos);
+        setNeedsEvolutionPhotos(!(recentCheckin && recentCheckin.foto_url));
       } catch (error) {
         console.error("Error checking evolution photos:", error);
       }
     };
-    
     checkEvolutionPhotosNeeded();
   }, [user, subscribed]);
 
-  // Check for pending payment status FIRST (before anamnese check)
   useEffect(() => {
     const checkPendingPayment = async () => {
-      if (!user) {
-        setCheckingPayment(false);
-        return;
-      }
-      
-      if (isAdmin) {
-        setCheckingPayment(false);
-        return;
-      }
-      
+      if (!user) { setCheckingPayment(false); return; }
+      if (isAdmin) { setCheckingPayment(false); return; }
       try {
         const { data } = await supabase
           .from("subscriptions")
@@ -230,7 +207,6 @@ export default function Dashboard() {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        
         if (data?.status === "pending_payment") {
           setPendingPaymentInfo({
             planType: data.plan_type || "mensal",
@@ -244,43 +220,22 @@ export default function Dashboard() {
         setCheckingPayment(false);
       }
     };
-    
     checkPendingPayment();
   }, [user, isAdmin]);
 
-  // Check anamnese ONLY after payment status is resolved
   useEffect(() => {
     const checkAnamneseAndGetName = async () => {
       if (!user) return;
-      
-      // Wait for payment check to complete first
       if (checkingPayment) return;
-      
-      // If pending payment, don't redirect to anamnese - stay here to show payment screen
-      if (pendingPaymentInfo) {
-        setCheckingAnamnese(false);
-        return;
-      }
-      
+      if (pendingPaymentInfo) { setCheckingAnamnese(false); return; }
       try {
         const { data } = await supabase
           .from("profiles")
           .select("age, weight, height, goals, anamnese_completa, full_name")
           .eq("id", user.id)
           .single();
-        
-        // Set user's first name for greeting
-        if (data?.full_name) {
-          const firstName = data.full_name.split(" ")[0];
-          setUserName(firstName.toUpperCase());
-        }
-        
-        // Check if anamnese is complete (either by flag or by essential fields)
         const hasEssentialData = !!(data?.age && data?.weight && data?.height && data?.goals);
         const anamneseComplete = data?.anamnese_completa === true || hasEssentialData;
-        
-        // Redirect to anamnese only for subscribed non-admin users with incomplete anamnese
-        // Admins bypass anamnese requirement entirely
         if (!anamneseComplete && subscribed && !isAdmin) {
           navigate("/anamnese");
         }
@@ -290,33 +245,16 @@ export default function Dashboard() {
         setCheckingAnamnese(false);
       }
     };
-    
     if (!subLoading && !checkingPayment) {
       checkAnamneseAndGetName();
     }
   }, [user, subscribed, isAdmin, subLoading, navigate, pendingPaymentInfo, checkingPayment]);
 
-  const handleManageSubscription = async () => {
-    try {
-      await openCustomerPortal();
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível abrir o portal",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleSelectPlan = async (priceId: string) => {
     try {
       await createCheckout(priceId);
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível iniciar o checkout",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível iniciar o checkout", variant: "destructive" });
     }
   };
 
@@ -326,22 +264,15 @@ export default function Dashboard() {
     return <FullPageLoader />;
   }
 
-  // Show pending payment screen
+  // Pending payment screen
   if (pendingPaymentInfo && !isAdmin) {
     const handlePayNow = async () => {
       if (pendingPaymentInfo.priceId) {
-        try {
-          await createCheckout(pendingPaymentInfo.priceId);
-        } catch (error) {
-          toast({
-            title: "Erro",
-            description: "Não foi possível iniciar o pagamento",
-            variant: "destructive",
-          });
+        try { await createCheckout(pendingPaymentInfo.priceId); } catch (error) {
+          toast({ title: "Erro", description: "Não foi possível iniciar o pagamento", variant: "destructive" });
         }
       }
     };
-
     return (
       <ClientLayout>
         <div className="container mx-auto max-w-lg py-12">
@@ -351,28 +282,18 @@ export default function Dashboard() {
                 <Lock className="w-8 h-8 text-yellow-500" />
               </div>
               <CardTitle className="text-2xl">Pagamento Pendente</CardTitle>
-              <CardDescription>
-                Seu acesso está aguardando a confirmação do pagamento
-              </CardDescription>
+              <CardDescription>Seu acesso está aguardando a confirmação do pagamento</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="bg-muted/30 rounded-lg p-4 text-center">
                 <p className="text-sm text-muted-foreground mb-1">Plano selecionado</p>
                 <p className="text-lg font-semibold text-primary">{pendingPaymentInfo.planName}</p>
               </div>
-              
-              <p className="text-sm text-muted-foreground text-center">
-                Complete o pagamento para desbloquear todas as funcionalidades do Método Renascer, incluindo treinos, nutrição e suporte com o mentor.
-              </p>
-
+              <p className="text-sm text-muted-foreground text-center">Complete o pagamento para desbloquear todas as funcionalidades.</p>
               <Button onClick={handlePayNow} variant="fire" className="w-full" size="lg">
                 <CreditCard className="mr-2 h-5 w-5" />
                 Pagar Agora
               </Button>
-              
-              <p className="text-xs text-muted-foreground text-center">
-                Pagamento seguro via Stripe. Após a confirmação, seu acesso será liberado automaticamente.
-              </p>
             </CardContent>
           </Card>
         </div>
@@ -380,6 +301,7 @@ export default function Dashboard() {
     );
   }
 
+  // Plan selection
   if (!subscribed && !isAdmin) {
     return (
       <ClientLayout>
@@ -388,126 +310,97 @@ export default function Dashboard() {
     );
   }
 
+  // Determine daily action
+  const getDailyAction = () => {
+    if (canDoWeeklyCheckin) {
+      return { label: "Check-in pendente", cta: "Registrar hoje", icon: ClipboardCheck, action: () => setShowWeeklyCheckin(true) };
+    }
+    if (needsEvolutionPhotos) {
+      return { label: "Fotos de evolução", cta: "Enviar fotos", icon: Camera, action: () => navigate("/evolucao") };
+    }
+    return { label: "Treino disponível", cta: "Iniciar treino", icon: Dumbbell, action: () => navigate("/treino") };
+  };
+
+  const dailyAction = getDailyAction();
+
+  const quickAccess = [
+    { label: "Treino", icon: Dumbbell, href: "/treino" },
+    { label: "Nutrição", icon: Utensils, href: "/nutricao" },
+    { label: "Evolução", icon: TrendingUp, href: "/evolucao" },
+    { label: "Dados do Corpo", icon: Heart, href: "/dados-corpo" },
+  ];
+
   return (
     <ClientLayout>
       <OnboardingTour />
-      
-      <div className="container mx-auto max-w-6xl">
-        {/* Welcome Header */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold uppercase text-foreground mb-2">
-              BEM-VINDO, <span className="text-primary">{userName || "ALUNO"}</span>
-            </h1>
-            <p className="text-muted-foreground">Sua jornada de transformacao continua hoje</p>
-          </div>
-          
-          {/* Streak compact display */}
+
+      <div className="container mx-auto max-w-xl space-y-6">
+        {/* 1. Executive Status — ScoreRing */}
+        <div className="flex flex-col items-center gap-4 py-4">
+          <ScoreRing score={renascer.score} classification={renascer.classification} />
+          <StatusBadge classification={renascer.classification} statusText={renascer.statusText} />
+          {renascer.recommendation.length > 0 && (
+            <p className="text-xs text-muted-foreground text-center max-w-xs">{renascer.recommendation[0]}</p>
+          )}
+        </div>
+
+        {/* 2. Ação do Dia */}
+        <div
+          onClick={dailyAction.action}
+          className="bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer rounded-lg p-4 flex items-center justify-between"
+        >
           <div className="flex items-center gap-3">
-            <StreakDisplay 
-              currentStreak={streak.current_streak} 
-              longestStreak={streak.longest_streak} 
-              compact 
-            />
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowAchievements(!showAchievements)}
-              className="gap-2"
+            <dailyAction.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+            <div>
+              <p className="text-sm font-medium text-foreground">{dailyAction.label}</p>
+              <p className="text-xs text-muted-foreground">{dailyAction.cta}</p>
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+        </div>
+
+        {/* 3. Progresso — 3 indicadores */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-card border border-border/50 rounded-lg p-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Consistência</p>
+            <p className="text-lg font-semibold text-primary">
+              {consistencyData?.hasEnoughData ? `${consistencyData.consistencyPercent}%` : "—"}
+            </p>
+            <p className="text-[10px] text-muted-foreground">últimos 7 dias</p>
+          </div>
+          <div className="bg-card border border-border/50 rounded-lg p-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Sequência</p>
+            <p className="text-lg font-semibold text-primary">
+              {streak.current_streak > 0 ? `${streak.current_streak} dias` : "—"}
+            </p>
+            <p className="text-[10px] text-muted-foreground">atual</p>
+          </div>
+          <div className="bg-card border border-border/50 rounded-lg p-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Evolução</p>
+            <p className="text-lg font-semibold text-primary">
+              {weightDelta != null ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg` : "—"}
+            </p>
+            <p className="text-[10px] text-muted-foreground">peso</p>
+          </div>
+        </div>
+
+        {/* 4. Quick Access */}
+        <div className="grid grid-cols-2 gap-3">
+          {quickAccess.map((item) => (
+            <div
+              key={item.label}
+              onClick={() => navigate(item.href)}
+              className="bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer rounded-lg p-4 flex items-center gap-3"
             >
-              <Trophy className="h-4 w-4 text-yellow-500" />
-              {totalPoints} pts
-            </Button>
-          </div>
+              <item.icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              <span className="text-sm font-medium text-foreground">{item.label}</span>
+            </div>
+          ))}
         </div>
-
-        {/* Evolution Photos Alert */}
-        {needsEvolutionPhotos && (
-          <Card className="mb-6 border-amber-500/30 bg-amber-500/10 animate-fade-in">
-            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-amber-500/20">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
-                </div>
-                <div>
-                  <p className="font-semibold text-amber-600 dark:text-amber-400">Envie suas fotos de evolução</p>
-                  <p className="text-sm text-muted-foreground">
-                    Já se passaram {daysSinceLastProtocol} dias desde seu último protocolo. Envie novas fotos para desbloquear a geração de novos protocolos personalizados.
-                  </p>
-                </div>
-              </div>
-              <Button 
-                size="sm" 
-                variant="default"
-                className="gap-2 shrink-0"
-                onClick={() => navigate("/evolucao")}
-              >
-                <Camera className="h-4 w-4" />
-                Enviar Fotos
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Weekly Checkin Prompt */}
-        {canDoWeeklyCheckin && (
-          <Card className="mb-6 border-primary/30 bg-primary/5">
-            <CardContent className="flex items-center justify-between py-4">
-              <div className="flex items-center gap-3">
-                <ClipboardCheck className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium">Check-in semanal disponível</p>
-                  <p className="text-sm text-muted-foreground">Registre como foi sua semana em 1 minuto</p>
-                </div>
-              </div>
-              <Button size="sm" onClick={() => setShowWeeklyCheckin(true)}>
-                Fazer agora
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Achievements Section (collapsible) */}
-        {showAchievements && (
-          <div className="mb-8 animate-fade-in">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-yellow-500" />
-                  Minhas Conquistas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AchievementsGrid 
-                  achievements={achievements}
-                  userAchievements={userAchievements}
-                  totalPoints={totalPoints}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Streak Full Display */}
-        <div className="mb-8">
-          <StreakDisplay 
-            currentStreak={streak.current_streak} 
-            longestStreak={streak.longest_streak} 
-          />
-        </div>
-
-        {/* Subscription Status */}
-        {subscriptionEnd && (
-          <SubscriptionStatusCard subscriptionEnd={subscriptionEnd} />
-        )}
-
-        {/* Main Dashboard Cards */}
-        <DashboardCardsGrid cards={DASHBOARD_CARDS} />
       </div>
 
-      {/* Weekly Checkin Modal */}
-      <WeeklyCheckinModal 
-        open={showWeeklyCheckin} 
+      <WeeklyCheckinModal
+        open={showWeeklyCheckin}
         onOpenChange={setShowWeeklyCheckin}
         onComplete={() => setCanDoWeeklyCheckin(false)}
       />
