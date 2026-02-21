@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getStoredUtmData } from "@/hooks/useAnalytics";
@@ -153,10 +153,17 @@ export function useSubscription() {
     return data;
   }, [session?.access_token]);
 
+  const checkedForUser = useRef<string | null>(null);
+
   useEffect(() => {
     if (user && session?.access_token) {
-      checkSubscription();
+      // Only call check-subscription once per user (skip token refreshes)
+      if (checkedForUser.current !== user.id) {
+        checkedForUser.current = user.id;
+        checkSubscription();
+      }
     } else if (!user) {
+      checkedForUser.current = null;
       setStatus({
         subscribed: false,
         subscriptionEnd: null,
@@ -165,7 +172,7 @@ export function useSubscription() {
         error: null,
       });
     }
-  }, [user, session?.access_token, checkSubscription]);
+  }, [user?.id, session?.access_token, checkSubscription]);
 
   // Removed 60s polling - subscription status is checked on mount and on user action
 
