@@ -15,8 +15,8 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
 
           {/* Creator */}
           <div className="text-center md:text-left">
-            <p className="text-foreground font-semibold text-right">Gabriel Bau</p>
-            <p className="text-muted-foreground text-sm">Transformacao Elite</p>
+            <p className="text-foreground font-semibold text-right">SISTEM INTELIGENCE PERFORMAN</p>
+            <p className="text-muted-foreground text-sm">Corpo & Mente.</p>
           </div>
 
           {/* WhatsApp Icon */}
