@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -28,6 +28,8 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
   const [blockedReason, setBlockedReason] = useState<string | null>(null);
   const [localPending, setLocalPending] = useState(false);
   const [checkingLocal, setCheckingLocal] = useState(true);
+  const accessVerified = useRef(false);
+  const verifiedUserId = useRef<string | null>(null);
 
   // Check for blocked/pending_payment in subscriptions table
   useEffect(() => {
@@ -108,11 +110,23 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
     }
   }, [isLoading, user, isAdmin, localBlocked, hasAccess, navigate]);
 
+  // Reset verified cache if user changes
+  if (user?.id !== verifiedUserId.current) {
+    accessVerified.current = false;
+    verifiedUserId.current = user?.id ?? null;
+  }
+
+  // Cache: if already verified for this user, skip loader on re-renders
+  if (accessVerified.current && user) {
+    return <>{children}</>;
+  }
+
   if (isLoading || !user) {
     return <FullPageLoader />;
   }
 
   if (isAdmin) {
+    accessVerified.current = true;
     return <>{children}</>;
   }
 
@@ -120,5 +134,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
     return <FullPageLoader />;
   }
 
+  // Mark as verified so subsequent re-renders skip the loader
+  accessVerified.current = true;
   return <>{children}</>;
 }

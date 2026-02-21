@@ -64,7 +64,14 @@ const ConnectDashboard = lazy(() => import("./pages/connect/ConnectDashboard"));
 const ConnectSync = lazy(() => import("./pages/connect/ConnectSync"));
 const Renascer = lazy(() => import("./pages/Renascer"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 // Loading fallback component
 const PageLoader = () => (
