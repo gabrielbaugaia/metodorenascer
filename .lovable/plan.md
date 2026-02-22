@@ -1,123 +1,185 @@
 
+# Refatoracao Premium Executiva Completa -- Renascer App
 
-# Refatoracao Executive Premium — Admin Dashboard + Student Dashboard
+## Analise do Estado Atual
 
-## Resumo
+Muitas das solicitacoes ja foram implementadas em mensagens anteriores:
+- Admin Dashboard ja esta no formato executivo (status bar + quick actions + insights colapsado)
+- Student Dashboard ja tem ScoreRing + acao do dia + progresso + quick access
+- Sidebar do aluno ja tem a estrutura limpa (Hoje, Evolucao, Treino, etc.)
+- BodyPremiumIndicators ja existe em DadosCorpo
+- ManualInput ja faz upsert por data em manual_day_logs
+- Timer de descanso ja persiste via localStorage
+- Source transparency ja existe no HealthDashboardTab
+- CSS tokens ja estao definidos (dark mode, --card, --border, --primary)
 
-Refatorar ambos os dashboards para modelo executivo premium: limpo, silencioso e orientado a acao. Nenhuma funcionalidade removida — apenas reorganizacao visual e hierarquia.
-
----
-
-## PARTE 1 — Admin Dashboard
-
-### Arquivo: `src/pages/admin/AdminDashboard.tsx`
-
-Reescrever completamente o JSX mantendo a mesma logica de fetch (useEffect com stats). Estrutura final:
-
-**1.1 Header minimalista**
-- Titulo "Dashboard" (sem subtitulo verbose)
-- Botao "Relatorio Semanal" discreto ao lado
-
-**1.2 Executive Status Bar (4 cards clicaveis em linha)**
-- Layout: `grid grid-cols-2 md:grid-cols-4 gap-3`
-- Cada card: icone discreto (strokeWidth 1.5) + label pequena (text-xs) + valor medio (text-lg font-semibold)
-- Sem circulos coloridos grandes, sem gradientes
-- Cards clicaveis com navigate:
-
-```text
-Clientes      → /admin/clientes      (Users)
-Receita       → /admin/metricas      (DollarSign)
-Protocolos    → /admin/planos        (FileText)
-Assinaturas   → /admin/planos-venda  (Activity)
-```
-
-- Estilo: `bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer`
-
-**1.3 Quick Actions — "Operacoes"**
-- Titulo: `<h2 class="text-sm font-medium text-muted-foreground uppercase tracking-wider">Operacoes</h2>`
-- Grid `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2`
-- Cada acao: icone monocromatico + texto pequeno, sem gradientes de fundo
-- Acoes: Novo Cliente, Ver Clientes, Protocolos, Banco de Videos, Planos Comerciais, Campanhas Trial, Connector Docs
-- Estilo flat: `bg-card border border-border/50 hover:border-primary/30`
-
-**1.4 Insights — Colapsado por padrao**
-- Usar `Collapsible` do Radix (ja instalado)
-- Trigger: `<CollapsibleTrigger>` com texto "Ver insights" + icone ChevronDown
-- Conteudo colapsado contem:
-  - AdminAlertsPanel
-  - 6 mini-cards financeiros (ticket medio, conversao, churn, MRR, LTV, pendentes)
-  - Gargalos
-  - Distribuicao por plano (pie chart)
-  - Graficos receita mensal e novos vs cancelados
-  - Clientes recentes
-- Tudo que ja existe, apenas dentro do Collapsible
-
-**1.5 Performance**
-- O fetch de stats ja carrega tudo (nao e lazy). Manter assim por ora — os dados sao leves (counts + subs). A diferenca e que graficos e listas ficam escondidos visualmente ate o usuario abrir.
-
-**REMOVER da visao principal (movidos para dentro de Insights):**
-- Ticket medio, conversao, churn, MRR, LTV, pendentes
-- Graficos
-- Lista de clientes recentes
-- Gargalos
-- Distribuicao por plano
+Este plano foca APENAS no que ainda NAO foi feito.
 
 ---
 
-## PARTE 2 — Student Dashboard
+## FASE 1 -- Design System: Componentes Reutilizaveis
 
-### Arquivo: `src/pages/Dashboard.tsx`
+**Arquivo novo:** `src/components/ui/page-header.tsx`
 
-Refatorar o bloco de retorno do usuario subscrito (linhas 391-515). Manter intactos: pending payment flow, plan selection flow, useEffects, estados.
+Componente PageHeader padrao para todas as paginas:
+- Props: title, subtitle?, actions? (ReactNode)
+- Layout: flex between, titulo h1 text-xl font-semibold, subtitulo text-sm text-muted-foreground
+- Elimina headers inconsistentes entre paginas
 
-**2.1 Executive Status — ScoreRing centralizado**
-- Importar `ScoreRing` e `useRenascerScore`
-- Bloco superior: ScoreRing grande + StatusBadge + recomendacao curta (1 linha)
-- Sem paragrafos longos
-- Layout centralizado, card unico
+**Arquivo novo:** `src/components/ui/kpi-chip.tsx`
 
-**2.2 Acao do Dia**
-- Card unico abaixo do score com logica condicional:
-  - Se `canDoWeeklyCheckin` → "Check-in pendente" + botao "Registrar hoje"
-  - Se `needsEvolutionPhotos` → "Fotos de evolucao" + botao "Enviar fotos"
-  - Senao → "Treino disponivel" + botao "Iniciar treino" (link para /treino)
-- Apenas UMA acao, a mais prioritaria
+Componente KPIChip reutilizavel (pilula compacta):
+- Props: label, value, icon?, trend? (up/down/stable)
+- Estilo: inline-flex, bg-card, border border-border/50, rounded-lg, p-2
+- Substitui cards ad-hoc repetidos em Dashboard, DadosCorpo, etc.
 
-**2.3 Progresso — 3 indicadores compactos**
-- Grid `grid-cols-3 gap-3`
-- Consistencia: usar `computeBodyIndicators` de `src/lib/bodyIndicators.ts` (ja existe) — fetch dos ultimos 7 dias de `manual_day_logs`
-- Sequencia: usar `streak.current_streak` (ja disponivel via useAchievements)
-- Evolucao: usar ultimo checkin/peso — query simples para mostrar delta. Se nao tiver, mostrar "--"
-- Cards pequenos, valor em `text-primary`, label em `text-xs text-muted-foreground`
+**Arquivo novo:** `src/components/ui/stat-card-mini.tsx`
 
-**2.4 Quick Access — Grid Apple**
-- Grid `grid-cols-2 gap-3`
-- 4 itens apenas: Treino, Nutricao, Evolucao, Dados do Corpo
-- Icone + label, sem descricao
-- Estilo flat: `bg-card border border-border/50 hover:border-primary/30`
-- Navega para: /treino, /nutricao, /evolucao, /dados-corpo
+StatCardMini para grids de metricas:
+- Props: label, value, icon, onClick?, color?
+- Estilo flat: bg-card border border-border/50 hover:border-primary/30, sem gradientes
+- Substitui os cards com gradientes coloridos da pagina Treino e Nutricao
 
-**REMOVER da visao principal:**
-- Welcome header com nome gigante em uppercase
-- DASHBOARD_CARDS com 5 cards grandes (Treino, Nutricao, Mindset, Receitas, Fale com Mentor)
-- StreakDisplay full (manter apenas o numero compacto)
-- Bloco de conquistas expansivel
-- SubscriptionStatusCard (mover para /assinatura)
-- OnboardingTour (manter, mas nao impacta visualmente)
+**Arquivo novo:** `src/components/ui/empty-state.tsx`
+
+EmptyState padronizado:
+- Props: icon, title, description, ctaLabel?, ctaAction?
+- Centralizado, icone discreto, texto curto
+- Substitui empty states inconsistentes (Treino, Nutricao, Evolucao todos diferentes)
 
 ---
 
-## Arquivos a criar/modificar
+## FASE 2 -- Padronizar Paginas com Design System
 
-| Arquivo | Acao |
-|---------|------|
-| `src/pages/admin/AdminDashboard.tsx` | Reescrever JSX: status bar + quick actions + insights colapsado |
-| `src/pages/Dashboard.tsx` | Reescrever bloco subscrito: score + acao + progresso + quick access |
+### 2.1 Treino (`src/pages/Treino.tsx`)
 
-## Sem alteracoes
-- Banco de dados
+Mudancas:
+- Substituir header com gradiente laranja-vermelho por PageHeader simples
+- Substituir 4 stats cards com gradientes coloridos por 4 StatCardMini flat (sem bg-gradient-to-br)
+- Remover StreakDisplay separado (o streak ja aparece nos stats)
+- Substituir empty state customizado por EmptyState padrao
+- Remover console.logs de debug
+
+### 2.2 Nutricao (`src/pages/Nutricao.tsx`)
+
+Mudancas:
+- Substituir header com gradiente verde por PageHeader simples
+- MacroCard: remover cores vividas (bg-blue-500/10, bg-green-500/10) e usar bg-card com border padrao
+- MealMacrosBar: substituir badges coloridos (bg-blue-50, bg-green-50) por badges neutros com border-border/50
+- Hidratacao card: remover bg-cyan-50/30 e usar bg-card padrao
+- Pre-sono: remover bg-indigo-50/30 e usar bg-card padrao
+- Empty state: usar EmptyState padrao
+
+### 2.3 Evolucao (`src/pages/Evolucao.tsx`)
+
+Mudancas:
+- Substituir header por PageHeader
+- Grid de fotos iniciais: manter thumbs mas com altura max-h-[160px] e rounded-lg padrao
+- Formulario "Enviar evolucao": converter para drawer/sheet em vez de bloco grande inline
+- Empty state: usar EmptyState padrao
+
+### 2.4 DadosCorpo (`src/pages/DadosCorpo.tsx`)
+
+Mudancas:
+- Substituir header por PageHeader
+- Manter BodyPremiumIndicators e tabs como estao (ja corretos)
+
+### 2.5 Renascer/Hoje (`src/pages/Renascer.tsx`)
+
+Mudancas:
+- Substituir header com emoji (🔥) por PageHeader limpo sem emoji
+- Adicionar data de hoje no header: "Hoje -- Sab, 22/02"
+- Adicionar bloco "Historico" abaixo do ManualInput: ultimos 7 dias em ListRow compacto
+
+---
+
+## FASE 3 -- Historico de 7 Dias no "Hoje"
+
+**Novo componente:** `src/components/renascer/RecentLogsHistory.tsx`
+
+- Recebe os dados de `useRenascerScore` (scores7d + todayLog)
+- Faz query adicional de manual_day_logs dos ultimos 7 dias
+- Renderiza lista vertical compacta:
+  - Cada linha: data (dd/mm) + 3 mini icones (sono/stress/energia) + score badge
+  - Clicar abre dialog com detalhe do dia
+- Se nao houver dados: "Registre seu primeiro dia"
+
+**Integracao:** Inserir em Renascer.tsx abaixo do ManualInput
+
+---
+
+## FASE 4 -- Corrigir Passos/Calorias Falsos
+
+**Arquivo:** `src/components/health/HealthDashboardTab.tsx`
+
+A logica de SourceBadge ja existe. Falta:
+- Para Passos: se todayData?.steps === 0 e source !== "auto", mostrar "--" com subtitle "Conecte para preencher"
+- Para Calorias: mesma logica
+- NAO exibir "0" quando nao ha fonte automatica real
+
+Verificar que a logica condicional ja aplicada (emptyValue) esta sendo usada corretamente nos MetricCards de passos e calorias.
+
+---
+
+## FASE 5 -- Nutricao: Respeitar Horarios do Perfil
+
+**Arquivo:** `supabase/functions/generate-protocol/prompts/nutricao.ts`
+
+Verificar e reforcar no prompt que:
+- As refeicoes DEVEM usar horario_acorda, horario_treino, horario_dorme do perfil
+- Pre-treino: 60-90min antes de horario_treino
+- Pos-treino: ate 60min depois
+- Pre-sono: 30-60min antes de horario_dorme
+- Proibido horarios fixos hardcoded
+
+(Esta regra pode ja ter sido implementada -- verificar e corrigir se necessario)
+
+---
+
+## FASE 6 -- PDF: Fonte Unica e Alinhamento
+
+**Arquivo:** `src/lib/generateProtocolPdf.ts`
+
+- Garantir que TODA a geracao usa "helvetica" (ja e o padrao do jsPDF, sem importar fontes externas)
+- Padronizar hierarquia:
+  - Titulo: 14px bold
+  - Subtitulo: 12px bold
+  - Corpo: 10px normal
+  - Caption: 9px normal
+- Verificar espaçamento vertical consistente (yPos += 6 para titulos, += 5 para body)
+- Remover qualquer mistura de setFont com fontes diferentes
+
+---
+
+## Arquivos a criar
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/components/ui/page-header.tsx` | Header padrao para todas as paginas |
+| `src/components/ui/kpi-chip.tsx` | Pilula compacta de indicador |
+| `src/components/ui/stat-card-mini.tsx` | Card de metrica flat estilo Apple |
+| `src/components/ui/empty-state.tsx` | Estado vazio padronizado |
+| `src/components/renascer/RecentLogsHistory.tsx` | Historico 7 dias compacto |
+
+## Arquivos a modificar
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/pages/Treino.tsx` | PageHeader + StatCardMini flat + remover gradientes |
+| `src/pages/Nutricao.tsx` | PageHeader + cores neutras + EmptyState |
+| `src/pages/Evolucao.tsx` | PageHeader + fotos compactas + drawer para envio |
+| `src/pages/DadosCorpo.tsx` | PageHeader |
+| `src/pages/Renascer.tsx` | PageHeader com data + historico 7 dias + remover emoji |
+| `src/components/health/HealthDashboardTab.tsx` | Corrigir exibicao passos/calorias zerados |
+| `src/lib/generateProtocolPdf.ts` | Padronizar fonte e espacamento |
+| `supabase/functions/generate-protocol/prompts/nutricao.ts` | Reforcar horarios do perfil |
+
+## NAO alterar
+
+- Banco de dados (tabelas existentes ja cobrem tudo)
 - Rotas (App.tsx)
-- Sidebar / BottomNav
-- Componentes existentes (ScoreRing, StreakDisplay, etc.)
-- Edge functions
-
+- Sidebar / BottomNav (ja corretos)
+- Admin Dashboard (ja refatorado)
+- Student Dashboard (ja refatorado)
+- Score engine / bodyIndicators
+- Edge functions (exceto prompt nutricao)
