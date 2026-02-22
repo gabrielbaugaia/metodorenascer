@@ -1,185 +1,221 @@
 
-# Refatoracao Premium Executiva Completa -- Renascer App
+
+# MASTER SPRINT — Hardening Completo + Performance + UX Premium
 
 ## Analise do Estado Atual
 
-Muitas das solicitacoes ja foram implementadas em mensagens anteriores:
-- Admin Dashboard ja esta no formato executivo (status bar + quick actions + insights colapsado)
-- Student Dashboard ja tem ScoreRing + acao do dia + progresso + quick access
-- Sidebar do aluno ja tem a estrutura limpa (Hoje, Evolucao, Treino, etc.)
-- BodyPremiumIndicators ja existe em DadosCorpo
-- ManualInput ja faz upsert por data em manual_day_logs
-- Timer de descanso ja persiste via localStorage
-- Source transparency ja existe no HealthDashboardTab
-- CSS tokens ja estao definidos (dark mode, --card, --border, --primary)
-
-Este plano foca APENAS no que ainda NAO foi feito.
+Apos auditoria completa do codigo, identifiquei os problemas reais e o que ja foi feito. Abaixo, o plano organizado por prioridade.
 
 ---
 
-## FASE 1 -- Design System: Componentes Reutilizaveis
+## PARTE 1 — SEGURANCA CRITICA (P0)
 
-**Arquivo novo:** `src/components/ui/page-header.tsx`
+### 1.1 Proteger rotas /admin/* e /mqo no router
 
-Componente PageHeader padrao para todas as paginas:
-- Props: title, subtitle?, actions? (ReactNode)
-- Layout: flex between, titulo h1 text-xl font-semibold, subtitulo text-sm text-muted-foreground
-- Elimina headers inconsistentes entre paginas
+**Problema:** Linhas 127-146 do `src/App.tsx` — todas as rotas admin e /mqo estao SEM guard. Qualquer usuario autenticado (ou mesmo nao autenticado) pode navegar diretamente para `/admin`, `/admin/clientes`, `/mqo`, etc. A verificacao de admin e feita internamente em cada pagina, mas o componente carrega e faz queries antes de redirecionar.
 
-**Arquivo novo:** `src/components/ui/kpi-chip.tsx`
+**Solucao:**
+- Criar componente `AdminGuard` em `src/components/auth/AdminGuard.tsx`
+- Verificar autenticacao + role admin via `useAdminCheck`
+- Se nao for admin: redirecionar para `/acesso-bloqueado`
+- Envolver TODAS as rotas admin e /mqo com `<AdminGuard>` no App.tsx
 
-Componente KPIChip reutilizavel (pilula compacta):
-- Props: label, value, icon?, trend? (up/down/stable)
-- Estilo: inline-flex, bg-card, border border-border/50, rounded-lg, p-2
-- Substitui cards ad-hoc repetidos em Dashboard, DadosCorpo, etc.
+**Arquivos:**
+- Criar: `src/components/auth/AdminGuard.tsx`
+- Modificar: `src/App.tsx` (linhas 127-146)
 
-**Arquivo novo:** `src/components/ui/stat-card-mini.tsx`
+### 1.2 Proteger Edge Functions expostas (verify_jwt = false)
 
-StatCardMini para grids de metricas:
-- Props: label, value, icon, onClick?, color?
-- Estilo flat: bg-card border border-border/50 hover:border-primary/30, sem gradientes
-- Substitui os cards com gradientes coloridos da pagina Treino e Nutricao
+**Problema identificado no config.toml:** 9 funcoes com `verify_jwt = false`:
+- `stripe-webhook` — OK (webhook externo, valida signature)
+- `send-password-reset` — OK (precisa ser publico)
+- `send-urgent-support-alert` — RISCO (pode ser chamada por qualquer um)
+- `weekly-support-report` — RISCO
+- `check-free-expiration` — RISCO (cron, mas exposta)
+- `complete-guest-checkout` — aceitavel (checkout flow)
+- `finalize-checkout` — aceitavel
+- `sync-exercise-gifs` — RISCO (admin only)
+- `suggest-exercise-name` — tem comentario dizendo "auth validated in code"
+- `cleanup-old-conversations` — RISCO (cron)
+- `audit-treino` — RISCO
+- `health-sync` — RISCO (aceita payload sem auth)
 
-**Arquivo novo:** `src/components/ui/empty-state.tsx`
+**Solucao para funcoes de risco:**
+Adicionar validacao de JWT no CODIGO de cada funcao (nao mudar config.toml, pois algumas sao chamadas por cron). Adicionar verificacao de `Authorization` header com `getClaims()` nas funcoes:
+- `send-urgent-support-alert`
+- `weekly-support-report`
+- `audit-treino`
+- `health-sync`
+- `sync-exercise-gifs`
+- `cleanup-old-conversations`
+- `check-free-expiration`
 
-EmptyState padronizado:
-- Props: icon, title, description, ctaLabel?, ctaAction?
-- Centralizado, icone discreto, texto curto
-- Substitui empty states inconsistentes (Treino, Nutricao, Evolucao todos diferentes)
+**Arquivos:** 7 edge functions index.ts
 
----
+### 1.3 Sessao de treino — melhorar resiliencia
 
-## FASE 2 -- Padronizar Paginas com Design System
+**Estado atual:** Ja implementado:
+- Persistencia em `active_workout_sessions` (banco)
+- `rehydrateSession` no mount
+- Auto-abandon de sessoes > 4h
+- Timer de descanso persistido via localStorage
 
-### 2.1 Treino (`src/pages/Treino.tsx`)
+**Melhoria:** Adicionar coluna `last_seen_at` e atualizar periodicamente (heartbeat a cada 60s). Mudar logica de abandon para usar `last_seen_at` em vez de `started_at` quando disponivel, permitindo sessoes longas reais.
 
-Mudancas:
-- Substituir header com gradiente laranja-vermelho por PageHeader simples
-- Substituir 4 stats cards com gradientes coloridos por 4 StatCardMini flat (sem bg-gradient-to-br)
-- Remover StreakDisplay separado (o streak ja aparece nos stats)
-- Substituir empty state customizado por EmptyState padrao
-- Remover console.logs de debug
-
-### 2.2 Nutricao (`src/pages/Nutricao.tsx`)
-
-Mudancas:
-- Substituir header com gradiente verde por PageHeader simples
-- MacroCard: remover cores vividas (bg-blue-500/10, bg-green-500/10) e usar bg-card com border padrao
-- MealMacrosBar: substituir badges coloridos (bg-blue-50, bg-green-50) por badges neutros com border-border/50
-- Hidratacao card: remover bg-cyan-50/30 e usar bg-card padrao
-- Pre-sono: remover bg-indigo-50/30 e usar bg-card padrao
-- Empty state: usar EmptyState padrao
-
-### 2.3 Evolucao (`src/pages/Evolucao.tsx`)
-
-Mudancas:
-- Substituir header por PageHeader
-- Grid de fotos iniciais: manter thumbs mas com altura max-h-[160px] e rounded-lg padrao
-- Formulario "Enviar evolucao": converter para drawer/sheet em vez de bloco grande inline
-- Empty state: usar EmptyState padrao
-
-### 2.4 DadosCorpo (`src/pages/DadosCorpo.tsx`)
-
-Mudancas:
-- Substituir header por PageHeader
-- Manter BodyPremiumIndicators e tabs como estao (ja corretos)
-
-### 2.5 Renascer/Hoje (`src/pages/Renascer.tsx`)
-
-Mudancas:
-- Substituir header com emoji (🔥) por PageHeader limpo sem emoji
-- Adicionar data de hoje no header: "Hoje -- Sab, 22/02"
-- Adicionar bloco "Historico" abaixo do ManualInput: ultimos 7 dias em ListRow compacto
+**Arquivos:**
+- Migration: adicionar coluna `last_seen_at` em `active_workout_sessions`
+- Modificar: `src/hooks/useWorkoutSession.ts` (adicionar heartbeat + logica de pausa)
 
 ---
 
-## FASE 3 -- Historico de 7 Dias no "Hoje"
+## PARTE 2 — PERFORMANCE (P1)
 
-**Novo componente:** `src/components/renascer/RecentLogsHistory.tsx`
+### 2.1 Lazy-load do exercisesDatabase.json
 
-- Recebe os dados de `useRenascerScore` (scores7d + todayLog)
-- Faz query adicional de manual_day_logs dos ultimos 7 dias
-- Renderiza lista vertical compacta:
-  - Cada linha: data (dd/mm) + 3 mini icones (sono/stress/energia) + score badge
-  - Clicar abre dialog com detalhe do dia
-- Se nao houver dados: "Registre seu primeiro dia"
+**Problema:** `src/data/exercisesDatabase.json` (1.3MB) e importado estaticamente em `AdminExerciseGifs.tsx`, carregando no bundle principal.
 
-**Integracao:** Inserir em Renascer.tsx abaixo do ManualInput
+**Solucao:** Converter o import estatico para `dynamic import()` — o JSON so carrega quando a pagina AdminExerciseGifs e aberta (ja e lazy-loaded via `React.lazy`, mas o JSON nao e).
 
----
+**Arquivo:** `src/pages/admin/AdminExerciseGifs.tsx`
 
-## FASE 4 -- Corrigir Passos/Calorias Falsos
+### 2.2 Indices criticos no banco
 
-**Arquivo:** `src/components/health/HealthDashboardTab.tsx`
+Criar indices para queries frequentes:
 
-A logica de SourceBadge ja existe. Falta:
-- Para Passos: se todayData?.steps === 0 e source !== "auto", mostrar "--" com subtitle "Conecte para preencher"
-- Para Calorias: mesma logica
-- NAO exibir "0" quando nao ha fonte automatica real
+```sql
+CREATE INDEX IF NOT EXISTS idx_events_user_created ON events(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_workout_completions_user_date ON workout_completions(user_id, workout_date);
+CREATE INDEX IF NOT EXISTS idx_manual_day_logs_user_date ON manual_day_logs(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_health_daily_user_date ON health_daily(user_id, date);
+```
 
-Verificar que a logica condicional ja aplicada (emptyValue) esta sendo usada corretamente nos MetricCards de passos e calorias.
+**Arquivo:** Nova migration SQL
 
----
+### 2.3 Politica de retencao da tabela events
 
-## FASE 5 -- Nutricao: Respeitar Horarios do Perfil
+Criar funcao de limpeza para manter apenas ultimos 180 dias:
 
-**Arquivo:** `supabase/functions/generate-protocol/prompts/nutricao.ts`
+```sql
+CREATE OR REPLACE FUNCTION cleanup_old_events()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM events WHERE created_at < NOW() - INTERVAL '180 days';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
 
-Verificar e reforcar no prompt que:
-- As refeicoes DEVEM usar horario_acorda, horario_treino, horario_dorme do perfil
-- Pre-treino: 60-90min antes de horario_treino
-- Pos-treino: ate 60min depois
-- Pre-sono: 30-60min antes de horario_dorme
-- Proibido horarios fixos hardcoded
-
-(Esta regra pode ja ter sido implementada -- verificar e corrigir se necessario)
+Agendar via pg_cron (semanal).
 
 ---
 
-## FASE 6 -- PDF: Fonte Unica e Alinhamento
+## PARTE 3 — CONSISTENCIA VISUAL (P1)
 
-**Arquivo:** `src/lib/generateProtocolPdf.ts`
+### 3.1 Verificacao
 
-- Garantir que TODA a geracao usa "helvetica" (ja e o padrao do jsPDF, sem importar fontes externas)
-- Padronizar hierarquia:
-  - Titulo: 14px bold
-  - Subtitulo: 12px bold
-  - Corpo: 10px normal
-  - Caption: 9px normal
-- Verificar espaçamento vertical consistente (yPos += 6 para titulos, += 5 para body)
-- Remover qualquer mistura de setFont com fontes diferentes
+Apos auditoria, as seguintes paginas JA usam o Design System (PageHeader, StatCardMini, EmptyState):
+- Dashboard (aluno) -- OK
+- Treino -- OK
+- Nutricao -- OK
+- Evolucao -- OK
+- Renascer (Hoje) -- OK
+- DadosCorpo -- OK
+- AdminDashboard -- OK
+
+**Pendente:** Simplificar `HealthDashboardTab` — reduzir 3 tabs para foco principal + "Ver detalhes". Porem esta mudanca e cosmetica e nao critica. Manter como esta por ora e focar em seguranca/performance.
 
 ---
 
-## Arquivos a criar
+## PARTE 4 — LIMPEZA DE CODIGO (P1)
 
+### 4.1 Remover pagina AreaCliente
+
+**Problema:** `src/pages/AreaCliente.tsx` e uma pagina legada com design antigo (gradientes, cards grandes, estilo pre-refatoracao). O Dashboard atual ja substitui toda sua funcionalidade.
+
+**Solucao:**
+- Remover a rota `/area-cliente` do App.tsx (linha 116)
+- Remover o arquivo `src/pages/AreaCliente.tsx`
+- Remover a importacao lazy (linha 30)
+- Redirecionar qualquer referencia interna para `/dashboard`
+
+**Nota sobre authStore.ts e healthkit.ts:** NAO remover. Ambos sao usados ativamente pelas paginas do Renascer Connect (`/connect/*`), que e o app mobile Capacitor. Sao servicos essenciais para o conector mobile.
+
+### 4.2 Remover console.logs de debug
+
+Fazer busca e remover `console.log` e `console.error` nao-essenciais em:
+- `src/hooks/useWorkoutSession.ts`
+- `src/pages/Evolucao.tsx`
+- Outros hooks
+
+---
+
+## PARTE 5 — ESCALABILIDADE (P2)
+
+### 5.1 Cache react-query consistente
+
+**Estado atual:** QueryClient ja configurado com `staleTime: 5min` e `refetchOnWindowFocus: false`. Hooks como `useSubscription` e `useEntitlements` usam cache session-level.
+
+**Melhoria:** Nenhuma acao critica necessaria. A arquitetura atual suporta ate ~10k usuarios sem problemas. Para 100k+, sera necessario:
+- Materialized views para engagement_summary (futuro)
+- Connection pooling configurado no Supabase (via dashboard)
+- CDN para assets estaticos
+
+### 5.2 Lazy loading de imagens
+
+As imagens de transformacao e fotos de corpo ja usam URLs assinadas do Storage. Adicionar `loading="lazy"` nas tags `<img>` da galeria de evolucao.
+
+---
+
+## RESUMO DE ARQUIVOS
+
+### Criar
 | Arquivo | Descricao |
 |---------|-----------|
-| `src/components/ui/page-header.tsx` | Header padrao para todas as paginas |
-| `src/components/ui/kpi-chip.tsx` | Pilula compacta de indicador |
-| `src/components/ui/stat-card-mini.tsx` | Card de metrica flat estilo Apple |
-| `src/components/ui/empty-state.tsx` | Estado vazio padronizado |
-| `src/components/renascer/RecentLogsHistory.tsx` | Historico 7 dias compacto |
+| `src/components/auth/AdminGuard.tsx` | Guard para rotas administrativas |
 
-## Arquivos a modificar
-
+### Modificar
 | Arquivo | Mudanca |
 |---------|---------|
-| `src/pages/Treino.tsx` | PageHeader + StatCardMini flat + remover gradientes |
-| `src/pages/Nutricao.tsx` | PageHeader + cores neutras + EmptyState |
-| `src/pages/Evolucao.tsx` | PageHeader + fotos compactas + drawer para envio |
-| `src/pages/DadosCorpo.tsx` | PageHeader |
-| `src/pages/Renascer.tsx` | PageHeader com data + historico 7 dias + remover emoji |
-| `src/components/health/HealthDashboardTab.tsx` | Corrigir exibicao passos/calorias zerados |
-| `src/lib/generateProtocolPdf.ts` | Padronizar fonte e espacamento |
-| `supabase/functions/generate-protocol/prompts/nutricao.ts` | Reforcar horarios do perfil |
+| `src/App.tsx` | Envolver rotas admin/mqo com AdminGuard + remover AreaCliente |
+| `src/hooks/useWorkoutSession.ts` | Adicionar heartbeat last_seen_at |
+| `src/pages/admin/AdminExerciseGifs.tsx` | Dynamic import do exercisesDatabase.json |
+| `supabase/functions/send-urgent-support-alert/index.ts` | Adicionar validacao JWT |
+| `supabase/functions/weekly-support-report/index.ts` | Adicionar validacao JWT |
+| `supabase/functions/audit-treino/index.ts` | Adicionar validacao JWT |
+| `supabase/functions/health-sync/index.ts` | Adicionar validacao JWT |
+| `supabase/functions/sync-exercise-gifs/index.ts` | Adicionar validacao JWT |
+| `supabase/functions/cleanup-old-conversations/index.ts` | Adicionar validacao JWT |
+| `supabase/functions/check-free-expiration/index.ts` | Adicionar validacao JWT |
 
-## NAO alterar
+### Remover
+| Arquivo | Razao |
+|---------|-------|
+| `src/pages/AreaCliente.tsx` | Pagina legada substituida pelo Dashboard |
 
-- Banco de dados (tabelas existentes ja cobrem tudo)
-- Rotas (App.tsx)
-- Sidebar / BottomNav (ja corretos)
-- Admin Dashboard (ja refatorado)
-- Student Dashboard (ja refatorado)
-- Score engine / bodyIndicators
-- Edge functions (exceto prompt nutricao)
+### Database (Migrations)
+| Mudanca | Descricao |
+|---------|-----------|
+| Adicionar coluna `last_seen_at` em `active_workout_sessions` | Heartbeat para sessoes de treino |
+| Criar 4 indices em events, workout_completions, manual_day_logs, health_daily | Performance de queries |
+| Criar funcao `cleanup_old_events()` | Retencao de 180 dias |
+
+### NAO alterar
+- `authStore.ts` — usado pelo Renascer Connect (mobile)
+- `healthkit.ts` — usado pelo Renascer Connect (mobile)
+- `supabase/config.toml` — nao pode ser editado manualmente
+- Sidebar/BottomNav — ja corretos
+- Score engine / bodyIndicators — ja corretos
+- PDF generator — ja usa helvetica consistentemente
+
+---
+
+## Score Projetado Pos-Sprint
+
+| Dimensao | Antes | Depois |
+|----------|-------|--------|
+| Arquitetura | 7.5 | 8.5 |
+| Seguranca | 7.0 | 9.0 |
+| Performance | 7.0 | 8.0 |
+| UX | 7.5 | 7.5 |
+| Escalabilidade | 6.0 | 7.5 |
+| **Geral** | **7.0** | **8.1** |
+
