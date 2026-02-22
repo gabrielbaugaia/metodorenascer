@@ -10,8 +10,9 @@ import { toast } from "sonner";
 import { HealthConnectTab } from "@/components/health/HealthConnectTab";
 import { HealthDashboardTab } from "@/components/health/HealthDashboardTab";
 import { HealthReadinessTab } from "@/components/health/HealthReadinessTab";
-import { HeartPulse, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { BodyPremiumIndicators } from "@/components/health/BodyPremiumIndicators";
+import { PageHeader } from "@/components/ui/page-header";
 
 function DadosCorpo() {
   const [activeTab, setActiveTab] = useState("painel");
@@ -79,18 +80,18 @@ function DadosCorpo() {
   return (
     <ClientLayout>
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <HeartPulse className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">Dados do Corpo</h1>
-          </div>
-          {isAdmin && (
-            <Button size="sm" variant="outline" onClick={insertSampleData} disabled={inserting}>
-              {inserting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-              Inserir dados de exemplo
-            </Button>
-          )}
-        </div>
+        <PageHeader
+          title="Dados do Corpo"
+          subtitle="Prontidão e métricas de saúde"
+          actions={
+            isAdmin ? (
+              <Button size="sm" variant="outline" onClick={insertSampleData} disabled={inserting}>
+                {inserting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+                Inserir dados de exemplo
+              </Button>
+            ) : undefined
+          }
+        />
 
         {user?.id && <BodyPremiumIndicators userId={user.id} />}
 

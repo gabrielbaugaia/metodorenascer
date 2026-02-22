@@ -30,6 +30,7 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface CheckIn {
   id: string;
@@ -467,14 +468,11 @@ export default function Evolucao() {
   return (
     <ClientLayout>
       <div className="max-w-5xl mx-auto space-y-4 sm:space-y-8 px-1 sm:px-0 pb-20 sm:pb-0">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold uppercase">Minha Evolução</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">Acompanhe seu progresso e envie suas fotos</p>
-        </div>
+        <PageHeader title="Evolução" subtitle="Acompanhe seu progresso e envie suas fotos" />
 
         {/* AI Analysis Modal/Card */}
         {showAnalysis && aiAnalysis && (
-          <Card className="border-primary/50 bg-gradient-to-br from-primary/5 to-transparent">
+          <Card className="border-primary/50">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">

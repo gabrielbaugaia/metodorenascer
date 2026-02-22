@@ -7,10 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Download, AlertTriangle, RefreshCw, Lock } from "lucide-react";
+import { Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Download, AlertTriangle, RefreshCw, Lock } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatCardMini } from "@/components/ui/stat-card-mini";
+import { EmptyState } from "@/components/ui/empty-state";
 import { WorkoutCard } from "@/components/treino/WorkoutCard";
 import { SuccessAnimation } from "@/components/feedback/SuccessAnimation";
-import { StreakDisplay } from "@/components/gamification/StreakDisplay";
 import { TrialBanner } from "@/components/access/TrialBadge";
 import { UpgradeModal } from "@/components/access/UpgradeModal";
 import { generateProtocolPdf } from "@/lib/generateProtocolPdf";
@@ -47,21 +49,17 @@ interface Protocol {
 }
 
 export default function Treino() {
-  console.log("[Treino] Component mounted");
   const navigate = useNavigate();
   const { user } = useAuth();
-  console.log("[Treino] User:", user?.id);
   const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
   const [protocol, setProtocol] = useState<Protocol | null>(null);
-  
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  
-  console.log("[Treino] Initializing workout tracking");
+
   const { 
     getTotalCount, 
     getTotalCalories, 
@@ -70,12 +68,9 @@ export default function Treino() {
     completeWorkout,
     getCurrentStreak 
   } = useWorkoutTracking();
-  console.log("[Treino] Workout tracking initialized");
 
   const currentStreak = getCurrentStreak();
-  console.log("[Treino] Current streak:", currentStreak);
-  
-  // Telemetry helper
+
   const logTrace = async (outcome: string, details: Record<string, unknown> = {}) => {
     if (!user) return;
     try {
@@ -83,33 +78,25 @@ export default function Treino() {
         user_id: user.id,
         event_name: "treino_page_trace",
         page_name: "/treino",
-        metadata: {
-          outcome,
-          ...details,
-          timestamp: new Date().toISOString(),
-        },
+        metadata: { outcome, ...details, timestamp: new Date().toISOString() },
       });
     } catch (e) {
-      console.error("[Treino] Trace log failed:", e);
+      // silent
     }
   };
 
   useEffect(() => {
-    console.log("[Treino] fetchProtocol useEffect triggered");
     const fetchProtocol = async () => {
       if (!user) {
         setLoading(false);
         return;
       }
-      
       setError(null);
       setLoading(true);
       const startTime = performance.now();
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-      
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       try {
-        console.log("[Treino] Fetching protocol for user:", user.id);
         const { data, error: fetchError } = await supabase
           .from("protocolos")
           .select("id, conteudo")
@@ -120,35 +107,22 @@ export default function Treino() {
           .limit(1)
           .abortSignal(controller.signal)
           .maybeSingle();
-        
         clearTimeout(timeoutId);
         const elapsed = Math.round(performance.now() - startTime);
-        console.log(`[Treino] Protocol fetch completed in ${elapsed}ms`);
-        
         if (fetchError) {
-          console.error("[Treino] Error fetching protocol:", fetchError);
           setError("Erro ao carregar treino. Tente novamente.");
           logTrace("fetch_error", { error: fetchError.message, elapsed_ms: elapsed });
         } else if (data) {
-          console.log("[Treino] Protocol fetched successfully");
           const conteudo = data.conteudo as Record<string, unknown>;
           const treinosLen = Array.isArray(conteudo?.treinos) ? conteudo.treinos.length : 0;
           const semanasLen = Array.isArray(conteudo?.semanas) ? conteudo.semanas.length : 0;
-          logTrace("fetch_success", { 
-            elapsed_ms: elapsed, 
-            protocol_id: data.id,
-            treinos_len: treinosLen,
-            semanas_len: semanasLen,
-          });
+          logTrace("fetch_success", { elapsed_ms: elapsed, protocol_id: data.id, treinos_len: treinosLen, semanas_len: semanasLen });
           setProtocol(data as Protocol);
         } else {
-          console.log("[Treino] No protocol found for user");
           logTrace("no_protocol", { elapsed_ms: elapsed });
         }
       } catch (err: any) {
         clearTimeout(timeoutId);
-        console.error("[Treino] Error:", err);
-        
         if (err.name === 'AbortError') {
           setError("Tempo esgotado. Verifique sua conexão.");
           logTrace("timeout", {});
@@ -157,20 +131,15 @@ export default function Treino() {
           logTrace("exception", { error: err.message });
         }
       } finally {
-        console.log("[Treino] Setting loading to false");
         setLoading(false);
       }
     };
-
     fetchProtocol();
   }, [user, retryCount]);
 
   const workouts = useMemo<Workout[]>(() => {
     if (!protocol?.conteudo) return [];
-
     const conteudo: any = protocol.conteudo;
-
-    // Helper: normalize exercise fields (accept multiple field names)
     const normalizeExercise = (ex: any): Exercise => ({
       name: ex.nome || ex.name || "Exercício",
       sets: ex.series ?? ex.sets ?? 3,
@@ -180,14 +149,11 @@ export default function Treino() {
       tips: ex.dicas || ex.tips || undefined,
       completed: false,
     });
-
-    // Novo formato: treinos com letras (A, B, C, D) - PREFERIDO
     if (Array.isArray(conteudo.treinos) && conteudo.treinos.length > 0) {
-      console.log("[Treino] Usando formato A/B/C/D, treinos:", conteudo.treinos.length);
       return conteudo.treinos.map((treino: any): Workout => {
         const exercicios = Array.isArray(treino.exercicios) ? treino.exercicios : [];
         return {
-          day: `Treino ${treino.letra || treino.nome || ""}`, // "Treino A", "Treino B"
+          day: `Treino ${treino.letra || treino.nome || ""}`,
           focus: treino.foco || treino.nome || "",
           duration: String(treino.duracao_minutos || 45),
           calories: treino.calorias_estimadas || 0,
@@ -196,21 +162,11 @@ export default function Treino() {
         };
       });
     }
-
-    // Formato legado: semanas com dias
     const semanas = conteudo.semanas;
-    if (!Array.isArray(semanas) || semanas.length === 0) {
-      console.log("[Treino] Nenhum formato válido encontrado");
-      return [];
-    }
-
-    console.log("[Treino] Usando formato legado (semanas)");
+    if (!Array.isArray(semanas) || semanas.length === 0) return [];
     const currentWeekNumber = conteudo.semana_atual || semanas[0].semana;
-    const currentWeek =
-      semanas.find((s: any) => s.semana === currentWeekNumber) || semanas[0];
-
+    const currentWeek = semanas.find((s: any) => s.semana === currentWeekNumber) || semanas[0];
     if (!Array.isArray(currentWeek.dias)) return [];
-
     return currentWeek.dias.map((dia: any): Workout => {
       const exercicios = Array.isArray(dia.exercicios) ? dia.exercicios : [];
       return {
@@ -224,40 +180,21 @@ export default function Treino() {
     });
   }, [protocol]);
 
-  const completedWorkoutsToday = todayCompleted ? 1 : 0;
-  const totalCaloriesFromTracking = loading ? 0 : getTotalCalories();
   const weeklyCount = loading ? 0 : getWeeklyCount();
   const totalCount = loading ? 0 : getTotalCount();
 
   const handleCompleteWorkout = async (workout: Workout, durationSeconds?: number, sessionId?: string) => {
-    console.log("[Treino] Completing workout:", workout.focus, "duration:", durationSeconds);
-    const durationMinutes = durationSeconds 
-      ? Math.round(durationSeconds / 60) 
-      : (parseInt(workout.duration) || 45);
+    const durationMinutes = durationSeconds ? Math.round(durationSeconds / 60) : (parseInt(workout.duration) || 45);
     const success = await completeWorkout(
-      workout.focus,
-      workout.exercises.length,
-      durationMinutes,
-      workout.calories,
-      undefined,
-      durationSeconds,
-      sessionId
+      workout.focus, workout.exercises.length, durationMinutes, workout.calories, undefined, durationSeconds, sessionId
     );
-    if (success) {
-      setShowSuccess(true);
-    }
+    if (success) setShowSuccess(true);
   };
+
   if (loading) {
-    console.log("[Treino] Rendering loading state");
     return (
       <ClientLayout>
-        <SuccessAnimation 
-          show={showSuccess} 
-          onComplete={() => setShowSuccess(false)}
-          type="trophy"
-          message="Treino Concluído!"
-          subMessage="Você está cada vez mais perto do seu objetivo!"
-        />
+        <SuccessAnimation show={showSuccess} onComplete={() => setShowSuccess(false)} type="trophy" message="Treino Concluído!" subMessage="Você está cada vez mais perto do seu objetivo!" />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-muted-foreground text-sm">Carregando seu treino...</p>
@@ -267,20 +204,19 @@ export default function Treino() {
   }
 
   if (error) {
-    console.log("[Treino] Rendering error state:", error);
     return (
       <ClientLayout>
         <div className="max-w-4xl mx-auto">
           <Card className="p-8 text-center border-destructive/50">
-            <AlertTriangle className="w-16 h-16 mx-auto text-destructive mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Erro ao carregar</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
+            <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" strokeWidth={1.5} />
+            <h3 className="text-base font-semibold mb-1">Erro ao carregar</h3>
+            <p className="text-sm text-muted-foreground mb-4">{error}</p>
             <div className="flex gap-2 justify-center flex-wrap">
-              <Button variant="outline" onClick={() => setRetryCount(c => c + 1)}>
+              <Button variant="outline" size="sm" onClick={() => setRetryCount(c => c + 1)}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Tentar novamente
               </Button>
-              <Button variant="fire" onClick={() => navigate("/suporte")}>
+              <Button size="sm" onClick={() => navigate("/suporte")}>
                 Falar com Suporte
               </Button>
             </div>
@@ -290,148 +226,75 @@ export default function Treino() {
     );
   }
 
-  console.log("[Treino] Rendering main content, workouts count:", workouts.length);
   return (
     <ClientLayout>
-      <SuccessAnimation 
-        show={showSuccess} 
-        onComplete={() => setShowSuccess(false)}
-        type="trophy"
-        message="Treino Concluído!"
-        subMessage="Você está cada vez mais perto do seu objetivo!"
-      />
+      <SuccessAnimation show={showSuccess} onComplete={() => setShowSuccess(false)} type="trophy" message="Treino Concluído!" subMessage="Você está cada vez mais perto do seu objetivo!" />
       <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shrink-0">
-              <Target className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-3xl font-bold uppercase text-foreground">
-                Seu <span className="text-primary">Treino</span>
-              </h1>
-              <p className="text-muted-foreground text-xs sm:text-sm">
-                {workouts.length > 0 
-                  ? "Clique em um exercício para ver o vídeo"
-                  : "Seu protocolo será gerado em breve"}
-              </p>
-            </div>
-          </div>
-          {protocol && isFull && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full sm:w-auto"
-              onClick={() => {
-                generateProtocolPdf({
-                  id: protocol.id,
-                  tipo: "treino",
-                  titulo: "Protocolo de Treino",
-                  conteudo: protocol.conteudo,
-                  data_geracao: new Date().toISOString()
-                });
-                toast.success("PDF baixado!");
-              }}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Baixar PDF
-            </Button>
-          )}
-        </div>
+        {/* Header — flat, sem gradiente */}
+        <PageHeader
+          title="Treino"
+          subtitle={workouts.length > 0 ? "Clique em um exercício para ver o vídeo" : "Seu protocolo será gerado em breve"}
+          actions={
+            protocol && isFull ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  generateProtocolPdf({ id: protocol.id, tipo: "treino", titulo: "Protocolo de Treino", conteudo: protocol.conteudo, data_geracao: new Date().toISOString() });
+                  toast.success("PDF baixado!");
+                }}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Baixar PDF
+              </Button>
+            ) : undefined
+          }
+        />
 
-        {/* Access blocked - auto open modal */}
         {!entLoading && isBlocked && (
           <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />
         )}
 
-        {/* Trial banner */}
         {isTrialing && (
-          <TrialBanner 
-            isTrialing={isTrialing} 
-            onUpgradeClick={() => setShowUpgradeModal(true)} 
-          />
+          <TrialBanner isTrialing={isTrialing} onUpgradeClick={() => setShowUpgradeModal(true)} />
         )}
 
         {workouts.length === 0 && !isBlocked ? (
-          <Card className="p-8 text-center">
-            <Target className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Nenhum treino disponível</h3>
-            <p className="text-muted-foreground mb-4">
-              Seu protocolo de treino será gerado em breve. Fale com seu mentor para mais informações.
-            </p>
-            <Button variant="fire" onClick={() => navigate("/suporte")}>
-              Falar com Mentor
-            </Button>
-          </Card>
+          <EmptyState
+            icon={Target}
+            title="Nenhum treino disponível"
+            description="Seu protocolo de treino será gerado em breve. Fale com seu mentor para mais informações."
+            ctaLabel="Falar com Mentor"
+            ctaAction={() => navigate("/suporte")}
+          />
         ) : !isBlocked ? (
           <>
-            {/* Streak Display */}
-            <StreakDisplay 
-              currentStreak={currentStreak} 
-              longestStreak={currentStreak}
-            />
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
-              <Card className="p-2.5 sm:p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-lg sm:text-2xl font-bold text-foreground">{weeklyCount}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Esta semana</p>
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-2.5 sm:p-4 bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-lg sm:text-2xl font-bold text-foreground">{currentStreak}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Dias seguidos</p>
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-2.5 sm:p-4 bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-lg sm:text-2xl font-bold text-foreground">{totalCount}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Treinos feitos</p>
-                  </div>
-                </div>
-              </Card>
-              <Card className="p-2.5 sm:p-4 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  {todayCompleted ? (
-                    <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
-                  ) : (
-                    <Target className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 shrink-0" />
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-lg sm:text-2xl font-bold text-foreground">{todayCompleted ? "Feito!" : "Pendente"}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Treino hoje</p>
-                  </div>
-                </div>
-              </Card>
+            {/* Stats — flat, sem gradientes coloridos */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+              <StatCardMini icon={Calendar} label="Esta semana" value={weeklyCount} />
+              <StatCardMini icon={Flame} label="Dias seguidos" value={currentStreak} />
+              <StatCardMini icon={Trophy} label="Treinos feitos" value={totalCount} />
+              <StatCardMini
+                icon={todayCompleted ? CheckCircle : Target}
+                label="Treino hoje"
+                value={todayCompleted ? "Feito" : "Pendente"}
+              />
             </div>
 
             {/* Week phase */}
             {protocol?.conteudo?.fase && (
-              <Card className="p-3 sm:p-4 border-primary/20 bg-primary/5">
+              <Card className="p-3 sm:p-4 border-border/50">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-                      <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                    </div>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Trophy className="w-4 h-4 text-primary shrink-0" strokeWidth={1.5} />
                     <div className="min-w-0">
-                      <p className="font-semibold text-sm sm:text-base text-foreground truncate">{protocol.conteudo.fase}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{protocol.conteudo.descricao || "Fase do seu protocolo"}</p>
+                      <p className="font-semibold text-sm text-foreground truncate">{protocol.conteudo.fase}</p>
+                      <p className="text-xs text-muted-foreground truncate">{protocol.conteudo.descricao || "Fase do seu protocolo"}</p>
                     </div>
                   </div>
                   {protocol.conteudo.total_semanas && (
                     <div className="text-right shrink-0">
-                      <p className="text-xs sm:text-sm font-medium text-primary whitespace-nowrap">
+                      <p className="text-xs font-medium text-primary whitespace-nowrap">
                         Sem. {protocol.conteudo.semana_atual || 1}/{protocol.conteudo.total_semanas}
                       </p>
                       <div className="w-16 sm:w-24 h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
@@ -446,12 +309,11 @@ export default function Treino() {
               </Card>
             )}
 
-            {/* Workouts - limited by access */}
+            {/* Workouts */}
             {(() => {
               const maxVisible = isTrialing ? 1 : workouts.length;
               const visibleWorkouts = workouts.slice(0, maxVisible);
               const lockedWorkouts = workouts.slice(maxVisible);
-
               return (
                 <div className="space-y-3 sm:space-y-4">
                   {visibleWorkouts.map((workout, index) => (
@@ -464,20 +326,14 @@ export default function Treino() {
                       calories={workout.calories}
                       completed={workout.completed}
                       index={index}
-                      onComplete={(durationSeconds?: number, sessionId?: string) => 
-                        handleCompleteWorkout(workout, durationSeconds, sessionId)
-                      }
+                      onComplete={(durationSeconds?: number, sessionId?: string) => handleCompleteWorkout(workout, durationSeconds, sessionId)}
                       todayCompleted={todayCompleted}
                     />
                   ))}
                   {lockedWorkouts.length > 0 && (
                     <>
                       {lockedWorkouts.map((workout, index) => (
-                        <Card 
-                          key={`locked-${index}`} 
-                          className="p-4 relative overflow-hidden cursor-pointer opacity-60 blur-[2px] hover:opacity-80 transition-all"
-                          onClick={() => setShowUpgradeModal(true)}
-                        >
+                        <Card key={`locked-${index}`} className="p-4 relative overflow-hidden cursor-pointer opacity-60 blur-[2px] hover:opacity-80 transition-all" onClick={() => setShowUpgradeModal(true)}>
                           <div className="flex items-center gap-3">
                             <Lock className="w-5 h-5 text-muted-foreground" />
                             <div>
@@ -488,7 +344,7 @@ export default function Treino() {
                         </Card>
                       ))}
                       <div className="text-center py-2">
-                        <Button variant="outline" onClick={() => setShowUpgradeModal(true)}>
+                        <Button variant="outline" size="sm" onClick={() => setShowUpgradeModal(true)}>
                           Desbloquear todos os treinos
                         </Button>
                       </div>
@@ -500,10 +356,7 @@ export default function Treino() {
           </>
         ) : null}
       </div>
-      <UpgradeModal 
-        open={showUpgradeModal} 
-        onClose={() => setShowUpgradeModal(false)} 
-      />
+      <UpgradeModal open={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
     </ClientLayout>
   );
 }
