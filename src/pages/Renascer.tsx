@@ -5,6 +5,7 @@ import { useRenascerScore } from "@/hooks/useRenascerScore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
+import { PageHeader } from "@/components/ui/page-header";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
 import { MiniConfetti } from "@/components/renascer/MiniConfetti";
 import { StatusBadge } from "@/components/renascer/StatusBadge";
@@ -12,10 +13,13 @@ import { TrendIndicator } from "@/components/renascer/TrendIndicator";
 import { DayRecommendation } from "@/components/renascer/DayRecommendation";
 import { ManualInput } from "@/components/renascer/ManualInput";
 import { ScoreSparkline } from "@/components/renascer/ScoreSparkline";
+import { RecentLogsHistory } from "@/components/renascer/RecentLogsHistory";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ExternalLink } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Renascer() {
   const { user } = useAuth();
@@ -37,13 +41,11 @@ export default function Renascer() {
   } = useRenascerScore();
 
   const handleSaveSuccess = useCallback(() => {
-    // Always trigger ring celebration
     setCelebrating(true);
     setShowFeedback(true);
     setTimeout(() => setCelebrating(false), 900);
     setTimeout(() => setShowFeedback(false), 2500);
 
-    // Confetti only first 7 times
     const key = "renascer_celebrations_count";
     const count = parseInt(localStorage.getItem(key) ?? "0", 10);
     if (count < 7) {
@@ -53,7 +55,6 @@ export default function Renascer() {
     }
   }, []);
 
-  // Fetch data_mode from profile
   const { data: profile } = useQuery({
     queryKey: ["profile-data-mode", user?.id],
     enabled: !!user?.id,
@@ -78,6 +79,8 @@ export default function Renascer() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["profile-data-mode"] }),
   });
 
+  const todayFormatted = format(new Date(), "EEE, dd/MM", { locale: ptBR });
+
   if (scoreLoading) {
     return (
       <ClientLayout>
@@ -91,15 +94,11 @@ export default function Renascer() {
   return (
     <ClientLayout>
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6 pb-24 md:pb-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-xl font-bold text-foreground">
-            Olá, {firstName} 🔥
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Você está no controle hoje.
-          </p>
-        </div>
+        {/* Header — sem emoji, com data */}
+        <PageHeader
+          title={`Olá, ${firstName}`}
+          subtitle={`Hoje — ${todayFormatted}`}
+        />
 
         {/* Score Ring + Badge */}
         <div className="rounded-xl border border-border/50 bg-card p-6 flex flex-col items-center gap-4 relative">
@@ -115,7 +114,7 @@ export default function Renascer() {
 
         {/* Trend + Sparkline */}
         <div className="rounded-xl border border-border/50 bg-card p-5 space-y-3">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground">
             Tendência
           </h3>
           <TrendIndicator trend={trend} text={trendText} />
@@ -138,6 +137,9 @@ export default function Renascer() {
 
         {/* Manual Input / Auto placeholder */}
         <ManualInput dataMode={dataMode} todayLog={todayLog} onSaveSuccess={handleSaveSuccess} />
+
+        {/* Histórico 7 dias */}
+        <RecentLogsHistory />
 
         {/* Advanced panel link */}
         <div className="text-center pt-2">
