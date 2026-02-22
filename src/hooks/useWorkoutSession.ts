@@ -129,6 +129,19 @@ export function useWorkoutSession(exercises: Exercise[]) {
         return false;
       }
 
+      // Auto-abandon sessions older than 4 hours to prevent stale timer values (e.g. 7352:11)
+      const MAX_SESSION_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours
+      const sessionAge = Date.now() - new Date(existing.started_at).getTime();
+      if (sessionAge > MAX_SESSION_AGE_MS) {
+        console.log(`[WorkoutSession] Abandoning stale session ${existing.id} (${Math.round(sessionAge / 60000)} min old)`);
+        await supabase
+          .from("active_workout_sessions")
+          .update({ status: "abandoned" })
+          .eq("id", existing.id);
+        setIsRecovering(false);
+        return false;
+      }
+
       // Load set logs for this session
       const { data: existingLogs, error: logsError } = await supabase
         .from("workout_set_logs")
