@@ -7,7 +7,7 @@ import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useAchievements } from "@/hooks/useAchievements";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
-import { Target, Utensils, TrendingUp, Heart, CreditCard, Lock, Camera, AlertTriangle, Dumbbell, ClipboardCheck, Flame, ArrowRight } from "lucide-react";
+import { Target, Utensils, TrendingUp, Heart, CreditCard, Lock, Camera, AlertTriangle, Dumbbell, ClipboardCheck, Flame, ArrowRight, ChefHat } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { STRIPE_PRICE_IDS } from "@/lib/planConstants";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
