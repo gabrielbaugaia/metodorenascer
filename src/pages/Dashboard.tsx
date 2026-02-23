@@ -326,8 +326,8 @@ export default function Dashboard() {
   const quickAccess = [
     { label: "Treino", icon: Dumbbell, href: "/treino" },
     { label: "Nutrição", icon: Utensils, href: "/nutricao" },
+    { label: "Receitas", icon: ChefHat, href: "/receitas" },
     { label: "Evolução", icon: TrendingUp, href: "/evolucao" },
-    { label: "Dados do Corpo", icon: Heart, href: "/dados-corpo" },
   ];
 
   return (

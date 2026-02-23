@@ -50,6 +50,7 @@ const clientMenuItems = [
   { title: "Evolução", url: "/evolucao", icon: Camera },
   { title: "Treino", url: "/treino", icon: Dumbbell },
   { title: "Nutrição", url: "/nutricao", icon: Apple },
+  { title: "Receitas", url: "/receitas", icon: ChefHat },
   { title: "Mindset", url: "/mindset", icon: Brain },
   { title: "Meu Perfil", url: "/meu-perfil", icon: User },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
