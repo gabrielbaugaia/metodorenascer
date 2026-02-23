@@ -1,7 +1,8 @@
 import { registerPlugin } from '@capacitor/core';
+import { platform } from './platform';
 
 // ============================================================
-// HealthKit Plugin Bridge (Capacitor) + Mock Fallback
+// HealthKit Plugin Bridge (Capacitor – iOS) + Mock Fallback
 // ============================================================
 
 export type TodayMetrics = {
@@ -31,10 +32,6 @@ interface HealthKitPluginInterface {
 
 // ---------- helpers ----------
 
-function isNative(): boolean {
-  return typeof (window as any)?.Capacitor !== 'undefined';
-}
-
 function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -43,12 +40,12 @@ function generateExternalId(startTime: string, endTime: string, type: string, so
   return btoa(`${startTime}|${endTime}|${type}|${source}`).replace(/=/g, '');
 }
 
-// ---------- plugin registration (lazy) ----------
+// ---------- plugin registration (lazy, iOS only) ----------
 
 let _plugin: HealthKitPluginInterface | null = null;
 
 function getPlugin(): HealthKitPluginInterface | null {
-  if (!isNative()) return null;
+  if (platform !== 'ios') return null;
   if (!_plugin) {
     try {
       _plugin = registerPlugin<HealthKitPluginInterface>('HealthKitPlugin');
@@ -95,7 +92,7 @@ export async function requestPermissions(): Promise<boolean> {
     return granted;
   } catch {
     console.warn('[HealthKit] requestPermissions failed, using mock fallback');
-    return true; // fallback mock
+    return true;
   }
 }
 
@@ -176,7 +173,6 @@ export interface MockWorkout {
 }
 
 export async function getWorkoutsLast24h(): Promise<MockWorkout[]> {
-  // Try real workouts first
   const realWorkouts = await healthkitGetWorkoutsLast24h();
   if (realWorkouts.length > 0) {
     return realWorkouts.map((w) => ({
