@@ -374,7 +374,7 @@ export default function Nutricao() {
             )}
 
             {/* Shopping List */}
-            {isFull && listaCompras && !Array.isArray(listaCompras) && (
+            {isFull && listaCompras && !Array.isArray(listaCompras) ? (
               <CollapsibleSection title="Lista de Compras Semanal" icon={ShoppingCart}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.entries(listaCompras).map(([cat, items]) => {
@@ -395,7 +395,13 @@ export default function Nutricao() {
                   })}
                 </div>
               </CollapsibleSection>
-            )}
+            ) : isFull && hasContent ? (
+              <CollapsibleSection title="Lista de Compras Semanal" icon={ShoppingCart}>
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Sua lista de compras será incluída na próxima atualização do protocolo.
+                </p>
+              </CollapsibleSection>
+            ) : null}
 
             {/* Substitutions */}
             {isFull && substituicoes && substituicoes.length > 0 && (
