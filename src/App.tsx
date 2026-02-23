@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { SubscriptionGuard } from "@/components/auth/SubscriptionGuard";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { AdminGuard } from "@/components/auth/AdminGuard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -27,7 +28,7 @@ const Mindset = lazy(() => import("./pages/Mindset"));
 const Receitas = lazy(() => import("./pages/Receitas"));
 const Evolucao = lazy(() => import("./pages/Evolucao"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const AreaCliente = lazy(() => import("./pages/AreaCliente"));
+
 const Protocolos = lazy(() => import("./pages/Protocolos"));
 const Suporte = lazy(() => import("./pages/Suporte"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -113,7 +114,7 @@ const App = () => (
             <Route path="/mindset" element={<SubscriptionGuard><Mindset /></SubscriptionGuard>} />
             <Route path="/evolucao" element={<SubscriptionGuard><Evolucao /></SubscriptionGuard>} />
             <Route path="/receitas" element={<SubscriptionGuard><Receitas /></SubscriptionGuard>} />
-            <Route path="/area-cliente" element={<SubscriptionGuard><AreaCliente /></SubscriptionGuard>} />
+            
             <Route path="/protocolos" element={<SubscriptionGuard><Protocolos /></SubscriptionGuard>} />
             <Route path="/suporte" element={<SubscriptionGuard><Suporte /></SubscriptionGuard>} />
             <Route path="/meu-perfil" element={<SubscriptionGuard><MeuPerfil /></SubscriptionGuard>} />
@@ -123,27 +124,27 @@ const App = () => (
             <Route path="/dados-corpo" element={<SubscriptionGuard><DadosCorpo /></SubscriptionGuard>} />
             <Route path="/renascer" element={<SubscriptionGuard><Renascer /></SubscriptionGuard>} />
 
-            {/* ROTAS ADMIN (verificação de admin é feita internamente) */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/clientes" element={<AdminClientes />} />
-            <Route path="/admin/clientes/:id" element={<AdminClienteDetalhes />} />
-            <Route path="/admin/criar-cliente" element={<AdminCriarCliente />} />
-            <Route path="/admin/planos" element={<AdminPlanos />} />
-            <Route path="/admin/suporte" element={<AdminSuporteChats />} />
-            <Route path="/admin/suporte-chats" element={<AdminSuporteChats />} />
-            <Route path="/admin/mensagens" element={<AdminMensagens />} />
-            <Route path="/admin/videos" element={<AdminVideos />} />
-            <Route path="/admin/gifs" element={<AdminExerciseGifs />} />
-            <Route path="/admin/planos-venda" element={<AdminPlanosVenda />} />
-            <Route path="/admin/metricas" element={<AdminMetricas />} />
-            <Route path="/admin/convites" element={<AdminConvites />} />
-            <Route path="/admin/leads" element={<AdminLeads />} />
-            <Route path="/admin/blog" element={<AdminBlog />} />
-              <Route path="/admin/blog/:id" element={<AdminBlogEditor />} />
-              <Route path="/admin/commercial-plans" element={<AdminCommercialPlans />} />
-              <Route path="/admin/trial-campaigns" element={<AdminTrialCampaigns />} />
-              <Route path="/mqo" element={<Mqo />} />
-              <Route path="/admin/docs/conector-mobile" element={<AdminConectorMobileDocs />} />
+            {/* ROTAS ADMIN (protegidas por AdminGuard) */}
+            <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+            <Route path="/admin/clientes" element={<AdminGuard><AdminClientes /></AdminGuard>} />
+            <Route path="/admin/clientes/:id" element={<AdminGuard><AdminClienteDetalhes /></AdminGuard>} />
+            <Route path="/admin/criar-cliente" element={<AdminGuard><AdminCriarCliente /></AdminGuard>} />
+            <Route path="/admin/planos" element={<AdminGuard><AdminPlanos /></AdminGuard>} />
+            <Route path="/admin/suporte" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
+            <Route path="/admin/suporte-chats" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
+            <Route path="/admin/mensagens" element={<AdminGuard><AdminMensagens /></AdminGuard>} />
+            <Route path="/admin/videos" element={<AdminGuard><AdminVideos /></AdminGuard>} />
+            <Route path="/admin/gifs" element={<AdminGuard><AdminExerciseGifs /></AdminGuard>} />
+            <Route path="/admin/planos-venda" element={<AdminGuard><AdminPlanosVenda /></AdminGuard>} />
+            <Route path="/admin/metricas" element={<AdminGuard><AdminMetricas /></AdminGuard>} />
+            <Route path="/admin/convites" element={<AdminGuard><AdminConvites /></AdminGuard>} />
+            <Route path="/admin/leads" element={<AdminGuard><AdminLeads /></AdminGuard>} />
+            <Route path="/admin/blog" element={<AdminGuard><AdminBlog /></AdminGuard>} />
+              <Route path="/admin/blog/:id" element={<AdminGuard><AdminBlogEditor /></AdminGuard>} />
+              <Route path="/admin/commercial-plans" element={<AdminGuard><AdminCommercialPlans /></AdminGuard>} />
+              <Route path="/admin/trial-campaigns" element={<AdminGuard><AdminTrialCampaigns /></AdminGuard>} />
+              <Route path="/mqo" element={<AdminGuard><Mqo /></AdminGuard>} />
+              <Route path="/admin/docs/conector-mobile" element={<AdminGuard><AdminConectorMobileDocs /></AdminGuard>} />
 
               {/* ROTAS RENASCER CONNECT (mobile) */}
               <Route path="/connect/login" element={<ConnectLogin />} />

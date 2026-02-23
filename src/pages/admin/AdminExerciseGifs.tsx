@@ -70,7 +70,15 @@ import {
   Globe
 } from "lucide-react";
 import { generateGifCoverageReportPdf } from "@/lib/generateGifCoverageReportPdf";
-import exercisesDatabase from "@/data/exercisesDatabase.json";
+// Lazy-loaded to avoid 1.3MB in bundle
+let exercisesDatabase: any[] = [];
+const loadExercisesDatabase = async () => {
+  if (exercisesDatabase.length === 0) {
+    const module = await import("@/data/exercisesDatabase.json");
+    exercisesDatabase = module.default;
+  }
+  return exercisesDatabase;
+};
 import { ExerciseFromDb, getMuscleGroupsFromExercise, GIF_BASE_URL } from "@/types/exerciseDatabase";
 import { syncAllExercisesFromApi, checkApiStatus, isUsingCustomApi } from "@/services/exerciseDb";
 import { Progress } from "@/components/ui/progress";
