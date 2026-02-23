@@ -7,7 +7,7 @@ import { useActivityTracker } from "@/hooks/useActivityTracker";
 import { useAchievements } from "@/hooks/useAchievements";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
-import { Target, Utensils, TrendingUp, Heart, CreditCard, Lock, Camera, AlertTriangle, Dumbbell, ClipboardCheck, Flame, ArrowRight } from "lucide-react";
+import { Target, Utensils, TrendingUp, Heart, CreditCard, Lock, Camera, AlertTriangle, Dumbbell, ClipboardCheck, Flame, ArrowRight, ChefHat } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { STRIPE_PRICE_IDS } from "@/lib/planConstants";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
@@ -326,6 +326,7 @@ export default function Dashboard() {
   const quickAccess = [
     { label: "Treino", icon: Dumbbell, href: "/treino" },
     { label: "Nutrição", icon: Utensils, href: "/nutricao" },
+    { label: "Receitas", icon: ChefHat, href: "/receitas" },
     { label: "Evolução", icon: TrendingUp, href: "/evolucao" },
     { label: "Dados do Corpo", icon: Heart, href: "/dados-corpo" },
   ];
