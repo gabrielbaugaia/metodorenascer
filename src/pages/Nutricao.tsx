@@ -404,7 +404,7 @@ export default function Nutricao() {
             ) : null}
 
             {/* Substitutions */}
-            {isFull && substituicoes && substituicoes.length > 0 && (
+            {isFull && substituicoes && substituicoes.length > 0 ? (
               <CollapsibleSection title="Substituições Equivalentes" icon={ArrowLeftRight}>
                 <div className="space-y-4">
                   {substituicoes.map((cat, ci) => (
@@ -424,7 +424,13 @@ export default function Nutricao() {
                   ))}
                 </div>
               </CollapsibleSection>
-            )}
+            ) : isFull && hasContent ? (
+              <CollapsibleSection title="Substituições Equivalentes" icon={ArrowLeftRight}>
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  A tabela de substituições será incluída na próxima atualização do protocolo.
+                </p>
+              </CollapsibleSection>
+            ) : null}
 
             {/* Tips */}
             {Array.isArray(dicas) && dicas.length > 0 && isFull && (
