@@ -1,221 +1,68 @@
 
 
-# MASTER SPRINT — Hardening Completo + Performance + UX Premium
+# Restaurar Acesso: Receitas, Lista de Compras e Substituicoes
 
-## Analise do Estado Atual
+## Diagnostico
 
-Apos auditoria completa do codigo, identifiquei os problemas reais e o que ja foi feito. Abaixo, o plano organizado por prioridade.
+Nenhum codigo foi removido. Os tres recursos existem no sistema:
 
----
+- **Lista de Compras** -- renderiza dentro de `/nutricao` quando o protocolo contem `lista_compras_semanal`
+- **Lista de Substituicoes** -- renderiza dentro de `/nutricao` quando o protocolo contem `substituicoes`
+- **Gerador de Receitas** -- pagina completa em `/receitas`, com rota ativa, porem sem link de navegacao
 
-## PARTE 1 — SEGURANCA CRITICA (P0)
+## Problema Real
 
-### 1.1 Proteger rotas /admin/* e /mqo no router
+1. A **pagina Receitas** nao tem link no menu lateral (`ClientSidebar`) nem na barra inferior (`BottomNav`), tornando-a inacessivel para o aluno
+2. A **Lista de Compras e Substituicoes** dependem do protocolo de nutricao conter esses campos. Se o protocolo nao foi gerado com esses dados, as secoes ficam ocultas -- mas o codigo esta la
 
-**Problema:** Linhas 127-146 do `src/App.tsx` — todas as rotas admin e /mqo estao SEM guard. Qualquer usuario autenticado (ou mesmo nao autenticado) pode navegar diretamente para `/admin`, `/admin/clientes`, `/mqo`, etc. A verificacao de admin e feita internamente em cada pagina, mas o componente carrega e faz queries antes de redirecionar.
+## Plano de Correcao
 
-**Solucao:**
-- Criar componente `AdminGuard` em `src/components/auth/AdminGuard.tsx`
-- Verificar autenticacao + role admin via `useAdminCheck`
-- Se nao for admin: redirecionar para `/acesso-bloqueado`
-- Envolver TODAS as rotas admin e /mqo com `<AdminGuard>` no App.tsx
+### 1. Adicionar "Receitas" ao menu lateral do aluno
 
-**Arquivos:**
-- Criar: `src/components/auth/AdminGuard.tsx`
-- Modificar: `src/App.tsx` (linhas 127-146)
+**Arquivo:** `src/components/layout/ClientSidebar.tsx`
 
-### 1.2 Proteger Edge Functions expostas (verify_jwt = false)
+Adicionar item ao array `clientMenuItems`:
 
-**Problema identificado no config.toml:** 9 funcoes com `verify_jwt = false`:
-- `stripe-webhook` — OK (webhook externo, valida signature)
-- `send-password-reset` — OK (precisa ser publico)
-- `send-urgent-support-alert` — RISCO (pode ser chamada por qualquer um)
-- `weekly-support-report` — RISCO
-- `check-free-expiration` — RISCO (cron, mas exposta)
-- `complete-guest-checkout` — aceitavel (checkout flow)
-- `finalize-checkout` — aceitavel
-- `sync-exercise-gifs` — RISCO (admin only)
-- `suggest-exercise-name` — tem comentario dizendo "auth validated in code"
-- `cleanup-old-conversations` — RISCO (cron)
-- `audit-treino` — RISCO
-- `health-sync` — RISCO (aceita payload sem auth)
-
-**Solucao para funcoes de risco:**
-Adicionar validacao de JWT no CODIGO de cada funcao (nao mudar config.toml, pois algumas sao chamadas por cron). Adicionar verificacao de `Authorization` header com `getClaims()` nas funcoes:
-- `send-urgent-support-alert`
-- `weekly-support-report`
-- `audit-treino`
-- `health-sync`
-- `sync-exercise-gifs`
-- `cleanup-old-conversations`
-- `check-free-expiration`
-
-**Arquivos:** 7 edge functions index.ts
-
-### 1.3 Sessao de treino — melhorar resiliencia
-
-**Estado atual:** Ja implementado:
-- Persistencia em `active_workout_sessions` (banco)
-- `rehydrateSession` no mount
-- Auto-abandon de sessoes > 4h
-- Timer de descanso persistido via localStorage
-
-**Melhoria:** Adicionar coluna `last_seen_at` e atualizar periodicamente (heartbeat a cada 60s). Mudar logica de abandon para usar `last_seen_at` em vez de `started_at` quando disponivel, permitindo sessoes longas reais.
-
-**Arquivos:**
-- Migration: adicionar coluna `last_seen_at` em `active_workout_sessions`
-- Modificar: `src/hooks/useWorkoutSession.ts` (adicionar heartbeat + logica de pausa)
-
----
-
-## PARTE 2 — PERFORMANCE (P1)
-
-### 2.1 Lazy-load do exercisesDatabase.json
-
-**Problema:** `src/data/exercisesDatabase.json` (1.3MB) e importado estaticamente em `AdminExerciseGifs.tsx`, carregando no bundle principal.
-
-**Solucao:** Converter o import estatico para `dynamic import()` — o JSON so carrega quando a pagina AdminExerciseGifs e aberta (ja e lazy-loaded via `React.lazy`, mas o JSON nao e).
-
-**Arquivo:** `src/pages/admin/AdminExerciseGifs.tsx`
-
-### 2.2 Indices criticos no banco
-
-Criar indices para queries frequentes:
-
-```sql
-CREATE INDEX IF NOT EXISTS idx_events_user_created ON events(user_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_workout_completions_user_date ON workout_completions(user_id, workout_date);
-CREATE INDEX IF NOT EXISTS idx_manual_day_logs_user_date ON manual_day_logs(user_id, date);
-CREATE INDEX IF NOT EXISTS idx_health_daily_user_date ON health_daily(user_id, date);
+```text
+{ title: "Receitas", url: "/receitas", icon: ChefHat }
 ```
 
-**Arquivo:** Nova migration SQL
+Posicionar apos "Nutricao" para manter a logica do fluxo alimentar.
 
-### 2.3 Politica de retencao da tabela events
+### 2. Adicionar link rapido para Receitas no Dashboard
 
-Criar funcao de limpeza para manter apenas ultimos 180 dias:
+**Arquivo:** `src/pages/Dashboard.tsx`
 
-```sql
-CREATE OR REPLACE FUNCTION cleanup_old_events()
-RETURNS void AS $$
-BEGIN
-  DELETE FROM events WHERE created_at < NOW() - INTERVAL '180 days';
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+Adicionar ao array `quickAccess` (linha 326-331):
+
+```text
+{ label: "Receitas", icon: ChefHat, href: "/receitas" }
 ```
 
-Agendar via pg_cron (semanal).
+### 3. Garantir visibilidade da Lista de Compras e Substituicoes
 
----
+**Arquivo:** `src/pages/Nutricao.tsx`
 
-## PARTE 3 — CONSISTENCIA VISUAL (P1)
+As secoes ja existem no codigo. Elas dependem dos dados do protocolo. Duas opcoes:
 
-### 3.1 Verificacao
+- **Opcao A (recomendada):** Manter como esta -- se o protocolo contiver os dados, as secoes aparecem automaticamente. Isso significa que ao gerar/atualizar o protocolo do aluno no admin, os campos `lista_compras_semanal` e `substituicoes` devem ser incluidos.
 
-Apos auditoria, as seguintes paginas JA usam o Design System (PageHeader, StatCardMini, EmptyState):
-- Dashboard (aluno) -- OK
-- Treino -- OK
-- Nutricao -- OK
-- Evolucao -- OK
-- Renascer (Hoje) -- OK
-- DadosCorpo -- OK
-- AdminDashboard -- OK
+- **Opcao B:** Adicionar um estado vazio ("Nenhuma lista de compras disponivel ainda") quando os dados nao existirem, para que o aluno saiba que o recurso existe.
 
-**Pendente:** Simplificar `HealthDashboardTab` — reduzir 3 tabs para foco principal + "Ver detalhes". Porem esta mudanca e cosmetica e nao critica. Manter como esta por ora e focar em seguranca/performance.
+Recomendo a **Opcao B** para melhor UX -- o aluno ve que o recurso existe mesmo antes do protocolo ser gerado.
 
----
+### Resumo de Arquivos
 
-## PARTE 4 — LIMPEZA DE CODIGO (P1)
-
-### 4.1 Remover pagina AreaCliente
-
-**Problema:** `src/pages/AreaCliente.tsx` e uma pagina legada com design antigo (gradientes, cards grandes, estilo pre-refatoracao). O Dashboard atual ja substitui toda sua funcionalidade.
-
-**Solucao:**
-- Remover a rota `/area-cliente` do App.tsx (linha 116)
-- Remover o arquivo `src/pages/AreaCliente.tsx`
-- Remover a importacao lazy (linha 30)
-- Redirecionar qualquer referencia interna para `/dashboard`
-
-**Nota sobre authStore.ts e healthkit.ts:** NAO remover. Ambos sao usados ativamente pelas paginas do Renascer Connect (`/connect/*`), que e o app mobile Capacitor. Sao servicos essenciais para o conector mobile.
-
-### 4.2 Remover console.logs de debug
-
-Fazer busca e remover `console.log` e `console.error` nao-essenciais em:
-- `src/hooks/useWorkoutSession.ts`
-- `src/pages/Evolucao.tsx`
-- Outros hooks
-
----
-
-## PARTE 5 — ESCALABILIDADE (P2)
-
-### 5.1 Cache react-query consistente
-
-**Estado atual:** QueryClient ja configurado com `staleTime: 5min` e `refetchOnWindowFocus: false`. Hooks como `useSubscription` e `useEntitlements` usam cache session-level.
-
-**Melhoria:** Nenhuma acao critica necessaria. A arquitetura atual suporta ate ~10k usuarios sem problemas. Para 100k+, sera necessario:
-- Materialized views para engagement_summary (futuro)
-- Connection pooling configurado no Supabase (via dashboard)
-- CDN para assets estaticos
-
-### 5.2 Lazy loading de imagens
-
-As imagens de transformacao e fotos de corpo ja usam URLs assinadas do Storage. Adicionar `loading="lazy"` nas tags `<img>` da galeria de evolucao.
-
----
-
-## RESUMO DE ARQUIVOS
-
-### Criar
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/components/auth/AdminGuard.tsx` | Guard para rotas administrativas |
-
-### Modificar
 | Arquivo | Mudanca |
 |---------|---------|
-| `src/App.tsx` | Envolver rotas admin/mqo com AdminGuard + remover AreaCliente |
-| `src/hooks/useWorkoutSession.ts` | Adicionar heartbeat last_seen_at |
-| `src/pages/admin/AdminExerciseGifs.tsx` | Dynamic import do exercisesDatabase.json |
-| `supabase/functions/send-urgent-support-alert/index.ts` | Adicionar validacao JWT |
-| `supabase/functions/weekly-support-report/index.ts` | Adicionar validacao JWT |
-| `supabase/functions/audit-treino/index.ts` | Adicionar validacao JWT |
-| `supabase/functions/health-sync/index.ts` | Adicionar validacao JWT |
-| `supabase/functions/sync-exercise-gifs/index.ts` | Adicionar validacao JWT |
-| `supabase/functions/cleanup-old-conversations/index.ts` | Adicionar validacao JWT |
-| `supabase/functions/check-free-expiration/index.ts` | Adicionar validacao JWT |
+| `src/components/layout/ClientSidebar.tsx` | Adicionar item "Receitas" com icone ChefHat |
+| `src/pages/Dashboard.tsx` | Adicionar "Receitas" ao quickAccess |
+| `src/pages/Nutricao.tsx` | Adicionar empty states para lista de compras e substituicoes quando dados nao existirem |
 
-### Remover
-| Arquivo | Razao |
-|---------|-------|
-| `src/pages/AreaCliente.tsx` | Pagina legada substituida pelo Dashboard |
+### O que NAO muda
 
-### Database (Migrations)
-| Mudanca | Descricao |
-|---------|-----------|
-| Adicionar coluna `last_seen_at` em `active_workout_sessions` | Heartbeat para sessoes de treino |
-| Criar 4 indices em events, workout_completions, manual_day_logs, health_daily | Performance de queries |
-| Criar funcao `cleanup_old_events()` | Retencao de 180 dias |
-
-### NAO alterar
-- `authStore.ts` — usado pelo Renascer Connect (mobile)
-- `healthkit.ts` — usado pelo Renascer Connect (mobile)
-- `supabase/config.toml` — nao pode ser editado manualmente
-- Sidebar/BottomNav — ja corretos
-- Score engine / bodyIndicators — ja corretos
-- PDF generator — ja usa helvetica consistentemente
-
----
-
-## Score Projetado Pos-Sprint
-
-| Dimensao | Antes | Depois |
-|----------|-------|--------|
-| Arquitetura | 7.5 | 8.5 |
-| Seguranca | 7.0 | 9.0 |
-| Performance | 7.0 | 8.0 |
-| UX | 7.5 | 7.5 |
-| Escalabilidade | 6.0 | 7.5 |
-| **Geral** | **7.0** | **8.1** |
+- Nenhuma logica de negocio alterada
+- Nenhuma tabela do banco modificada
+- Pagina de Receitas ja funciona 100% -- so precisa de link
+- Codigo da lista de compras e substituicoes ja esta implementado
 
