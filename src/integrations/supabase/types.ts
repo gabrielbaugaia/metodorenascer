@@ -52,6 +52,7 @@ export type Database = {
           created_at: string
           ended_at: string | null
           id: string
+          last_seen_at: string | null
           started_at: string
           status: string
           total_duration_seconds: number | null
@@ -62,6 +63,7 @@ export type Database = {
           created_at?: string
           ended_at?: string | null
           id?: string
+          last_seen_at?: string | null
           started_at?: string
           status?: string
           total_duration_seconds?: number | null
@@ -72,6 +74,7 @@ export type Database = {
           created_at?: string
           ended_at?: string | null
           id?: string
+          last_seen_at?: string | null
           started_at?: string
           status?: string
           total_duration_seconds?: number | null
@@ -2276,6 +2279,7 @@ export type Database = {
     }
     Functions: {
       cleanup_expired_pending_logins: { Args: never; Returns: undefined }
+      cleanup_old_events: { Args: never; Returns: undefined }
       get_referrer_name_by_code: {
         Args: { lookup_code: string }
         Returns: string
