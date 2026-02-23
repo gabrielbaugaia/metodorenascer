@@ -2,10 +2,10 @@ import { registerPlugin } from '@capacitor/core';
 import { platform } from './platform';
 
 // ============================================================
-// HealthKit Plugin Bridge (Capacitor – iOS) + Mock Fallback
+// Health Connect Plugin Bridge (Capacitor – Android) + Mock Fallback
 // ============================================================
 
-export type TodayMetrics = {
+export type HealthConnectMetrics = {
   date: string;
   steps: number;
   activeCalories: number;
@@ -14,20 +14,20 @@ export type TodayMetrics = {
   hrvMs: number | null;
 };
 
-export interface HealthKitWorkout {
+export interface HealthConnectWorkout {
   startTime: string;
   endTime: string;
   type: string;
   calories: number | null;
-  source: 'apple';
+  source: 'google';
   externalId: string;
 }
 
-interface HealthKitPluginInterface {
+interface HealthConnectPluginInterface {
   isAvailable(): Promise<{ available: boolean }>;
   requestPermissions(): Promise<{ granted: boolean }>;
-  getTodayMetrics(): Promise<TodayMetrics>;
-  getWorkoutsLast24h(): Promise<{ workouts: HealthKitWorkout[] }>;
+  getTodayMetrics(): Promise<HealthConnectMetrics>;
+  getWorkoutsLast24h(): Promise<{ workouts: HealthConnectWorkout[] }>;
 }
 
 // ---------- helpers ----------
@@ -40,15 +40,15 @@ function generateExternalId(startTime: string, endTime: string, type: string, so
   return btoa(`${startTime}|${endTime}|${type}|${source}`).replace(/=/g, '');
 }
 
-// ---------- plugin registration (lazy, iOS only) ----------
+// ---------- plugin registration (lazy) ----------
 
-let _plugin: HealthKitPluginInterface | null = null;
+let _plugin: HealthConnectPluginInterface | null = null;
 
-function getPlugin(): HealthKitPluginInterface | null {
-  if (platform !== 'ios') return null;
+function getPlugin(): HealthConnectPluginInterface | null {
+  if (platform !== 'android') return null;
   if (!_plugin) {
     try {
-      _plugin = registerPlugin<HealthKitPluginInterface>('HealthKitPlugin');
+      _plugin = registerPlugin<HealthConnectPluginInterface>('HealthConnectPlugin');
     } catch {
       _plugin = null;
     }
@@ -58,7 +58,7 @@ function getPlugin(): HealthKitPluginInterface | null {
 
 // ---------- module-level cache ----------
 
-let _cachedMetrics: TodayMetrics | null = null;
+let _cachedMetrics: HealthConnectMetrics | null = null;
 let _cacheTimestamp = 0;
 const CACHE_TTL_MS = 30_000; // 30 s
 
@@ -68,8 +68,8 @@ function isCacheValid(): boolean {
 
 // ---------- public API ----------
 
-/** Check if HealthKit is available on this device */
-export async function healthkitIsAvailable(): Promise<boolean> {
+/** Check if Health Connect is available on this device */
+export async function healthConnectIsAvailable(): Promise<boolean> {
   const plugin = getPlugin();
   if (!plugin) return false;
   try {
@@ -80,27 +80,27 @@ export async function healthkitIsAvailable(): Promise<boolean> {
   }
 }
 
-/** Request HealthKit permissions. Returns true if granted (or mock). */
-export async function requestPermissions(): Promise<boolean> {
+/** Request Health Connect permissions. Returns true if granted (or mock). */
+export async function requestHealthConnectPermissions(): Promise<boolean> {
   const plugin = getPlugin();
   if (!plugin) {
-    console.log('[HealthKit Mock] Permissions granted (mock)');
+    console.log('[HealthConnect Mock] Permissions granted (mock)');
     return true;
   }
   try {
     const { granted } = await plugin.requestPermissions();
     return granted;
   } catch {
-    console.warn('[HealthKit] requestPermissions failed, using mock fallback');
+    console.warn('[HealthConnect] requestPermissions failed, using mock fallback');
     return true;
   }
 }
 
 /**
- * Fetch all metrics in a single native call (includes restingHr and hrvMs).
- * Returns null when HealthKit is unavailable or on error (caller should use mock).
+ * Fetch all metrics in a single native call.
+ * Returns null when Health Connect is unavailable or on error (caller should use mock).
  */
-export async function healthkitGetTodayMetrics(): Promise<TodayMetrics | null> {
+export async function healthConnectGetTodayMetrics(): Promise<HealthConnectMetrics | null> {
   if (isCacheValid()) return _cachedMetrics;
 
   const plugin = getPlugin();
@@ -112,7 +112,7 @@ export async function healthkitGetTodayMetrics(): Promise<TodayMetrics | null> {
     _cacheTimestamp = Date.now();
     return metrics;
   } catch (err) {
-    console.warn('[HealthKit] getTodayMetrics failed:', err);
+    console.warn('[HealthConnect] getTodayMetrics failed:', err);
     return null;
   }
 }
@@ -121,7 +121,7 @@ export async function healthkitGetTodayMetrics(): Promise<TodayMetrics | null> {
  * Fetch workouts from the last 24h via native plugin.
  * Returns empty array on failure (caller should use mock).
  */
-export async function healthkitGetWorkoutsLast24h(): Promise<HealthKitWorkout[]> {
+export async function healthConnectGetWorkoutsLast24h(): Promise<HealthConnectWorkout[]> {
   const plugin = getPlugin();
   if (!plugin) return [];
 
@@ -129,39 +129,12 @@ export async function healthkitGetWorkoutsLast24h(): Promise<HealthKitWorkout[]>
     const result = await plugin.getWorkoutsLast24h();
     return result.workouts || [];
   } catch (err) {
-    console.warn('[HealthKit] getWorkoutsLast24h failed:', err);
+    console.warn('[HealthConnect] getWorkoutsLast24h failed:', err);
     return [];
   }
 }
 
-// ---------- individual metric helpers (backward-compatible) ----------
-
-export async function getTodaySteps(): Promise<number> {
-  const m = await healthkitGetTodayMetrics();
-  return m ? m.steps : randomBetween(4000, 12000);
-}
-
-export async function getTodayActiveCalories(): Promise<number> {
-  const m = await healthkitGetTodayMetrics();
-  return m ? m.activeCalories : randomBetween(200, 700);
-}
-
-export async function getTodaySleepMinutes(): Promise<number> {
-  const m = await healthkitGetTodayMetrics();
-  return m ? m.sleepMinutes : randomBetween(300, 480);
-}
-
-export async function getTodayRestingHR(): Promise<number | null> {
-  const m = await healthkitGetTodayMetrics();
-  return m ? m.restingHr : randomBetween(55, 70);
-}
-
-export async function getTodayHRV(): Promise<number | null> {
-  const m = await healthkitGetTodayMetrics();
-  return m ? m.hrvMs : randomBetween(40, 80);
-}
-
-// ---------- workouts ----------
+// ---------- mock helpers (backward-compatible) ----------
 
 export interface MockWorkout {
   start_time: string;
@@ -172,15 +145,40 @@ export interface MockWorkout {
   external_id?: string;
 }
 
-export async function getWorkoutsLast24h(): Promise<MockWorkout[]> {
-  const realWorkouts = await healthkitGetWorkoutsLast24h();
+export async function getHealthConnectMockSteps(): Promise<number> {
+  const m = await healthConnectGetTodayMetrics();
+  return m ? m.steps : randomBetween(4000, 12000);
+}
+
+export async function getHealthConnectMockCalories(): Promise<number> {
+  const m = await healthConnectGetTodayMetrics();
+  return m ? m.activeCalories : randomBetween(200, 700);
+}
+
+export async function getHealthConnectMockSleep(): Promise<number> {
+  const m = await healthConnectGetTodayMetrics();
+  return m ? m.sleepMinutes : randomBetween(300, 480);
+}
+
+export async function getHealthConnectMockHR(): Promise<number | null> {
+  const m = await healthConnectGetTodayMetrics();
+  return m ? m.restingHr : randomBetween(55, 70);
+}
+
+export async function getHealthConnectMockHRV(): Promise<number | null> {
+  const m = await healthConnectGetTodayMetrics();
+  return m ? m.hrvMs : randomBetween(40, 80);
+}
+
+export async function getHealthConnectWorkoutsWithFallback(): Promise<MockWorkout[]> {
+  const realWorkouts = await healthConnectGetWorkoutsLast24h();
   if (realWorkouts.length > 0) {
     return realWorkouts.map((w) => ({
       start_time: w.startTime,
       end_time: w.endTime,
       type: w.type,
       calories: w.calories ?? 0,
-      source: 'apple',
+      source: 'google',
       external_id: w.externalId,
     }));
   }
@@ -203,7 +201,7 @@ export async function getWorkoutsLast24h(): Promise<MockWorkout[]> {
       end_time: end.toISOString(),
       type,
       calories: randomBetween(150, 500),
-      source: 'apple_health',
+      source: 'health_connect',
       external_id: generateExternalId(start.toISOString(), end.toISOString(), type, 'mock'),
     });
   }

@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getToken, clearToken, getLastSync, saveLastSync } from "@/services/authStore";
 import { syncHealthData, type SyncResult } from "@/services/healthSync";
-import { healthkitIsAvailable, requestPermissions } from "@/services/healthkit";
+import { healthkitIsAvailable, requestPermissions as requestApplePermissions } from "@/services/healthkit";
+import { healthConnectIsAvailable, requestHealthConnectPermissions } from "@/services/healthConnect";
+import { platform } from "@/services/platform";
 import SyncButton from "@/components/connect/SyncButton";
 import StatusCard from "@/components/connect/StatusCard";
 import { Button } from "@/components/ui/button";
@@ -28,6 +30,12 @@ function savePermission(v: HealthPermission) {
   } catch {}
 }
 
+function getProviderLabel(): string {
+  if (platform === 'ios') return 'Apple Health';
+  if (platform === 'android') return 'Health Connect';
+  return 'Saúde';
+}
+
 const ConnectDashboard = () => {
   const navigate = useNavigate();
   const [connected, setConnected] = useState(false);
@@ -37,6 +45,8 @@ const ConnectDashboard = () => {
   const [userName, setUserName] = useState<string>("");
   const [healthPermission, setHealthPermission] = useState<HealthPermission>("checking");
   const [permLoading, setPermLoading] = useState(false);
+
+  const providerLabel = getProviderLabel();
 
   useEffect(() => {
     const init = async () => {
@@ -61,9 +71,17 @@ const ConnectDashboard = () => {
         if (profile) setUserName(profile.full_name);
       }
 
-      // Check HealthKit availability
-      const available = await healthkitIsAvailable();
-      if (!available) {
+      // Check health provider availability based on platform
+      let available = false;
+      if (platform === 'ios') {
+        available = await healthkitIsAvailable();
+      } else if (platform === 'android') {
+        available = await healthConnectIsAvailable();
+      }
+
+      if (!available && platform !== 'web') {
+        setHealthPermission("unavailable");
+      } else if (platform === 'web') {
         setHealthPermission("unavailable");
       } else {
         const persisted = loadPermission();
@@ -76,7 +94,12 @@ const ConnectDashboard = () => {
   const handleRequestPermission = async () => {
     setPermLoading(true);
     try {
-      const granted = await requestPermissions();
+      let granted = false;
+      if (platform === 'ios') {
+        granted = await requestApplePermissions();
+      } else if (platform === 'android') {
+        granted = await requestHealthConnectPermissions();
+      }
       const status: HealthPermission = granted ? "granted" : "denied";
       setHealthPermission(status);
       savePermission(status);
@@ -142,20 +165,27 @@ const ConnectDashboard = () => {
           syncResult={syncResult}
         />
 
-        {/* Apple Health Card */}
+        {/* Health Provider Card */}
         <HealthPermissionCard
           status={healthPermission}
           loading={permLoading}
           onRequest={handleRequestPermission}
+          providerLabel={providerLabel}
         />
 
         {/* Sync button */}
         <SyncButton onSync={handleSync} loading={loading} />
 
         {/* Info */}
-        {healthPermission !== "granted" && (
+        {healthPermission !== "granted" && platform !== 'web' && (
           <p className="text-xs text-center text-muted-foreground">
-            Dados mock — conecte o Apple Health para dados reais
+            Dados mock — conecte o {providerLabel} para dados reais
+          </p>
+        )}
+
+        {platform === 'web' && (
+          <p className="text-xs text-center text-muted-foreground">
+            Baixe o app Renascer Connect para sincronizar dados reais do seu dispositivo
           </p>
         )}
       </div>
@@ -163,18 +193,26 @@ const ConnectDashboard = () => {
   );
 };
 
-// ---------- Apple Health Permission Card ----------
+// ---------- Health Permission Card (platform-adaptive) ----------
 
 function HealthPermissionCard({
   status,
   loading,
   onRequest,
+  providerLabel,
 }: {
   status: HealthPermission;
   loading: boolean;
   onRequest: () => void;
+  providerLabel: string;
 }) {
   if (status === "checking") return null;
+
+  const deniedHint = platform === 'ios'
+    ? 'Ative em Ajustes → Saúde → Acesso de dados'
+    : platform === 'android'
+      ? 'Ative nas configurações do Health Connect'
+      : '';
 
   return (
     <Card className="border">
@@ -183,7 +221,7 @@ function HealthPermissionCard({
           <div className="flex items-center gap-3">
             <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-foreground">Apple Health conectado</p>
+              <p className="text-sm font-medium text-foreground">{providerLabel} conectado</p>
               <p className="text-xs text-muted-foreground">Dados reais serão sincronizados</p>
             </div>
           </div>
@@ -194,7 +232,7 @@ function HealthPermissionCard({
             <div className="flex items-center gap-3">
               <Smartphone className="h-5 w-5 text-primary shrink-0" />
               <div>
-                <p className="text-sm font-medium text-foreground">Apple Health</p>
+                <p className="text-sm font-medium text-foreground">{providerLabel}</p>
                 <p className="text-xs text-muted-foreground">
                   Conecte para sincronizar passos, calorias e sono reais
                 </p>
@@ -206,7 +244,7 @@ function HealthPermissionCard({
               className="w-full"
               size="sm"
             >
-              {loading ? "Solicitando..." : "Conectar Apple Health"}
+              {loading ? "Solicitando..." : `Conectar ${providerLabel}`}
             </Button>
           </div>
         )}
@@ -216,9 +254,9 @@ function HealthPermissionCard({
             <XCircle className="h-5 w-5 text-amber-500 shrink-0" />
             <div>
               <p className="text-sm font-medium text-foreground">Permissão negada</p>
-              <p className="text-xs text-muted-foreground">
-                Ative em Ajustes → Saúde → Acesso de dados
-              </p>
+              {deniedHint && (
+                <p className="text-xs text-muted-foreground">{deniedHint}</p>
+              )}
             </div>
           </div>
         )}
@@ -227,9 +265,13 @@ function HealthPermissionCard({
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-muted-foreground shrink-0" />
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Apple Health não disponível</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                {platform === 'web' ? 'Sincronização via app' : `${providerLabel} não disponível`}
+              </p>
               <p className="text-xs text-muted-foreground">
-                Não disponível neste dispositivo
+                {platform === 'web'
+                  ? 'Use o app Renascer Connect no celular'
+                  : 'Não disponível neste dispositivo'}
               </p>
             </div>
           </div>
