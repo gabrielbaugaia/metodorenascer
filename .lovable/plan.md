@@ -1,63 +1,38 @@
 
+# Lembrete de Anamnese Pendente no Dashboard
 
-# Upload de Fotos Corporais pelo Admin
+## Problema
 
-## Contexto
+A logica atual do Dashboard tenta redirecionar para `/anamnese` quando detecta que a anamnese nao esta completa (linha 239). Porem, isso depende de uma cadeia de condicoes (`subscribed`, timing de loading, etc.) que pode falhar silenciosamente. Quando isso acontece, a cliente (como a Laiza) fica no Dashboard sem nenhuma indicacao visual de que precisa preencher a anamnese.
 
-A cliente Laiza nao conseguiu enviar as fotos pelo app, entao o admin precisa fazer o upload manualmente. Atualmente a pagina `AdminClienteDetalhes` exibe as fotos (quando existem) mas nao tem opcao de upload.
+## Solucao
 
-## O que sera feito
+Adicionar um **estado local `anamneseIncomplete`** no Dashboard e exibir um **card de alerta proeminente** quando a anamnese nao estiver completa. Isso funciona como rede de seguranca: mesmo que o redirect falhe, o lembrete visual aparece.
 
-Adicionar uma secao de **upload de fotos corporais** na pagina de detalhes do cliente (`AdminClienteDetalhes.tsx`) que permite ao admin:
+## Mudancas
 
-1. Selecionar e enviar imagens para Frente, Lado e Costas
-2. Ver preview antes do upload
-3. Substituir fotos existentes
-4. Salvar as URLs no perfil do cliente automaticamente
+### `src/pages/Dashboard.tsx`
 
-## Implementacao Tecnica
+1. Adicionar estado `const [anamneseIncomplete, setAnamneseIncomplete] = useState(false)`
 
-### Arquivo: `src/pages/admin/AdminClienteDetalhes.tsx`
+2. No `useEffect` de checagem de anamnese (linha 226), alem do redirect, setar `setAnamneseIncomplete(true)` quando `!anamneseComplete`
 
-Adicionar na secao de acoes rapidas (ou como um Card separado logo apos o header):
+3. Renderizar um card de alerta **antes** da secao de status executivo (ScoreRing), visivel apenas quando `anamneseIncomplete === true`:
+   - Fundo com borda amarela/primaria
+   - Icone de alerta (AlertTriangle, ja importado)
+   - Titulo: "Anamnese Pendente"
+   - Texto: "Preencha sua anamnese para que possamos gerar seus protocolos de treino, dieta e mentalidade personalizados."
+   - Botao CTA: "Preencher Anamnese Agora" que navega para `/anamnese`
 
-- **3 inputs de arquivo** (Frente, Lado, Costas) com preview da imagem selecionada
-- Ao selecionar uma imagem, fazer upload para o bucket `body-photos` no caminho `{userId}/{tipo}-{timestamp}.{ext}`
-- Apos upload bem-sucedido, atualizar o campo correspondente (`foto_frente_url`, `foto_lado_url`, `foto_costas_url`) na tabela `profiles`
-- Mostrar as fotos atuais com opcao de substituir
-- Indicador de loading durante o upload
+4. O card aparece para qualquer usuario com `anamneseIncomplete === true`, independente de estar subscribed ou nao — se nao estiver subscribed, a tela de planos ja aparece antes. Entao o card so sera visivel para quem tem assinatura mas nao completou a anamnese.
 
-### Logica de upload
+### Comportamento esperado
 
-```text
-1. Admin seleciona arquivo via input
-2. Validar tipo (image/jpeg, image/png, image/webp) e tamanho (max 5MB)
-3. Upload para storage: body-photos/{clientId}/{tipo}-{timestamp}.{extensao}
-4. Obter path do arquivo
-5. Atualizar profiles.foto_{tipo}_url com o path
-6. Gerar URL assinada para exibir preview
-7. Atualizar estado local
-```
+- Laiza (e qualquer cliente futura) vera um card grande e claro no topo do Dashboard dizendo que precisa preencher a anamnese
+- Ao clicar no botao, sera levada para `/anamnese`
+- Apos completar a anamnese, o campo `anamnese_completa` vira `true` e o card desaparece automaticamente na proxima carga do Dashboard
+- O redirect automatico continua existindo como primeira tentativa — o card e a rede de seguranca visual
 
-### RLS do bucket body-photos
+### Nenhuma mudanca de banco de dados necessaria
 
-O bucket `body-photos` ja existe e e privado. As politicas de RLS do storage precisam permitir que admins facam upload. Sera verificado se ja existe uma policy para admin no bucket -- caso contrario, sera criada uma migration adicionando:
-
-- INSERT para admins (upload)
-- SELECT para admins (visualizar)
-
-### Resumo visual
-
-O Card tera 3 colunas (Frente / Lado / Costas), cada uma com:
-- Foto atual (se existir) com URL assinada
-- Botao "Enviar foto" ou "Substituir"
-- Preview da foto selecionada
-- Indicador de progresso durante upload
-
-### Arquivos modificados
-
-| Arquivo | Mudanca |
-|---------|---------|
-| `src/pages/admin/AdminClienteDetalhes.tsx` | Adicionar secao de upload de fotos corporais com 3 inputs |
-| Migration SQL (se necessario) | Adicionar RLS policy para admin no bucket body-photos |
-
+Os campos `anamnese_completa`, `age`, `weight`, `height`, `goals` ja existem na tabela `profiles`.
