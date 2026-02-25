@@ -123,15 +123,27 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Stripe customer found", { customerId });
 
-    // Check for active subscriptions
-    const subscriptions = await stripe.subscriptions.list({
+    // Check for active OR trialing subscriptions
+    const activeSubscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
       limit: 1,
     });
 
-    if (subscriptions.data.length === 0) {
-      logStep("No active subscription found");
+    let subscription = activeSubscriptions.data[0] || null;
+
+    // If no active subscription, check for trialing
+    if (!subscription) {
+      const trialingSubscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "trialing",
+        limit: 1,
+      });
+      subscription = trialingSubscriptions.data[0] || null;
+    }
+
+    if (!subscription) {
+      logStep("No active or trialing subscription found");
       
       // Update local subscription status
       await supabaseClient
@@ -139,18 +151,27 @@ serve(async (req) => {
         .update({ status: "inactive" })
         .eq("user_id", user.id);
 
+      // Also reset entitlements
+      await supabaseClient
+        .from("entitlements")
+        .upsert({
+          user_id: user.id,
+          access_level: "none",
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+
       return new Response(
         JSON.stringify({ subscribed: false, subscription_end: null, product_id: null }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 },
       );
     }
 
-    const subscription = subscriptions.data[0];
     const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
     const productId = subscription.items.data[0]?.price?.product as string;
     
-    logStep("Active subscription found", { 
-      subscriptionId: subscription.id, 
+    logStep("Valid subscription found", { 
+      subscriptionId: subscription.id,
+      stripeStatus: subscription.status,
       endDate: subscriptionEnd,
       productId 
     });
@@ -244,6 +265,21 @@ serve(async (req) => {
 
     if (upsertError) {
       logStep("Error upserting subscription", { error: upsertError.message });
+    }
+
+    // Ensure entitlements are updated to "full" for active/trialing subscriptions
+    const { error: entitlementError } = await supabaseClient
+      .from("entitlements")
+      .upsert({
+        user_id: user.id,
+        access_level: "full",
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+
+    if (entitlementError) {
+      logStep("Error upserting entitlement", { error: entitlementError.message });
+    } else {
+      logStep("Entitlement updated to full");
     }
 
     return new Response(
