@@ -1,38 +1,48 @@
 
-# Lembrete de Anamnese Pendente no Dashboard
+
+# Corrigir Acesso da Laiza e Bug do check-subscription
 
 ## Problema
 
-A logica atual do Dashboard tenta redirecionar para `/anamnese` quando detecta que a anamnese nao esta completa (linha 239). Porem, isso depende de uma cadeia de condicoes (`subscribed`, timing de loading, etc.) que pode falhar silenciosamente. Quando isso acontece, a cliente (como a Laiza) fica no Dashboard sem nenhuma indicacao visual de que precisa preencher a anamnese.
+A funcao `check-subscription` consulta o Stripe filtrando apenas por `status: "active"` (linha 129). A assinatura da Laiza no Stripe esta com status `"trialing"` (periodo de teste do Stripe), entao a funcao nao encontra nada e sobrescreve o status local para "inactive", bloqueando o acesso dela.
 
-## Solucao
+Fluxo do bug:
+1. `sync-stripe-subscription` sincroniza corretamente como "active" no banco local
+2. `check-subscription` roda, consulta Stripe com filtro `status: "active"`
+3. Stripe retorna 0 resultados (porque la esta "trialing")
+4. Funcao sobrescreve status local para "inactive"
+5. Entitlements ficam como "none" -- acesso bloqueado
 
-Adicionar um **estado local `anamneseIncomplete`** no Dashboard e exibir um **card de alerta proeminente** quando a anamnese nao estiver completa. Isso funciona como rede de seguranca: mesmo que o redirect falhe, o lembrete visual aparece.
+## Correcao
 
-## Mudancas
+### 1. `supabase/functions/check-subscription/index.ts`
 
-### `src/pages/Dashboard.tsx`
+Alterar a consulta do Stripe (linha 127-131) para buscar TAMBEM assinaturas com status "trialing":
 
-1. Adicionar estado `const [anamneseIncomplete, setAnamneseIncomplete] = useState(false)`
+- Trocar `status: "active"` por duas consultas: primeiro "active", se nao encontrar, buscar "trialing"
+- Ou usar a API do Stripe sem filtro de status e verificar manualmente se e "active" ou "trialing"
 
-2. No `useEffect` de checagem de anamnese (linha 226), alem do redirect, setar `setAnamneseIncomplete(true)` quando `!anamneseComplete`
+Abordagem escolhida: remover o filtro `status: "active"` e filtrar no codigo, aceitando "active" e "trialing" como validos.
 
-3. Renderizar um card de alerta **antes** da secao de status executivo (ScoreRing), visivel apenas quando `anamneseIncomplete === true`:
-   - Fundo com borda amarela/primaria
-   - Icone de alerta (AlertTriangle, ja importado)
-   - Titulo: "Anamnese Pendente"
-   - Texto: "Preencha sua anamnese para que possamos gerar seus protocolos de treino, dieta e mentalidade personalizados."
-   - Botao CTA: "Preencher Anamnese Agora" que navega para `/anamnese`
+Tambem: quando encontrar uma assinatura "trialing", mapear para status local "active" (como o sync ja faz) e atualizar o entitlement para "full".
 
-4. O card aparece para qualquer usuario com `anamneseIncomplete === true`, independente de estar subscribed ou nao — se nao estiver subscribed, a tela de planos ja aparece antes. Entao o card so sera visivel para quem tem assinatura mas nao completou a anamnese.
+### 2. Atualizar entitlements junto com a subscription
 
-### Comportamento esperado
+Na secao de upsert da subscription (linha 231-243), adicionar um upsert na tabela `entitlements` para garantir que o access_level seja atualizado para "full" quando houver assinatura ativa ou trialing.
 
-- Laiza (e qualquer cliente futura) vera um card grande e claro no topo do Dashboard dizendo que precisa preencher a anamnese
-- Ao clicar no botao, sera levada para `/anamnese`
-- Apos completar a anamnese, o campo `anamnese_completa` vira `true` e o card desaparece automaticamente na proxima carga do Dashboard
-- O redirect automatico continua existindo como primeira tentativa — o card e a rede de seguranca visual
+### 3. Acesso imediato da Laiza
 
-### Nenhuma mudanca de banco de dados necessaria
+A correcao do codigo resolve o problema para o futuro. Para liberar o acesso da Laiza AGORA, o admin pode usar o override de cortesia que ja existe no sistema (na pagina de detalhes do cliente), ou a correcao do check-subscription vai resolver na proxima vez que ela abrir o app.
 
-Os campos `anamnese_completa`, `age`, `weight`, `height`, `goals` ja existem na tabela `profiles`.
+## Resumo de Mudancas
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `supabase/functions/check-subscription/index.ts` | Aceitar status "trialing" do Stripe como valido; atualizar entitlements junto com subscription |
+
+## Impacto
+
+- Qualquer cliente que pague via Stripe e entre em periodo de trial (ex: 7 dias gratis antes da cobranca) tera acesso liberado imediatamente
+- Nenhuma tabela alterada, apenas logica da edge function
+- Backward compatible: assinaturas "active" continuam funcionando normalmente
+
