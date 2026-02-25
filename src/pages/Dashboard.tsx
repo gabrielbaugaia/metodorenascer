@@ -85,6 +85,7 @@ export default function Dashboard() {
   const [checkingPayment, setCheckingPayment] = useState(true);
   const [needsEvolutionPhotos, setNeedsEvolutionPhotos] = useState(false);
   const [daysSinceLastProtocol, setDaysSinceLastProtocol] = useState(0);
+  const [anamneseIncomplete, setAnamneseIncomplete] = useState(false);
 
   // Fetch consistency data
   const { data: consistencyData } = useQuery({
@@ -236,8 +237,11 @@ export default function Dashboard() {
           .single();
         const hasEssentialData = !!(data?.age && data?.weight && data?.height && data?.goals);
         const anamneseComplete = data?.anamnese_completa === true || hasEssentialData;
-        if (!anamneseComplete && subscribed && !isAdmin) {
-          navigate("/anamnese");
+        if (!anamneseComplete && !isAdmin) {
+          setAnamneseIncomplete(true);
+          if (subscribed) {
+            navigate("/anamnese");
+          }
         }
       } catch (error) {
         console.error("Error checking anamnese:", error);
@@ -336,6 +340,24 @@ export default function Dashboard() {
       <OnboardingTour />
 
       <div className="container mx-auto max-w-xl space-y-6">
+        {/* Alerta de Anamnese Pendente */}
+        {anamneseIncomplete && (
+          <Card className="border-yellow-500/40 bg-yellow-500/5">
+            <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-yellow-500" />
+              </div>
+              <CardTitle className="text-lg">Anamnese Pendente</CardTitle>
+              <p className="text-sm text-muted-foreground max-w-sm">
+                Preencha sua anamnese para que possamos gerar seus protocolos de treino, dieta e mentalidade personalizados.
+              </p>
+              <Button variant="fire" size="lg" className="w-full mt-2" onClick={() => navigate("/anamnese")}>
+                Preencher Anamnese Agora
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 1. Executive Status — ScoreRing */}
         <div className="flex flex-col items-center gap-4 py-4">
           <ScoreRing score={renascer.score} classification={renascer.classification} />
