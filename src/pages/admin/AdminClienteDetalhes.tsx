@@ -141,6 +141,7 @@ export default function AdminClienteDetalhes() {
   const [newEmail, setNewEmail] = useState("");
   const [updatingEmail, setUpdatingEmail] = useState(false);
   const [syncingStripe, setSyncingStripe] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -988,96 +989,112 @@ export default function AdminClienteDetalhes() {
           </Card>
         </div>
 
-        {/* Fotos Corporais - Em destaque no topo */}
+        {/* Fotos Corporais - Upload pelo Admin */}
         <Card className="border-primary/30 bg-primary/5">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Camera className="h-5 w-5 text-primary" />
-              Fotos Corporais da Anamnese
+              Fotos Corporais
             </CardTitle>
             <CardDescription>
-              Fotos enviadas pelo cliente durante o preenchimento da anamnese
+              Envie ou substitua as fotos corporais do cliente (Frente, Lado, Costas)
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {(profile.foto_frente_url || profile.foto_lado_url || profile.foto_costas_url) ? (
-              <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                <div className="space-y-1 sm:space-y-2">
-                  <p className="text-xs sm:text-sm font-medium text-center">Frente</p>
-                  {profile.foto_frente_url ? (
-                    signedBodyPhotos.frente ? (
-                      <a href={signedBodyPhotos.frente} target="_blank" rel="noopener noreferrer">
-                        <img 
-                          src={signedBodyPhotos.frente} 
-                          alt="Foto corporal - Frente" 
-                          className="aspect-[3/4] w-full object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                          loading="lazy"
-                        />
-                      </a>
-                    ) : (
-                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
-                        <Loader2 className="h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    )
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              {([
+                { key: "frente" as const, label: "Frente", field: "foto_frente_url" as const },
+                { key: "lado" as const, label: "Lado", field: "foto_lado_url" as const },
+                { key: "costas" as const, label: "Costas", field: "foto_costas_url" as const },
+              ]).map(({ key, label, field }) => (
+                <div key={key} className="space-y-2">
+                  <p className="text-xs sm:text-sm font-medium text-center">{label}</p>
+                  {profile[field] && signedBodyPhotos[key] ? (
+                    <a href={signedBodyPhotos[key]!} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={signedBodyPhotos[key]!}
+                        alt={`Foto corporal - ${label}`}
+                        className="aspect-[3/4] w-full object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
+                        loading="lazy"
+                      />
+                    </a>
+                  ) : profile[field] ? (
+                    <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
+                      <Loader2 className="h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground" />
+                    </div>
                   ) : (
                     <div className="aspect-[3/4] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 flex items-center justify-center">
-                      <span className="text-[10px] sm:text-xs text-muted-foreground">Não enviada</span>
+                      <Camera className="h-6 w-6 text-muted-foreground/40" />
                     </div>
                   )}
+                  <label className="block">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={uploadingPhoto !== null}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !id) return;
+
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error("Imagem muito grande (máx 5MB)");
+                          return;
+                        }
+
+                        setUploadingPhoto(key);
+                        try {
+                          const ext = file.name.split(".").pop() || "jpg";
+                          const path = `${id}/${key}-${Date.now()}.${ext}`;
+
+                          const { error: uploadErr } = await supabase.storage
+                            .from("body-photos")
+                            .upload(path, file, { upsert: true });
+
+                          if (uploadErr) throw uploadErr;
+
+                          const { error: updateErr } = await supabase
+                            .from("profiles")
+                            .update({ [field]: path })
+                            .eq("id", id);
+
+                          if (updateErr) throw updateErr;
+
+                          setProfile((prev) => prev ? { ...prev, [field]: path } : prev);
+
+                          const signedUrl = await createBodyPhotosSignedUrl(path);
+                          setSignedBodyPhotos((prev) => ({ ...prev, [key]: signedUrl }));
+
+                          toast.success(`Foto ${label} enviada com sucesso!`);
+                        } catch (err: any) {
+                          console.error(`Erro upload ${key}:`, err);
+                          toast.error(err.message || `Erro ao enviar foto ${label}`);
+                        } finally {
+                          setUploadingPhoto(null);
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs"
+                      disabled={uploadingPhoto !== null}
+                      asChild
+                    >
+                      <span className="cursor-pointer">
+                        {uploadingPhoto === key ? (
+                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        ) : (
+                          <Camera className="h-3 w-3 mr-1" />
+                        )}
+                        {profile[field] ? "Substituir" : "Enviar"}
+                      </span>
+                    </Button>
+                  </label>
                 </div>
-                <div className="space-y-1 sm:space-y-2">
-                  <p className="text-xs sm:text-sm font-medium text-center">Lado</p>
-                  {profile.foto_lado_url ? (
-                    signedBodyPhotos.lado ? (
-                      <a href={signedBodyPhotos.lado} target="_blank" rel="noopener noreferrer">
-                        <img 
-                          src={signedBodyPhotos.lado} 
-                          alt="Foto corporal - Lado" 
-                          className="aspect-[3/4] w-full object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                          loading="lazy"
-                        />
-                      </a>
-                    ) : (
-                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
-                        <Loader2 className="h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    )
-                  ) : (
-                    <div className="aspect-[3/4] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 flex items-center justify-center">
-                      <span className="text-[10px] sm:text-xs text-muted-foreground">Não enviada</span>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-1 sm:space-y-2">
-                  <p className="text-xs sm:text-sm font-medium text-center">Costas</p>
-                  {profile.foto_costas_url ? (
-                    signedBodyPhotos.costas ? (
-                      <a href={signedBodyPhotos.costas} target="_blank" rel="noopener noreferrer">
-                        <img 
-                          src={signedBodyPhotos.costas} 
-                          alt="Foto corporal - Costas" 
-                          className="aspect-[3/4] w-full object-cover rounded-lg border border-border hover:opacity-80 transition-opacity"
-                          loading="lazy"
-                        />
-                      </a>
-                    ) : (
-                      <div className="aspect-[3/4] rounded-lg border border-border bg-muted flex items-center justify-center">
-                        <Loader2 className="h-4 w-4 sm:h-6 sm:w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    )
-                  ) : (
-                    <div className="aspect-[3/4] rounded-lg border border-dashed border-muted-foreground/30 bg-muted/50 flex items-center justify-center">
-                      <span className="text-[10px] sm:text-xs text-muted-foreground">Não enviada</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-6 sm:py-8 text-muted-foreground">
-                <Camera className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Cliente ainda não enviou fotos corporais</p>
-              </div>
-            )}
+              ))}
+            </div>
           </CardContent>
         </Card>
 
