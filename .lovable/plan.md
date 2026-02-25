@@ -1,162 +1,63 @@
 
 
-# Finalizar Camada Web/TypeScript — iOS + Android Health Bridge
+# Upload de Fotos Corporais pelo Admin
 
-## Objetivo
+## Contexto
 
-Criar a bridge completa para Android Health Connect, refatorar o fluxo de sincronizacao para detectar plataforma automaticamente (iOS/Android/Web), e atualizar a UI para refletir o provider correto.
+A cliente Laiza nao conseguiu enviar as fotos pelo app, entao o admin precisa fazer o upload manualmente. Atualmente a pagina `AdminClienteDetalhes` exibe as fotos (quando existem) mas nao tem opcao de upload.
 
----
+## O que sera feito
 
-## Arquivos a Criar
+Adicionar uma secao de **upload de fotos corporais** na pagina de detalhes do cliente (`AdminClienteDetalhes.tsx`) que permite ao admin:
 
-### 1. `src/services/platform.ts`
-Utilitario centralizado de deteccao de plataforma. Substitui todas as funcoes `isNative()` espalhadas.
+1. Selecionar e enviar imagens para Frente, Lado e Costas
+2. Ver preview antes do upload
+3. Substituir fotos existentes
+4. Salvar as URLs no perfil do cliente automaticamente
 
-```text
-- Exporta: platform ('ios' | 'android' | 'web')
-- Exporta: isNative (boolean)
-- Usa Capacitor.getPlatform() quando disponivel
-- Fallback para 'web' quando Capacitor nao existe
-```
+## Implementacao Tecnica
 
-### 2. `src/services/healthConnect.ts`
-Bridge TypeScript para o plugin nativo Android Health Connect. Mesma estrutura do `healthkit.ts`.
+### Arquivo: `src/pages/admin/AdminClienteDetalhes.tsx`
 
-```text
-- registerPlugin('HealthConnectPlugin')
-- Interface HealthConnectPluginInterface com:
-  - isAvailable()
-  - requestPermissions()
-  - getTodayMetrics()
-  - getWorkoutsLast24h()
-- Funcoes publicas:
-  - healthConnectIsAvailable()
-  - requestHealthConnectPermissions()
-  - healthConnectGetTodayMetrics() (com cache 30s)
-  - healthConnectGetWorkoutsLast24h()
-- Mock fallback identico ao do healthkit.ts para quando plugin nativo nao estiver disponivel
-- source retornada: 'google' ou 'health_connect'
-```
+Adicionar na secao de acoes rapidas (ou como um Card separado logo apos o header):
 
----
+- **3 inputs de arquivo** (Frente, Lado, Costas) com preview da imagem selecionada
+- Ao selecionar uma imagem, fazer upload para o bucket `body-photos` no caminho `{userId}/{tipo}-{timestamp}.{ext}`
+- Apos upload bem-sucedido, atualizar o campo correspondente (`foto_frente_url`, `foto_lado_url`, `foto_costas_url`) na tabela `profiles`
+- Mostrar as fotos atuais com opcao de substituir
+- Indicador de loading durante o upload
 
-## Arquivos a Modificar
-
-### 3. `src/services/healthkit.ts`
-Tornar exclusivo para iOS. Remover a funcao `isNative()` local e usar `platform.ts`.
-
-Mudancas:
-- Importar `platform` de `./platform`
-- Substituir `isNative()` por `platform === 'ios'` no `getPlugin()`
-- Manter todas as funcoes publicas intactas (sao usadas como fallback pelo healthSync)
-- Manter mocks para backward compatibility
-
-### 4. `src/services/healthSync.ts`
-Refatorar para selecionar provider por plataforma automaticamente.
-
-Mudancas:
-- Importar `platform` de `./platform`
-- Importar funcoes do `healthConnect.ts`
-- Logica:
+### Logica de upload
 
 ```text
-se platform === 'ios':
-  usar healthkitGetTodayMetrics / healthkitGetWorkoutsLast24h
-  source = 'apple'
-
-se platform === 'android':
-  usar healthConnectGetTodayMetrics / healthConnectGetWorkoutsLast24h
-  source = 'google'
-
-se platform === 'web':
-  usar mock fallback (manter comportamento atual)
-  source = 'mock'
+1. Admin seleciona arquivo via input
+2. Validar tipo (image/jpeg, image/png, image/webp) e tamanho (max 5MB)
+3. Upload para storage: body-photos/{clientId}/{tipo}-{timestamp}.{extensao}
+4. Obter path do arquivo
+5. Atualizar profiles.foto_{tipo}_url com o path
+6. Gerar URL assinada para exibir preview
+7. Atualizar estado local
 ```
 
-- Atualizar tipo SyncResult.source para incluir `'google' | 'mock'`
-- Mensagens de sucesso adaptadas por plataforma
+### RLS do bucket body-photos
 
-### 5. `src/services/authStore.ts`
-Substituir `isNative()` local pela importacao de `platform.ts`.
+O bucket `body-photos` ja existe e e privado. As politicas de RLS do storage precisam permitir que admins facam upload. Sera verificado se ja existe uma policy para admin no bucket -- caso contrario, sera criada uma migration adicionando:
 
-Mudanca minima: trocar `function isNative()` por `import { isNative } from './platform'` e remover a funcao local.
+- INSERT para admins (upload)
+- SELECT para admins (visualizar)
 
-### 6. `src/pages/connect/ConnectDashboard.tsx`
-Adaptar UI para mostrar provider correto por plataforma.
+### Resumo visual
 
-Mudancas:
-- Importar `platform` de `@/services/platform`
-- Se `platform === 'ios'`: mostrar "Apple Health" (comportamento atual)
-- Se `platform === 'android'`: mostrar "Health Connect" com icone Android, textos e labels adaptados
-- Se `platform === 'web'`: mostrar ambas opcoes como informativas
-- Importar `healthConnectIsAvailable` e `requestHealthConnectPermissions` do `healthConnect.ts`
-- No `useEffect` de init: chamar o provider correto baseado na plataforma
-- Renomear `HealthPermissionCard` para aceitar prop `providerName` e `providerIcon`
+O Card tera 3 colunas (Frente / Lado / Costas), cada uma com:
+- Foto atual (se existir) com URL assinada
+- Botao "Enviar foto" ou "Substituir"
+- Preview da foto selecionada
+- Indicador de progresso durante upload
 
-### 7. `src/components/renascer/WearableModal.tsx`
-Adaptar conteudo baseado na plataforma.
+### Arquivos modificados
 
-Mudancas:
-- Importar `platform, isNative` de `@/services/platform`
-- Se `isNative`:
-  - Mostrar apenas o provider da plataforma atual (nao "em breve")
-  - Texto: "Toque em Sincronizar para conectar seu [Apple Health / Health Connect]"
-  - Remover frase "Funcionalidade em desenvolvimento"
-- Se web:
-  - Manter comportamento atual (informativo sobre ambas plataformas)
-  - Manter texto "Baixe o Conector Renascer..."
-
----
-
-## Resumo de Arquivos
-
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `src/services/platform.ts` | Criar | Deteccao centralizada de plataforma |
-| `src/services/healthConnect.ts` | Criar | Bridge TypeScript para Android Health Connect |
-| `src/services/healthkit.ts` | Modificar | Tornar exclusivo iOS, usar platform.ts |
-| `src/services/healthSync.ts` | Modificar | Selecao automatica de provider por plataforma |
-| `src/services/authStore.ts` | Modificar | Usar platform.ts centralizado |
-| `src/pages/connect/ConnectDashboard.tsx` | Modificar | UI adaptativa por plataforma |
-| `src/components/renascer/WearableModal.tsx` | Modificar | Conteudo dinamico nativo vs web |
-
----
-
-## Detalhes Tecnicos
-
-### Contrato do HealthConnectPlugin (Android nativo - Kotlin)
-
-A bridge TypeScript define a interface que o plugin nativo Kotlin deve implementar. Os metodos sao identicos ao HealthKitPlugin:
-
-```text
-HealthConnectPluginInterface {
-  isAvailable(): Promise<{ available: boolean }>
-  requestPermissions(): Promise<{ granted: boolean }>
-  getTodayMetrics(): Promise<TodayMetrics>
-  getWorkoutsLast24h(): Promise<{ workouts: HealthConnectWorkout[] }>
-}
-```
-
-O plugin nativo Kotlin (HealthConnectPlugin.kt) NAO faz parte deste sprint — ele precisa ser criado manualmente no Android Studio. A bridge TypeScript esta preparada para funcionar com mock quando o plugin nativo nao estiver presente.
-
-### Fluxo de dados por plataforma
-
-```text
-iOS:
-  ConnectDashboard -> healthkit.ts -> HealthKitPlugin (Swift) -> Apple HealthKit -> healthSync.ts -> Supabase
-
-Android:
-  ConnectDashboard -> healthConnect.ts -> HealthConnectPlugin (Kotlin) -> Health Connect -> healthSync.ts -> Supabase
-
-Web:
-  ConnectDashboard -> healthSync.ts -> mock data -> Supabase
-```
-
-### Backward Compatibility
-
-- Nenhuma rota alterada
-- Nenhuma tabela do banco modificada
-- O backend (health-sync edge function) ja aceita ambos os sources ('apple', 'google')
-- Mocks continuam funcionando identicamente na web
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/pages/admin/AdminClienteDetalhes.tsx` | Adicionar secao de upload de fotos corporais com 3 inputs |
+| Migration SQL (se necessario) | Adicionar RLS policy para admin no bucket body-photos |
 
