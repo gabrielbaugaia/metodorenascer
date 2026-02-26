@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { WearableModal } from "./WearableModal";
 import { useWearables } from "@/lib/wearables/useWearables";
-import { ChevronDown, Camera, X, Footprints, Flame, Timer, PersonStanding, Route } from "lucide-react";
+import { ChevronDown, Camera, X, Footprints, Flame, Timer, PersonStanding, Route, Loader2 } from "lucide-react";
 
 interface ManualInputProps {
   dataMode: string;
@@ -49,6 +49,30 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
   const [distanceKm, setDistanceKm] = useState<string>("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [extracting, setExtracting] = useState(false);
+
+  const extractFitnessData = async (base64: string) => {
+    try {
+      setExtracting(true);
+      const { data, error } = await supabase.functions.invoke("extract-fitness-data", {
+        body: { image_base64: base64 },
+      });
+      if (error) throw error;
+      if (data) {
+        if (data.steps != null) setSteps(String(data.steps));
+        if (data.active_calories != null) setActiveCals(String(data.active_calories));
+        if (data.exercise_minutes != null) setExerciseMins(String(data.exercise_minutes));
+        if (data.standing_hours != null) setStandingHrs(String(data.standing_hours));
+        if (data.distance_km != null) setDistanceKm(String(data.distance_km));
+        toast.success("Dados lidos da imagem com sucesso!");
+      }
+    } catch (err) {
+      console.error("OCR extraction failed:", err);
+      toast.error("Não foi possível ler a imagem. Preencha manualmente.");
+    } finally {
+      setExtracting(false);
+    }
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,8 +82,13 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       return;
     }
     setScreenshotFile(file);
+    setFitnessOpen(true);
     const reader = new FileReader();
-    reader.onload = (ev) => setScreenshotPreview(ev.target?.result as string);
+    reader.onload = (ev) => {
+      const result = ev.target?.result as string;
+      setScreenshotPreview(result);
+      extractFitnessData(result);
+    };
     reader.readAsDataURL(file);
   };
 
@@ -266,8 +295,15 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-3 pt-2">
           <p className="text-[11px] text-muted-foreground">
-            Preencha com os dados do Apple Fitness, Google Fit ou relógio.
+            Envie um print do Apple Fitness, Google Fit ou Samsung Health para preencher automaticamente.
           </p>
+
+          {extracting && (
+            <div className="flex items-center gap-2 py-3 px-3 rounded-lg bg-primary/10 border border-primary/20">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span className="text-xs font-medium text-primary">Lendo dados da imagem...</span>
+            </div>
+          )}
 
           {/* Steps */}
           <div className="space-y-1">
