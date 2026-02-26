@@ -33,6 +33,7 @@ import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
 import { AdminAccessControlSection } from "@/components/admin/AdminAccessControlSection";
 import { AdminRenascerSection } from "@/components/admin/AdminRenascerSection";
+import { BodyAssessmentImport } from "@/components/admin/BodyAssessmentImport";
 import {
   Dialog,
   DialogContent,
@@ -1098,8 +1099,14 @@ export default function AdminClienteDetalhes() {
           </CardContent>
         </Card>
 
+        {/* Avaliação Corporal Externa */}
+        <BodyAssessmentImport 
+          clientId={id!} 
+          onAssessmentImported={() => fetchProfile()} 
+        />
+
         {/* Evolução do Cliente */}
-        <AdminEvolutionSection 
+        <AdminEvolutionSection
           clientId={id!}
           clientName={profile.full_name}
           initialWeight={profile.weight}
