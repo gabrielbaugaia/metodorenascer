@@ -940,36 +940,54 @@ export type Database = {
       }
       manual_day_logs: {
         Row: {
+          active_calories: number | null
           created_at: string | null
           date: string
+          distance_km: number | null
           energy_focus: number | null
+          exercise_minutes: number | null
+          fitness_screenshot_path: string | null
           id: string
           rpe: number | null
           sleep_hours: number | null
+          standing_hours: number | null
+          steps: number | null
           stress_level: number | null
           trained_today: boolean | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          active_calories?: number | null
           created_at?: string | null
           date?: string
+          distance_km?: number | null
           energy_focus?: number | null
+          exercise_minutes?: number | null
+          fitness_screenshot_path?: string | null
           id?: string
           rpe?: number | null
           sleep_hours?: number | null
+          standing_hours?: number | null
+          steps?: number | null
           stress_level?: number | null
           trained_today?: boolean | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          active_calories?: number | null
           created_at?: string | null
           date?: string
+          distance_km?: number | null
           energy_focus?: number | null
+          exercise_minutes?: number | null
+          fitness_screenshot_path?: string | null
           id?: string
           rpe?: number | null
           sleep_hours?: number | null
+          standing_hours?: number | null
+          steps?: number | null
           stress_level?: number | null
           trained_today?: boolean | null
           updated_at?: string | null
