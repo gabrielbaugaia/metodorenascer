@@ -33,6 +33,7 @@ import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
 import { AdminAccessControlSection } from "@/components/admin/AdminAccessControlSection";
 import { AdminRenascerSection } from "@/components/admin/AdminRenascerSection";
+import { BodyAssessmentImport } from "@/components/admin/BodyAssessmentImport";
 import {
   Dialog,
   DialogContent,
