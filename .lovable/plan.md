@@ -1,83 +1,68 @@
-Dados do Apple Fitness -- Input Manual + Print de Tela
-
-## O que sera feito
-
-Expandir o formulario de registro diario para que o cliente possa informar os dados que ve no app Fitness da Apple (passos, calorias, minutos de exercicio, horas em pe, distancia) e tambem enviar um **print de tela** como comprovante. Isso permite ao admin e ao sistema usar esses dados para gerar analises mesmo sem o wearable conectado.
-
-## Mudancas
-
-### 1. Banco de dados -- nova migration
-
-Adicionar colunas na tabela `manual_day_logs`:
 
 
-| Coluna                  | Tipo         | Default |
-| ----------------------- | ------------ | ------- |
-| steps                   | integer      | null    |
-| active_calories         | integer      | null    |
-| exercise_minutes        | integer      | null    |
-| standing_hours          | integer      | null    |
-| distance_km             | numeric(5,2) | null    |
-| fitness_screenshot_path | text         | null    |
+# Leitura Automática de Print do Fitness com IA (OCR)
 
+## Objetivo
 
-Tambem sincronizar `steps` e `active_calories` na tabela `health_daily` (que ja tem essas colunas).
+Quando o cliente enviar um print da tela do Apple Fitness, Google Fit ou Samsung Health, a IA vai ler a imagem automaticamente e preencher os campos (Passos, Calorias Ativas, Minutos de Exercicio, Horas em Pe, Distancia) sem o cliente precisar digitar nada.
 
-### 2. Upload de screenshot -- Storage
+## Como vai funcionar
 
-Usar o bucket existente `body-photos` (ou criar um novo `fitness-screenshots`). O print sera salvo em `fitness-screenshots/{userId}/{date}.{ext}`. As RLS policies do storage precisam permitir que o proprio usuario faca upload.
+1. Cliente tira print da tela do app de fitness no celular (iPhone ou Android)
+2. Clica em "Enviar print" no formulario
+3. Sistema envia a imagem para uma funcao backend que usa IA com visao (Gemini) para extrair os dados
+4. Os campos sao preenchidos automaticamente com os valores lidos
+5. Cliente pode conferir, ajustar se necessario, e clicar "Salvar meu dia"
 
-### 3. Formulario expandido -- `ManualInput.tsx`
+## Mudancas Tecnicas
 
-Adicionar uma secao colapsavel **"Dados do Apple Fitness / Relogio"** abaixo dos campos existentes (sono, estresse, energia, treino):
+### 1. Nova Edge Function: `extract-fitness-data`
 
-- **Passos** -- input numerico
-- **Calorias Ativas** -- input numerico
-- **Minutos de Exercicio** -- input numerico
-- **Horas em Pe** -- input numerico
-- **Distancia (km)** -- input numerico com step 0.1
-- **Print da tela do Fitness** -- botao de upload com preview da imagem
+Cria uma funcao backend que:
+- Recebe a imagem em base64
+- Envia para o Gemini (google/gemini-2.5-flash) via Lovable AI Gateway com um prompt especifico para extrair dados de fitness
+- Usa tool calling para retornar JSON estruturado com: `steps`, `active_calories`, `exercise_minutes`, `standing_hours`, `distance_km`
+- Retorna os valores extraidos para o frontend
 
-A secao sera opcional (campos nao preenchidos ficam null). Isso nao quebra o fluxo rapido de 30 segundos para quem nao tem esses dados.
+Prompt da IA sera algo como: "Analise este print de tela de um app de fitness (Apple Fitness, Google Fit, Samsung Health, etc). Extraia os seguintes dados numericos visiveis na imagem: passos, calorias ativas, minutos de exercicio, horas em pe, distancia em km."
 
-### 4. Salvamento
+### 2. Atualizar `ManualInput.tsx`
 
-Ao clicar "Salvar meu dia", os novos campos sao incluidos no upsert de `manual_day_logs`. Os campos `steps` e `active_calories` tambem sao espelhados na tabela `health_daily` (como ja e feito com `sleep_minutes`).
+- Ao selecionar uma imagem, alem de mostrar o preview, disparar automaticamente a chamada para `extract-fitness-data`
+- Mostrar um estado de loading "Lendo dados..." enquanto a IA processa
+- Quando a resposta chegar, preencher automaticamente os campos de passos, calorias, etc.
+- Se algum campo nao for encontrado na imagem, deixar vazio para o cliente preencher manualmente
+- Manter a possibilidade de editar qualquer campo apos o preenchimento automatico
 
-### 5. Visualizacao no historico
-
-O componente `RecentLogsHistory` podera exibir icones extras (passos, calorias) quando esses dados existirem, mas isso e uma melhoria incremental e nao bloqueia o lancamento.
-
-## Detalhes Tecnicos
-
-### Arquivos modificados
-
-
-| Arquivo                                   | Mudanca                                                          |
-| ----------------------------------------- | ---------------------------------------------------------------- |
-| Migration SQL                             | Adicionar 6 colunas em `manual_day_logs` + policy de storage     |
-| `src/components/renascer/ManualInput.tsx` | Expandir formulario com campos de fitness + upload de screenshot |
-| `src/integrations/supabase/types.ts`      | Auto-atualizado apos migration                                   |
-
-
-### Fluxo do upload de screenshot
+### 3. Fluxo visual
 
 ```text
-1. Cliente tira print no iPhone
-2. Clica "Enviar print" no formulario
-3. Seleciona imagem da galeria
-4. Preview aparece no formulario
-5. Ao clicar "Salvar meu dia", imagem sobe para Storage
-6. Path salvo em manual_day_logs.fitness_screenshot_path
-7. Admin pode ver o print na pagina de detalhes do cliente
+[Cliente envia print]
+       |
+  [Preview aparece]
+       |
+  [Loading: "Lendo dados da imagem..."]
+       |
+  [IA retorna valores]
+       |
+  [Campos preenchidos automaticamente]
+       |
+  [Cliente confere e clica "Salvar meu dia"]
 ```
 
-### Experiencia do usuario
+## Arquivos
 
-O formulario continua rapido para quem so quer registrar sono/estresse/energia. Os campos de fitness ficam em uma secao expansivel com titulo "Dados do Fitness (opcional)" -- o cliente so abre se quiser preencher. O upload de print e um botao com icone de camera, simples e direto.
+| Arquivo | Mudanca |
+|---------|---------|
+| `supabase/functions/extract-fitness-data/index.ts` | Nova edge function com OCR via Gemini |
+| `src/components/renascer/ManualInput.tsx` | Chamar a funcao apos upload e preencher campos |
 
-&nbsp;
+## Sobre analise e graficos
 
-observação: do Android também se
+Os dados extraidos (passos, calorias, etc.) ja sao salvos nas tabelas `manual_day_logs` e `health_daily`. O sistema ja possui:
+- Score de prontidao (Renascer Score) que usa esses dados
+- Sparkline de tendencia dos ultimos 7 dias
+- Indicadores de corpo (Consistencia, Recuperacao, Capacidade)
 
-For o sistema do cliente poder anexar do Android tbm 
+Com os dados preenchidos via OCR, todos esses graficos e analises ja serao alimentados automaticamente. Nenhuma mudanca adicional e necessaria para gerar as analises -- basta ter os dados preenchidos.
+
