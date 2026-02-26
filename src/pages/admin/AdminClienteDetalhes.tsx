@@ -1099,8 +1099,14 @@ export default function AdminClienteDetalhes() {
           </CardContent>
         </Card>
 
+        {/* Avaliação Corporal Externa */}
+        <BodyAssessmentImport 
+          clientId={id!} 
+          onAssessmentImported={() => fetchProfile()} 
+        />
+
         {/* Evolução do Cliente */}
-        <AdminEvolutionSection 
+        <AdminEvolutionSection
           clientId={id!}
           clientName={profile.full_name}
           initialWeight={profile.weight}

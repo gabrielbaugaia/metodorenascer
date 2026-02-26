@@ -123,3 +123,6 @@ verify_jwt = false
 
 [functions.extract-fitness-data]
 verify_jwt = false
+
+[functions.extract-body-assessment]
+verify_jwt = false
