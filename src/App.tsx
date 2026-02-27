@@ -64,6 +64,7 @@ const ConnectLogin = lazy(() => import("./pages/connect/ConnectLogin"));
 const ConnectDashboard = lazy(() => import("./pages/connect/ConnectDashboard"));
 const ConnectSync = lazy(() => import("./pages/connect/ConnectSync"));
 const Renascer = lazy(() => import("./pages/Renascer"));
+const AnamneseExterna = lazy(() => import("./pages/AnamneseExterna"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,6 +104,7 @@ const App = () => (
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/oferta" element={<Oferta />} />
+            <Route path="/anamnese-externa/:token" element={<AnamneseExterna />} />
 
             {/* ROTAS QUE REQUEREM APENAS AUTENTICAÇÃO (mostram planos se sem assinatura) */}
             <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />

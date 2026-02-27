@@ -28,8 +28,11 @@ import {
   AlertTriangle,
   Mail,
   RefreshCw,
+  Link,
+  FileDown,
 } from "lucide-react";
 import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
+import { generateBlankAnamnesePdf } from "@/lib/generateBlankAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
 import { AdminAccessControlSection } from "@/components/admin/AdminAccessControlSection";
 import { AdminRenascerSection } from "@/components/admin/AdminRenascerSection";
@@ -143,6 +146,7 @@ export default function AdminClienteDetalhes() {
   const [updatingEmail, setUpdatingEmail] = useState(false);
   const [syncingStripe, setSyncingStripe] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -506,6 +510,49 @@ export default function AdminClienteDetalhes() {
     } finally {
       setGeneratingPdf(false);
     }
+  };
+
+  const handleSendAnamneseLink = async () => {
+    if (!id || !profile) return;
+
+    setGeneratingLink(true);
+    try {
+      // Generate random 32-char token
+      const array = new Uint8Array(16);
+      crypto.getRandomValues(array);
+      const token = Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const { error } = await supabase
+        .from("anamnese_tokens" as any)
+        .insert({
+          user_id: id,
+          token,
+          expires_at: expiresAt.toISOString(),
+          created_by: user!.id,
+        } as any);
+
+      if (error) throw error;
+
+      const baseUrl = window.location.origin;
+      const link = `${baseUrl}/anamnese-externa/${token}`;
+
+      await navigator.clipboard.writeText(link);
+      toast.success("Link copiado para a área de transferência!", {
+        description: `Válido por 7 dias. Envie para ${profile.full_name}.`,
+      });
+    } catch (error: any) {
+      console.error("Error generating anamnese link:", error);
+      toast.error("Erro ao gerar link da anamnese");
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const handleDownloadBlankAnamnese = () => {
+    generateBlankAnamnesePdf(profile?.full_name);
   };
 
   const handleSave = async () => {
@@ -928,6 +975,39 @@ export default function AdminClienteDetalhes() {
                 </Button>
                 <p className="text-xs text-muted-foreground mt-1">
                   Gera um PDF com todas as informações e fotos do cliente
+                </p>
+              </div>
+
+              {/* Anamnese Externa */}
+              <div className="space-y-2">
+                <Label className="mb-2 block">Anamnese Externa</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleSendAnamneseLink}
+                    disabled={generatingLink}
+                    size="sm"
+                    className="w-full"
+                  >
+                    {generatingLink ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Link className="h-4 w-4 mr-2" />
+                    )}
+                    <span className="text-xs sm:text-sm">Enviar Link da Anamnese</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleDownloadBlankAnamnese}
+                    size="sm"
+                    className="w-full"
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    <span className="text-xs sm:text-sm">Baixar Anamnese em Branco</span>
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Envie o link para o cliente preencher online ou baixe o PDF em branco para preenchimento manual
                 </p>
               </div>
 

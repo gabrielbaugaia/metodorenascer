@@ -126,3 +126,6 @@ verify_jwt = false
 
 [functions.extract-body-assessment]
 verify_jwt = false
+
+[functions.submit-external-anamnese]
+verify_jwt = false
