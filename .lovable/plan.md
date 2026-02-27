@@ -1,99 +1,88 @@
 
-
-# Anexar Prints de Fitness no Historico + Suporte a 3 Imagens
-
-## O que muda
-
-Hoje o sistema so permite enviar 1 screenshot e apenas no momento do registro. O usuario quer:
-1. Poder anexar prints a dias ja registrados no historico
-2. Enviar ate 3 prints por dia (nem sempre todas as informacoes aparecem em uma tela so)
-3. Filtro de data para escolher qual dia atualizar
-
-## Mudancas no Banco de Dados
-
-**Migracoes necessarias:**
-
-Adicionar 2 colunas na tabela `manual_day_logs`:
-- `fitness_screenshot_path_2` (text, nullable) -- segundo print
-- `fitness_screenshot_path_3` (text, nullable) -- terceiro print
-
-Isso mantém compatibilidade com o campo existente `fitness_screenshot_path` (que sera o print 1).
-
-## Mudancas nos Arquivos
-
-### 1. `src/components/renascer/RecentLogsHistory.tsx`
-
-Transformar o dialog de detalhes de cada dia para incluir:
-- Botao "Anexar print do Fitness" dentro do dialog de cada dia
-- Input de arquivo que aceita ate 3 imagens
-- Ao selecionar imagem, chamar a edge function `extract-fitness-data` para OCR
-- Atualizar os campos de fitness do log existente (steps, active_calories, etc.) via upsert
-- Upload das imagens no bucket `fitness-screenshots` com path `{user_id}/{date}_1.jpg`, `{user_id}/{date}_2.jpg`, `{user_id}/{date}_3.jpg`
-- Exibir thumbnails dos prints ja anexados
-- Mostrar indicador visual nos dias que tem prints anexados
-
-### 2. `src/components/renascer/ManualInput.tsx`
-
-Expandir o upload de screenshots para suportar ate 3 imagens:
-- Trocar o estado `screenshotFile` / `screenshotPreview` (single) por arrays de ate 3 arquivos
-- Mostrar grid de previews com botao de remover individual
-- Cada imagem passa pelo OCR e os dados sao mesclados (somando ou pegando o maior valor)
-- Upload salva nos 3 campos (`fitness_screenshot_path`, `_2`, `_3`)
-
-### 3. `supabase/functions/extract-fitness-data/index.ts`
-
-Nenhuma mudanca necessaria -- a funcao ja recebe uma imagem e retorna dados. Sera chamada uma vez por imagem.
-
-## Fluxo do Usuario
-
-```text
-Historico "Ultimos 7 dias"
-  |
-  [Clica no dia "Qui 27/02"]
-  |
-  Dialog abre com detalhes do dia
-  |
-  [Botao: "Anexar print do Fitness" com icone de camera]
-  |
-  Seleciona ate 3 imagens
-  |
-  IA le cada imagem → preenche/atualiza campos fitness
-  |
-  [Botao "Salvar"] → atualiza manual_day_logs + health_daily
-  |
-  Toast: "Dados de fitness atualizados para Qui 27/02!"
-```
-
-## Detalhes Tecnicos
-
-### Migracao SQL
-
-```sql
-ALTER TABLE public.manual_day_logs
-  ADD COLUMN fitness_screenshot_path_2 text,
-  ADD COLUMN fitness_screenshot_path_3 text;
-```
-
-### RecentLogsHistory - Adicoes principais
-
-- Query expandida para incluir campos de fitness: `steps, active_calories, exercise_minutes, standing_hours, distance_km, fitness_screenshot_path, fitness_screenshot_path_2, fitness_screenshot_path_3`
-- Estado local dentro do dialog para editar fitness data do dia selecionado
-- Funcao de upload + OCR reutilizando a mesma logica do ManualInput
-- Mutation de update que faz upsert no `manual_day_logs` e `health_daily`
-- Indicador visual (icone de imagem) nos dias que ja tem screenshots
-
-### ManualInput - Mudancas
-
-- `screenshotFiles: File[]` (max 3) em vez de `screenshotFile: File | null`
-- `screenshotPreviews: string[]` em vez de `screenshotPreview: string | null`
-- Grid de thumbnails com botao X individual
-- Botao "+" para adicionar mais prints (ate 3)
-- Dados de OCR mesclados: cada imagem chama `extract-fitness-data`, valores nao-nulos substituem os anteriores (ultima imagem tem prioridade)
+# Link Exclusivo de Anamnese + PDF em Branco para o Admin
 
 ## Resumo
 
-| Componente | Mudanca |
-|------------|---------|
-| Migracao SQL | 2 novas colunas para screenshots adicionais |
-| `RecentLogsHistory.tsx` | Botao de anexar prints no dialog do historico; upload + OCR + save |
-| `ManualInput.tsx` | Suporte a ate 3 screenshots em vez de 1 |
+Criar um sistema para que o admin possa:
+1. **Enviar um link exclusivo** de anamnese para o cliente preencher diretamente (sem precisar de login)
+2. **Baixar um PDF em branco** da anamnese para preencher manualmente e depois inserir os dados na plataforma
+3. Quando o cliente preencher pelo link e clicar "Enviar", os dados alimentam automaticamente o perfil dele
+
+## Como Funciona
+
+### Fluxo do Link Exclusivo
+1. Admin acessa o cadastro do cliente e clica "Enviar Link da Anamnese"
+2. O sistema gera um token unico e salva no banco com validade de 7 dias
+3. O link e copiado para a area de transferencia (ex: `metodorenascer.lovable.app/anamnese-externa/abc123`)
+4. O cliente abre o link, ve o formulario completo da anamnese com o nome dele no topo
+5. Preenche os dados e clica "Enviar"
+6. Os dados sao salvos no perfil do cliente automaticamente via uma edge function segura
+7. O token e marcado como usado
+
+### PDF em Branco
+- Botao "Baixar Anamnese em Branco" na area do admin
+- Gera um PDF com todos os campos da anamnese vazios (com linhas para preenchimento manual)
+- O admin pode imprimir e preencher com o cliente presencialmente
+
+## Mudancas Tecnicas
+
+### 1. Nova tabela: `anamnese_tokens`
+
+```text
+id (uuid, PK)
+user_id (uuid, NOT NULL) -- o cliente que vai preencher
+token (text, UNIQUE, NOT NULL) -- token aleatorio de 32 chars
+expires_at (timestamptz, NOT NULL) -- validade de 7 dias
+used_at (timestamptz, NULL) -- quando foi preenchido
+created_by (uuid, NOT NULL) -- o admin que criou
+created_at (timestamptz, default now())
+```
+
+RLS: admins podem inserir e ler; service role pode ler para validacao na edge function.
+
+### 2. Nova edge function: `submit-external-anamnese`
+
+- Recebe o token + dados do formulario
+- Valida que o token existe, nao esta expirado e nao foi usado
+- Atualiza o perfil do cliente com os dados recebidos (mesma logica da pagina /anamnese)
+- Marca o token como usado (`used_at = now()`)
+- Retorna sucesso
+
+### 3. Nova pagina: `src/pages/AnamneseExterna.tsx`
+
+- Rota publica: `/anamnese-externa/:token`
+- Ao montar, chama a edge function para validar o token e obter o nome do cliente
+- Se valido, exibe o formulario da anamnese (reutilizando os mesmos componentes: PersonalDataFields, TrainingHistoryFields, etc.)
+- Se invalido/expirado/usado, exibe mensagem de erro
+- Ao enviar, chama a edge function `submit-external-anamnese`
+- Tela de sucesso com animacao de confirmacao
+
+### 4. Atualizar `AdminClienteDetalhes.tsx`
+
+Adicionar na secao "Acoes Rapidas":
+
+- **Botao "Enviar Link da Anamnese"**: gera o token, monta a URL e copia para clipboard com toast de confirmacao
+- **Botao "Baixar Anamnese em Branco"**: chama uma funcao que gera o PDF sem dados preenchidos
+
+### 5. Nova funcao: `generateBlankAnamnesePdf` em `src/lib/generateBlankAnamnesePdf.ts`
+
+- Baseada na `generateAnamnesePdf` existente
+- Em vez de valores preenchidos, mostra linhas vazias com labels dos campos
+- Inclui header "Metodo Renascer - Anamnese" e espaco para nome do cliente
+- Layout profissional para impressao
+
+### 6. Atualizar `App.tsx`
+
+- Adicionar rota publica: `/anamnese-externa/:token` apontando para `AnamneseExterna`
+
+## Resumo dos Arquivos
+
+| Arquivo | Acao |
+|---------|------|
+| Migracao SQL | Criar tabela `anamnese_tokens` com RLS |
+| `supabase/functions/submit-external-anamnese/index.ts` | Nova edge function para validar token e salvar dados |
+| `src/pages/AnamneseExterna.tsx` | Nova pagina publica do formulario |
+| `src/lib/generateBlankAnamnesePdf.ts` | Nova funcao para PDF em branco |
+| `src/pages/admin/AdminClienteDetalhes.tsx` | Adicionar botoes de link e PDF em branco |
+| `src/App.tsx` | Adicionar rota publica |
+| `supabase/config.toml` | Registrar nova edge function com `verify_jwt = false` |
