@@ -130,6 +130,36 @@ export type Database = {
           },
         ]
       }
+      anamnese_tokens: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       automated_messages: {
         Row: {
           cooldown_days: number | null
