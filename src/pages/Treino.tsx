@@ -72,6 +72,29 @@ export default function Treino() {
 
   const currentStreak = getCurrentStreak();
 
+  // Check for active workout session on mount to auto-resume
+  useEffect(() => {
+    if (!user) return;
+    const checkActiveSession = async () => {
+      const { data } = await supabase
+        .from("active_workout_sessions")
+        .select("workout_name, started_at")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        const age = Date.now() - new Date(data.started_at).getTime();
+        if (age < 4 * 60 * 60 * 1000) {
+          setActiveSessionWorkout(data.workout_name);
+        }
+      }
+    };
+    checkActiveSession();
+  }, [user]);
+
   const logTrace = async (outcome: string, details: Record<string, unknown> = {}) => {
     if (!user) return;
     try {
