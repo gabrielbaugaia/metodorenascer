@@ -10,10 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { WearableModal } from "./WearableModal";
 import { useWearables } from "@/lib/wearables/useWearables";
-import { ChevronDown, Camera, X, Footprints, Flame, Timer, PersonStanding, Route, Loader2 } from "lucide-react";
+import { ChevronDown, Camera, X, Footprints, Flame, Timer, PersonStanding, Route, Loader2, CalendarDays } from "lucide-react";
+
+type DateOption = "today" | "yesterday" | "custom";
 
 interface ManualInputProps {
   dataMode: string;
@@ -40,6 +43,25 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
   const [trained, setTrained] = useState(todayLog?.trained_today ?? false);
   const [rpe, setRpe] = useState(todayLog?.rpe ?? 7);
 
+  // Date selection
+  const [dateOption, setDateOption] = useState<DateOption>("today");
+  const [customDate, setCustomDate] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  const getSelectedDate = (): string => {
+    if (dateOption === "today") return format(new Date(), "yyyy-MM-dd");
+    if (dateOption === "yesterday") return format(subDays(new Date(), 1), "yyyy-MM-dd");
+    return customDate;
+  };
+
+  const getDateLabel = (): string => {
+    const d = getSelectedDate();
+    const today = format(new Date(), "yyyy-MM-dd");
+    const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+    if (d === today) return "Hoje";
+    if (d === yesterday) return "Ontem";
+    return format(new Date(d + "T12:00:00"), "dd/MM/yyyy");
+  };
+
   // Fitness fields
   const [fitnessOpen, setFitnessOpen] = useState(false);
   const [steps, setSteps] = useState<string>("");
@@ -64,7 +86,24 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         if (data.exercise_minutes != null) setExerciseMins(String(data.exercise_minutes));
         if (data.standing_hours != null) setStandingHrs(String(data.standing_hours));
         if (data.distance_km != null) setDistanceKm(String(data.distance_km));
-        toast.success("Dados lidos da imagem com sucesso!");
+        // Auto-detect date from image
+        if (data.detected_date) {
+          const detected = data.detected_date as string;
+          const today = format(new Date(), "yyyy-MM-dd");
+          const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+          if (detected === today) {
+            setDateOption("today");
+          } else if (detected === yesterday) {
+            setDateOption("yesterday");
+          } else {
+            setDateOption("custom");
+            setCustomDate(detected);
+          }
+          toast.success(`Dados lidos! Data detectada: ${format(new Date(detected + "T12:00:00"), "dd/MM/yyyy")}`);
+        } else {
+          toast.success("Dados lidos da imagem com sucesso!");
+        }
+        setFitnessOpen(true);
       }
     } catch (err) {
       console.error("OCR extraction failed:", err);
@@ -82,7 +121,6 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       return;
     }
     setScreenshotFile(file);
-    setFitnessOpen(true);
     const reader = new FileReader();
     reader.onload = (ev) => {
       const result = ev.target?.result as string;
@@ -101,13 +139,13 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error("Not authenticated");
-      const today = format(new Date(), "yyyy-MM-dd");
+      const selectedDate = getSelectedDate();
 
       // Upload screenshot if provided
       let screenshotPath: string | null = null;
       if (screenshotFile) {
         const ext = screenshotFile.name.split(".").pop() || "jpg";
-        const path = `${user.id}/${today}.${ext}`;
+        const path = `${user.id}/${selectedDate}.${ext}`;
         const { error: uploadErr } = await supabase.storage
           .from("fitness-screenshots")
           .upload(path, screenshotFile, { upsert: true });
@@ -129,7 +167,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       // Upsert manual_day_logs
       const upsertData: Record<string, unknown> = {
         user_id: user.id,
-        date: today,
+        date: selectedDate,
         sleep_hours: sleep,
         stress_level: stress,
         energy_focus: energy,
@@ -153,7 +191,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       // Sync to health_daily for backward compat
       const healthData: Record<string, unknown> = {
         user_id: user.id,
-        date: today,
+        date: selectedDate,
         sleep_minutes: Math.round(sleep * 60),
         source: "manual",
       };
@@ -204,8 +242,87 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
   return (
     <div className="rounded-xl border border-border/50 bg-card p-5 space-y-5">
       <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
-        Registrar hoje (30s)
+        Registrar {getDateLabel()} (30s)
       </h3>
+
+      {/* Date Selector */}
+      <div className="space-y-2">
+        <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <CalendarDays className="h-3.5 w-3.5" /> Qual dia?
+        </Label>
+        <div className="flex gap-2">
+          {(["today", "yesterday", "custom"] as DateOption[]).map((opt) => (
+            <button
+              key={opt}
+              onClick={() => setDateOption(opt)}
+              className={cn(
+                "flex-1 py-2 rounded-lg text-xs font-semibold border transition-all",
+                dateOption === opt
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted/50 text-muted-foreground border-border/50 hover:border-primary/50"
+              )}
+            >
+              {opt === "today" ? "Hoje" : opt === "yesterday" ? "Ontem" : "Outra data"}
+            </button>
+          ))}
+        </div>
+        {dateOption === "custom" && (
+          <Input
+            type="date"
+            value={customDate}
+            max={format(new Date(), "yyyy-MM-dd")}
+            onChange={(e) => setCustomDate(e.target.value)}
+            className="bg-muted/50"
+          />
+        )}
+      </div>
+
+      {/* Print Button - PROMINENT */}
+      <div className="space-y-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileSelect}
+        />
+        {screenshotPreview ? (
+          <div className="relative inline-block">
+            <img
+              src={screenshotPreview}
+              alt="Print do fitness"
+              className="rounded-lg border border-border/50 max-h-40 object-contain"
+            />
+            <button
+              onClick={removeScreenshot}
+              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary py-5"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Camera className="h-5 w-5" />
+            <span className="font-semibold">Enviar print do Fitness</span>
+          </Button>
+        )}
+        {!screenshotPreview && (
+          <p className="text-[11px] text-muted-foreground text-center">
+            Apple Fitness, Google Fit ou Samsung Health — a IA lê automaticamente
+          </p>
+        )}
+        {extracting && (
+          <div className="flex items-center gap-2 py-3 px-3 rounded-lg bg-primary/10 border border-primary/20">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span className="text-xs font-medium text-primary">Lendo dados da imagem...</span>
+          </div>
+        )}
+      </div>
 
       {/* Sleep */}
       <div className="space-y-2">
@@ -285,7 +402,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         <CollapsibleTrigger asChild>
           <button className="w-full flex items-center justify-between py-2 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors">
             <span className="flex items-center gap-1.5">
-              📱 Dados do Fitness (opcional)
+              📱 Dados do Fitness
               {hasFitnessData && (
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary" />
               )}
@@ -294,17 +411,6 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-3 pt-2">
-          <p className="text-[11px] text-muted-foreground">
-            Envie um print do Apple Fitness, Google Fit ou Samsung Health para preencher automaticamente.
-          </p>
-
-          {extracting && (
-            <div className="flex items-center gap-2 py-3 px-3 rounded-lg bg-primary/10 border border-primary/20">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <span className="text-xs font-medium text-primary">Lendo dados da imagem...</span>
-            </div>
-          )}
-
           {/* Steps */}
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -381,44 +487,6 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
               className="bg-muted/50"
             />
           </div>
-
-          {/* Screenshot Upload */}
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Print da tela do Fitness</Label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-            {screenshotPreview ? (
-              <div className="relative inline-block">
-                <img
-                  src={screenshotPreview}
-                  alt="Print do fitness"
-                  className="rounded-lg border border-border/50 max-h-40 object-contain"
-                />
-                <button
-                  onClick={removeScreenshot}
-                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Camera className="h-3.5 w-3.5" />
-                Enviar print
-              </Button>
-            )}
-          </div>
         </CollapsibleContent>
       </Collapsible>
 
@@ -427,7 +495,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         disabled={saveMutation.isPending}
         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
       >
-        {saveMutation.isPending ? "Salvando..." : "Salvar meu dia"}
+        {saveMutation.isPending ? "Salvando..." : `Salvar ${getDateLabel().toLowerCase()}`}
       </Button>
     </div>
   );

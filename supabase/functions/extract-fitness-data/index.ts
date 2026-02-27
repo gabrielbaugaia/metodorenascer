@@ -46,14 +46,14 @@ serve(async (req) => {
           {
             role: "system",
             content:
-              "You are a fitness data extraction assistant. You analyze screenshots from fitness apps (Apple Fitness, Google Fit, Samsung Health, Garmin, etc.) and extract numeric health metrics visible on screen. Always use the extract_fitness_data tool to return structured data. If a value is not visible in the image, set it to null. For distance, always convert to kilometers.",
+              "You are a fitness data extraction assistant. You analyze screenshots from fitness apps (Apple Fitness, Google Fit, Samsung Health, Garmin, etc.) and extract numeric health metrics visible on screen. Always use the extract_fitness_data tool to return structured data. If a value is not visible in the image, set it to null. For distance, always convert to kilometers. Also extract the date shown in the screenshot if visible (e.g. 'Thursday', 'Feb 26', '26/02/2025') and convert it to YYYY-MM-DD format. If the date shows only a weekday name, calculate the most recent past occurrence of that weekday. If no date is visible, set detected_date to null.",
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Analyze this fitness app screenshot and extract all visible health metrics: steps, active calories, exercise minutes, standing hours, and distance in km.",
+                text: "Analyze this fitness app screenshot. Extract all visible health metrics (steps, active calories, exercise minutes, standing hours, distance in km) AND the date shown on screen.",
               },
               {
                 type: "image_url",
@@ -69,7 +69,7 @@ serve(async (req) => {
             type: "function",
             function: {
               name: "extract_fitness_data",
-              description: "Extract fitness metrics from a screenshot",
+              description: "Extract fitness metrics and date from a screenshot",
               parameters: {
                 type: "object",
                 properties: {
@@ -93,8 +93,12 @@ serve(async (req) => {
                     type: ["number", "null"],
                     description: "Distance in kilometers",
                   },
+                  detected_date: {
+                    type: ["string", "null"],
+                    description: "Date shown in the screenshot in YYYY-MM-DD format. null if not visible.",
+                  },
                 },
-                required: ["steps", "active_calories", "exercise_minutes", "standing_hours", "distance_km"],
+                required: ["steps", "active_calories", "exercise_minutes", "standing_hours", "distance_km", "detected_date"],
                 additionalProperties: false,
               },
             },

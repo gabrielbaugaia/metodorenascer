@@ -1,70 +1,68 @@
 
 
-# Tornar Upload de Print Fitness Visivel + Permitir Escolher Data
+# Leitura Automática de Print do Fitness com IA (OCR)
 
-## Problema Atual
+## Objetivo
 
-1. **Botao escondido**: O botao "Enviar print" esta dentro de uma secao colapsavel ("Dados do Fitness (opcional)") que fica fechada por padrao. O cliente nao sabe que existe.
+Quando o cliente enviar um print da tela do Apple Fitness, Google Fit ou Samsung Health, a IA vai ler a imagem automaticamente e preencher os campos (Passos, Calorias Ativas, Minutos de Exercicio, Horas em Pe, Distancia) sem o cliente precisar digitar nada.
 
-2. **Sempre salva como hoje**: O sistema usa `format(new Date(), "yyyy-MM-dd")` fixo. Se o cliente quer registrar os dados de quinta-feira na sexta, nao consegue.
+## Como vai funcionar
 
-## Solucao
+1. Cliente tira print da tela do app de fitness no celular (iPhone ou Android)
+2. Clica em "Enviar print" no formulario
+3. Sistema envia a imagem para uma funcao backend que usa IA com visao (Gemini) para extrair os dados
+4. Os campos sao preenchidos automaticamente com os valores lidos
+5. Cliente pode conferir, ajustar se necessario, e clicar "Salvar meu dia"
 
-### 1. Botao de print destacado antes do formulario
+## Mudancas Tecnicas
 
-Mover o botao de "Enviar print" para FORA da secao colapsavel, posicionando-o logo acima dos campos manuais como acao principal. O fluxo fica:
+### 1. Nova Edge Function: `extract-fitness-data`
+
+Cria uma funcao backend que:
+- Recebe a imagem em base64
+- Envia para o Gemini (google/gemini-2.5-flash) via Lovable AI Gateway com um prompt especifico para extrair dados de fitness
+- Usa tool calling para retornar JSON estruturado com: `steps`, `active_calories`, `exercise_minutes`, `standing_hours`, `distance_km`
+- Retorna os valores extraidos para o frontend
+
+Prompt da IA sera algo como: "Analise este print de tela de um app de fitness (Apple Fitness, Google Fit, Samsung Health, etc). Extraia os seguintes dados numericos visiveis na imagem: passos, calorias ativas, minutos de exercicio, horas em pe, distancia em km."
+
+### 2. Atualizar `ManualInput.tsx`
+
+- Ao selecionar uma imagem, alem de mostrar o preview, disparar automaticamente a chamada para `extract-fitness-data`
+- Mostrar um estado de loading "Lendo dados..." enquanto a IA processa
+- Quando a resposta chegar, preencher automaticamente os campos de passos, calorias, etc.
+- Se algum campo nao for encontrado na imagem, deixar vazio para o cliente preencher manualmente
+- Manter a possibilidade de editar qualquer campo apos o preenchimento automatico
+
+### 3. Fluxo visual
 
 ```text
-[Registrar hoje (30s)]
-  |
-  [Botao grande: "Enviar print do Fitness"]  <-- VISIVEL
-  |
-  [Seletor de data: Hoje / Ontem / Escolher data]
-  |
-  [Sono, Estresse, Energia, Treino...]
-  |
-  [Secao colapsavel: campos manuais de fitness]
-  |
-  [Salvar meu dia]
+[Cliente envia print]
+       |
+  [Preview aparece]
+       |
+  [Loading: "Lendo dados da imagem..."]
+       |
+  [IA retorna valores]
+       |
+  [Campos preenchidos automaticamente]
+       |
+  [Cliente confere e clica "Salvar meu dia"]
 ```
 
-O botao tera icone de camera, texto claro, e cor de destaque. Ao selecionar a imagem, a IA le automaticamente e preenche os campos (como ja funciona).
+## Arquivos
 
-### 2. Seletor de data
+| Arquivo | Mudanca |
+|---------|---------|
+| `supabase/functions/extract-fitness-data/index.ts` | Nova edge function com OCR via Gemini |
+| `src/components/renascer/ManualInput.tsx` | Chamar a funcao apos upload e preencher campos |
 
-Adicionar 3 opcoes rapidas de data no topo do formulario:
-- **Hoje** (padrao)
-- **Ontem** (1 clique)
-- **Outra data** (abre um campo date picker)
+## Sobre analise e graficos
 
-A data selecionada sera usada tanto para o `manual_day_logs` quanto para o `health_daily`.
+Os dados extraidos (passos, calorias, etc.) ja sao salvos nas tabelas `manual_day_logs` e `health_daily`. O sistema ja possui:
+- Score de prontidao (Renascer Score) que usa esses dados
+- Sparkline de tendencia dos ultimos 7 dias
+- Indicadores de corpo (Consistencia, Recuperacao, Capacidade)
 
-### 3. IA detecta data da imagem (bonus)
-
-Atualizar o prompt da edge function `extract-fitness-data` para tambem tentar extrair a data visivel na imagem. Se a IA encontrar uma data (ex: "Thu, Feb 26"), o seletor de data sera atualizado automaticamente para essa data. O cliente pode confirmar ou alterar.
-
-O campo retornado sera `detected_date` no formato `YYYY-MM-DD`.
-
-## Mudancas por Arquivo
-
-| Arquivo | O que muda |
-|---------|-----------|
-| `src/components/renascer/ManualInput.tsx` | Botao de print movido para cima e destacado; seletor de data adicionado; logica de save usa data selecionada em vez de `new Date()` |
-| `supabase/functions/extract-fitness-data/index.ts` | Prompt atualizado para tambem extrair a data visivel na imagem; novo campo `detected_date` no retorno |
-
-## Detalhes Tecnicos
-
-### ManualInput.tsx
-
-- Novo estado `selectedDate` (default: hoje)
-- 3 botoes tipo chip: "Hoje", "Ontem", "Outra"
-- Ao selecionar "Outra", mostra `<Input type="date" />`
-- Botao de camera movido para antes da secao colapsavel, com estilo `variant="outline"` e tamanho maior
-- Quando IA retorna `detected_date`, atualiza `selectedDate` automaticamente e mostra toast informando
-
-### extract-fitness-data Edge Function
-
-- Adicionar ao prompt: "Tambem extraia a data visivel na imagem, se houver, no formato YYYY-MM-DD"
-- Adicionar campo `detected_date` no tool calling schema (string, opcional)
-- Retornar no response junto com os outros campos
+Com os dados preenchidos via OCR, todos esses graficos e analises ja serao alimentados automaticamente. Nenhuma mudanca adicional e necessaria para gerar as analises -- basta ter os dados preenchidos.
 
