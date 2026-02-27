@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Flame } from "lucide-react";
+import { Loader2, Flame, AlertTriangle } from "lucide-react";
 import { PersonalDataFields } from "@/components/anamnese/PersonalDataFields";
 import { TrainingHistoryFields } from "@/components/anamnese/TrainingHistoryFields";
 import { HealthAndHabitsFields } from "@/components/anamnese/HealthAndHabitsFields";

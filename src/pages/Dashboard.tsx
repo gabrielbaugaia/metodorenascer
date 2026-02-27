@@ -426,16 +426,27 @@ export default function Dashboard() {
 
         {/* 4. Quick Access */}
         <div className="grid grid-cols-2 gap-3">
-          {quickAccess.map((item) => (
-            <div
-              key={item.label}
-              onClick={() => navigate(item.href)}
-              className="bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer rounded-lg p-4 flex items-center gap-3"
-            >
-              <item.icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-              <span className="text-sm font-medium text-foreground">{item.label}</span>
-            </div>
-          ))}
+          {quickAccess.map((item) => {
+            const isLocked = anamneseIncomplete;
+            return (
+              <div
+                key={item.label}
+                onClick={() => !isLocked && navigate(item.href)}
+                className={`bg-card border rounded-lg p-4 flex items-center gap-3 transition-colors ${
+                  isLocked
+                    ? "border-border/30 opacity-50 cursor-not-allowed"
+                    : "border-border/50 hover:border-primary/30 cursor-pointer"
+                }`}
+              >
+                {isLocked ? (
+                  <Lock className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+                ) : (
+                  <item.icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+                )}
+                <span className="text-sm font-medium text-foreground">{item.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
