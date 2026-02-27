@@ -59,6 +59,7 @@ export default function Treino() {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [activeSessionWorkout, setActiveSessionWorkout] = useState<string | null>(null);
 
   const { 
     getTotalCount, 
