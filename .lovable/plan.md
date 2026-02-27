@@ -1,68 +1,103 @@
 
+# Fix: Sessao de Treino Persistente ao Voltar do Background
 
-# Leitura Automática de Print do Fitness com IA (OCR)
+## Problema
 
-## Objetivo
+Quando o usuario sai do app (vai pro Instagram, WhatsApp etc) e volta, o componente `WorkoutCard` remonta com `sessionMode = false` (estado local React). O resultado e que ele ve a tela "Pronto para treinar?" em vez de voltar direto para a sessao ativa. Os dados da sessao estao salvos no banco, mas a UI nao sabe que precisa reentrar no modo de sessao.
 
-Quando o cliente enviar um print da tela do Apple Fitness, Google Fit ou Samsung Health, a IA vai ler a imagem automaticamente e preencher os campos (Passos, Calorias Ativas, Minutos de Exercicio, Horas em Pe, Distancia) sem o cliente precisar digitar nada.
+## Causa Raiz
 
-## Como vai funcionar
+`WorkoutCard.tsx` linha 52: `const [sessionMode, setSessionMode] = useState(false);` -- sempre inicia como `false` ao montar.
 
-1. Cliente tira print da tela do app de fitness no celular (iPhone ou Android)
-2. Clica em "Enviar print" no formulario
-3. Sistema envia a imagem para uma funcao backend que usa IA com visao (Gemini) para extrair os dados
-4. Os campos sao preenchidos automaticamente com os valores lidos
-5. Cliente pode conferir, ajustar se necessario, e clicar "Salvar meu dia"
+O `WorkoutSessionManager` tem logica de rehydrate que funciona, mas so e executada DEPOIS que `sessionMode = true`. Como `sessionMode` volta pra `false`, o manager nunca monta e nunca reidrata.
 
-## Mudancas Tecnicas
+## Solucao
 
-### 1. Nova Edge Function: `extract-fitness-data`
+### Arquivo: `src/pages/Treino.tsx`
 
-Cria uma funcao backend que:
-- Recebe a imagem em base64
-- Envia para o Gemini (google/gemini-2.5-flash) via Lovable AI Gateway com um prompt especifico para extrair dados de fitness
-- Usa tool calling para retornar JSON estruturado com: `steps`, `active_calories`, `exercise_minutes`, `standing_hours`, `distance_km`
-- Retorna os valores extraidos para o frontend
+Adicionar uma verificacao no mount que busca sessoes ativas do usuario no banco. Se existir uma sessao ativa, identificar qual workout corresponde e passar essa informacao para o `WorkoutCard` correto.
 
-Prompt da IA sera algo como: "Analise este print de tela de um app de fitness (Apple Fitness, Google Fit, Samsung Health, etc). Extraia os seguintes dados numericos visiveis na imagem: passos, calorias ativas, minutos de exercicio, horas em pe, distancia em km."
+- Novo estado: `activeSessionWorkout: string | null`
+- Query no mount: buscar `active_workout_sessions` com `status = 'active'` e `user_id = user.id` (limite 1, mais recente)
+- Se a sessao tiver mais de 4h, ignorar (consistente com logica existente)
+- Passar prop `autoStartSession={true}` para o WorkoutCard cujo nome bate com o `workout_name` da sessao ativa
 
-### 2. Atualizar `ManualInput.tsx`
+### Arquivo: `src/components/treino/WorkoutCard.tsx`
 
-- Ao selecionar uma imagem, alem de mostrar o preview, disparar automaticamente a chamada para `extract-fitness-data`
-- Mostrar um estado de loading "Lendo dados..." enquanto a IA processa
-- Quando a resposta chegar, preencher automaticamente os campos de passos, calorias, etc.
-- Se algum campo nao for encontrado na imagem, deixar vazio para o cliente preencher manualmente
-- Manter a possibilidade de editar qualquer campo apos o preenchimento automatico
+- Nova prop: `autoStartSession?: boolean`
+- `useEffect` que seta `setSessionMode(true)` quando `autoStartSession` e `true`
+- Isso faz o `WorkoutSessionManager` montar, que por sua vez chama `rehydrateSession` e recupera todos os dados (logs, timer, tempo decorrido)
 
-### 3. Fluxo visual
+## Fluxo Corrigido
 
 ```text
-[Cliente envia print]
-       |
-  [Preview aparece]
-       |
-  [Loading: "Lendo dados da imagem..."]
-       |
-  [IA retorna valores]
-       |
-  [Campos preenchidos automaticamente]
-       |
-  [Cliente confere e clica "Salvar meu dia"]
+1. Usuario inicia treino A → sessionMode=true, sessao criada no banco
+2. Usuario anota cargas, timer de descanso roda
+3. Usuario sai pro Instagram
+4. Usuario volta → Treino.tsx monta
+5. Query encontra sessao ativa "Treino A - Peito..."
+6. WorkoutCard do Treino A recebe autoStartSession=true
+7. sessionMode=true automaticamente
+8. WorkoutSessionManager monta e reidrata a sessao
+9. Usuario volta exatamente onde parou (com timer geral correto)
 ```
 
-## Arquivos
+## Detalhes Tecnicos
+
+### Treino.tsx - Adicoes
+
+```typescript
+const [activeSessionWorkout, setActiveSessionWorkout] = useState<string | null>(null);
+
+useEffect(() => {
+  if (!user) return;
+  const checkActiveSession = async () => {
+    const { data } = await supabase
+      .from("active_workout_sessions")
+      .select("workout_name, started_at")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (data) {
+      const age = Date.now() - new Date(data.started_at).getTime();
+      if (age < 4 * 60 * 60 * 1000) {
+        setActiveSessionWorkout(data.workout_name);
+      }
+    }
+  };
+  checkActiveSession();
+}, [user]);
+```
+
+Na renderizacao do WorkoutCard, passar:
+```typescript
+autoStartSession={activeSessionWorkout === `${workout.day} — ${workout.focus}`}
+```
+
+### WorkoutCard.tsx - Adicoes
+
+Nova prop e effect:
+```typescript
+interface WorkoutCardProps {
+  // ... existentes
+  autoStartSession?: boolean;
+}
+
+useEffect(() => {
+  if (autoStartSession) {
+    setSessionMode(true);
+  }
+}, [autoStartSession]);
+```
+
+## Resumo
 
 | Arquivo | Mudanca |
 |---------|---------|
-| `supabase/functions/extract-fitness-data/index.ts` | Nova edge function com OCR via Gemini |
-| `src/components/renascer/ManualInput.tsx` | Chamar a funcao apos upload e preencher campos |
+| `src/pages/Treino.tsx` | Query para sessao ativa no mount; passa `autoStartSession` ao WorkoutCard correto |
+| `src/components/treino/WorkoutCard.tsx` | Nova prop `autoStartSession`; effect que auto-entra em session mode |
 
-## Sobre analise e graficos
-
-Os dados extraidos (passos, calorias, etc.) ja sao salvos nas tabelas `manual_day_logs` e `health_daily`. O sistema ja possui:
-- Score de prontidao (Renascer Score) que usa esses dados
-- Sparkline de tendencia dos ultimos 7 dias
-- Indicadores de corpo (Consistencia, Recuperacao, Capacidade)
-
-Com os dados preenchidos via OCR, todos esses graficos e analises ja serao alimentados automaticamente. Nenhuma mudanca adicional e necessaria para gerar as analises -- basta ter os dados preenchidos.
-
+Nenhuma mudanca no banco de dados. A logica de rehydrate do `useWorkoutSession` ja funciona -- so precisamos garantir que o componente monte.
