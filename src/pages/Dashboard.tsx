@@ -224,6 +224,8 @@ export default function Dashboard() {
     checkPendingPayment();
   }, [user, isAdmin]);
 
+  const [missingAnamneseFields, setMissingAnamneseFields] = useState<string[]>([]);
+
   useEffect(() => {
     const checkAnamneseAndGetName = async () => {
       if (!user) return;
@@ -232,16 +234,25 @@ export default function Dashboard() {
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("age, weight, height, goals, anamnese_completa, full_name")
+          .select("age, weight, height, goals, objetivo_principal, anamnese_completa, full_name, dias_disponiveis, nivel_condicionamento, horario_treino, ja_treinou_antes, data_nascimento")
           .eq("id", user.id)
           .single();
-        const hasEssentialData = !!(data?.age && data?.weight && data?.height && data?.goals);
+        const hasEssentialData = !!(data?.age && data?.weight && data?.height && (data?.goals || data?.objetivo_principal));
         const anamneseComplete = data?.anamnese_completa === true || hasEssentialData;
         if (!anamneseComplete && !isAdmin) {
           setAnamneseIncomplete(true);
-          if (subscribed) {
-            navigate("/anamnese");
-          }
+          // Calculate missing fields for display
+          const fieldChecks: [boolean, string][] = [
+            [!data?.data_nascimento && !data?.age, "Data de nascimento"],
+            [!data?.weight, "Peso"],
+            [!data?.height, "Altura"],
+            [!data?.objetivo_principal && !data?.goals, "Objetivo principal"],
+            [data?.ja_treinou_antes == null, "Histórico de treino"],
+            [!data?.dias_disponiveis, "Dias disponíveis"],
+            [!data?.nivel_condicionamento, "Nível de condicionamento"],
+            [!data?.horario_treino, "Horário de treino"],
+          ];
+          setMissingAnamneseFields(fieldChecks.filter(([missing]) => missing).map(([, label]) => label));
         }
       } catch (error) {
         console.error("Error checking anamnese:", error);
@@ -351,6 +362,12 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground max-w-sm">
                 Preencha sua anamnese para que possamos gerar seus protocolos de treino, dieta e mentalidade personalizados.
               </p>
+              {missingAnamneseFields.length > 0 && (
+                <div className="w-full bg-muted/30 rounded-lg p-3 text-left">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Campos faltando:</p>
+                  <p className="text-xs text-foreground">{missingAnamneseFields.join(" • ")}</p>
+                </div>
+              )}
               <Button variant="fire" size="lg" className="w-full mt-2" onClick={() => navigate("/anamnese")}>
                 Preencher Anamnese Agora
               </Button>
@@ -409,16 +426,27 @@ export default function Dashboard() {
 
         {/* 4. Quick Access */}
         <div className="grid grid-cols-2 gap-3">
-          {quickAccess.map((item) => (
-            <div
-              key={item.label}
-              onClick={() => navigate(item.href)}
-              className="bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer rounded-lg p-4 flex items-center gap-3"
-            >
-              <item.icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-              <span className="text-sm font-medium text-foreground">{item.label}</span>
-            </div>
-          ))}
+          {quickAccess.map((item) => {
+            const isLocked = anamneseIncomplete;
+            return (
+              <div
+                key={item.label}
+                onClick={() => !isLocked && navigate(item.href)}
+                className={`bg-card border rounded-lg p-4 flex items-center gap-3 transition-colors ${
+                  isLocked
+                    ? "border-border/30 opacity-50 cursor-not-allowed"
+                    : "border-border/50 hover:border-primary/30 cursor-pointer"
+                }`}
+              >
+                {isLocked ? (
+                  <Lock className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+                ) : (
+                  <item.icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+                )}
+                <span className="text-sm font-medium text-foreground">{item.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
