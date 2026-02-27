@@ -1072,6 +1072,8 @@ export type Database = {
           energy_focus: number | null
           exercise_minutes: number | null
           fitness_screenshot_path: string | null
+          fitness_screenshot_path_2: string | null
+          fitness_screenshot_path_3: string | null
           id: string
           rpe: number | null
           sleep_hours: number | null
@@ -1090,6 +1092,8 @@ export type Database = {
           energy_focus?: number | null
           exercise_minutes?: number | null
           fitness_screenshot_path?: string | null
+          fitness_screenshot_path_2?: string | null
+          fitness_screenshot_path_3?: string | null
           id?: string
           rpe?: number | null
           sleep_hours?: number | null
@@ -1108,6 +1112,8 @@ export type Database = {
           energy_focus?: number | null
           exercise_minutes?: number | null
           fitness_screenshot_path?: string | null
+          fitness_screenshot_path_2?: string | null
+          fitness_screenshot_path_3?: string | null
           id?: string
           rpe?: number | null
           sleep_hours?: number | null

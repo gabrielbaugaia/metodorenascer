@@ -14,7 +14,7 @@ import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { WearableModal } from "./WearableModal";
 import { useWearables } from "@/lib/wearables/useWearables";
-import { ChevronDown, Camera, X, Footprints, Flame, Timer, PersonStanding, Route, Loader2, CalendarDays } from "lucide-react";
+import { ChevronDown, Camera, X, Footprints, Flame, Timer, PersonStanding, Route, Loader2, CalendarDays, Plus } from "lucide-react";
 
 type DateOption = "today" | "yesterday" | "custom";
 
@@ -69,8 +69,10 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
   const [exerciseMins, setExerciseMins] = useState<string>("");
   const [standingHrs, setStandingHrs] = useState<string>("");
   const [distanceKm, setDistanceKm] = useState<string>("");
-  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+
+  // Multi-screenshot support (up to 3)
+  const [screenshotFiles, setScreenshotFiles] = useState<File[]>([]);
+  const [screenshotPreviews, setScreenshotPreviews] = useState<string[]>([]);
   const [extracting, setExtracting] = useState(false);
 
   const extractFitnessData = async (base64: string) => {
@@ -114,26 +116,32 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Imagem muito grande. Máximo 10MB.");
-      return;
+    const selected = Array.from(e.target.files || []);
+    if (!selected.length) return;
+
+    const remaining = 3 - screenshotFiles.length;
+    const toAdd = selected.slice(0, remaining);
+
+    for (const file of toAdd) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Imagem muito grande. Máximo 10MB.");
+        continue;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const result = ev.target?.result as string;
+        setScreenshotPreviews((p) => [...p, result]);
+        setScreenshotFiles((f) => [...f, file]);
+        extractFitnessData(result);
+      };
+      reader.readAsDataURL(file);
     }
-    setScreenshotFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const result = ev.target?.result as string;
-      setScreenshotPreview(result);
-      extractFitnessData(result);
-    };
-    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const removeScreenshot = () => {
-    setScreenshotFile(null);
-    setScreenshotPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const removeScreenshot = (idx: number) => {
+    setScreenshotFiles((f) => f.filter((_, i) => i !== idx));
+    setScreenshotPreviews((p) => p.filter((_, i) => i !== idx));
   };
 
   const saveMutation = useMutation({
@@ -141,19 +149,19 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       if (!user?.id) throw new Error("Not authenticated");
       const selectedDate = getSelectedDate();
 
-      // Upload screenshot if provided
-      let screenshotPath: string | null = null;
-      if (screenshotFile) {
-        const ext = screenshotFile.name.split(".").pop() || "jpg";
-        const path = `${user.id}/${selectedDate}.${ext}`;
+      // Upload screenshots
+      const screenshotPaths: (string | null)[] = [null, null, null];
+      for (let i = 0; i < screenshotFiles.length && i < 3; i++) {
+        const file = screenshotFiles[i];
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `${user.id}/${selectedDate}_${i + 1}.${ext}`;
         const { error: uploadErr } = await supabase.storage
           .from("fitness-screenshots")
-          .upload(path, screenshotFile, { upsert: true });
+          .upload(path, file, { upsert: true });
         if (uploadErr) {
           console.warn("Screenshot upload failed:", uploadErr);
-          toast.error("Falha ao enviar print. Dados serão salvos sem a imagem.");
         } else {
-          screenshotPath = path;
+          screenshotPaths[i] = path;
         }
       }
 
@@ -179,9 +187,9 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         standing_hours: standingHrsVal,
         distance_km: distanceKmVal,
       };
-      if (screenshotPath) {
-        upsertData.fitness_screenshot_path = screenshotPath;
-      }
+      if (screenshotPaths[0]) upsertData.fitness_screenshot_path = screenshotPaths[0];
+      if (screenshotPaths[1]) upsertData.fitness_screenshot_path_2 = screenshotPaths[1];
+      if (screenshotPaths[2]) upsertData.fitness_screenshot_path_3 = screenshotPaths[2];
 
       const { error: e1 } = await supabase
         .from("manual_day_logs")
@@ -237,7 +245,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
     );
   }
 
-  const hasFitnessData = steps || activeCals || exerciseMins || standingHrs || distanceKm || screenshotFile;
+  const hasFitnessData = steps || activeCals || exerciseMins || standingHrs || distanceKm || screenshotFiles.length > 0;
 
   return (
     <div className="rounded-xl border border-border/50 bg-card p-5 space-y-5">
@@ -277,45 +285,64 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         )}
       </div>
 
-      {/* Print Button - PROMINENT */}
+      {/* Print Button - PROMINENT + multi-image grid */}
       <div className="space-y-2">
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple
           className="hidden"
           onChange={handleFileSelect}
         />
-        {screenshotPreview ? (
-          <div className="relative inline-block">
-            <img
-              src={screenshotPreview}
-              alt="Print do fitness"
-              className="rounded-lg border border-border/50 max-h-40 object-contain"
-            />
-            <button
-              onClick={removeScreenshot}
-              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+
+        {/* Previews grid */}
+        {screenshotPreviews.length > 0 && (
+          <div className="flex gap-2 flex-wrap">
+            {screenshotPreviews.map((preview, idx) => (
+              <div key={idx} className="relative inline-block">
+                <img
+                  src={preview}
+                  alt={`Print ${idx + 1}`}
+                  className="rounded-lg border border-border/50 h-24 w-24 object-cover"
+                />
+                <button
+                  onClick={() => removeScreenshot(idx)}
+                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+            {screenshotFiles.length < 3 && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="h-24 w-24 rounded-lg border-2 border-dashed border-primary/30 flex flex-col items-center justify-center text-primary/60 hover:border-primary/60 hover:text-primary transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+                <span className="text-[10px] mt-0.5">Adicionar</span>
+              </button>
+            )}
           </div>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary py-5"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Camera className="h-5 w-5" />
-            <span className="font-semibold">Enviar print do Fitness</span>
-          </Button>
         )}
-        {!screenshotPreview && (
-          <p className="text-[11px] text-muted-foreground text-center">
-            Apple Fitness, Google Fit ou Samsung Health — a IA lê automaticamente
-          </p>
+
+        {screenshotPreviews.length === 0 && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary py-5"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Camera className="h-5 w-5" />
+              <span className="font-semibold">Enviar print do Fitness</span>
+            </Button>
+            <p className="text-[11px] text-muted-foreground text-center">
+              Até 3 telas — Apple Fitness, Google Fit ou Samsung Health — a IA lê automaticamente
+            </p>
+          </>
         )}
+
         {extracting && (
           <div className="flex items-center gap-2 py-3 px-3 rounded-lg bg-primary/10 border border-primary/20">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
