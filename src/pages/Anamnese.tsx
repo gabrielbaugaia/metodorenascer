@@ -113,7 +113,28 @@ export default function Anamnese() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [missingRequired, setMissingRequired] = useState<string[]>([]);
+
+  const requiredFieldLabels: Record<string, string> = {
+    data_nascimento: "Data de nascimento",
+    weight: "Peso",
+    height: "Altura",
+    objetivo_principal: "Objetivo principal",
+    ja_treinou_antes: "Histórico de treino",
+    dias_disponiveis: "Dias disponíveis",
+    nivel_condicionamento: "Nível de condicionamento",
+    horario_treino: "Horário de treino",
+  };
+
+  // Recalculate missing fields when form changes
+  useEffect(() => {
+    const missing = Object.entries(requiredFieldLabels)
+      .filter(([key]) => !formData[key as keyof FormData])
+      .map(([, label]) => label);
+    setMissingRequired(missing);
+  }, [formData]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -121,11 +142,12 @@ export default function Anamnese() {
     }
   }, [user, authLoading, navigate]);
 
-  // Check if user has pending payment - must pay before anamnese
+  // Check payment status and load existing profile data
   useEffect(() => {
-    const checkPaymentStatus = async () => {
+    const loadProfileData = async () => {
       if (!user) return;
-      
+
+      // Check pending payment
       const { data: subscription } = await supabase
         .from("subscriptions")
         .select("status")
@@ -133,34 +155,67 @@ export default function Anamnese() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      
-      // If pending payment, redirect to dashboard to show payment screen
+
       if (subscription?.status === "pending_payment") {
         navigate("/dashboard");
         return;
       }
-    };
-    
-    checkPaymentStatus();
-  }, [user, navigate]);
 
-  // Check if user already completed anamnese
-  useEffect(() => {
-    const checkProfile = async () => {
-      if (!user) return;
-      
-      const { data } = await supabase
+      // Load existing profile data to pre-fill form
+      const { data: profile } = await supabase
         .from("profiles")
-        .select("anamnese_completa")
+        .select("*")
         .eq("id", user.id)
         .maybeSingle();
-      
-      if (data?.anamnese_completa) {
+
+      if (!profile) { setProfileLoaded(true); return; }
+
+      // If already completed, go to dashboard
+      if (profile.anamnese_completa) {
         navigate("/dashboard");
+        return;
       }
+
+      // Pre-fill form with existing data
+      const boolToStr = (v: boolean | null) => v === true ? "sim" : v === false ? "nao" : "";
+      
+      setFormData(prev => ({
+        ...prev,
+        data_nascimento: profile.data_nascimento || prev.data_nascimento,
+        weight: profile.weight ? String(profile.weight) : prev.weight,
+        height: profile.height ? String(profile.height) : prev.height,
+        whatsapp: profile.telefone || profile.whatsapp || prev.whatsapp,
+        sexo: profile.sexo || prev.sexo,
+        objetivo_principal: profile.objetivo_principal || prev.objetivo_principal,
+        ja_treinou_antes: boolToStr(profile.ja_treinou_antes),
+        local_treino: profile.local_treino || prev.local_treino,
+        dias_disponiveis: profile.dias_disponiveis || prev.dias_disponiveis,
+        nivel_condicionamento: profile.nivel_condicionamento || prev.nivel_condicionamento,
+        pratica_aerobica: boolToStr(profile.pratica_aerobica),
+        escada_sem_cansar: profile.escada_sem_cansar || prev.escada_sem_cansar,
+        condicoes_saude: profile.condicoes_saude || prev.condicoes_saude,
+        injuries: profile.injuries || prev.injuries,
+        toma_medicamentos: boolToStr(profile.toma_medicamentos),
+        refeicoes_por_dia: profile.refeicoes_por_dia || prev.refeicoes_por_dia,
+        bebe_agua_frequente: boolToStr(profile.bebe_agua_frequente),
+        restricoes_alimentares: profile.restricoes_alimentares || prev.restricoes_alimentares,
+        qualidade_sono: profile.qualidade_sono || prev.qualidade_sono,
+        nivel_estresse: profile.nivel_estresse || prev.nivel_estresse,
+        consome_alcool: profile.consome_alcool || prev.consome_alcool,
+        fuma: profile.fuma || prev.fuma,
+        horario_treino: profile.horario_treino || prev.horario_treino,
+        horario_acorda: profile.horario_acorda || prev.horario_acorda,
+        horario_dorme: profile.horario_dorme || prev.horario_dorme,
+        foto_frente_url: profile.foto_frente_url || prev.foto_frente_url,
+        foto_lado_url: profile.foto_lado_url || prev.foto_lado_url,
+        foto_costas_url: profile.foto_costas_url || prev.foto_costas_url,
+        observacoes_adicionais: profile.observacoes_adicionais || prev.observacoes_adicionais,
+      }));
+
+      setProfileLoaded(true);
     };
-    
-    checkProfile();
+
+    loadProfileData();
   }, [user, navigate]);
 
   const handleFieldChange = (field: string, value: string) => {
