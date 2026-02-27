@@ -1,68 +1,71 @@
 
 
-# Leitura Automática de Print do Fitness com IA (OCR)
+# Alerta de Anamnese Pendente + Pre-preenchimento de Dados
 
-## Objetivo
+## Problema Atual
 
-Quando o cliente enviar um print da tela do Apple Fitness, Google Fit ou Samsung Health, a IA vai ler a imagem automaticamente e preencher os campos (Passos, Calorias Ativas, Minutos de Exercicio, Horas em Pe, Distancia) sem o cliente precisar digitar nada.
+1. **Formulario de anamnese nao carrega dados existentes**: Quando o admin adiciona informacoes ao perfil do cliente (como fez com a Laiza), o formulario de anamnese começa vazio. O cliente precisa preencher tudo do zero, sem ver os dados que o admin ja adicionou.
 
-## Como vai funcionar
+2. **Redirecionamento silencioso**: Clientes com assinatura ativa que nao completaram a anamnese sao redirecionados automaticamente para `/anamnese` sem entender o motivo. Nao ha contexto do que falta preencher.
 
-1. Cliente tira print da tela do app de fitness no celular (iPhone ou Android)
-2. Clica em "Enviar print" no formulario
-3. Sistema envia a imagem para uma funcao backend que usa IA com visao (Gemini) para extrair os dados
-4. Os campos sao preenchidos automaticamente com os valores lidos
-5. Cliente pode conferir, ajustar se necessario, e clicar "Salvar meu dia"
+3. **Alerta fraco no dashboard**: O card amarelo atual aparece, mas para clientes com assinatura ativa ele nem chega a ser visto porque o redirect acontece antes.
 
-## Mudancas Tecnicas
+## Solucao
 
-### 1. Nova Edge Function: `extract-fitness-data`
+### 1. Pre-preencher formulario de anamnese com dados existentes do perfil
 
-Cria uma funcao backend que:
-- Recebe a imagem em base64
-- Envia para o Gemini (google/gemini-2.5-flash) via Lovable AI Gateway com um prompt especifico para extrair dados de fitness
-- Usa tool calling para retornar JSON estruturado com: `steps`, `active_calories`, `exercise_minutes`, `standing_hours`, `distance_km`
-- Retorna os valores extraidos para o frontend
+**Arquivo: `src/pages/Anamnese.tsx`**
 
-Prompt da IA sera algo como: "Analise este print de tela de um app de fitness (Apple Fitness, Google Fit, Samsung Health, etc). Extraia os seguintes dados numericos visiveis na imagem: passos, calorias ativas, minutos de exercicio, horas em pe, distancia em km."
+Adicionar um `useEffect` que carrega os dados atuais do perfil do banco de dados e preenche o formulario com os valores existentes. Assim, se o admin ja adicionou peso, altura, sexo, etc., esses campos ja aparecem preenchidos para o cliente. O cliente so precisa completar o que falta.
 
-### 2. Atualizar `ManualInput.tsx`
+Campos mapeados do perfil para o formulario:
+- `data_nascimento` -> `data_nascimento`
+- `weight` -> `weight` (convertido para string)
+- `height` -> `height` (convertido para string)
+- `telefone` -> `whatsapp`
+- `sexo` -> `sexo`
+- `objetivo_principal` -> `objetivo_principal`
+- `ja_treinou_antes` -> `ja_treinou_antes` (boolean para "sim"/"nao")
+- `local_treino` -> `local_treino`
+- `dias_disponiveis` -> `dias_disponiveis`
+- `nivel_condicionamento` -> `nivel_condicionamento`
+- `pratica_aerobica` -> `pratica_aerobica` (boolean para "sim"/"nao")
+- `escada_sem_cansar` -> `escada_sem_cansar`
+- `condicoes_saude` -> `condicoes_saude`
+- `injuries` -> `injuries`
+- `toma_medicamentos` -> `toma_medicamentos` (boolean para "sim"/"nao")
+- `refeicoes_por_dia` -> `refeicoes_por_dia`
+- `bebe_agua_frequente` -> `bebe_agua_frequente` (boolean para "sim"/"nao")
+- `restricoes_alimentares` -> `restricoes_alimentares`
+- `qualidade_sono` -> `qualidade_sono`
+- `nivel_estresse` -> `nivel_estresse`
+- `consome_alcool` -> `consome_alcool`
+- `fuma` -> `fuma`
+- `horario_treino`, `horario_acorda`, `horario_dorme`
+- `foto_frente_url`, `foto_lado_url`, `foto_costas_url`
+- `observacoes_adicionais`
 
-- Ao selecionar uma imagem, alem de mostrar o preview, disparar automaticamente a chamada para `extract-fitness-data`
-- Mostrar um estado de loading "Lendo dados..." enquanto a IA processa
-- Quando a resposta chegar, preencher automaticamente os campos de passos, calorias, etc.
-- Se algum campo nao for encontrado na imagem, deixar vazio para o cliente preencher manualmente
-- Manter a possibilidade de editar qualquer campo apos o preenchimento automatico
+### 2. Melhorar alerta no Dashboard
 
-### 3. Fluxo visual
+**Arquivo: `src/pages/Dashboard.tsx`**
 
-```text
-[Cliente envia print]
-       |
-  [Preview aparece]
-       |
-  [Loading: "Lendo dados da imagem..."]
-       |
-  [IA retorna valores]
-       |
-  [Campos preenchidos automaticamente]
-       |
-  [Cliente confere e clica "Salvar meu dia"]
-```
+- Remover o redirecionamento automatico para `/anamnese` (linha 243-244). Em vez disso, manter o cliente no dashboard e mostrar o alerta proeminente.
+- Mostrar quais campos obrigatorios estao faltando no alerta (ex: "Faltam: peso, altura, objetivo").
+- Bloquear os cards de acesso rapido (treino, nutricao, etc.) enquanto a anamnese nao estiver completa, mostrando-os em estado desabilitado com um cadeado.
+- Manter o botao "Preencher Anamnese Agora" como acao principal.
 
-## Arquivos
+### 3. Indicador de campos faltantes na anamnese
 
-| Arquivo | Mudanca |
-|---------|---------|
-| `supabase/functions/extract-fitness-data/index.ts` | Nova edge function com OCR via Gemini |
-| `src/components/renascer/ManualInput.tsx` | Chamar a funcao apos upload e preencher campos |
+**Arquivo: `src/pages/Anamnese.tsx`**
 
-## Sobre analise e graficos
+Adicionar um banner no topo do formulario mostrando quais campos obrigatorios ainda faltam preencher, com destaque visual nos campos vazios. Isso ajuda o cliente a saber exatamente o que falta sem ter que procurar.
 
-Os dados extraidos (passos, calorias, etc.) ja sao salvos nas tabelas `manual_day_logs` e `health_daily`. O sistema ja possui:
-- Score de prontidao (Renascer Score) que usa esses dados
-- Sparkline de tendencia dos ultimos 7 dias
-- Indicadores de corpo (Consistencia, Recuperacao, Capacidade)
+## Resumo das Mudancas
 
-Com os dados preenchidos via OCR, todos esses graficos e analises ja serao alimentados automaticamente. Nenhuma mudanca adicional e necessaria para gerar as analises -- basta ter os dados preenchidos.
+| Arquivo | O que muda |
+|---------|-----------|
+| `src/pages/Anamnese.tsx` | Carrega dados existentes do perfil no formulario; adiciona banner de campos faltantes |
+| `src/pages/Dashboard.tsx` | Remove redirect silencioso; melhora alerta com lista de campos faltantes; bloqueia cards de acesso quando anamnese incompleta |
+
+Nenhuma mudanca no banco de dados e necessaria -- todos os campos ja existem na tabela `profiles`.
 
