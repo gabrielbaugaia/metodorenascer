@@ -59,6 +59,7 @@ export default function Treino() {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [activeSessionWorkout, setActiveSessionWorkout] = useState<string | null>(null);
 
   const { 
     getTotalCount, 
@@ -70,6 +71,29 @@ export default function Treino() {
   } = useWorkoutTracking();
 
   const currentStreak = getCurrentStreak();
+
+  // Check for active workout session on mount to auto-resume
+  useEffect(() => {
+    if (!user) return;
+    const checkActiveSession = async () => {
+      const { data } = await supabase
+        .from("active_workout_sessions")
+        .select("workout_name, started_at")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        const age = Date.now() - new Date(data.started_at).getTime();
+        if (age < 4 * 60 * 60 * 1000) {
+          setActiveSessionWorkout(data.workout_name);
+        }
+      }
+    };
+    checkActiveSession();
+  }, [user]);
 
   const logTrace = async (outcome: string, details: Record<string, unknown> = {}) => {
     if (!user) return;
@@ -328,6 +352,7 @@ export default function Treino() {
                       index={index}
                       onComplete={(durationSeconds?: number, sessionId?: string) => handleCompleteWorkout(workout, durationSeconds, sessionId)}
                       todayCompleted={todayCompleted}
+                      autoStartSession={activeSessionWorkout === `${workout.day} — ${workout.focus}`}
                     />
                   ))}
                   {lockedWorkouts.length > 0 && (

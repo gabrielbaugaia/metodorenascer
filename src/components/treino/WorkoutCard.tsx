@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,7 @@ interface WorkoutCardProps {
   index: number;
   onComplete?: (durationSeconds?: number, sessionId?: string) => void;
   todayCompleted?: boolean;
+  autoStartSession?: boolean;
 }
 
 export function WorkoutCard({
@@ -45,11 +46,19 @@ export function WorkoutCard({
   index,
   onComplete,
   todayCompleted = false,
+  autoStartSession = false,
 }: WorkoutCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [sessionMode, setSessionMode] = useState(false);
+
+  // Auto-resume active session when returning from background
+  useEffect(() => {
+    if (autoStartSession && !sessionMode) {
+      setSessionMode(true);
+    }
+  }, [autoStartSession]);
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(exercise);
