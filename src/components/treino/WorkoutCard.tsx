@@ -53,6 +53,13 @@ export function WorkoutCard({
   const [modalOpen, setModalOpen] = useState(false);
   const [sessionMode, setSessionMode] = useState(false);
 
+  // Auto-resume active session when returning from background
+  useEffect(() => {
+    if (autoStartSession && !sessionMode) {
+      setSessionMode(true);
+    }
+  }, [autoStartSession]);
+
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(exercise);
     setModalOpen(true);
