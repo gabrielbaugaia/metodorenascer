@@ -362,6 +362,12 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground max-w-sm">
                 Preencha sua anamnese para que possamos gerar seus protocolos de treino, dieta e mentalidade personalizados.
               </p>
+              {missingAnamneseFields.length > 0 && (
+                <div className="w-full bg-muted/30 rounded-lg p-3 text-left">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Campos faltando:</p>
+                  <p className="text-xs text-foreground">{missingAnamneseFields.join(" • ")}</p>
+                </div>
+              )}
               <Button variant="fire" size="lg" className="w-full mt-2" onClick={() => navigate("/anamnese")}>
                 Preencher Anamnese Agora
               </Button>
