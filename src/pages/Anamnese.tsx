@@ -459,6 +459,24 @@ export default function Anamnese() {
           <p className="text-muted-foreground mb-4">
             Preencha os dados abaixo para personalizar seu programa
           </p>
+
+          {/* Banner de campos obrigatórios faltantes */}
+          {profileLoaded && missingRequired.length > 0 && (
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-4 text-left">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-1">
+                    {missingRequired.length} campo{missingRequired.length > 1 ? "s" : ""} obrigatório{missingRequired.length > 1 ? "s" : ""} faltando
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {missingRequired.join(" • ")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Progress indicator */}
           <div className="bg-card border border-border rounded-lg p-4">
             <div className="flex items-center justify-between text-sm mb-2">
