@@ -397,7 +397,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
     return exLogs.length >= ex.sets;
   });
 
-  const canCompleteWorkout = allSetsCompleted && !restTimer.active;
+  const canCompleteWorkout = !restTimer.active;
 
   const finishSession = useCallback(async (): Promise<SessionSummary | null> => {
     if (!user || !sessionId) return null;

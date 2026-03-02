@@ -230,8 +230,8 @@ export function WorkoutSessionManager({
       <Button
         variant="fire"
         size="lg"
-        className={cn("w-full", !session.canCompleteWorkout && "opacity-50")}
-        disabled={!session.canCompleteWorkout || session.saving}
+        className="w-full"
+        disabled={session.saving}
         onClick={handleFinish}
       >
         {session.saving ? (
