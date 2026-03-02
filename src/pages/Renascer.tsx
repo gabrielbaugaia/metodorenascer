@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { PageHeader } from "@/components/ui/page-header";
+import { PageTutorial } from "@/components/onboarding/PageTutorial";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
 import { MiniConfetti } from "@/components/renascer/MiniConfetti";
 import { StatusBadge } from "@/components/renascer/StatusBadge";
@@ -98,6 +99,7 @@ export default function Renascer() {
         <PageHeader
           title={`Olá, ${firstName}`}
           subtitle={`Hoje — ${todayFormatted}`}
+          actions={<PageTutorial pageId="renascer" />}
         />
 
         {/* Score Ring + Badge */}

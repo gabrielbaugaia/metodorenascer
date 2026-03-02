@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/ui/page-header";
+import { PageTutorial } from "@/components/onboarding/PageTutorial";
 import { EmptyState } from "@/components/ui/empty-state";
 import { 
   Utensils, Loader2, Apple, Download, Lock, Droplets, 
@@ -224,12 +225,15 @@ export default function Nutricao() {
           title="Plano Nutricional"
           subtitle={hasContent ? "Seu cardápio estratégico para máxima performance" : "Seu protocolo será gerado em breve"}
           actions={
-            protocol && isFull ? (
-              <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={downloading}>
-                <Download className="w-4 h-4 mr-2" />
-                {downloading ? "Baixando..." : "Baixar PDF"}
-              </Button>
-            ) : undefined
+            <div className="flex items-center gap-1">
+              <PageTutorial pageId="nutricao" />
+              {protocol && isFull && (
+                <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={downloading}>
+                  <Download className="w-4 h-4 mr-2" />
+                  {downloading ? "Baixando..." : "Baixar PDF"}
+                </Button>
+              )}
+            </div>
           }
         />
 

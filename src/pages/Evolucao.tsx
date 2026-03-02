@@ -31,6 +31,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { PageTutorial } from "@/components/onboarding/PageTutorial";
 
 interface CheckIn {
   id: string;
@@ -468,7 +469,7 @@ export default function Evolucao() {
   return (
     <ClientLayout>
       <div className="max-w-5xl mx-auto space-y-4 sm:space-y-8 px-1 sm:px-0 pb-20 sm:pb-0">
-        <PageHeader title="Evolução" subtitle="Acompanhe seu progresso e envie suas fotos" />
+        <PageHeader title="Evolução" subtitle="Acompanhe seu progresso e envie suas fotos" actions={<PageTutorial pageId="evolucao" />} />
 
         {/* AI Analysis Modal/Card */}
         {showAnalysis && aiAnalysis && (
