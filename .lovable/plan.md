@@ -1,103 +1,65 @@
 
-# Corrigir Liberacao Admin + Criar Tutorial "Comece Aqui"
+# Tornar o Tutorial "Como Usar" Visivel e Proeminente
 
-## Problema 1: Admin nao consegue liberar acesso permanente
+## Problema
+O botao "Como usar" esta no PageHeader como um botao ghost minusculo — praticamente invisivel para clientes novos. Precisa ser o primeiro item que o usuario ve ao entrar em cada pagina.
 
-### Causa raiz
-O `AdminAccessControlSection` so permite "Override de Cortesia" com data de expiracao obrigatoria. O `computeEffective()` em `useEntitlements.ts` ignora overrides sem `override_expires_at`. Quando o admin quer liberar acesso total permanente (ate o Stripe assumir), nao tem como.
+## Solucao
 
-### Solucao
-Adicionar um botao **"Liberar Acesso Completo"** que atualiza diretamente o campo `access_level` para `'full'` (sem usar override). Assim, o acesso persiste indefinidamente ate o Stripe sincronizar e atualizar naturalmente.
+### 1. Criar um banner de boas-vindas no topo de cada pagina
 
-**Arquivo: `src/components/admin/AdminAccessControlSection.tsx`**
-- Adicionar botao "Liberar Acesso Completo" que faz upsert em `entitlements` com `access_level: 'full'` e limpa `override_level` / `override_expires_at`
-- Adicionar botao "Revogar para Trial" que reseta `access_level` para `'trial_limited'`
-- Adicionar botao "Bloquear Acesso" que seta `access_level` para `'none'`
-- Manter o override de cortesia existente para casos temporarios
+Quando o usuario ainda nao viu o tutorial daquela pagina, exibir um **card/banner chamativo** no topo da pagina (antes de qualquer outro conteudo), com:
+- Texto: "Primeira vez aqui? Veja como usar esta pagina"
+- Botao: "Ver Tutorial"
+- Botao de fechar (X) que marca como visto
 
-O fluxo fica:
-1. Admin clica "Liberar Acesso Completo"
-2. `entitlements.access_level` = `'full'`, sem data de expiracao
-3. Cliente tem acesso total imediato
-4. Quando cliente paga via Stripe, a funcao `check-subscription` faz upsert normal e mantem `'full'`
-5. Se cancelar no futuro, Stripe webhook atualiza para `'none'`
+Apos clicar em "Ver Tutorial" ou fechar, o banner some permanentemente (localStorage) e resta apenas o botao discreto no header para consulta futura.
 
----
+### 2. Alterar o componente `PageTutorial.tsx`
 
-## Problema 2: Tutorial "Comece Aqui" para cada area
+Modificar o componente para renderizar **dois modos**:
+- **Modo banner** (quando nunca viu): Card destacado com fundo `bg-primary/10`, borda `border-primary/30`, texto convidativo e botao "Ver Tutorial" com estilo `default`
+- **Modo icone** (apos ja ter visto): Comportamento atual — botao ghost discreto no header
 
-### Solucao
-Criar um componente reutilizavel `PageTutorial` que exibe um guia passo-a-passo para cada pagina. O tutorial aparece como um botao discreto "Como usar" no canto da pagina que abre um dialog/drawer com instrucoes escritas organizadas por passos.
+O componente passa a exportar dois sub-componentes:
+- `<PageTutorialBanner pageId="treino" />` — vai no corpo da pagina, antes do conteudo
+- `<PageTutorial pageId="treino" />` — fica no header como esta
 
-### Novo componente: `src/components/onboarding/PageTutorial.tsx`
-- Recebe `pageId` como prop (ex: `'treino'`, `'nutricao'`, `'mindset'`, etc.)
-- Botao "Como usar" com icone de HelpCircle
-- Ao clicar, abre um Dialog com os passos do tutorial
-- Cada passo tem titulo, descricao e icone
-- Salva no localStorage quais tutoriais o usuario ja viu (para mostrar badge de "Novo" se nunca abriu)
+### 3. Integrar o banner em todas as paginas
 
-### Conteudo dos tutoriais
+Adicionar `<PageTutorialBanner pageId="..." />` como primeiro elemento do conteudo em:
+- `Treino.tsx` — logo apos o PageHeader
+- `Nutricao.tsx` — logo apos o PageHeader
+- `Mindset.tsx` — logo apos o header customizado
+- `Suporte.tsx` — logo apos o header customizado
+- `Evolucao.tsx` — logo apos o PageHeader
+- `Renascer.tsx` — logo apos o PageHeader
 
-**Treino:**
-1. Como visualizar seus treinos do dia
-2. Como iniciar uma sessao de treino
-3. Como registrar carga em cada exercicio
-4. Como funciona o intervalo de descanso
-5. Como finalizar o treino e ver o resumo
+### Visual do banner
 
-**Nutricao:**
-1. Como alternar entre dia de treino e dia de descanso
-2. Como ver macros e calorias de cada refeicao
-3. Como usar a lista de compras
-4. Como baixar o PDF do plano
+```text
++--------------------------------------------------+
+|  [?]  Primeira vez aqui?                     [X]  |
+|       Veja como usar esta pagina em poucos passos |
+|                                                    |
+|       [ Ver Tutorial ]                             |
++--------------------------------------------------+
+```
 
-**Mindset:**
-1. Como acessar as rotinas de manha e noite
-2. Como marcar praticas concluidas
-3. Como acompanhar seu progresso mental
+- Fundo sutil com borda primary
+- Desaparece apos clicar "Ver Tutorial" ou no X
+- Animacao suave de fade-out ao fechar
 
-**Suporte:**
-1. Como enviar mensagem ao mentor
-2. Como usar o chat de IA
-3. Tempo de resposta esperado
-
-**Evolucao:**
-1. Como enviar fotos de progresso
-2. Padrao correto das fotos (frente, lado, costas)
-3. Como ver a analise de IA
-4. Como acompanhar a timeline
-
-**Renascer (Hoje):**
-1. Como registrar dados do dia (sono, estresse, energia)
-2. Como importar dados do celular via print do fitness
-3. Como anexar ate 3 screenshots
-4. Como ver o historico dos ultimos 7 dias
-5. O que significa o Score Renascer
-
-### Integracao nas paginas
-Adicionar o componente `<PageTutorial pageId="treino" />` nas seguintes paginas:
-- `src/pages/Treino.tsx`
-- `src/pages/Nutricao.tsx`
-- `src/pages/Mindset.tsx`
-- `src/pages/Suporte.tsx`
-- `src/pages/Evolucao.tsx`
-- `src/pages/Renascer.tsx`
-
-O botao sera posicionado no `actions` do `PageHeader` existente, ao lado de botoes como "Baixar PDF".
-
----
-
-## Resumo dos arquivos
+## Arquivos alterados
 
 | Arquivo | Acao |
 |---------|------|
-| `src/components/admin/AdminAccessControlSection.tsx` | Adicionar botoes de liberacao direta (full/trial/none) |
-| `src/components/onboarding/PageTutorial.tsx` | Novo componente de tutorial reutilizavel |
-| `src/pages/Treino.tsx` | Adicionar `<PageTutorial>` |
-| `src/pages/Nutricao.tsx` | Adicionar `<PageTutorial>` |
-| `src/pages/Mindset.tsx` | Adicionar `<PageTutorial>` |
-| `src/pages/Suporte.tsx` | Adicionar `<PageTutorial>` |
-| `src/pages/Evolucao.tsx` | Adicionar `<PageTutorial>` |
-| `src/pages/Renascer.tsx` | Adicionar `<PageTutorial>` |
+| `src/components/onboarding/PageTutorial.tsx` | Adicionar componente `PageTutorialBanner` |
+| `src/pages/Treino.tsx` | Adicionar banner no topo |
+| `src/pages/Nutricao.tsx` | Adicionar banner no topo |
+| `src/pages/Mindset.tsx` | Adicionar banner no topo |
+| `src/pages/Suporte.tsx` | Adicionar banner no topo |
+| `src/pages/Evolucao.tsx` | Adicionar banner no topo |
+| `src/pages/Renascer.tsx` | Adicionar banner no topo |
 
-Nenhuma mudanca no banco de dados necessaria -- o campo `access_level` na tabela `entitlements` ja aceita o valor `'full'`.
+Nenhuma mudanca no banco de dados.
