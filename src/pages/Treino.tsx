@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Download, AlertTriangle, RefreshCw, Lock } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
-import { PageTutorial } from "@/components/onboarding/PageTutorial";
+import { PageTutorial, PageTutorialBanner } from "@/components/onboarding/PageTutorial";
 import { StatCardMini } from "@/components/ui/stat-card-mini";
 import { EmptyState } from "@/components/ui/empty-state";
 import { WorkoutCard } from "@/components/treino/WorkoutCard";
@@ -278,6 +278,8 @@ export default function Treino() {
             </div>
           }
         />
+
+        <PageTutorialBanner pageId="treino" />
 
         {!entLoading && isBlocked && (
           <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />

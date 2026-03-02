@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { PageTutorial } from "@/components/onboarding/PageTutorial";
+import { PageTutorial, PageTutorialBanner } from "@/components/onboarding/PageTutorial";
 
 interface Message {
   role: "user" | "assistant";
@@ -589,6 +589,8 @@ export default function Suporte() {
           </div>
           <PageTutorial pageId="suporte" />
         </div>
+
+        <PageTutorialBanner pageId="suporte" />
 
         <Tabs defaultValue="chat" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
