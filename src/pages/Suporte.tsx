@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { PageTutorial } from "@/components/onboarding/PageTutorial";
 
 interface Message {
   role: "user" | "assistant";
@@ -581,9 +582,12 @@ export default function Suporte() {
   return (
     <ClientLayout>
       <div className="max-w-5xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold uppercase">Suporte</h1>
-          <p className="text-muted-foreground">Tire suas dúvidas com nosso mentor ou consulte o FAQ</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold uppercase">Suporte</h1>
+            <p className="text-muted-foreground">Tire suas dúvidas com nosso mentor ou consulte o FAQ</p>
+          </div>
+          <PageTutorial pageId="suporte" />
         </div>
 
         <Tabs defaultValue="chat" className="space-y-6">

@@ -293,7 +293,102 @@ export function AdminAccessControlSection({ clientId }: AdminAccessControlSectio
           </div>
         )}
 
-        {/* Apply Override Button */}
+        {/* Direct Access Control Buttons */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Ações rápidas</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              disabled={savingOverride || effectiveLevel === "full"}
+              onClick={async () => {
+                setSavingOverride(true);
+                try {
+                  const { error } = await supabase.from("entitlements").upsert(
+                    {
+                      user_id: clientId,
+                      access_level: "full",
+                      override_level: null,
+                      override_expires_at: null,
+                      updated_at: new Date().toISOString(),
+                    },
+                    { onConflict: "user_id" }
+                  );
+                  if (error) throw error;
+                  toast.success("Acesso completo liberado!");
+                  fetchData();
+                } catch (err: any) {
+                  toast.error(err.message || "Erro ao liberar acesso");
+                } finally {
+                  setSavingOverride(false);
+                }
+              }}
+            >
+              {savingOverride ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Crown className="h-4 w-4 mr-1" />}
+              Liberar Completo
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={savingOverride || effectiveLevel === "trial_limited"}
+              onClick={async () => {
+                setSavingOverride(true);
+                try {
+                  const { error } = await supabase.from("entitlements").upsert(
+                    {
+                      user_id: clientId,
+                      access_level: "trial_limited",
+                      override_level: null,
+                      override_expires_at: null,
+                      updated_at: new Date().toISOString(),
+                    },
+                    { onConflict: "user_id" }
+                  );
+                  if (error) throw error;
+                  toast.success("Revertido para trial");
+                  fetchData();
+                } catch (err: any) {
+                  toast.error(err.message || "Erro ao reverter");
+                } finally {
+                  setSavingOverride(false);
+                }
+              }}
+            >
+              Revogar p/ Trial
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={savingOverride || effectiveLevel === "none"}
+              onClick={async () => {
+                setSavingOverride(true);
+                try {
+                  const { error } = await supabase.from("entitlements").upsert(
+                    {
+                      user_id: clientId,
+                      access_level: "none",
+                      override_level: null,
+                      override_expires_at: null,
+                      updated_at: new Date().toISOString(),
+                    },
+                    { onConflict: "user_id" }
+                  );
+                  if (error) throw error;
+                  toast.success("Acesso bloqueado");
+                  fetchData();
+                } catch (err: any) {
+                  toast.error(err.message || "Erro ao bloquear");
+                } finally {
+                  setSavingOverride(false);
+                }
+              }}
+            >
+              Bloquear
+            </Button>
+          </div>
+        </div>
+
+        {/* Apply Override Button (temporary) */}
         <Button
           variant="outline"
           className="w-full"
@@ -305,7 +400,7 @@ export function AdminAccessControlSection({ clientId }: AdminAccessControlSectio
           }}
         >
           <Crown className="h-4 w-4 mr-2" />
-          Aplicar Override de Cortesia
+          Override Temporário (com data)
         </Button>
 
         {/* Override Dialog */}

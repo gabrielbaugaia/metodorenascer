@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Target, Calendar, Trophy, Flame, Loader2, CheckCircle, Download, AlertTriangle, RefreshCw, Lock } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { PageTutorial } from "@/components/onboarding/PageTutorial";
 import { StatCardMini } from "@/components/ui/stat-card-mini";
 import { EmptyState } from "@/components/ui/empty-state";
 import { WorkoutCard } from "@/components/treino/WorkoutCard";
@@ -259,19 +260,22 @@ export default function Treino() {
           title="Treino"
           subtitle={workouts.length > 0 ? "Clique em um exercício para ver o vídeo" : "Seu protocolo será gerado em breve"}
           actions={
-            protocol && isFull ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  generateProtocolPdf({ id: protocol.id, tipo: "treino", titulo: "Protocolo de Treino", conteudo: protocol.conteudo, data_geracao: new Date().toISOString() });
-                  toast.success("PDF baixado!");
-                }}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Baixar PDF
-              </Button>
-            ) : undefined
+            <div className="flex items-center gap-1">
+              <PageTutorial pageId="treino" />
+              {protocol && isFull && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    generateProtocolPdf({ id: protocol.id, tipo: "treino", titulo: "Protocolo de Treino", conteudo: protocol.conteudo, data_geracao: new Date().toISOString() });
+                    toast.success("PDF baixado!");
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar PDF
+                </Button>
+              )}
+            </div>
           }
         />
 
