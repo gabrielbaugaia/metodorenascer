@@ -26,7 +26,7 @@ import { useProtocol } from "@/hooks/useProtocol";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { TrialBanner } from "@/components/access/TrialBadge";
 import { UpgradeModal } from "@/components/access/UpgradeModal";
-import { PageTutorial } from "@/components/onboarding/PageTutorial";
+import { PageTutorial, PageTutorialBanner } from "@/components/onboarding/PageTutorial";
 
 interface MindsetPratica {
   nome: string;
@@ -212,6 +212,8 @@ export default function Mindset() {
             Reprogramação Mental para Transformação
           </p>
         </div>
+
+        <PageTutorialBanner pageId="mindset" />
 
         {/* Progress Card */}
         <Card>

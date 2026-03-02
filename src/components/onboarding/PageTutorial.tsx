@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { X as XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -217,6 +219,107 @@ function markTutorialSeen(pageId: string) {
 
 interface PageTutorialProps {
   pageId: string;
+}
+
+export function PageTutorialBanner({ pageId }: PageTutorialProps) {
+  const [dismissed, setDismissed] = useState(() => getSeenTutorials().includes(pageId));
+  const [open, setOpen] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
+
+  const tutorial = TUTORIALS[pageId];
+  if (!tutorial || dismissed) return null;
+
+  const handleDismiss = () => {
+    setFadeOut(true);
+    setTimeout(() => {
+      markTutorialSeen(pageId);
+      setDismissed(true);
+    }, 300);
+  };
+
+  const handleOpenTutorial = () => {
+    setOpen(true);
+    markTutorialSeen(pageId);
+  };
+
+  const handleCloseDialog = (value: boolean) => {
+    setOpen(value);
+    if (!value) {
+      setFadeOut(true);
+      setTimeout(() => setDismissed(true), 300);
+    }
+  };
+
+  return (
+    <>
+      <div
+        className={cn(
+          "rounded-xl border border-primary/30 bg-primary/5 p-4 transition-all duration-300",
+          fadeOut && "opacity-0 scale-95"
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+              <HelpCircle className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Primeira vez aqui?</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Veja como usar esta página em poucos passos
+              </p>
+              <Button
+                size="sm"
+                className="mt-3"
+                onClick={handleOpenTutorial}
+              >
+                Ver Tutorial
+              </Button>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={handleDismiss}>
+            <XIcon className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <Dialog open={open} onOpenChange={handleCloseDialog}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <HelpCircle className="w-5 h-5 text-primary" />
+              {tutorial.title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {tutorial.steps.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <div key={index} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4 text-primary" />
+                    </div>
+                    {index < tutorial.steps.length - 1 && (
+                      <div className="w-px h-full bg-border/50 mt-1" />
+                    )}
+                  </div>
+                  <div className="pb-4">
+                    <p className="text-sm font-medium text-foreground">
+                      {index + 1}. {step.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
 
 export function PageTutorial({ pageId }: PageTutorialProps) {

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/ui/page-header";
-import { PageTutorial } from "@/components/onboarding/PageTutorial";
+import { PageTutorial, PageTutorialBanner } from "@/components/onboarding/PageTutorial";
 import { EmptyState } from "@/components/ui/empty-state";
 import { 
   Utensils, Loader2, Apple, Download, Lock, Droplets, 
@@ -236,6 +236,8 @@ export default function Nutricao() {
             </div>
           }
         />
+
+        <PageTutorialBanner pageId="nutricao" />
 
         {!entLoading && isBlocked && (
           <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />
