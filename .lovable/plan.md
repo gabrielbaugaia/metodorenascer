@@ -1,65 +1,20 @@
 
-# Tornar o Tutorial "Como Usar" Visivel e Proeminente
+# Permitir Finalizar Treino Sem Anotar Séries
 
 ## Problema
-O botao "Como usar" esta no PageHeader como um botao ghost minusculo — praticamente invisivel para clientes novos. Precisa ser o primeiro item que o usuario ve ao entrar em cada pagina.
+Atualmente, o botão "Concluir Treino" só fica habilitado quando **todas** as séries de **todos** os exercícios foram registradas (`allSetsCompleted`). Se o cliente não anotou nada, o botão fica desabilitado com opacidade reduzida.
 
-## Solucao
+## Solução
+Remover a restrição de `allSetsCompleted` do `canCompleteWorkout`, permitindo finalizar a qualquer momento (exceto durante o descanso ativo).
 
-### 1. Criar um banner de boas-vindas no topo de cada pagina
+### Mudanças
 
-Quando o usuario ainda nao viu o tutorial daquela pagina, exibir um **card/banner chamativo** no topo da pagina (antes de qualquer outro conteudo), com:
-- Texto: "Primeira vez aqui? Veja como usar esta pagina"
-- Botao: "Ver Tutorial"
-- Botao de fechar (X) que marca como visto
+**`src/hooks/useWorkoutSession.ts` (linha 400)**
+- De: `const canCompleteWorkout = allSetsCompleted && !restTimer.active;`
+- Para: `const canCompleteWorkout = !restTimer.active;`
 
-Apos clicar em "Ver Tutorial" ou fechar, o banner some permanentemente (localStorage) e resta apenas o botao discreto no header para consulta futura.
+**`src/components/treino/WorkoutSessionManager.tsx` (linhas 231-234)**
+- Remover a classe `opacity-50` condicional baseada em `canCompleteWorkout` (o botão já respeita `disabled`)
+- Manter o `disabled` apenas para `session.saving`
 
-### 2. Alterar o componente `PageTutorial.tsx`
-
-Modificar o componente para renderizar **dois modos**:
-- **Modo banner** (quando nunca viu): Card destacado com fundo `bg-primary/10`, borda `border-primary/30`, texto convidativo e botao "Ver Tutorial" com estilo `default`
-- **Modo icone** (apos ja ter visto): Comportamento atual — botao ghost discreto no header
-
-O componente passa a exportar dois sub-componentes:
-- `<PageTutorialBanner pageId="treino" />` — vai no corpo da pagina, antes do conteudo
-- `<PageTutorial pageId="treino" />` — fica no header como esta
-
-### 3. Integrar o banner em todas as paginas
-
-Adicionar `<PageTutorialBanner pageId="..." />` como primeiro elemento do conteudo em:
-- `Treino.tsx` — logo apos o PageHeader
-- `Nutricao.tsx` — logo apos o PageHeader
-- `Mindset.tsx` — logo apos o header customizado
-- `Suporte.tsx` — logo apos o header customizado
-- `Evolucao.tsx` — logo apos o PageHeader
-- `Renascer.tsx` — logo apos o PageHeader
-
-### Visual do banner
-
-```text
-+--------------------------------------------------+
-|  [?]  Primeira vez aqui?                     [X]  |
-|       Veja como usar esta pagina em poucos passos |
-|                                                    |
-|       [ Ver Tutorial ]                             |
-+--------------------------------------------------+
-```
-
-- Fundo sutil com borda primary
-- Desaparece apos clicar "Ver Tutorial" ou no X
-- Animacao suave de fade-out ao fechar
-
-## Arquivos alterados
-
-| Arquivo | Acao |
-|---------|------|
-| `src/components/onboarding/PageTutorial.tsx` | Adicionar componente `PageTutorialBanner` |
-| `src/pages/Treino.tsx` | Adicionar banner no topo |
-| `src/pages/Nutricao.tsx` | Adicionar banner no topo |
-| `src/pages/Mindset.tsx` | Adicionar banner no topo |
-| `src/pages/Suporte.tsx` | Adicionar banner no topo |
-| `src/pages/Evolucao.tsx` | Adicionar banner no topo |
-| `src/pages/Renascer.tsx` | Adicionar banner no topo |
-
-Nenhuma mudanca no banco de dados.
+Duas linhas de código alteradas em dois arquivos. Sem mudanças no banco de dados.
