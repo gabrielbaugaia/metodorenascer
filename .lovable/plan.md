@@ -1,88 +1,103 @@
 
-# Link Exclusivo de Anamnese + PDF em Branco para o Admin
+# Corrigir Liberacao Admin + Criar Tutorial "Comece Aqui"
 
-## Resumo
+## Problema 1: Admin nao consegue liberar acesso permanente
 
-Criar um sistema para que o admin possa:
-1. **Enviar um link exclusivo** de anamnese para o cliente preencher diretamente (sem precisar de login)
-2. **Baixar um PDF em branco** da anamnese para preencher manualmente e depois inserir os dados na plataforma
-3. Quando o cliente preencher pelo link e clicar "Enviar", os dados alimentam automaticamente o perfil dele
+### Causa raiz
+O `AdminAccessControlSection` so permite "Override de Cortesia" com data de expiracao obrigatoria. O `computeEffective()` em `useEntitlements.ts` ignora overrides sem `override_expires_at`. Quando o admin quer liberar acesso total permanente (ate o Stripe assumir), nao tem como.
 
-## Como Funciona
+### Solucao
+Adicionar um botao **"Liberar Acesso Completo"** que atualiza diretamente o campo `access_level` para `'full'` (sem usar override). Assim, o acesso persiste indefinidamente ate o Stripe sincronizar e atualizar naturalmente.
 
-### Fluxo do Link Exclusivo
-1. Admin acessa o cadastro do cliente e clica "Enviar Link da Anamnese"
-2. O sistema gera um token unico e salva no banco com validade de 7 dias
-3. O link e copiado para a area de transferencia (ex: `metodorenascer.lovable.app/anamnese-externa/abc123`)
-4. O cliente abre o link, ve o formulario completo da anamnese com o nome dele no topo
-5. Preenche os dados e clica "Enviar"
-6. Os dados sao salvos no perfil do cliente automaticamente via uma edge function segura
-7. O token e marcado como usado
+**Arquivo: `src/components/admin/AdminAccessControlSection.tsx`**
+- Adicionar botao "Liberar Acesso Completo" que faz upsert em `entitlements` com `access_level: 'full'` e limpa `override_level` / `override_expires_at`
+- Adicionar botao "Revogar para Trial" que reseta `access_level` para `'trial_limited'`
+- Adicionar botao "Bloquear Acesso" que seta `access_level` para `'none'`
+- Manter o override de cortesia existente para casos temporarios
 
-### PDF em Branco
-- Botao "Baixar Anamnese em Branco" na area do admin
-- Gera um PDF com todos os campos da anamnese vazios (com linhas para preenchimento manual)
-- O admin pode imprimir e preencher com o cliente presencialmente
+O fluxo fica:
+1. Admin clica "Liberar Acesso Completo"
+2. `entitlements.access_level` = `'full'`, sem data de expiracao
+3. Cliente tem acesso total imediato
+4. Quando cliente paga via Stripe, a funcao `check-subscription` faz upsert normal e mantem `'full'`
+5. Se cancelar no futuro, Stripe webhook atualiza para `'none'`
 
-## Mudancas Tecnicas
+---
 
-### 1. Nova tabela: `anamnese_tokens`
+## Problema 2: Tutorial "Comece Aqui" para cada area
 
-```text
-id (uuid, PK)
-user_id (uuid, NOT NULL) -- o cliente que vai preencher
-token (text, UNIQUE, NOT NULL) -- token aleatorio de 32 chars
-expires_at (timestamptz, NOT NULL) -- validade de 7 dias
-used_at (timestamptz, NULL) -- quando foi preenchido
-created_by (uuid, NOT NULL) -- o admin que criou
-created_at (timestamptz, default now())
-```
+### Solucao
+Criar um componente reutilizavel `PageTutorial` que exibe um guia passo-a-passo para cada pagina. O tutorial aparece como um botao discreto "Como usar" no canto da pagina que abre um dialog/drawer com instrucoes escritas organizadas por passos.
 
-RLS: admins podem inserir e ler; service role pode ler para validacao na edge function.
+### Novo componente: `src/components/onboarding/PageTutorial.tsx`
+- Recebe `pageId` como prop (ex: `'treino'`, `'nutricao'`, `'mindset'`, etc.)
+- Botao "Como usar" com icone de HelpCircle
+- Ao clicar, abre um Dialog com os passos do tutorial
+- Cada passo tem titulo, descricao e icone
+- Salva no localStorage quais tutoriais o usuario ja viu (para mostrar badge de "Novo" se nunca abriu)
 
-### 2. Nova edge function: `submit-external-anamnese`
+### Conteudo dos tutoriais
 
-- Recebe o token + dados do formulario
-- Valida que o token existe, nao esta expirado e nao foi usado
-- Atualiza o perfil do cliente com os dados recebidos (mesma logica da pagina /anamnese)
-- Marca o token como usado (`used_at = now()`)
-- Retorna sucesso
+**Treino:**
+1. Como visualizar seus treinos do dia
+2. Como iniciar uma sessao de treino
+3. Como registrar carga em cada exercicio
+4. Como funciona o intervalo de descanso
+5. Como finalizar o treino e ver o resumo
 
-### 3. Nova pagina: `src/pages/AnamneseExterna.tsx`
+**Nutricao:**
+1. Como alternar entre dia de treino e dia de descanso
+2. Como ver macros e calorias de cada refeicao
+3. Como usar a lista de compras
+4. Como baixar o PDF do plano
 
-- Rota publica: `/anamnese-externa/:token`
-- Ao montar, chama a edge function para validar o token e obter o nome do cliente
-- Se valido, exibe o formulario da anamnese (reutilizando os mesmos componentes: PersonalDataFields, TrainingHistoryFields, etc.)
-- Se invalido/expirado/usado, exibe mensagem de erro
-- Ao enviar, chama a edge function `submit-external-anamnese`
-- Tela de sucesso com animacao de confirmacao
+**Mindset:**
+1. Como acessar as rotinas de manha e noite
+2. Como marcar praticas concluidas
+3. Como acompanhar seu progresso mental
 
-### 4. Atualizar `AdminClienteDetalhes.tsx`
+**Suporte:**
+1. Como enviar mensagem ao mentor
+2. Como usar o chat de IA
+3. Tempo de resposta esperado
 
-Adicionar na secao "Acoes Rapidas":
+**Evolucao:**
+1. Como enviar fotos de progresso
+2. Padrao correto das fotos (frente, lado, costas)
+3. Como ver a analise de IA
+4. Como acompanhar a timeline
 
-- **Botao "Enviar Link da Anamnese"**: gera o token, monta a URL e copia para clipboard com toast de confirmacao
-- **Botao "Baixar Anamnese em Branco"**: chama uma funcao que gera o PDF sem dados preenchidos
+**Renascer (Hoje):**
+1. Como registrar dados do dia (sono, estresse, energia)
+2. Como importar dados do celular via print do fitness
+3. Como anexar ate 3 screenshots
+4. Como ver o historico dos ultimos 7 dias
+5. O que significa o Score Renascer
 
-### 5. Nova funcao: `generateBlankAnamnesePdf` em `src/lib/generateBlankAnamnesePdf.ts`
+### Integracao nas paginas
+Adicionar o componente `<PageTutorial pageId="treino" />` nas seguintes paginas:
+- `src/pages/Treino.tsx`
+- `src/pages/Nutricao.tsx`
+- `src/pages/Mindset.tsx`
+- `src/pages/Suporte.tsx`
+- `src/pages/Evolucao.tsx`
+- `src/pages/Renascer.tsx`
 
-- Baseada na `generateAnamnesePdf` existente
-- Em vez de valores preenchidos, mostra linhas vazias com labels dos campos
-- Inclui header "Metodo Renascer - Anamnese" e espaco para nome do cliente
-- Layout profissional para impressao
+O botao sera posicionado no `actions` do `PageHeader` existente, ao lado de botoes como "Baixar PDF".
 
-### 6. Atualizar `App.tsx`
+---
 
-- Adicionar rota publica: `/anamnese-externa/:token` apontando para `AnamneseExterna`
-
-## Resumo dos Arquivos
+## Resumo dos arquivos
 
 | Arquivo | Acao |
 |---------|------|
-| Migracao SQL | Criar tabela `anamnese_tokens` com RLS |
-| `supabase/functions/submit-external-anamnese/index.ts` | Nova edge function para validar token e salvar dados |
-| `src/pages/AnamneseExterna.tsx` | Nova pagina publica do formulario |
-| `src/lib/generateBlankAnamnesePdf.ts` | Nova funcao para PDF em branco |
-| `src/pages/admin/AdminClienteDetalhes.tsx` | Adicionar botoes de link e PDF em branco |
-| `src/App.tsx` | Adicionar rota publica |
-| `supabase/config.toml` | Registrar nova edge function com `verify_jwt = false` |
+| `src/components/admin/AdminAccessControlSection.tsx` | Adicionar botoes de liberacao direta (full/trial/none) |
+| `src/components/onboarding/PageTutorial.tsx` | Novo componente de tutorial reutilizavel |
+| `src/pages/Treino.tsx` | Adicionar `<PageTutorial>` |
+| `src/pages/Nutricao.tsx` | Adicionar `<PageTutorial>` |
+| `src/pages/Mindset.tsx` | Adicionar `<PageTutorial>` |
+| `src/pages/Suporte.tsx` | Adicionar `<PageTutorial>` |
+| `src/pages/Evolucao.tsx` | Adicionar `<PageTutorial>` |
+| `src/pages/Renascer.tsx` | Adicionar `<PageTutorial>` |
+
+Nenhuma mudanca no banco de dados necessaria -- o campo `access_level` na tabela `entitlements` ja aceita o valor `'full'`.
