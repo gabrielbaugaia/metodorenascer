@@ -40,9 +40,19 @@ interface BodyAnalysis {
   };
   composicaoCorporal?: {
     percentualGorduraEstimado: string;
+    escalaVisualGordura?: string;
     classificacao: string;
     distribuicaoGordura: string;
     massaMuscular: string;
+  };
+  analisePostural?: {
+    cabeca: string;
+    ombros: string;
+    coluna: string;
+    quadril: string;
+    joelhos: string;
+    tornozelos?: string;
+    observacoes: string;
   };
   [key: string]: unknown;
 }
