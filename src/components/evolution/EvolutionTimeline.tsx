@@ -157,7 +157,7 @@ export function EvolutionTimeline({
                 : null;
 
               return (
-                <div key={checkin.id} className="relative pl-8">
+                <div key={checkin.id} className="relative pl-8 min-w-0 overflow-hidden">
                   {/* Timeline dot */}
                   <div className="absolute left-1.5 top-2 w-3 h-3 rounded-full bg-primary ring-4 ring-background" />
 
@@ -259,7 +259,7 @@ export function EvolutionTimeline({
                           {/* Notes */}
                           {checkin.notas && (
                             <div className="p-3 rounded-lg bg-muted/50">
-                              <p className="text-sm text-muted-foreground">{checkin.notas}</p>
+                              <p className="text-sm text-muted-foreground break-words [overflow-wrap:break-word]">{checkin.notas}</p>
                             </div>
                           )}
 
@@ -289,7 +289,7 @@ export function EvolutionTimeline({
                               ) : (
                                 <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
                                   <div
-                                    className="text-sm leading-relaxed whitespace-pre-wrap"
+                                    className="text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:break-word]"
                                     dangerouslySetInnerHTML={{
                                       __html: formatAiContent(analysis.data, "compact"),
                                     }}
