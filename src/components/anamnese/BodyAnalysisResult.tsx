@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { 
   User, 
   Activity, 
@@ -20,6 +19,7 @@ interface BodyAnalysis {
   };
   composicaoCorporal?: {
     percentualGorduraEstimado: string;
+    escalaVisualGordura?: string;
     classificacao: string;
     distribuicaoGordura: string;
     massaMuscular: string;
@@ -30,6 +30,7 @@ interface BodyAnalysis {
     coluna: string;
     quadril: string;
     joelhos: string;
+    tornozelos?: string;
     observacoes: string;
   };
   analiseFrente?: {
@@ -150,6 +151,11 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
                   variant="secondary"
                 />
               </div>
+              {analysis.composicaoCorporal.escalaVisualGordura && (
+                <p className="text-xs text-muted-foreground mt-3 italic border-l-2 border-primary/30 pl-2">
+                  {analysis.composicaoCorporal.escalaVisualGordura}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-2">
                 Distribuição: {analysis.composicaoCorporal.distribuicaoGordura}
               </p>
@@ -164,16 +170,19 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Activity className="h-4 w-4" />
-              Análise Postural
+              Análise Postural Técnica
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-3">
-              <MetricBadge label="Cabeça" value={analysis.analisePostural.cabeca} variant="outline" />
-              <MetricBadge label="Ombros" value={analysis.analisePostural.ombros} variant="outline" />
-              <MetricBadge label="Coluna" value={analysis.analisePostural.coluna} variant="outline" />
-              <MetricBadge label="Quadril" value={analysis.analisePostural.quadril} variant="outline" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+              <MetricBadge label="Posição Cervical" value={analysis.analisePostural.cabeca} variant="outline" />
+              <MetricBadge label="Alinhamento Escapular" value={analysis.analisePostural.ombros} variant="outline" />
+              <MetricBadge label="Coluna Vertebral" value={analysis.analisePostural.coluna} variant="outline" />
+              <MetricBadge label="Cintura Pélvica" value={analysis.analisePostural.quadril} variant="outline" />
               <MetricBadge label="Joelhos" value={analysis.analisePostural.joelhos} variant="outline" />
+              {analysis.analisePostural.tornozelos && (
+                <MetricBadge label="Tornozelos / Pés" value={analysis.analisePostural.tornozelos} variant="outline" />
+              )}
             </div>
             {analysis.analisePostural.observacoes && (
               <p className="text-sm text-muted-foreground">{analysis.analisePostural.observacoes}</p>
