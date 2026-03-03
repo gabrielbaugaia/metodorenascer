@@ -468,17 +468,17 @@ export default function Evolucao() {
 
   return (
     <ClientLayout>
-      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-8 px-1 sm:px-0 pb-20 sm:pb-0">
+      <div className="max-w-2xl mx-auto space-y-4 px-3 sm:px-0 pb-20 sm:pb-0 overflow-x-hidden">
         <PageHeader title="Evolução" subtitle="Acompanhe seu progresso e envie suas fotos" actions={<PageTutorial pageId="evolucao" />} />
         <PageTutorialBanner pageId="evolucao" />
 
         {/* AI Analysis Modal/Card */}
         {showAnalysis && aiAnalysis && (
-          <Card className="border-primary/50">
+          <Card className="border-primary/50 w-full min-w-0 overflow-hidden">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
                   Análise Comparativa
                 </CardTitle>
                 <Button variant="ghost" size="icon" onClick={() => setShowAnalysis(false)}>
@@ -504,9 +504,9 @@ export default function Evolucao() {
                   }}
                 />
               ) : (
-                <div className="prose prose-invert prose-sm max-w-none">
+                <div className="prose prose-invert prose-sm max-w-none min-w-0 overflow-hidden">
                   <div
-                    className="whitespace-pre-wrap text-sm leading-relaxed"
+                    className="whitespace-pre-wrap text-sm leading-relaxed break-words [overflow-wrap:break-word]"
                     dangerouslySetInnerHTML={{
                       __html: formatAiContent(typeof aiAnalysis === 'string' ? aiAnalysis : JSON.stringify(aiAnalysis)),
                     }}

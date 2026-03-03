@@ -173,7 +173,7 @@ export function EvolutionAnalysisResult({
   );
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-3 sm:space-y-4 min-w-0 w-full overflow-hidden">
       {/* Photo Comparison - Before/After Side by Side */}
       {showPhotoComparison && hasPhotos && (
         <Card className="border-primary/30">
@@ -311,7 +311,7 @@ export function EvolutionAnalysisResult({
           </div>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">
-          <p className="text-xs sm:text-sm leading-relaxed mb-2 sm:mb-3">{analysis.resumoGeral}</p>
+          <p className="text-xs sm:text-sm leading-relaxed mb-2 sm:mb-3 break-words [overflow-wrap:break-word]">{analysis.resumoGeral}</p>
           {analysis.pontuacaoEvolucao?.justificativa && (
             <p className="text-[10px] sm:text-xs text-muted-foreground italic">
               {analysis.pontuacaoEvolucao.justificativa}
@@ -398,7 +398,7 @@ export function EvolutionAnalysisResult({
             if (!data || typeof data !== 'object' || !('mudancasPositivas' in data)) return null;
             
             return (
-              <Card key={angle} className="border-border/50">
+              <Card key={angle} className="border-border/50 min-w-0 overflow-hidden">
                 <CardHeader className="pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
                   <CardTitle className="text-xs sm:text-sm capitalize">{angle}</CardTitle>
                 </CardHeader>
@@ -485,7 +485,7 @@ export function EvolutionAnalysisResult({
               </div>
             )}
             {analysis.ajustesTreino.observacoes && (
-              <p className="text-xs text-muted-foreground italic mt-2">
+              <p className="text-xs text-muted-foreground italic mt-2 break-words [overflow-wrap:break-word]">
                 {analysis.ajustesTreino.observacoes}
               </p>
             )}
@@ -503,7 +503,7 @@ export function EvolutionAnalysisResult({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <MacroBadge label="Calorias" value={analysis.ajustesDieta.calorias} />
               <MacroBadge label="Proteína" value={analysis.ajustesDieta.proteina} />
               <MacroBadge label="Carboidratos" value={analysis.ajustesDieta.carboidratos} />
@@ -522,7 +522,7 @@ export function EvolutionAnalysisResult({
               </div>
             )}
             {analysis.ajustesDieta.observacoes && (
-              <p className="text-xs text-muted-foreground italic">
+              <p className="text-xs text-muted-foreground italic break-words [overflow-wrap:break-word]">
                 {analysis.ajustesDieta.observacoes}
               </p>
             )}

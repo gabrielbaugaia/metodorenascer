@@ -70,7 +70,16 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
   const lastAnalysis = lastCheckin ? parseAnalysis(lastCheckin.ai_analysis) : { structured: false, data: null };
   const lastCheckinPhotos = lastCheckin ? signedPhotos[lastCheckin.id] : null;
 
-  // Helper functions
+  // ─── Helper: ensure minimum space, add page if needed ───
+  const ensureSpace = (minHeight: number) => {
+    if (yPos + minHeight > pageHeight - 15) {
+      doc.addPage();
+      addHeader();
+      yPos = 28;
+    }
+  };
+
+  // ─── Helper: header bar ───
   const addHeader = () => {
     doc.setFillColor(255, 69, 0);
     doc.rect(0, 0, pageWidth, 22, "F");
@@ -83,7 +92,9 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
     doc.text("Relatório de Evolução Comparativa", pageWidth - margin - 55, 14);
   };
 
+  // ─── Helper: section title (orange bar) ───
   const addSectionTitle = (title: string) => {
+    ensureSpace(40);
     doc.setFillColor(255, 69, 0);
     doc.rect(margin, yPos - 3, contentWidth, 6, "F");
     doc.setTextColor(255, 255, 255);
@@ -93,7 +104,8 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
     yPos += 9;
   };
 
-  const addCompactField = (label: string, value: string, xOffset: number = 0, width: number = contentWidth) => {
+  // ─── Helper: compact field (label + value) ───
+  const addCompactField = (label: string, value: string, xOffset: number = 0) => {
     doc.setTextColor(80, 80, 80);
     doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
@@ -103,7 +115,9 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
     doc.text(value, margin + xOffset + 35, yPos);
   };
 
+  // ─── Helper: text paragraph ───
   const addTextParagraph = (text: string, isBold: boolean = false, maxLines: number = 4) => {
+    ensureSpace(maxLines * 3.5 + 4);
     doc.setTextColor(30, 30, 30);
     doc.setFontSize(8);
     doc.setFont("helvetica", isBold ? "bold" : "normal");
@@ -113,6 +127,7 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
     yPos += linesToShow.length * 3.5 + 2;
   };
 
+  // ─── Helper: load image as base64 ───
   const loadImage = async (url: string): Promise<string | null> => {
     try {
       const response = await fetch(url);
@@ -133,7 +148,7 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
 
   // Title
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(12);
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text(`Evolução de ${clientName}`, margin, yPos);
   doc.setFontSize(8);
@@ -142,7 +157,7 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
   doc.text(format(new Date(), "dd/MM/yyyy", { locale: ptBR }), pageWidth - margin - 20, yPos);
   yPos += 10;
 
-  // Summary stats in columns
+  // Summary stats
   addSectionTitle("Resumo da Evolução");
   
   const leftCol = 0;
@@ -166,7 +181,7 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
   }
   yPos += 8;
 
-  // Weight Chart (compact)
+  // Weight Chart
   const weightData = sortedCheckins
     .filter(c => c.peso_atual !== null)
     .map(c => ({ date: c.created_at, weight: c.peso_atual as number }));
@@ -224,7 +239,7 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
     addTextParagraph(truncateText(lastCheckin.notas, 300), false, 3);
   }
 
-  // ==================== PAGE 2: Photo Comparisons with Analysis ====================
+  // ==================== PAGE 2: Photo Comparisons ====================
   const hasInitialPhotos = initialPhotos?.frente || initialPhotos?.lado || initialPhotos?.costas;
   const hasCurrentPhotos = lastCheckinPhotos?.frente || lastCheckinPhotos?.lado || lastCheckinPhotos?.costas;
   
@@ -240,7 +255,6 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
     const gapBetweenPhotos = 8;
     const analysisWidth = contentWidth - (photoWidth * 2) - gapBetweenPhotos - 10;
     
-    // Load all photos
     const [
       initialFrenteBase64,
       initialLadoBase64,
@@ -257,14 +271,14 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
       lastCheckinPhotos?.costas ? loadImage(lastCheckinPhotos.costas) : Promise.resolve(null),
     ]);
 
-    // Helper to draw a comparison row with analysis
     const drawComparisonWithAnalysis = (
       label: string,
       initialImg: string | null,
       currentImg: string | null,
       analysisText: string
     ) => {
-      const rowHeight = photoHeight + 8;
+      const rowHeight = photoHeight + 12;
+      ensureSpace(rowHeight);
       
       // Label
       doc.setFontSize(9);
@@ -322,7 +336,7 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
       yPos = photoY + photoHeight + 6;
     };
 
-    // Extract analysis per position from structured data
+    // Extract analysis per position
     let frenteAnalysis = "Análise não disponível para esta posição.";
     let ladoAnalysis = "Análise não disponível para esta posição.";
     let costasAnalysis = "Análise não disponível para esta posição.";
@@ -355,7 +369,6 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
       costasAnalysis = frenteAnalysis;
     }
 
-    // Draw all three comparisons
     if (initialFrenteBase64 || currentFrenteBase64) {
       drawComparisonWithAnalysis("▸ VISTA FRONTAL", initialFrenteBase64, currentFrenteBase64, frenteAnalysis);
     }
@@ -391,7 +404,7 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
 
     // Weight Analysis
     if (a.analisePeso) {
-      yPos += 2;
+      ensureSpace(20);
       doc.setFontSize(8);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(60, 60, 60);
@@ -409,27 +422,35 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
       const t = a.ajustesTreino;
       
       if (t.intensificar?.length > 0) {
+        ensureSpace(8);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(7);
         doc.setTextColor(40, 40, 40);
         doc.text("Intensificar: ", margin, yPos);
         doc.setFont("helvetica", "normal");
-        doc.text(t.intensificar.join(", "), margin + 22, yPos);
-        yPos += 4;
+        const intensText = doc.splitTextToSize(t.intensificar.join(", "), contentWidth - 22);
+        doc.text(intensText.slice(0, 2), margin + 22, yPos);
+        yPos += intensText.slice(0, 2).length * 3.5 + 1;
       }
       if (t.adicionar?.length > 0) {
+        ensureSpace(8);
         doc.setFont("helvetica", "bold");
+        doc.setFontSize(7);
         doc.text("Adicionar: ", margin, yPos);
         doc.setFont("helvetica", "normal");
-        doc.text(t.adicionar.join(", "), margin + 18, yPos);
-        yPos += 4;
+        const addText = doc.splitTextToSize(t.adicionar.join(", "), contentWidth - 18);
+        doc.text(addText.slice(0, 2), margin + 18, yPos);
+        yPos += addText.slice(0, 2).length * 3.5 + 1;
       }
       if (t.manutencao?.length > 0) {
+        ensureSpace(8);
         doc.setFont("helvetica", "bold");
+        doc.setFontSize(7);
         doc.text("Manutenção: ", margin, yPos);
         doc.setFont("helvetica", "normal");
-        doc.text(t.manutencao.join(", "), margin + 22, yPos);
-        yPos += 4;
+        const manText = doc.splitTextToSize(t.manutencao.join(", "), contentWidth - 22);
+        doc.text(manText.slice(0, 2), margin + 22, yPos);
+        yPos += manText.slice(0, 2).length * 3.5 + 1;
       }
       if (t.observacoes) {
         yPos += 2;
@@ -439,7 +460,6 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
 
     // Diet Adjustments
     if (a.ajustesDieta) {
-      yPos += 2;
       addSectionTitle("Orientações Nutricionais");
       const d = a.ajustesDieta;
       
@@ -449,6 +469,7 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
       if (d.carboidratos) macros.push(`Carboidratos: ${d.carboidratos}`);
       
       if (macros.length > 0) {
+        ensureSpace(8);
         doc.setFontSize(7);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(40, 40, 40);
@@ -467,7 +488,6 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
 
     // Goals for next 30 days
     if (a.metasProximos30Dias?.length > 0) {
-      yPos += 2;
       addSectionTitle("Metas para os Próximos 30 Dias");
       
       doc.setFontSize(8);
@@ -475,20 +495,26 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
       doc.setTextColor(40, 40, 40);
       
       a.metasProximos30Dias.slice(0, 5).forEach((meta: string, idx: number) => {
+        ensureSpace(6);
         const metaText = `${idx + 1}. ${truncateText(meta, 100)}`;
         doc.text(metaText, margin, yPos);
         yPos += 4;
       });
     }
 
-    // Motivational message
+    // Motivational message — grouped with previous content, never alone on new page
     if (a.mensagemMotivacional) {
-      yPos += 4;
-      doc.setFillColor(255, 245, 235);
       const msgLines = doc.splitTextToSize(a.mensagemMotivacional, contentWidth - 8);
       const boxHeight = Math.min(msgLines.length * 3.5 + 8, 25);
-      doc.rect(margin, yPos, contentWidth, boxHeight, "F");
-      doc.setTextColor(255, 69, 0);
+      ensureSpace(boxHeight + 8);
+      
+      yPos += 4;
+      // Pale orange background box
+      doc.setFillColor(255, 245, 235);
+      doc.setDrawColor(255, 200, 170);
+      doc.setLineWidth(0.3);
+      doc.rect(margin, yPos, contentWidth, boxHeight, "FD");
+      doc.setTextColor(80, 50, 30);
       doc.setFontSize(8);
       doc.setFont("helvetica", "italic");
       doc.text(msgLines.slice(0, 4), margin + 4, yPos + 5);
@@ -501,6 +527,7 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
   } else {
     addSectionTitle("Análise");
     doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 100, 100);
     doc.text("Nenhuma análise disponível para este período.", margin, yPos);
   }
@@ -513,13 +540,12 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
     doc.setTextColor(150, 150, 150);
     doc.text(
       `Página ${i} de ${pageCount}`,
-      pageWidth / 2,
-      pageHeight - 8,
-      { align: "center" }
+      pageWidth - margin - 20,
+      pageHeight - 8
     );
   }
 
-  // Save the PDF
+  // Save
   const fileName = `evolucao_${clientName.replace(/\s+/g, "_").toLowerCase()}_${format(new Date(), "yyyy-MM-dd")}.pdf`;
   doc.save(fileName);
 }
