@@ -1854,6 +1854,276 @@ export type Database = {
         }
         Relationships: []
       }
+      sis_cognitive_checkins: {
+        Row: {
+          alcohol: boolean | null
+          created_at: string | null
+          date: string
+          focus: number | null
+          food_discipline: number | null
+          id: string
+          irritability: number | null
+          mental_clarity: number | null
+          mental_energy: number | null
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          alcohol?: boolean | null
+          created_at?: string | null
+          date: string
+          focus?: number | null
+          food_discipline?: number | null
+          id?: string
+          irritability?: number | null
+          mental_clarity?: number | null
+          mental_energy?: number | null
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          alcohol?: boolean | null
+          created_at?: string | null
+          date?: string
+          focus?: number | null
+          food_discipline?: number | null
+          id?: string
+          irritability?: number | null
+          mental_clarity?: number | null
+          mental_energy?: number | null
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sis_cognitive_checkins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sis_device_sources: {
+        Row: {
+          access_status: string | null
+          created_at: string | null
+          id: string
+          last_sync_at: string | null
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          access_status?: string | null
+          created_at?: string | null
+          id?: string
+          last_sync_at?: string | null
+          provider: string
+          user_id: string
+        }
+        Update: {
+          access_status?: string | null
+          created_at?: string | null
+          id?: string
+          last_sync_at?: string | null
+          provider?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sis_device_sources_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sis_scores_daily: {
+        Row: {
+          alerts: Json | null
+          body_comp_score: number | null
+          classification: string | null
+          cognitive_score: number | null
+          consistency_score: number | null
+          created_at: string | null
+          date: string
+          id: string
+          mechanical_score: number | null
+          recovery_score: number | null
+          shape_intelligence_score: number | null
+          structural_score: number | null
+          user_id: string
+        }
+        Insert: {
+          alerts?: Json | null
+          body_comp_score?: number | null
+          classification?: string | null
+          cognitive_score?: number | null
+          consistency_score?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          mechanical_score?: number | null
+          recovery_score?: number | null
+          shape_intelligence_score?: number | null
+          structural_score?: number | null
+          user_id: string
+        }
+        Update: {
+          alerts?: Json | null
+          body_comp_score?: number | null
+          classification?: string | null
+          cognitive_score?: number | null
+          consistency_score?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          mechanical_score?: number | null
+          recovery_score?: number | null
+          shape_intelligence_score?: number | null
+          structural_score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sis_scores_daily_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sis_streaks: {
+        Row: {
+          best_streak: number | null
+          current_streak: number | null
+          last_checkin_date: string | null
+          user_id: string
+        }
+        Insert: {
+          best_streak?: number | null
+          current_streak?: number | null
+          last_checkin_date?: string | null
+          user_id: string
+        }
+        Update: {
+          best_streak?: number | null
+          current_streak?: number | null
+          last_checkin_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sis_streaks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sis_structural_assessments: {
+        Row: {
+          cervical_angle: number | null
+          created_at: string | null
+          date: string
+          hinge_score: number | null
+          id: string
+          mobility_score: number | null
+          notes: string | null
+          overhead_score: number | null
+          pelvic_tilt: number | null
+          photo_back_url: string | null
+          photo_front_url: string | null
+          photo_side_url: string | null
+          scapular_asymmetry: number | null
+          squat_score: number | null
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          cervical_angle?: number | null
+          created_at?: string | null
+          date: string
+          hinge_score?: number | null
+          id?: string
+          mobility_score?: number | null
+          notes?: string | null
+          overhead_score?: number | null
+          pelvic_tilt?: number | null
+          photo_back_url?: string | null
+          photo_front_url?: string | null
+          photo_side_url?: string | null
+          scapular_asymmetry?: number | null
+          squat_score?: number | null
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          cervical_angle?: number | null
+          created_at?: string | null
+          date?: string
+          hinge_score?: number | null
+          id?: string
+          mobility_score?: number | null
+          notes?: string | null
+          overhead_score?: number | null
+          pelvic_tilt?: number | null
+          photo_back_url?: string | null
+          photo_front_url?: string | null
+          photo_side_url?: string | null
+          scapular_asymmetry?: number | null
+          squat_score?: number | null
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sis_structural_assessments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sis_wearable_raw: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          payload: Json | null
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          payload?: Json | null
+          provider: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          payload?: Json | null
+          provider?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sis_wearable_raw_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           access_blocked: boolean | null

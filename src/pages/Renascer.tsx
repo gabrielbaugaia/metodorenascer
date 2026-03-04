@@ -2,23 +2,24 @@ import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRenascerScore } from "@/hooks/useRenascerScore";
+import { useSisScore } from "@/hooks/useSisScore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTutorial, PageTutorialBanner } from "@/components/onboarding/PageTutorial";
-import { ScoreRing } from "@/components/renascer/ScoreRing";
+import { SisScoreRing } from "@/components/sis/SisScoreRing";
+import { SisSubScoreCards } from "@/components/sis/SisSubScoreCards";
+import { SisAlerts } from "@/components/sis/SisAlerts";
+import { SisTrendChart } from "@/components/sis/SisTrendChart";
+import { SisCognitiveCheckin } from "@/components/sis/SisCognitiveCheckin";
 import { MiniConfetti } from "@/components/renascer/MiniConfetti";
-import { StatusBadge } from "@/components/renascer/StatusBadge";
-import { TrendIndicator } from "@/components/renascer/TrendIndicator";
-import { DayRecommendation } from "@/components/renascer/DayRecommendation";
 import { ManualInput } from "@/components/renascer/ManualInput";
-import { ScoreSparkline } from "@/components/renascer/ScoreSparkline";
 import { RecentLogsHistory } from "@/components/renascer/RecentLogsHistory";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Flame } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -29,19 +30,13 @@ export default function Renascer() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
 
-  const {
-    score,
-    classification,
-    statusText,
-    trend,
-    trendText,
-    recommendation,
-    todayLog,
-    scores7d,
-    isLoading: scoreLoading,
-  } = useRenascerScore();
+  // Legacy score (kept for ManualInput compatibility)
+  const { todayLog, isLoading: legacyLoading } = useRenascerScore();
 
-  const handleSaveSuccess = useCallback(() => {
+  // SIS score
+  const sis = useSisScore();
+
+  const handleSaveSuccess = useCallback(async () => {
     setCelebrating(true);
     setShowFeedback(true);
     setTimeout(() => setCelebrating(false), 900);
@@ -54,7 +49,17 @@ export default function Renascer() {
       localStorage.setItem(key, String(count + 1));
       setTimeout(() => setShowConfetti(false), 1200);
     }
-  }, []);
+
+    // Recompute SIS score after manual input save
+    try {
+      await supabase.functions.invoke("compute-sis-score", {
+        body: { target_date: format(new Date(), "yyyy-MM-dd") },
+      });
+      queryClient.invalidateQueries({ queryKey: ["sis-scores-30d"] });
+    } catch (e) {
+      console.error("SIS recompute failed:", e);
+    }
+  }, [queryClient]);
 
   const { data: profile } = useQuery({
     queryKey: ["profile-data-mode", user?.id],
@@ -82,7 +87,7 @@ export default function Renascer() {
 
   const todayFormatted = format(new Date(), "EEE, dd/MM", { locale: ptBR });
 
-  if (scoreLoading) {
+  if (sis.isLoading && legacyLoading) {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -95,7 +100,6 @@ export default function Renascer() {
   return (
     <ClientLayout>
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6 pb-24 md:pb-6">
-        {/* Header — sem emoji, com data */}
         <PageHeader
           title={`Olá, ${firstName}`}
           subtitle={`Hoje — ${todayFormatted}`}
@@ -104,11 +108,25 @@ export default function Renascer() {
 
         <PageTutorialBanner pageId="renascer" />
 
-        {/* Score Ring + Badge */}
+        {/* SIS Score Ring */}
         <div className="rounded-xl border border-border/50 bg-card p-6 flex flex-col items-center gap-4 relative">
           <MiniConfetti active={showConfetti} />
-          <ScoreRing score={score} classification={classification} celebrate={celebrating} />
-          <StatusBadge classification={classification} statusText={statusText} />
+          <SisScoreRing
+            score={sis.score}
+            classification={sis.classification}
+            label={sis.label}
+            delta7vs30={sis.delta7vs30}
+            hasTodayScore={sis.hasTodayScore}
+          />
+          {sis.currentStreak > 0 && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Flame className="h-3.5 w-3.5 text-orange-500" />
+              <span>{sis.currentStreak} dias consecutivos</span>
+              {sis.bestStreak > sis.currentStreak && (
+                <span className="text-muted-foreground/60">· recorde {sis.bestStreak}</span>
+              )}
+            </div>
+          )}
           {showFeedback && (
             <p className="text-xs text-muted-foreground animate-fade-in transition-opacity">
               Atualizado. Continue no controle.
@@ -116,17 +134,24 @@ export default function Renascer() {
           )}
         </div>
 
-        {/* Trend + Sparkline */}
-        <div className="rounded-xl border border-border/50 bg-card p-5 space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-foreground">
-            Tendência
-          </h3>
-          <TrendIndicator trend={trend} text={trendText} />
-          <ScoreSparkline data={scores7d} />
-        </div>
+        {/* Sub-score Cards */}
+        <SisSubScoreCards
+          mechanical={sis.mechanical}
+          recovery={sis.recovery}
+          structural={sis.structural}
+          bodyComp={sis.bodyComp}
+          cognitive={sis.cognitive}
+          consistency={sis.consistency}
+        />
 
-        {/* Recommendation */}
-        <DayRecommendation items={recommendation} />
+        {/* Alerts */}
+        <SisAlerts alerts={sis.alerts} />
+
+        {/* Trend Chart */}
+        <SisTrendChart data={sis.scores30d} avg7={sis.avg7} avg14={sis.avg14} avg30={sis.avg30} />
+
+        {/* Cognitive Quick Check-in */}
+        <SisCognitiveCheckin />
 
         {/* Data mode toggle */}
         <div className="flex items-center justify-between px-1">
@@ -139,10 +164,10 @@ export default function Renascer() {
           />
         </div>
 
-        {/* Manual Input / Auto placeholder */}
+        {/* Manual Input (kept) */}
         <ManualInput dataMode={dataMode} todayLog={todayLog} onSaveSuccess={handleSaveSuccess} />
 
-        {/* Histórico 7 dias */}
+        {/* Recent Logs History (kept) */}
         <RecentLogsHistory />
 
         {/* Advanced panel link */}
