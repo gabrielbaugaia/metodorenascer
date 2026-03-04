@@ -213,6 +213,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
+      queryClient.invalidateQueries({ queryKey: ["recent-logs-history"] });
       toast.success("Dia registrado. Seu Score foi atualizado.");
       onSaveSuccess?.();
     },
