@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, subDays } from "date-fns";
-import type { SisAlert, SisClassification } from "@/lib/sisScoreCalc";
+import type { SisAlert, SisClassification, SisScoreRow } from "@/lib/sisScoreCalc";
 
 export interface SisScoreData {
   // Today
@@ -18,6 +18,7 @@ export interface SisScoreData {
   alerts: SisAlert[];
   // Trends
   scores30d: { date: string; score: number }[];
+  scores30dFull: SisScoreRow[];
   avg7: number;
   avg14: number;
   avg30: number;
@@ -83,6 +84,21 @@ export function useSisScore(): SisScoreData {
     .filter(s => s.shape_intelligence_score != null)
     .map(s => ({ date: s.date, score: Number(s.shape_intelligence_score) }));
 
+  const scores30dFull = scoresList
+    .filter(s => s.shape_intelligence_score != null)
+    .map(s => ({
+      date: s.date,
+      mechanical_score: s.mechanical_score ? Number(s.mechanical_score) : null,
+      recovery_score: s.recovery_score ? Number(s.recovery_score) : null,
+      structural_score: s.structural_score ? Number(s.structural_score) : null,
+      body_comp_score: s.body_comp_score ? Number(s.body_comp_score) : null,
+      cognitive_score: s.cognitive_score ? Number(s.cognitive_score) : null,
+      consistency_score: s.consistency_score ? Number(s.consistency_score) : null,
+      shape_intelligence_score: Number(s.shape_intelligence_score),
+      classification: s.classification ?? null,
+      alerts: (s.alerts as unknown as SisAlert[] | undefined) ?? [],
+    }));
+
   const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
   const last7 = scores30d.slice(-7).map(s => s.score);
   const last14 = scores30d.slice(-14).map(s => s.score);
@@ -105,6 +121,7 @@ export function useSisScore(): SisScoreData {
     consistency: todayRow?.consistency_score ? Number(todayRow.consistency_score) : null,
     alerts: (todayRow?.alerts as unknown as SisAlert[] | undefined) ?? [],
     scores30d,
+    scores30dFull,
     avg7: Math.round(avg7 * 10) / 10,
     avg14: Math.round(avg14 * 10) / 10,
     avg30: Math.round(avg30 * 10) / 10,
