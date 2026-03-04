@@ -32,6 +32,8 @@ import {
   FileDown,
 } from "lucide-react";
 import { generateAnamnesePdf } from "@/lib/generateAnamnesePdf";
+import { generateSisReportPdf } from "@/lib/generateSisReportPdf";
+import type { SisAlert } from "@/lib/sisScoreCalc";
 import { generateBlankAnamnesePdf } from "@/lib/generateBlankAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
 import { AdminAccessControlSection } from "@/components/admin/AdminAccessControlSection";
@@ -147,6 +149,8 @@ export default function AdminClienteDetalhes() {
   const [syncingStripe, setSyncingStripe] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState(false);
+  const [backfillingSis, setBackfillingSis] = useState(false);
+  const [generatingSisPdf, setGeneratingSisPdf] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -847,7 +851,107 @@ export default function AdminClienteDetalhes() {
                 </p>
               </div>
 
-              {/* Reset Password */}
+              {/* SIS Actions */}
+              <div className="space-y-3">
+                <Label className="block">Shape Intelligence System™</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    disabled={backfillingSis}
+                    onClick={async () => {
+                      if (!id) return;
+                      setBackfillingSis(true);
+                      try {
+                        const { error } = await supabase.functions.invoke("compute-sis-score", {
+                          body: { backfill: true, target_user_id: id },
+                        });
+                        if (error) throw error;
+                        toast.success("Histórico SIS importado com sucesso!");
+                      } catch (e: any) {
+                        console.error("Backfill SIS error:", e);
+                        toast.error("Erro ao importar histórico SIS");
+                      } finally {
+                        setBackfillingSis(false);
+                      }
+                    }}
+                  >
+                    {backfillingSis ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                    <span className="text-xs sm:text-sm">Importar Histórico SIS</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    disabled={generatingSisPdf}
+                    onClick={async () => {
+                      if (!id || !profile) return;
+                      setGeneratingSisPdf(true);
+                      try {
+                        const d30ago = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+                        const today = new Date().toISOString().split("T")[0];
+                        const { data: scores } = await supabase
+                          .from("sis_scores_daily")
+                          .select("date, shape_intelligence_score, mechanical_score, recovery_score, structural_score, body_comp_score, cognitive_score, consistency_score, classification, alerts")
+                          .eq("user_id", id)
+                          .gte("date", d30ago)
+                          .lte("date", today)
+                          .order("date", { ascending: true });
+
+                        const scoresList = (scores ?? []).map(s => ({
+                          date: s.date,
+                          mechanical_score: s.mechanical_score ? Number(s.mechanical_score) : null,
+                          recovery_score: s.recovery_score ? Number(s.recovery_score) : null,
+                          structural_score: s.structural_score ? Number(s.structural_score) : null,
+                          body_comp_score: s.body_comp_score ? Number(s.body_comp_score) : null,
+                          cognitive_score: s.cognitive_score ? Number(s.cognitive_score) : null,
+                          consistency_score: s.consistency_score ? Number(s.consistency_score) : null,
+                          shape_intelligence_score: s.shape_intelligence_score ? Number(s.shape_intelligence_score) : null,
+                          classification: s.classification ?? null,
+                          alerts: (s.alerts as unknown as SisAlert[] | undefined) ?? [],
+                        }));
+
+                        const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+                        const vals = scoresList.filter(s => s.shape_intelligence_score != null).map(s => s.shape_intelligence_score!);
+                        const avg7 = avg(vals.slice(-7));
+                        const avg30 = avg(vals);
+                        const avg14 = avg(vals.slice(-14));
+
+                        const { data: streakData } = await supabase
+                          .from("sis_streaks")
+                          .select("current_streak, best_streak")
+                          .eq("user_id", id)
+                          .single();
+
+                        generateSisReportPdf({
+                          userName: profile.full_name,
+                          scores30d: scoresList,
+                          avg7: Math.round(avg7 * 10) / 10,
+                          avg14: Math.round(avg14 * 10) / 10,
+                          avg30: Math.round(avg30 * 10) / 10,
+                          delta7vs30: Math.round((avg7 - avg30) * 10) / 10,
+                          currentStreak: streakData?.current_streak ?? 0,
+                          bestStreak: streakData?.best_streak ?? 0,
+                        });
+                        toast.success("PDF SIS gerado com sucesso!");
+                      } catch (e: any) {
+                        console.error("SIS PDF error:", e);
+                        toast.error("Erro ao gerar PDF SIS");
+                      } finally {
+                        setGeneratingSisPdf(false);
+                      }
+                    }}
+                  >
+                    {generatingSisPdf ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileDown className="h-4 w-4 mr-2" />}
+                    <span className="text-xs sm:text-sm">Relatório SIS (PDF)</span>
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Importa dados históricos e gera relatório executivo do SIS
+                </p>
+              </div>
+
               <div>
                 <Label className="mb-2 block">Redefinir Senha</Label>
                 <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>

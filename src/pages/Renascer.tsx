@@ -19,8 +19,11 @@ import { RecentLogsHistory } from "@/components/renascer/RecentLogsHistory";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ExternalLink, Flame } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ExternalLink, Flame, Download, History, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { generateSisReportPdf } from "@/lib/generateSisReportPdf";
+import { toast } from "sonner";
 import { ptBR } from "date-fns/locale";
 
 export default function Renascer() {
@@ -29,6 +32,8 @@ export default function Renascer() {
   const [celebrating, setCelebrating] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   // Legacy score (kept for ManualInput compatibility)
   const { todayLog, isLoading: legacyLoading } = useRenascerScore();
@@ -169,6 +174,65 @@ export default function Renascer() {
 
         {/* Recent Logs History (kept) */}
         <RecentLogsHistory />
+
+        {/* SIS Actions */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 text-xs"
+            disabled={backfilling}
+            onClick={async () => {
+              setBackfilling(true);
+              try {
+                const { error } = await supabase.functions.invoke("compute-sis-score", {
+                  body: { backfill: true },
+                });
+                if (error) throw error;
+                queryClient.invalidateQueries({ queryKey: ["sis-scores-30d"] });
+                toast.success("Histórico SIS importado com sucesso!");
+              } catch (e) {
+                console.error("Backfill error:", e);
+                toast.error("Erro ao importar histórico");
+              } finally {
+                setBackfilling(false);
+              }
+            }}
+          >
+            {backfilling ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <History className="h-3.5 w-3.5 mr-1.5" />}
+            Importar Histórico
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 text-xs"
+            disabled={downloadingPdf || !sis.scores30d.length}
+            onClick={() => {
+              setDownloadingPdf(true);
+              try {
+                generateSisReportPdf({
+                  userName: profile?.full_name || firstName || "Aluno",
+                  scores30d: sis.scores30dFull,
+                  avg7: sis.avg7,
+                  avg14: sis.avg14,
+                  avg30: sis.avg30,
+                  delta7vs30: sis.delta7vs30,
+                  currentStreak: sis.currentStreak,
+                  bestStreak: sis.bestStreak,
+                });
+                toast.success("PDF gerado com sucesso!");
+              } catch (e) {
+                console.error("PDF error:", e);
+                toast.error("Erro ao gerar PDF");
+              } finally {
+                setDownloadingPdf(false);
+              }
+            }}
+          >
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+            Relatório SIS
+          </Button>
+        </div>
 
         {/* Advanced panel link */}
         <div className="text-center pt-2">
