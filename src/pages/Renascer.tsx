@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { TransformationPhaseCard } from "@/components/renascer/TransformationPhaseCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useRenascerScore } from "@/hooks/useRenascerScore";
 import { useSisScore } from "@/hooks/useSisScore";
@@ -127,6 +128,9 @@ export default function Renascer() {
 
         <PageTutorialBanner pageId="renascer" />
 
+        {/* 90-Day Transformation Journey */}
+        <TransformationPhaseCard />
+
         {/* SIS Score Ring */}
         <div className="rounded-xl border border-border/50 bg-card p-6 flex flex-col items-center gap-4 relative">
           <MiniConfetti active={showConfetti} />
@@ -177,10 +181,9 @@ export default function Renascer() {
         <SisSubScoreCards
           mechanical={sis.mechanical}
           recovery={sis.recovery}
-          structural={sis.structural}
-          bodyComp={sis.bodyComp}
           cognitive={sis.cognitive}
           consistency={sis.consistency}
+          nutrition={sis.nutrition}
         />
 
         {/* Alerts */}

@@ -1,4 +1,4 @@
-import { Dumbbell, Heart, Bone, Scale, Brain, CalendarCheck } from "lucide-react";
+import { Dumbbell, Heart, Brain, CalendarCheck, Apple } from "lucide-react";
 
 interface SubScore {
   label: string;
@@ -9,10 +9,9 @@ interface SubScore {
 interface SisSubScoreCardsProps {
   mechanical: number | null;
   recovery: number | null;
-  structural: number | null;
-  bodyComp: number | null;
   cognitive: number | null;
   consistency: number | null;
+  nutrition: number | null;
 }
 
 function ScoreBar({ value }: { value: number }) {
@@ -24,14 +23,13 @@ function ScoreBar({ value }: { value: number }) {
   );
 }
 
-export function SisSubScoreCards({ mechanical, recovery, structural, bodyComp, cognitive, consistency }: SisSubScoreCardsProps) {
+export function SisSubScoreCards({ mechanical, recovery, cognitive, consistency, nutrition }: SisSubScoreCardsProps) {
   const cards: SubScore[] = [
-    { label: "Mecânico", value: mechanical, icon: <Dumbbell className="h-4 w-4" /> },
+    { label: "Treino", value: mechanical, icon: <Dumbbell className="h-4 w-4" /> },
     { label: "Recuperação", value: recovery, icon: <Heart className="h-4 w-4" /> },
-    { label: "Estrutural", value: structural, icon: <Bone className="h-4 w-4" /> },
-    { label: "Composição", value: bodyComp, icon: <Scale className="h-4 w-4" /> },
     { label: "Cognitivo", value: cognitive, icon: <Brain className="h-4 w-4" /> },
     { label: "Consistência", value: consistency, icon: <CalendarCheck className="h-4 w-4" /> },
+    { label: "Nutrição", value: nutrition, icon: <Apple className="h-4 w-4" /> },
   ];
 
   return (

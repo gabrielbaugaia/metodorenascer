@@ -69,7 +69,7 @@ export function useBehaviorProfile() {
       const startOfDay = today + "T00:00:00Z";
       const endOfDay = today + "T23:59:59Z";
 
-      const [workoutRes, dayLogRes, cogRes] = await Promise.all([
+      const [workoutRes, dayLogRes, cogRes, foodRes] = await Promise.all([
         supabase.from("workout_completions")
           .select("id")
           .eq("user_id", user!.id)
@@ -85,12 +85,18 @@ export function useBehaviorProfile() {
           .eq("user_id", user!.id)
           .eq("date", today)
           .limit(1),
+        supabase.from("food_logs")
+          .select("id")
+          .eq("user_id", user!.id)
+          .eq("date", today)
+          .limit(1),
       ]);
 
       const wins: MicroWin[] = [
         { type: "workout", label: "Treino", done: (workoutRes.data?.length ?? 0) > 0 },
         { type: "sleep", label: "Registro de sono", done: (dayLogRes.data?.length ?? 0) > 0 && dayLogRes.data![0].sleep_hours != null },
         { type: "mental", label: "Check-in mental", done: (cogRes.data?.length ?? 0) > 0 },
+        { type: "nutrition", label: "Nutrição", done: (foodRes.data?.length ?? 0) > 0 },
       ];
       return wins;
     },

@@ -11,8 +11,7 @@ export interface SisScoreData {
   label: string;
   mechanical: number | null;
   recovery: number | null;
-  structural: number | null;
-  bodyComp: number | null;
+  nutrition: number | null;
   cognitive: number | null;
   consistency: number | null;
   alerts: SisAlert[];
@@ -42,7 +41,7 @@ export function useSisScore(): SisScoreData {
     queryFn: async () => {
       const { data } = await supabase
         .from("sis_scores_daily")
-        .select("date, shape_intelligence_score, mechanical_score, recovery_score, structural_score, body_comp_score, cognitive_score, consistency_score, classification, alerts")
+        .select("date, shape_intelligence_score, mechanical_score, recovery_score, structural_score, body_comp_score, cognitive_score, consistency_score, nutrition_score, classification, alerts")
         .eq("user_id", user!.id)
         .gte("date", d30ago)
         .lte("date", today)
@@ -94,6 +93,7 @@ export function useSisScore(): SisScoreData {
       body_comp_score: s.body_comp_score ? Number(s.body_comp_score) : null,
       cognitive_score: s.cognitive_score ? Number(s.cognitive_score) : null,
       consistency_score: s.consistency_score ? Number(s.consistency_score) : null,
+      nutrition_score: (s as any).nutrition_score ? Number((s as any).nutrition_score) : null,
       shape_intelligence_score: Number(s.shape_intelligence_score),
       classification: s.classification ?? null,
       alerts: (s.alerts as unknown as SisAlert[] | undefined) ?? [],
@@ -115,10 +115,9 @@ export function useSisScore(): SisScoreData {
     label,
     mechanical: todayRow?.mechanical_score ? Number(todayRow.mechanical_score) : null,
     recovery: todayRow?.recovery_score ? Number(todayRow.recovery_score) : null,
-    structural: todayRow?.structural_score ? Number(todayRow.structural_score) : null,
-    bodyComp: todayRow?.body_comp_score ? Number(todayRow.body_comp_score) : null,
     cognitive: todayRow?.cognitive_score ? Number(todayRow.cognitive_score) : null,
     consistency: todayRow?.consistency_score ? Number(todayRow.consistency_score) : null,
+    nutrition: (todayRow as any)?.nutrition_score ? Number((todayRow as any).nutrition_score) : null,
     alerts: (todayRow?.alerts as unknown as SisAlert[] | undefined) ?? [],
     scores30d,
     scores30dFull,
