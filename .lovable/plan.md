@@ -1,89 +1,71 @@
 
 
-# Diário Nutricional — Entrada manual + Banco ampliado + Leitura de foto por IA
+# Melhorias no Diário Nutricional: Upload de galeria + Quantidades flexíveis + Bebidas
 
-## Problemas identificados
+## Problemas atuais
 
-1. O banco `foods_database` tem apenas ~50 itens — faltam itens comuns como "café", "frango milanesa", "suco de laranja", etc.
-2. Não existe opção de **digitar manualmente** um alimento que não está no banco.
-3. Não existe opção de **tirar foto do prato** para IA identificar os alimentos.
+1. O input de foto usa `capture="environment"` que força a câmera — não permite escolher fotos da galeria do celular.
+2. Não há seletor de quantidade/unidade ao adicionar alimentos (copos, unidades, litros, ml, etc.).
+3. Faltam bebidas comuns no banco (energético, energético zero, refrigerante lata, etc.).
 
-## Solução em 3 partes
+## Solução
 
-### 1. Ampliar o banco de alimentos (~150 itens adicionais)
+### 1. Upload de foto da galeria (FoodSearchModal.tsx)
 
-Nova migration inserindo alimentos comuns que faltam, organizados por categoria:
+Remover o atributo `capture="environment"` do input de arquivo. Isso faz o celular mostrar as duas opções: "Tirar foto" ou "Escolher da galeria". Adicionar um segundo botão para deixar explícito:
 
-- **Bebidas**: café preto, café com leite, suco de laranja, suco verde, água de coco, refrigerante, chá
-- **Pratos prontos**: frango milanesa, bife acebolado, strogonoff, feijoada, moqueca, escondidinho, lasanha, pizza (fatia), hambúrguer, cachorro-quente, açaí com granola, poke bowl
-- **Carboidratos**: farofa, purê de batata, polenta, milho cozido, pipoca, biscoito cream cracker, torrada
-- **Proteínas**: carne de porco, costela, peito de peru, camarão, frango empanado, salsicha, calabresa
-- **Laticínios**: requeijão, queijo muçarela, cream cheese, manteiga, nata
-- **Frutas**: morango, uva, melancia, manga, laranja, abacaxi, kiwi, pera
-- **Vegetais**: pepino, beterraba, couve refogada, quiabo, abobrinha, berinjela, vagem
-- **Outros**: arroz com feijão (prato), omelete, panqueca, crepioca, wrap, salada mista
+- Botão "📸 Tirar foto" — abre câmera (input com `capture`)
+- Botão "🖼️ Escolher da galeria" — abre galeria (input sem `capture`)
 
-### 2. Opção de entrada manual (alimento customizado)
+### 2. Seletor de quantidade + unidade (FoodSearchModal.tsx)
 
-Quando a busca não retorna resultados, mostrar botão **"Adicionar manualmente"** que abre um mini-formulário:
+Quando o usuário seleciona um alimento da busca, em vez de adicionar direto, mostrar uma tela intermediária "Ajustar porção" com:
 
-- Nome do alimento (texto livre)
-- Calorias (número)
-- Proteína, Carboidrato, Gordura (opcionais, default 0)
-- Porção (texto, ex: "1 prato")
+- **Quantidade**: input numérico (default 1)
+- **Unidade**: select com opções contextuais (porção, unidade, copo 200ml, copo 300ml, litro, lata 350ml, garrafa 600ml, colher de sopa, fatia, xícara)
+- Os macros são recalculados multiplicando pela quantidade
+- Botão "Adicionar" confirma
 
-Isso permite registrar qualquer alimento em segundos, mesmo que não esteja no banco.
+### 3. Bebidas no banco de dados (migration SQL)
 
-### 3. Leitura de foto do prato por IA (Scan de Refeição)
-
-**Viabilidade: Alta.** O projeto já usa Lovable AI (Gemini) com visão em `validate-body-photo`. A mesma abordagem funciona para identificar alimentos em fotos.
-
-**Nova edge function: `analyze-meal-photo`**
-- Recebe imagem base64 do prato
-- Envia para Gemini Vision com prompt para identificar alimentos, estimar porções e macros
-- Retorna lista de alimentos detectados com calorias estimadas
-- Usuário revisa e confirma antes de salvar
-
-**UI no FoodSearchModal:**
-- Botão "📸 Escanear prato" no topo do modal
-- Abre câmera/galeria → envia foto → mostra lista de alimentos detectados
-- Usuário pode editar/remover itens antes de confirmar
-- Todos os itens confirmados são inseridos no `food_logs` de uma vez
+Inserir ~30 bebidas comuns que faltam:
+- Refrigerante cola (lata 350ml), Refrigerante guaraná, Refrigerante zero (lata)
+- Energético (lata 250ml), Energético zero (lata 250ml)
+- Cerveja (lata 350ml), Cerveja zero álcool
+- Suco de uva integral, Suco de maracujá, Limonada
+- Água tônica, Isotônico (garrafa 500ml)
+- Leite integral (copo 200ml), Leite desnatado
+- Iogurte natural, Iogurte grego, Whey shake
+- Cappuccino, Chocolate quente, Chá mate gelado
 
 ## Arquivos alterados
 
 | Arquivo | Ação |
 |---|---|
-| Nova migration SQL | Inserir ~150 alimentos adicionais |
-| `supabase/functions/analyze-meal-photo/index.ts` | Nova — IA identifica alimentos na foto |
-| `supabase/config.toml` | Adicionar config da nova function |
-| `src/components/nutrition/FoodSearchModal.tsx` | Adicionar entrada manual + botão de foto |
-| `src/components/nutrition/MealPhotoAnalysis.tsx` | Novo — UI de revisão dos alimentos detectados pela IA |
+| `src/components/nutrition/FoodSearchModal.tsx` | Adicionar upload galeria, tela de ajuste de porção com quantidade + unidade |
+| Nova migration SQL | Inserir ~30 bebidas no `foods_database` |
 
-## Fluxo do usuário (foto)
+## Fluxo atualizado
 
 ```text
 [Adicionar alimento]
     ↓
-┌──────────────────────────┐
-│  Buscar Alimento         │
-│  [🔍 Digite...]         │
-│  [📸 Escanear prato]    │
-│                          │
-│  Resultados da busca...  │
-│                          │
-│  Não encontrou?          │
-│  [✏️ Adicionar manual]  │
-└──────────────────────────┘
-    ↓ (se foto)
-┌──────────────────────────┐
-│  Alimentos detectados:   │
-│  ☑ Arroz branco - 130cal │
-│  ☑ Feijão - 76cal        │
-│  ☑ Frango milanesa-220cal│
-│  ☑ Salada - 25cal        │
-│                          │
-│  [Confirmar refeição]    │
-└──────────────────────────┘
+┌─────────────────────────────┐
+│  [📸 Tirar foto]            │
+│  [🖼️ Escolher da galeria]  │
+│  [🔍 Digite o alimento...] │
+│                             │
+│  Resultados...              │
+│  [✏️ Adicionar manual]     │
+└─────────────────────────────┘
+    ↓ (seleciona alimento)
+┌─────────────────────────────┐
+│  Arroz branco               │
+│  Quantidade: [1]            │
+│  Unidade: [copo 200ml ▼]   │
+│                             │
+│  130 kcal · P:2g C:28g G:0g│
+│  [Cancelar]  [Adicionar]    │
+└─────────────────────────────┘
 ```
 
