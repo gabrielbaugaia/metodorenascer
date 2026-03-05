@@ -710,6 +710,44 @@ export type Database = {
           },
         ]
       }
+      daily_nutrition_targets: {
+        Row: {
+          calories_target: number
+          carbs_target_g: number
+          fat_target_g: number
+          id: string
+          protein_target_g: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calories_target?: number
+          carbs_target_g?: number
+          fat_target_g?: number
+          id?: string
+          protein_target_g?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calories_target?: number
+          carbs_target_g?: number
+          fat_target_g?: number
+          id?: string
+          protein_target_g?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_nutrition_targets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       engagement_summary: {
         Row: {
           id: string
@@ -892,6 +930,89 @@ export type Database = {
           id?: string
           muscle_group?: string
           video_url?: string
+        }
+        Relationships: []
+      }
+      food_logs: {
+        Row: {
+          calories: number
+          carbs_g: number
+          created_at: string
+          date: string
+          fat_g: number
+          food_name: string
+          id: string
+          meal_type: string
+          portion_size: string
+          protein_g: number
+          user_id: string
+        }
+        Insert: {
+          calories?: number
+          carbs_g?: number
+          created_at?: string
+          date?: string
+          fat_g?: number
+          food_name: string
+          id?: string
+          meal_type: string
+          portion_size?: string
+          protein_g?: number
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          carbs_g?: number
+          created_at?: string
+          date?: string
+          fat_g?: number
+          food_name?: string
+          id?: string
+          meal_type?: string
+          portion_size?: string
+          protein_g?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foods_database: {
+        Row: {
+          calories: number
+          carbs_g: number
+          category: string
+          fat_g: number
+          food_name: string
+          id: string
+          portion_size: string
+          protein_g: number
+        }
+        Insert: {
+          calories?: number
+          carbs_g?: number
+          category?: string
+          fat_g?: number
+          food_name: string
+          id?: string
+          portion_size?: string
+          protein_g?: number
+        }
+        Update: {
+          calories?: number
+          carbs_g?: number
+          category?: string
+          fat_g?: number
+          food_name?: string
+          id?: string
+          portion_size?: string
+          protein_g?: number
         }
         Relationships: []
       }
@@ -2020,6 +2141,7 @@ export type Database = {
           date: string
           id: string
           mechanical_score: number | null
+          nutrition_score: number | null
           recovery_score: number | null
           shape_intelligence_score: number | null
           structural_score: number | null
@@ -2035,6 +2157,7 @@ export type Database = {
           date: string
           id?: string
           mechanical_score?: number | null
+          nutrition_score?: number | null
           recovery_score?: number | null
           shape_intelligence_score?: number | null
           structural_score?: number | null
@@ -2050,6 +2173,7 @@ export type Database = {
           date?: string
           id?: string
           mechanical_score?: number | null
+          nutrition_score?: number | null
           recovery_score?: number | null
           shape_intelligence_score?: number | null
           structural_score?: number | null
@@ -2270,6 +2394,50 @@ export type Database = {
             columns: ["commercial_plan_id"]
             isOneToOne: false
             referencedRelation: "commercial_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transformation_journeys: {
+        Row: {
+          badges_earned: Json
+          created_at: string
+          current_day: number
+          current_phase: string
+          id: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          badges_earned?: Json
+          created_at?: string
+          current_day?: number
+          current_phase?: string
+          id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          badges_earned?: Json
+          created_at?: string
+          current_day?: number
+          current_phase?: string
+          id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transformation_journeys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
