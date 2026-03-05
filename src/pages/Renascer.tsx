@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useRenascerScore } from "@/hooks/useRenascerScore";
 import { useSisScore } from "@/hooks/useSisScore";
+import { useBehaviorProfile } from "@/hooks/useBehaviorProfile";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
@@ -16,6 +17,9 @@ import { SisCognitiveCheckin } from "@/components/sis/SisCognitiveCheckin";
 import { MiniConfetti } from "@/components/renascer/MiniConfetti";
 import { ManualInput } from "@/components/renascer/ManualInput";
 import { RecentLogsHistory } from "@/components/renascer/RecentLogsHistory";
+import { BehaviorProfileBadge } from "@/components/renascer/BehaviorProfileBadge";
+import { MicroWinsCard } from "@/components/renascer/MicroWinsCard";
+import { ActiveChallengeCard } from "@/components/renascer/ActiveChallengeCard";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -40,6 +44,16 @@ export default function Renascer() {
 
   // SIS score
   const sis = useSisScore();
+
+  // Behavioral AI
+  const behavior = useBehaviorProfile();
+
+  // Classify behavior on dashboard load
+  useEffect(() => {
+    if (user?.id) {
+      supabase.functions.invoke("classify-behavior").catch(console.error);
+    }
+  }, [user?.id]);
 
   const handleSaveSuccess = useCallback(async () => {
     setCelebrating(true);
@@ -139,7 +153,27 @@ export default function Renascer() {
           )}
         </div>
 
-        {/* Sub-score Cards */}
+        {/* Behavioral Profile Badge */}
+        {behavior.profile && (
+          <BehaviorProfileBadge
+            profileType={behavior.profile.profile_type}
+            confidence={behavior.profile.confidence_score}
+          />
+        )}
+
+        {/* Micro Wins */}
+        <MicroWinsCard wins={behavior.microWins} />
+
+        {/* Active Challenge */}
+        {behavior.activeChallenge && behavior.activeChallengeInfo && (
+          <ActiveChallengeCard
+            challengeLabel={behavior.activeChallengeInfo.label}
+            targetDays={behavior.activeChallengeInfo.target}
+            currentStreak={sis.currentStreak}
+          />
+        )}
+
+
         <SisSubScoreCards
           mechanical={sis.mechanical}
           recovery={sis.recovery}

@@ -153,19 +153,46 @@ async function computeForDate(supabase: any, userId: string, today: string) {
     if (todayCog.alcohol) cognitiveScore = clamp(cognitiveScore - 5, 0, 100);
   }
 
-  // ======= CONSISTENCY SCORE =======
+  // ======= CONSISTENCY SCORE (Enhanced with Behavioral Discipline) =======
   const last14 = new Set<string>();
   const last14Cog = new Set<string>();
   const last14Recovery = new Set<string>();
+  const last14Workouts = new Set<string>();
+  const last14Sleep = new Set<string>();
 
-  for (const l of dayLogs) { if (l.date >= d14ago) last14.add(l.date); if (l.date >= d14ago) last14Recovery.add(l.date); }
+  for (const l of dayLogs) {
+    if (l.date >= d14ago) {
+      last14.add(l.date);
+      last14Recovery.add(l.date);
+      if (l.sleep_hours != null) last14Sleep.add(l.date);
+    }
+  }
   for (const c of cogCheckins) { if (c.date >= d14ago) { last14.add(c.date); last14Cog.add(c.date); } }
-  for (const d of Object.keys(dailyVolumes)) { if (d >= d14ago) last14.add(d); }
+  for (const d of Object.keys(dailyVolumes)) { if (d >= d14ago) { last14.add(d); last14Workouts.add(d); } }
+
+  // Behavioral discipline components
+  const workoutCompletionRate = last14Workouts.size / 14;
+  const sleepLogFrequency = last14Sleep.size / 14;
+  const mentalCheckinFrequency = last14Cog.size / 14;
+  const dailyConsistency = last14.size / 14;
+
+  // Streak bonus: scales from 0 to 15 points based on streak length (max at 30 days)
+  let streakBonus = 0;
+  const { data: streakData } = await supabase
+    .from("sis_streaks")
+    .select("current_streak")
+    .eq("user_id", userId)
+    .single();
+  if (streakData?.current_streak) {
+    streakBonus = clamp((streakData.current_streak / 30) * 15, 0, 15);
+  }
 
   const consistencyScore = clamp(
-    0.50 * (last14.size / 14) * 100 +
-    0.30 * (last14Cog.size / 14) * 100 +
-    0.20 * (last14Recovery.size / 14) * 100,
+    0.30 * workoutCompletionRate * 100 +
+    0.20 * sleepLogFrequency * 100 +
+    0.15 * mentalCheckinFrequency * 100 +
+    0.25 * dailyConsistency * 100 +
+    0.10 * (streakBonus / 15) * 100,
     0, 100
   );
 

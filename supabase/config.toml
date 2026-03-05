@@ -129,3 +129,9 @@ verify_jwt = false
 
 [functions.submit-external-anamnese]
 verify_jwt = false
+
+[functions.classify-behavior]
+verify_jwt = true
+
+[functions.send-adaptive-push]
+verify_jwt = false
