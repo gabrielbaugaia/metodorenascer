@@ -1,107 +1,179 @@
 
 
-# Adaptive Behavioral AI System
+# 90-Day Behavioral Transformation + Nutrition Tracking
 
-## Overview
+This is a large system. I'll break it into focused deliverables that integrate with the existing SIS infrastructure.
 
-This is a large feature set. I'll break it into 5 deliverables that integrate with existing infrastructure (the `events` table, `user_streaks`, `useAchievements`, and the SIS scoring system).
+## What Already Exists (no rebuild needed)
+- Behavioral profiles (explorer/executor/resistant/consistent) + classify-behavior edge function
+- Micro Wins card (workout, sleep, mental check-in)
+- Active Challenge card with streak progress
+- SIS score with 6 pillars (mechanical, recovery, structural, body_comp, cognitive, consistency)
+- Manual day logs (sleep, stress, energy, RPE, training)
+- Streak tracking via `sis_streaks`
 
-## Architecture Decision: Reuse vs. New Tables
+## What's New
 
-The app already tracks events in the `events` table and has `user_streaks` + `user_achievements`. Instead of duplicating, I'll:
-- **Reuse `events`** for behavioral event tracking (it already captures `app_open`, `page_view`, etc.)
-- **Create `behavior_profiles`** table for classification results
-- **Create `adaptive_challenges`** table for challenge milestones
-- **Modify `compute-sis-score`** to incorporate behavioral discipline
+### Database Migration (1 migration file)
 
-## Deliverables
-
-### 1. Database: New Tables + Migration
-
-**`behavior_profiles`** — stores computed behavioral classification per user:
+**Table: `transformation_journeys`** — tracks each user's 90-day journey
 ```
 user_id (uuid, unique, FK profiles)
-profile_type (text: explorer | executor | resistant | consistent)
-confidence_score (numeric 0-100)
-metrics_snapshot (jsonb — raw counts used for classification)
-computed_at (timestamptz)
+started_at (timestamptz, default now())
+current_day (integer, default 1)
+current_phase (text: 'installation' | 'consolidation' | 'identity')
+status (text: 'active' | 'completed' | 'paused')
+badges_earned (jsonb, default '[]')
 ```
 
-**`adaptive_challenges`** — tracks unlocked challenges per user:
+**Table: `food_logs`** — individual food entries per meal
 ```
+id (uuid)
 user_id (uuid, FK profiles)
-challenge_type (text: streak_10 | streak_21 | streak_30)
-unlocked_at (timestamptz)
-completed_at (timestamptz, nullable)
-status (text: active | completed | expired)
+date (date)
+meal_type (text: 'breakfast' | 'lunch' | 'dinner' | 'snack')
+food_name (text)
+calories (numeric)
+protein_g (numeric)
+carbs_g (numeric)
+fat_g (numeric)
+portion_size (text)
+created_at (timestamptz)
 ```
 
-RLS: users see own data, admins see all.
+**Table: `daily_nutrition_targets`** — user's daily calorie/macro targets
+```
+user_id (uuid, unique, FK profiles)
+calories_target (numeric, default 2000)
+protein_target_g (numeric, default 120)
+carbs_target_g (numeric, default 200)
+fat_target_g (numeric, default 65)
+updated_at (timestamptz)
+```
 
-### 2. Edge Function: `classify-behavior`
+**Table: `foods_database`** — searchable food catalog
+```
+id (uuid)
+food_name (text)
+calories (numeric)
+protein_g (numeric)
+carbs_g (numeric)
+fat_g (numeric)
+portion_size (text, default '100g')
+category (text)
+```
 
-New edge function that:
-1. Queries `events` for the last 14 days (app_open, workout_completed counts)
-2. Queries `user_streaks` for streak_breaks detection
-3. Queries `manual_day_logs` for sleep/mental checkin frequency
-4. Applies classification logic:
-   - **consistent**: workouts ≥ 4/week
-   - **explorer**: app_open > 5/week but workouts < 2/week
-   - **resistant**: streak resets > 2 in 14 days
-   - **executor**: default fallback (workouts 2-3/week, steady usage)
-5. Upserts into `behavior_profiles`
-6. Checks streak milestones → inserts into `adaptive_challenges`
-7. Returns profile + any new challenges unlocked
+Insert ~50 common Brazilian foods (arroz, feijão, frango, ovo, batata doce, etc.) as seed data.
 
-Called after each `compute-sis-score` or on dashboard load.
+RLS: users CRUD own food_logs and nutrition_targets. Everyone can SELECT foods_database.
 
-### 3. Edge Function: `send-adaptive-push`
+### 1. 90-Day Transformation Journey
 
-New edge function (cron-triggered) that:
-1. Reads all `behavior_profiles`
-2. Maps profile → notification template (consistent/explorer/resistant/executor messages from the spec)
-3. Calls existing `send-push` function logic to deliver
+**New component: `TransformationPhaseCard.tsx`**
+- Shows current day (e.g., "Dia 23 / 90"), current phase name, phase-specific motivational message
+- Phase logic: days 1-30 = Installation, 31-60 = Consolidation, 61-90 = Identity
+- Badge milestones at 7, 14, 30, 60, 90 days
+- Progress bar spanning the full 90-day arc
 
-### 4. Behavioral Score Integration into SIS
+**New hook: `useTransformationJourney.ts`**
+- Fetches `transformation_journeys` for user
+- Auto-creates journey on first visit if none exists
+- Calculates current_day from `started_at` to today
+- Determines phase and phase-specific messaging
+- Tracks badge unlocks
 
-Modify `compute-sis-score` to add a **behavioral_discipline** sub-component:
-- workout_completion rate (last 14d)
-- sleep_log frequency
-- mental_checkin frequency
-- daily consistency (days with any activity / 14)
-- streak length bonus
+**Integration**: Add to Renascer.tsx dashboard, placed above the SIS Score Ring.
 
-This replaces/enhances the existing `consistency_score` (currently 10% weight). I'll increase its sophistication without changing the SIS weight distribution.
+### 2. Enhanced Daily Progress
 
-### 5. Dashboard UI Updates (`Renascer.tsx`)
+**Update `MicroWinsCard.tsx`**:
+- Add "Nutrition log" as 4th micro win (check if any food_logs exist for today)
+- Show "4/4" progress counter
+- Display phase-aware motivational toast on each action completion
 
-Add to the SIS dashboard:
-- **Behavioral Profile Badge** — shows current classification with icon
-- **Consistency Streak** — already exists via `useSisScore().currentStreak`, will enhance display
-- **Today's Micro Wins** — small card showing completed actions today (workout, sleep log, mental checkin)
-- **Active Challenge** — shows current adaptive challenge progress (e.g., "Day 12 of 21-Day Challenge")
+**New component: `MotivationalToast.tsx`**:
+- Pool of positive messages (from spec: "Consistency creates transformation", "Small actions build transformation", etc.)
+- Randomly selected on each positive action
+- Displayed via `sonner` toast
 
-### 6. Hook: `useBehaviorProfile`
+### 3. Nutrition Tracking Page
 
-New React hook that:
-- Fetches `behavior_profiles` for current user
-- Fetches active `adaptive_challenges`
-- Provides `profile`, `challenges`, `microWins` (today's completed events)
+**New page: `NutricaoTracking.tsx`** (route: `/nutricao-diario`)
+- Top section: circular calorie gauge (consumed / target / remaining)
+- Macro distribution: 3 small circular charts (Protein, Carbs, Fat) using recharts PieChart
+- 4 meal sections (Breakfast, Lunch, Dinner, Snacks) each with:
+  - List of logged foods with calories
+  - "Add food" button → opens search modal
+- Behavioral feedback toast after each food log
+
+**New component: `FoodSearchModal.tsx`**:
+- Search input filtering `foods_database`
+- Shows matching foods with portion info
+- Single-tap to add → inserts into `food_logs`
+- Target: < 5 seconds to log a food
+
+**New component: `CalorieGauge.tsx`**:
+- Circular progress showing consumed vs target
+- Remaining calories displayed prominently
+
+**New component: `MacroDonutChart.tsx`**:
+- Three small donut charts for P/C/F using recharts
+
+**New hook: `useNutritionTracking.ts`**:
+- Fetches today's `food_logs` grouped by meal_type
+- Fetches `daily_nutrition_targets`
+- Calculates consumed totals, remaining
+- Provides `addFood` and `removeFood` mutations
+
+### 4. SIS Score Integration
+
+**Update `compute-sis-score` edge function**:
+- Add nutrition_score sub-component:
+  - Check if user logged any foods today → base score
+  - Adherence to calorie target (within ±15% = high score)
+  - Meal distribution (logged across ≥3 meal types = bonus)
+- Adjust SIS weights to match spec:
+  - Training: 25%, Recovery/Sleep: 20%, Cognitive: 15%, Consistency: 20%, Nutrition: 20%
+  - Remove structural (15%) and body_comp (15%), redistribute to consistency (20%) and nutrition (20%)
+
+**Update `sis_scores_daily`**: Add `nutrition_score` column via migration.
+
+**Update `SisSubScoreCards.tsx`**: Add Nutrition sub-score card.
+
+### 5. Navigation & Routing
+
+- Add `/nutricao-diario` route in App.tsx (behind SubscriptionGuard)
+- Add link in ClientSidebar to "Diário Nutricional"
+- Add link from Renascer dashboard to nutrition tracking
 
 ## Files Changed
 
 | File | Action |
 |---|---|
-| New migration SQL | Create `behavior_profiles` + `adaptive_challenges` tables |
-| `supabase/functions/classify-behavior/index.ts` | New — classification + challenge unlock logic |
-| `supabase/functions/send-adaptive-push/index.ts` | New — profile-based push notifications |
-| `supabase/functions/compute-sis-score/index.ts` | Enhance consistency_score with behavioral metrics |
-| `src/hooks/useBehaviorProfile.ts` | New — fetch profile + challenges + micro wins |
-| `src/components/renascer/BehaviorProfileBadge.tsx` | New — profile type display |
-| `src/components/renascer/MicroWinsCard.tsx` | New — today's completed actions |
-| `src/components/renascer/ActiveChallengeCard.tsx` | New — challenge progress |
-| `src/pages/Renascer.tsx` | Add new cards to dashboard |
-| `supabase/config.toml` | Add verify_jwt config for new functions |
+| New migration SQL | Create tables + seed foods + add nutrition_score column |
+| `src/pages/NutricaoTracking.tsx` | New — nutrition tracking page |
+| `src/hooks/useTransformationJourney.ts` | New — 90-day journey logic |
+| `src/hooks/useNutritionTracking.ts` | New — food log CRUD + targets |
+| `src/components/renascer/TransformationPhaseCard.tsx` | New — phase display |
+| `src/components/nutrition/FoodSearchModal.tsx` | New — food search + add |
+| `src/components/nutrition/CalorieGauge.tsx` | New — circular calorie display |
+| `src/components/nutrition/MacroDonutChart.tsx` | New — P/C/F donuts |
+| `src/components/nutrition/MealSection.tsx` | New — meal category with foods |
+| `src/components/renascer/MicroWinsCard.tsx` | Update — add nutrition win |
+| `src/pages/Renascer.tsx` | Add transformation phase card |
+| `src/App.tsx` | Add /nutricao-diario route |
+| `src/components/layout/ClientSidebar.tsx` | Add nav link |
+| `supabase/functions/compute-sis-score/index.ts` | Add nutrition_score pillar |
+| `src/hooks/useSisScore.ts` | Expose nutrition score |
+| `src/components/sis/SisSubScoreCards.tsx` | Add nutrition card |
+| `src/hooks/useBehaviorProfile.ts` | Add nutrition to micro wins |
 
-No changes to `events` table — it already captures the needed event types.
+## Implementation Order
+
+Due to the size, I recommend implementing in 2 batches:
+
+**Batch 1**: Database migration + 90-day transformation + enhanced micro wins + motivational feedback
+**Batch 2**: Nutrition tracking module (food database, logging, charts, SIS integration)
+
+Shall I proceed with Batch 1 first, or implement everything in one go?
 
