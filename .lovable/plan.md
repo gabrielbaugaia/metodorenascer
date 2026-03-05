@@ -1,71 +1,63 @@
 
 
-# Melhorias no Diário Nutricional: Upload de galeria + Quantidades flexíveis + Bebidas
+# Tendência 30 dias explicativa + Telas de detalhe dos sub-scores
 
-## Problemas atuais
+## Resumo
 
-1. O input de foto usa `capture="environment"` que força a câmera — não permite escolher fotos da galeria do celular.
-2. Não há seletor de quantidade/unidade ao adicionar alimentos (copos, unidades, litros, ml, etc.).
-3. Faltam bebidas comuns no banco (energético, energético zero, refrigerante lata, etc.).
+Duas melhorias na experiência do aluno:
 
-## Solução
+1. **Gráfico de Tendência 30 dias** — adicionar legenda explicativa abaixo do gráfico e tooltip enriquecido com contexto (o que significa cada número, o que as médias 7d/14d/30d representam).
 
-### 1. Upload de foto da galeria (FoodSearchModal.tsx)
+2. **Sub-score cards clicáveis** — cada card (Treino, Recuperação, Cognitivo, Consistência, Nutrição) abre um modal/sheet com:
+   - Gráfico de linha dos últimos 30 dias daquele pilar específico
+   - Explicação do que o pilar mede
+   - Como o score é calculado (linguagem simples)
+   - Dica de como melhorar
+   - Por que é importante preencher os dados
 
-Remover o atributo `capture="environment"` do input de arquivo. Isso faz o celular mostrar as duas opções: "Tirar foto" ou "Escolher da galeria". Adicionar um segundo botão para deixar explícito:
+## Implementação
 
-- Botão "📸 Tirar foto" — abre câmera (input com `capture`)
-- Botão "🖼️ Escolher da galeria" — abre galeria (input sem `capture`)
+### 1. SisTrendChart.tsx — Legenda explicativa
 
-### 2. Seletor de quantidade + unidade (FoodSearchModal.tsx)
+Adicionar abaixo do gráfico:
+- Texto explicativo: "Este gráfico mostra a evolução do seu Shape Intelligence Score™ nos últimos 30 dias."
+- Explicação das médias: "7d = média dos últimos 7 dias · 14d = últimos 14 · 30d = média geral do mês"
+- Indicador de tendência: se avg7 > avg30 → "Sua tendência está subindo ↑" (verde), se avg7 < avg30 → "Sua tendência está caindo ↓" (vermelho)
+- Dica: "Preencha seus dados diariamente para manter a precisão do gráfico."
 
-Quando o usuário seleciona um alimento da busca, em vez de adicionar direto, mostrar uma tela intermediária "Ajustar porção" com:
+### 2. SisSubScoreCards.tsx — Cards clicáveis com Sheet de detalhe
 
-- **Quantidade**: input numérico (default 1)
-- **Unidade**: select com opções contextuais (porção, unidade, copo 200ml, copo 300ml, litro, lata 350ml, garrafa 600ml, colher de sopa, fatia, xícara)
-- Os macros são recalculados multiplicando pela quantidade
-- Botão "Adicionar" confirma
+Tornar cada card clicável → abre um `Sheet` (drawer de baixo) com:
 
-### 3. Bebidas no banco de dados (migration SQL)
+**Conteúdo do Sheet por pilar:**
 
-Inserir ~30 bebidas comuns que faltam:
-- Refrigerante cola (lata 350ml), Refrigerante guaraná, Refrigerante zero (lata)
-- Energético (lata 250ml), Energético zero (lata 250ml)
-- Cerveja (lata 350ml), Cerveja zero álcool
-- Suco de uva integral, Suco de maracujá, Limonada
-- Água tônica, Isotônico (garrafa 500ml)
-- Leite integral (copo 200ml), Leite desnatado
-- Iogurte natural, Iogurte grego, Whey shake
-- Cappuccino, Chocolate quente, Chá mate gelado
+| Pilar | O que mede | Como melhorar |
+|---|---|---|
+| Treino | Volume e intensidade dos treinos registrados | Registre séries e RPE após cada treino |
+| Recuperação | Qualidade do sono e nível de estresse | Registre horas de sono e estresse diariamente |
+| Cognitivo | Clareza mental, foco e disposição | Faça o check-in cognitivo de 1 minuto |
+| Consistência | Frequência de registros ao longo do tempo | Registre dados todos os dias, mesmo nos dias de descanso |
+| Nutrição | Adesão ao plano alimentar e registro de refeições | Registre suas refeições no Diário Nutricional |
+
+Cada Sheet inclui:
+- Ícone + título do pilar
+- Score atual (grande)
+- Mini gráfico de linha 30 dias (dados do `scores30dFull`)
+- Texto "O que este número significa" com explicação simples
+- Texto "Como melhorar" com ação prática
+- Texto "Por que preencher?" enfatizando que dados vazios = score baixo
+
+### 3. Dados necessários
+
+Os dados de 30 dias por pilar já existem em `scores30dFull` do `useSisScore`. Basta passar esse array para o componente e extrair o campo correspondente (ex: `mechanical_score`, `recovery_score`, etc.).
 
 ## Arquivos alterados
 
 | Arquivo | Ação |
 |---|---|
-| `src/components/nutrition/FoodSearchModal.tsx` | Adicionar upload galeria, tela de ajuste de porção com quantidade + unidade |
-| Nova migration SQL | Inserir ~30 bebidas no `foods_database` |
+| `src/components/sis/SisTrendChart.tsx` | Adicionar legenda explicativa + indicador de tendência |
+| `src/components/sis/SisSubScoreCards.tsx` | Tornar cards clicáveis, abrir Sheet com gráfico + explicações |
+| `src/pages/Renascer.tsx` | Passar `scores30dFull` para SisSubScoreCards |
 
-## Fluxo atualizado
-
-```text
-[Adicionar alimento]
-    ↓
-┌─────────────────────────────┐
-│  [📸 Tirar foto]            │
-│  [🖼️ Escolher da galeria]  │
-│  [🔍 Digite o alimento...] │
-│                             │
-│  Resultados...              │
-│  [✏️ Adicionar manual]     │
-└─────────────────────────────┘
-    ↓ (seleciona alimento)
-┌─────────────────────────────┐
-│  Arroz branco               │
-│  Quantidade: [1]            │
-│  Unidade: [copo 200ml ▼]   │
-│                             │
-│  130 kcal · P:2g C:28g G:0g│
-│  [Cancelar]  [Adicionar]    │
-└─────────────────────────────┘
-```
+Nenhuma migration necessária — todos os dados já existem.
 
