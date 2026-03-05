@@ -83,6 +83,41 @@ export type Database = {
         }
         Relationships: []
       }
+      adaptive_challenges: {
+        Row: {
+          challenge_type: string
+          completed_at: string | null
+          id: string
+          status: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_type: string
+          completed_at?: string | null
+          id?: string
+          status?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_type?: string
+          completed_at?: string | null
+          id?: string
+          status?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adaptive_challenges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_support_alerts: {
         Row: {
           alert_type: string
@@ -234,6 +269,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      behavior_profiles: {
+        Row: {
+          computed_at: string
+          confidence_score: number
+          id: string
+          metrics_snapshot: Json
+          profile_type: string
+          user_id: string
+        }
+        Insert: {
+          computed_at?: string
+          confidence_score?: number
+          id?: string
+          metrics_snapshot?: Json
+          profile_type?: string
+          user_id: string
+        }
+        Update: {
+          computed_at?: string
+          confidence_score?: number
+          id?: string
+          metrics_snapshot?: Json
+          profile_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "behavior_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blog_leads: {
         Row: {
