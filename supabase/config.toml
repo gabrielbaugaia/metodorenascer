@@ -135,3 +135,6 @@ verify_jwt = true
 
 [functions.send-adaptive-push]
 verify_jwt = false
+
+[functions.analyze-meal-photo]
+verify_jwt = true

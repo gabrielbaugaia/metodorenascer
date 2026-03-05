@@ -124,6 +124,15 @@ export function useNutritionTracking(date?: string) {
     fat: Math.max(0, t.fat_target_g - consumed.fat),
   };
 
+  const addMultipleFoods = async (foods: Array<{ food_name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number; portion_size: string; meal_type: string }>) => {
+    const rows = foods.map((f) => ({ user_id: user!.id, date: today, ...f }));
+    const { error } = await supabase.from("food_logs").insert(rows);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ["food-logs", user?.id, today] });
+    queryClient.invalidateQueries({ queryKey: ["micro-wins-today"] });
+    toast.success(`${foods.length} alimentos registrados.`);
+  };
+
   return {
     logs: allLogs,
     byMeal,
@@ -132,6 +141,7 @@ export function useNutritionTracking(date?: string) {
     targets: t,
     isLoading: logsLoading,
     addFood: addFoodMutation.mutateAsync,
+    addMultipleFoods,
     removeFood: removeFoodMutation.mutateAsync,
     isAdding: addFoodMutation.isPending,
   };

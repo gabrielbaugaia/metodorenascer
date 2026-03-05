@@ -11,7 +11,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 
 export default function NutricaoTracking() {
-  const { byMeal, consumed, remaining, targets, isLoading, addFood, removeFood } = useNutritionTracking();
+  const { byMeal, consumed, remaining, targets, isLoading, addFood, addMultipleFoods, removeFood } = useNutritionTracking();
   const [modalMeal, setModalMeal] = useState<string | null>(null);
 
   const handleSelectFood = async (food: FoodItem) => {
@@ -77,6 +77,7 @@ export default function NutricaoTracking() {
           onClose={() => setModalMeal(null)}
           mealType={modalMeal ?? "snack"}
           onSelectFood={handleSelectFood}
+          onAddMultipleFoods={addMultipleFoods}
         />
       </div>
     </ClientLayout>
