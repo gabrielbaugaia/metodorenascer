@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Loader2, Camera, PenLine } from "lucide-react";
+import { Search, Loader2, Camera, PenLine, ImageIcon } from "lucide-react";
 import { MealPhotoAnalysis, type DetectedFood } from "./MealPhotoAnalysis";
 import { toast } from "sonner";
 import type { FoodItem } from "@/hooks/useNutritionTracking";
@@ -17,7 +18,20 @@ interface FoodSearchModalProps {
   onAddMultipleFoods?: (foods: Array<{ food_name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number; portion_size: string; meal_type: string }>) => void;
 }
 
-type ModalView = "search" | "manual" | "photo-result";
+type ModalView = "search" | "manual" | "photo-result" | "adjust-portion";
+
+const UNIT_OPTIONS = [
+  { value: "porção", label: "Porção" },
+  { value: "unidade", label: "Unidade" },
+  { value: "copo 200ml", label: "Copo 200ml" },
+  { value: "copo 300ml", label: "Copo 300ml" },
+  { value: "lata 350ml", label: "Lata 350ml" },
+  { value: "garrafa 600ml", label: "Garrafa 600ml" },
+  { value: "litro", label: "Litro (1L)" },
+  { value: "colher de sopa", label: "Colher de sopa" },
+  { value: "fatia", label: "Fatia" },
+  { value: "xícara", label: "Xícara" },
+];
 
 export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMultipleFoods }: FoodSearchModalProps) {
   const [query, setQuery] = useState("");
@@ -36,7 +50,13 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
   // Photo analysis
   const [photoFoods, setPhotoFoods] = useState<DetectedFood[]>([]);
   const [photoLoading, setPhotoLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  // Portion adjustment
+  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
+  const [portionQty, setPortionQty] = useState("1");
+  const [portionUnit, setPortionUnit] = useState("porção");
 
   const resetState = () => {
     setView("search");
@@ -48,6 +68,9 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
     setManualFat("");
     setManualPortion("1 porção");
     setPhotoFoods([]);
+    setSelectedFood(null);
+    setPortionQty("1");
+    setPortionUnit("porção");
   };
 
   const search = useCallback(async (q: string) => {
@@ -71,7 +94,25 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
   }, [open, query, search, view]);
 
   const handleSelect = (food: FoodItem) => {
-    onSelectFood(food);
+    setSelectedFood(food);
+    setPortionQty("1");
+    setPortionUnit(food.portion_size || "porção");
+    setView("adjust-portion");
+  };
+
+  const handlePortionConfirm = () => {
+    if (!selectedFood) return;
+    const qty = Math.max(0.1, Number(portionQty) || 1);
+    onSelectFood({
+      id: crypto.randomUUID(),
+      food_name: selectedFood.food_name,
+      calories: Math.round(selectedFood.calories * qty),
+      protein_g: Math.round(selectedFood.protein_g * qty * 10) / 10,
+      carbs_g: Math.round(selectedFood.carbs_g * qty * 10) / 10,
+      fat_g: Math.round(selectedFood.fat_g * qty * 10) / 10,
+      portion_size: `${qty} ${portionUnit}`,
+      category: selectedFood.category,
+    });
     onClose();
     resetState();
   };
@@ -128,7 +169,8 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
       setPhotoFoods([]);
     } finally {
       setPhotoLoading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
+      if (galleryInputRef.current) galleryInputRef.current.value = "";
     }
   };
 
@@ -146,7 +188,6 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
         }))
       );
     } else {
-      // Fallback: add one by one
       foods.forEach((f) => {
         onSelectFood({
           id: crypto.randomUUID(),
@@ -164,6 +205,15 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
     resetState();
   };
 
+  const adjustedMacros = selectedFood
+    ? {
+        cal: Math.round(selectedFood.calories * (Number(portionQty) || 1)),
+        p: Math.round(selectedFood.protein_g * (Number(portionQty) || 1) * 10) / 10,
+        c: Math.round(selectedFood.carbs_g * (Number(portionQty) || 1) * 10) / 10,
+        g: Math.round(selectedFood.fat_g * (Number(portionQty) || 1) * 10) / 10,
+      }
+    : null;
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); resetState(); } }}>
       <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
@@ -172,6 +222,7 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
             {view === "search" && "Buscar Alimento"}
             {view === "manual" && "Adicionar Manualmente"}
             {view === "photo-result" && "Scan de Refeição"}
+            {view === "adjust-portion" && "Ajustar Porção"}
           </DialogTitle>
         </DialogHeader>
 
@@ -182,6 +233,53 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
             onConfirm={handlePhotoConfirm}
             onCancel={() => setView("search")}
           />
+        )}
+
+        {view === "adjust-portion" && selectedFood && (
+          <div className="space-y-4">
+            <p className="text-sm font-semibold text-foreground">{selectedFood.food_name}</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Quantidade</Label>
+                <Input
+                  type="number"
+                  min="0.1"
+                  step="0.5"
+                  value={portionQty}
+                  onChange={(e) => setPortionQty(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Unidade</Label>
+                <Select value={portionUnit} onValueChange={setPortionUnit}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {UNIT_OPTIONS.map((u) => (
+                      <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {adjustedMacros && (
+              <div className="rounded-lg bg-muted/50 p-3 text-center">
+                <p className="text-lg font-bold text-foreground">{adjustedMacros.cal} kcal</p>
+                <p className="text-xs text-muted-foreground">
+                  P: {adjustedMacros.p}g · C: {adjustedMacros.c}g · G: {adjustedMacros.g}g
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setView("search")} className="flex-1">Voltar</Button>
+              <Button size="sm" onClick={handlePortionConfirm} className="flex-1">Adicionar</Button>
+            </div>
+          </div>
         )}
 
         {view === "manual" && (
@@ -223,24 +321,44 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
 
         {view === "search" && (
           <>
-            {/* Photo scan button */}
+            {/* Hidden file inputs */}
             <input
-              ref={fileInputRef}
+              ref={cameraInputRef}
               type="file"
               accept="image/*"
               capture="environment"
               className="hidden"
               onChange={handlePhotoCapture}
             />
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full gap-2"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Camera className="h-4 w-4" />
-              📸 Escanear prato com IA
-            </Button>
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoCapture}
+            />
+
+            {/* Photo buttons */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => cameraInputRef.current?.click()}
+              >
+                <Camera className="h-4 w-4" />
+                📸 Tirar foto
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => galleryInputRef.current?.click()}
+              >
+                <ImageIcon className="h-4 w-4" />
+                🖼️ Galeria
+              </Button>
+            </div>
 
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
