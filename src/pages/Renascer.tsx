@@ -184,6 +184,7 @@ export default function Renascer() {
           cognitive={sis.cognitive}
           consistency={sis.consistency}
           nutrition={sis.nutrition}
+          scores30dFull={sis.scores30dFull}
         />
 
         {/* Alerts */}
