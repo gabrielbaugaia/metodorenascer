@@ -1,39 +1,107 @@
 
 
-# Fix: Fitness Screenshot Attachment + Yesterday History Not Refreshing
+# Adaptive Behavioral AI System
 
-## Problems Found
+## Overview
 
-### 1. Fitness screenshot upload fails
-The `fitness-screenshots` storage bucket has INSERT and SELECT policies but **no UPDATE policy**. The code uses `upload(path, file, { upsert: true })` which requires UPDATE permission. Without it, the upload fails silently, causing the save mutation to error out.
+This is a large feature set. I'll break it into 5 deliverables that integrate with existing infrastructure (the `events` table, `user_streaks`, `useAchievements`, and the SIS scoring system).
 
-### 2. Yesterday's registration doesn't appear in history
-In `ManualInput.tsx` line 215, `onSuccess` only invalidates `["renascer-score"]`. The `RecentLogsHistory` component uses query key `["recent-logs-history"]`, which is never invalidated after saving. So the history list stays stale.
+## Architecture Decision: Reuse vs. New Tables
 
-## Fixes
+The app already tracks events in the `events` table and has `user_streaks` + `user_achievements`. Instead of duplicating, I'll:
+- **Reuse `events`** for behavioral event tracking (it already captures `app_open`, `page_view`, etc.)
+- **Create `behavior_profiles`** table for classification results
+- **Create `adaptive_challenges`** table for challenge milestones
+- **Modify `compute-sis-score`** to incorporate behavioral discipline
 
-### Migration: Add UPDATE storage policy for fitness-screenshots
-```sql
-CREATE POLICY "Users can update own fitness screenshots"
-ON storage.objects FOR UPDATE
-USING (
-  bucket_id = 'fitness-screenshots'
-  AND auth.uid()::text = (storage.foldername(name))[1]
-);
+## Deliverables
+
+### 1. Database: New Tables + Migration
+
+**`behavior_profiles`** — stores computed behavioral classification per user:
+```
+user_id (uuid, unique, FK profiles)
+profile_type (text: explorer | executor | resistant | consistent)
+confidence_score (numeric 0-100)
+metrics_snapshot (jsonb — raw counts used for classification)
+computed_at (timestamptz)
 ```
 
-### `src/components/renascer/ManualInput.tsx`
-In `onSuccess` (line 215), add:
-```typescript
-queryClient.invalidateQueries({ queryKey: ["recent-logs-history"] });
+**`adaptive_challenges`** — tracks unlocked challenges per user:
+```
+user_id (uuid, FK profiles)
+challenge_type (text: streak_10 | streak_21 | streak_30)
+unlocked_at (timestamptz)
+completed_at (timestamptz, nullable)
+status (text: active | completed | expired)
 ```
 
-This ensures the history list refreshes immediately after saving any day's data (today, yesterday, or custom date).
+RLS: users see own data, admins see all.
+
+### 2. Edge Function: `classify-behavior`
+
+New edge function that:
+1. Queries `events` for the last 14 days (app_open, workout_completed counts)
+2. Queries `user_streaks` for streak_breaks detection
+3. Queries `manual_day_logs` for sleep/mental checkin frequency
+4. Applies classification logic:
+   - **consistent**: workouts ≥ 4/week
+   - **explorer**: app_open > 5/week but workouts < 2/week
+   - **resistant**: streak resets > 2 in 14 days
+   - **executor**: default fallback (workouts 2-3/week, steady usage)
+5. Upserts into `behavior_profiles`
+6. Checks streak milestones → inserts into `adaptive_challenges`
+7. Returns profile + any new challenges unlocked
+
+Called after each `compute-sis-score` or on dashboard load.
+
+### 3. Edge Function: `send-adaptive-push`
+
+New edge function (cron-triggered) that:
+1. Reads all `behavior_profiles`
+2. Maps profile → notification template (consistent/explorer/resistant/executor messages from the spec)
+3. Calls existing `send-push` function logic to deliver
+
+### 4. Behavioral Score Integration into SIS
+
+Modify `compute-sis-score` to add a **behavioral_discipline** sub-component:
+- workout_completion rate (last 14d)
+- sleep_log frequency
+- mental_checkin frequency
+- daily consistency (days with any activity / 14)
+- streak length bonus
+
+This replaces/enhances the existing `consistency_score` (currently 10% weight). I'll increase its sophistication without changing the SIS weight distribution.
+
+### 5. Dashboard UI Updates (`Renascer.tsx`)
+
+Add to the SIS dashboard:
+- **Behavioral Profile Badge** — shows current classification with icon
+- **Consistency Streak** — already exists via `useSisScore().currentStreak`, will enhance display
+- **Today's Micro Wins** — small card showing completed actions today (workout, sleep log, mental checkin)
+- **Active Challenge** — shows current adaptive challenge progress (e.g., "Day 12 of 21-Day Challenge")
+
+### 6. Hook: `useBehaviorProfile`
+
+New React hook that:
+- Fetches `behavior_profiles` for current user
+- Fetches active `adaptive_challenges`
+- Provides `profile`, `challenges`, `microWins` (today's completed events)
 
 ## Files Changed
 
 | File | Action |
 |---|---|
-| New migration SQL | Add UPDATE storage policy for fitness-screenshots |
-| `src/components/renascer/ManualInput.tsx` | Invalidate `recent-logs-history` query on save success |
+| New migration SQL | Create `behavior_profiles` + `adaptive_challenges` tables |
+| `supabase/functions/classify-behavior/index.ts` | New — classification + challenge unlock logic |
+| `supabase/functions/send-adaptive-push/index.ts` | New — profile-based push notifications |
+| `supabase/functions/compute-sis-score/index.ts` | Enhance consistency_score with behavioral metrics |
+| `src/hooks/useBehaviorProfile.ts` | New — fetch profile + challenges + micro wins |
+| `src/components/renascer/BehaviorProfileBadge.tsx` | New — profile type display |
+| `src/components/renascer/MicroWinsCard.tsx` | New — today's completed actions |
+| `src/components/renascer/ActiveChallengeCard.tsx` | New — challenge progress |
+| `src/pages/Renascer.tsx` | Add new cards to dashboard |
+| `supabase/config.toml` | Add verify_jwt config for new functions |
+
+No changes to `events` table — it already captures the needed event types.
 
