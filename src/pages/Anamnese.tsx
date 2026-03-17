@@ -537,6 +537,12 @@ export default function Anamnese() {
             </CardContent>
           </Card>
 
+          {/* Preferências de Treino */}
+          <TrainingPreferencesSection
+            preferencias_treino={formData.preferencias_treino}
+            onChange={handleFieldChange}
+          />
+
           {/* Histórico de Treino e Condicionamento */}
           <TrainingHistoryFields 
             formData={formData} 

@@ -1737,6 +1737,7 @@ export type Database = {
           observacoes_adicionais: string | null
           onboarding_completed: boolean | null
           pratica_aerobica: boolean | null
+          preferencias_treino: string | null
           qualidade_sono: string | null
           refeicoes_por_dia: string | null
           referred_by_code: string | null
@@ -1793,6 +1794,7 @@ export type Database = {
           observacoes_adicionais?: string | null
           onboarding_completed?: boolean | null
           pratica_aerobica?: boolean | null
+          preferencias_treino?: string | null
           qualidade_sono?: string | null
           refeicoes_por_dia?: string | null
           referred_by_code?: string | null
@@ -1849,6 +1851,7 @@ export type Database = {
           observacoes_adicionais?: string | null
           onboarding_completed?: boolean | null
           pratica_aerobica?: boolean | null
+          preferencias_treino?: string | null
           qualidade_sono?: string | null
           refeicoes_por_dia?: string | null
           referred_by_code?: string | null

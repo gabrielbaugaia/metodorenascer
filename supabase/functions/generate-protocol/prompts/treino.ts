@@ -253,6 +253,8 @@ export function getTreinoUserPrompt(
   weeksPerCycle: number,
   adjustments?: string
 ): string {
+  const preferencias = (userContext as any).preferencias_treino;
+  
   return `Crie um protocolo de treino PERSONALIZADO para este cliente do Método Renascer:
 
 ### DADOS DO CLIENTE ###
@@ -260,6 +262,14 @@ ${JSON.stringify(userContext, null, 2)}
 
 ### PLANO ###
 Tipo: ${planType || 'mensal'} (${durationWeeks} semanas)
+
+${preferencias ? `### PREFERÊNCIAS PESSOAIS DO ALUNO ###
+${preferencias}
+
+IMPORTANTE: Respeite as preferências descritas acima ao montar o protocolo.
+Se o aluno pediu ênfase em algum grupo muscular, aumente o volume desse grupo.
+Se pediu para não treinar muito algo, reduza o volume mas mantenha o mínimo funcional.
+Se mencionou preferência por tipo de treino (curto/intenso, longo/leve), adapte a estrutura.` : ""}
 
 ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
 
