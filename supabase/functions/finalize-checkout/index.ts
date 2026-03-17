@@ -182,6 +182,23 @@ serve(async (req) => {
       throw new Error(`Error upserting subscription: ${upsertError.message}`);
     }
 
+    // Sync entitlements immediately
+    const accessLevel = subscription.status === "trialing" ? "trial_limited" : "full";
+    logStep("Syncing entitlement", { userId, accessLevel });
+
+    const { error: entitlementError } = await supabase
+      .from("entitlements")
+      .upsert(
+        { user_id: userId, access_level: accessLevel, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" }
+      );
+
+    if (entitlementError) {
+      logStep("Error syncing entitlement", { error: entitlementError.message });
+    } else {
+      logStep("Entitlement synced successfully", { accessLevel });
+    }
+
     logStep("Subscription finalized successfully");
 
     return new Response(

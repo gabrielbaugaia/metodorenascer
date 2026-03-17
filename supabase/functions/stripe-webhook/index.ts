@@ -279,6 +279,44 @@ serve(async (req) => {
                   user_id: userId,
                   temp_password: tempPassword,
                 });
+
+                // Send welcome email with credentials
+                try {
+                  const priceId2 = typeof session.subscription === "string" 
+                    ? null 
+                    : null;
+                  // Get plan name from subscription if available
+                  let planName = "Sua assinatura";
+                  if (session.subscription) {
+                    const subId = typeof session.subscription === "string" ? session.subscription : session.subscription;
+                    const sub = await stripe.subscriptions.retrieve(subId as string);
+                    const pid = sub.items.data[0]?.price?.id;
+                    if (pid && PRICE_TO_PLAN[pid]) {
+                      planName = PRICE_TO_PLAN[pid].name;
+                    }
+                  }
+
+                  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+                  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+                  
+                  await fetch(`${supabaseUrl}/functions/v1/send-welcome-credentials`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${supabaseKey}`,
+                    },
+                    body: JSON.stringify({
+                      email: customerEmail,
+                      temp_password: tempPassword,
+                      plan_name: planName,
+                    }),
+                  });
+                  logStep("Welcome email triggered", { email: customerEmail });
+                } catch (emailErr) {
+                  logStep("Failed to send welcome email (non-blocking)", { 
+                    error: emailErr instanceof Error ? emailErr.message : String(emailErr) 
+                  });
+                }
               }
             }
           }

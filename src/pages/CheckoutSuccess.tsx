@@ -1,11 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Loader2, ArrowRight, AlertCircle } from "lucide-react";
+import { CheckCircle, Loader2, ArrowRight, AlertCircle, Copy, LogIn } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CheckoutSuccess() {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ export default function CheckoutSuccess() {
   const [error, setError] = useState<string | null>(null);
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
   const [checkoutFinalized, setCheckoutFinalized] = useState(false);
+  const [guestCredentials, setGuestCredentials] = useState<{ email: string; password: string } | null>(null);
+  const finalizeRetryCount = useRef(0);
 
   const sessionId = searchParams.get("session_id");
 
@@ -50,79 +53,98 @@ export default function CheckoutSuccess() {
     }
   }, [sessionId, checkoutFinalized]);
 
+  // Retry finalize-checkout with backoff
+  useEffect(() => {
+    if (!sessionId || checkoutFinalized || !user) return;
+
+    const retryInterval = setInterval(async () => {
+      if (finalizeRetryCount.current >= 5 || checkoutFinalized) {
+        clearInterval(retryInterval);
+        return;
+      }
+      finalizeRetryCount.current += 1;
+      console.log(`[CheckoutSuccess] Retry finalize attempt ${finalizeRetryCount.current}`);
+      const success = await finalizeCheckout();
+      if (success) {
+        clearInterval(retryInterval);
+        await checkSubscription();
+      }
+    }, 3000);
+
+    return () => clearInterval(retryInterval);
+  }, [sessionId, checkoutFinalized, user, finalizeCheckout, checkSubscription]);
+
   // Handle guest checkout auto-login
   useEffect(() => {
     const completeGuestCheckout = async () => {
-      // Skip if already logged in, no session_id, or already attempted
-      if (user || !sessionId || autoLoginAttempted || authLoading) {
-        return;
-      }
+      if (user || !sessionId || autoLoginAttempted || authLoading) return;
 
       setAutoLoginAttempted(true);
 
       try {
-        // Wait a bit for webhook to process
+        // Wait for webhook to process
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        const { data, error: fnError } = await supabase.functions.invoke(
-          "complete-guest-checkout",
-          { body: { session_id: sessionId } }
-        );
+        const attemptLogin = async (): Promise<boolean> => {
+          const { data, error: fnError } = await supabase.functions.invoke(
+            "complete-guest-checkout",
+            { body: { session_id: sessionId } }
+          );
 
-        if (fnError) {
-          console.error("Guest checkout error:", fnError);
-          navigate("/auth");
-          return;
-        }
+          if (fnError || data?.error) return false;
 
-        if (data?.error) {
-          if (data.error === "not_found") {
-            // Webhook might not have processed yet, wait and retry once
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            const { data: retryData } = await supabase.functions.invoke(
-              "complete-guest-checkout",
-              { body: { session_id: sessionId } }
-            );
+          if (data?.email && data?.temp_password) {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+              email: data.email,
+              password: data.temp_password,
+            });
 
-            if (retryData?.email && retryData?.temp_password) {
-              const { error: signInError } = await supabase.auth.signInWithPassword({
-                email: retryData.email,
-                password: retryData.temp_password,
-              });
-
-              if (signInError) {
-                console.error("Auto-login failed:", signInError);
-                setError("Erro ao fazer login automático. Redirecionando...");
-                setTimeout(() => navigate("/auth"), 2000);
-              }
-              return;
+            if (signInError) {
+              console.error("Auto-login failed:", signInError);
+              // Show credentials as fallback
+              setGuestCredentials({ email: data.email, password: data.temp_password });
+              setChecking(false);
+              return false;
             }
+            return true;
           }
+          return false;
+        };
 
-          navigate("/auth");
-          return;
+        // First attempt
+        let success = await attemptLogin();
+        
+        if (!success) {
+          // Retry after delay
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          success = await attemptLogin();
         }
 
-        if (data?.email && data?.temp_password) {
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: data.email,
-            password: data.temp_password,
-          });
-
-          if (signInError) {
-            console.error("Auto-login failed:", signInError);
-            setError("Erro ao fazer login automático. Redirecionando...");
-            setTimeout(() => navigate("/auth"), 2000);
+        if (!success && !guestCredentials) {
+          // Last resort: try one more time
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          const { data } = await supabase.functions.invoke(
+            "complete-guest-checkout",
+            { body: { session_id: sessionId } }
+          );
+          
+          if (data?.email && data?.temp_password) {
+            setGuestCredentials({ email: data.email, password: data.temp_password });
+            setChecking(false);
+          } else {
+            setError("Não foi possível recuperar suas credenciais. Entre em contato com o suporte.");
+            setChecking(false);
           }
         }
       } catch (err) {
         console.error("Guest checkout error:", err);
-        navigate("/auth");
+        setError("Erro ao processar checkout. Entre em contato com o suporte.");
+        setChecking(false);
       }
     };
 
     completeGuestCheckout();
-  }, [user, sessionId, autoLoginAttempted, authLoading, navigate]);
+  }, [user, sessionId, autoLoginAttempted, authLoading]);
 
   // Verify subscription and finalize checkout when user is logged in
   useEffect(() => {
@@ -136,19 +158,12 @@ export default function CheckoutSuccess() {
     if (user && sessionId) {
       const verifyAndFinalize = async () => {
         setChecking(true);
-        
-        // First, try to finalize checkout directly (doesn't depend on webhook)
         await finalizeCheckout();
-        
-        // Then check subscription status
         await checkSubscription();
-        
         setChecking(false);
       };
-
       verifyAndFinalize();
     } else if (user) {
-      // User logged in but no session_id - just check subscription
       const verify = async () => {
         setChecking(true);
         await checkSubscription();
@@ -165,7 +180,72 @@ export default function CheckoutSuccess() {
     }
   }, [user, checking, subLoading, subscribed, navigate]);
 
-  if (authLoading || checking || subLoading || (!user && sessionId)) {
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado!`);
+  };
+
+  // Show guest credentials fallback
+  if (guestCredentials && !user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-10 h-10 text-green-500" />
+            </div>
+            <CardTitle className="text-2xl">Pagamento Confirmado!</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="text-muted-foreground text-center">
+              Sua conta foi criada com sucesso. Use as credenciais abaixo para acessar a plataforma:
+            </p>
+
+            <div className="space-y-3">
+              <div className="bg-muted rounded-lg p-4 space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">E-mail</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-mono text-sm break-all">{guestCredentials.email}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(guestCredentials.email, "E-mail")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="bg-muted rounded-lg p-4 space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">Senha provisória</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-mono text-sm">{guestCredentials.password}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard(guestCredentials.password, "Senha")}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground text-center">
+              Recomendamos alterar sua senha após o primeiro acesso em Configurações.
+            </p>
+
+            <Button onClick={() => navigate("/auth")} className="w-full" size="lg">
+              <LogIn className="mr-2 h-4 w-4" />
+              Ir para Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (authLoading || checking || subLoading || (!user && sessionId && !guestCredentials)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -190,6 +270,12 @@ export default function CheckoutSuccess() {
             </div>
             <CardTitle className="text-2xl">{error}</CardTitle>
           </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate("/auth")} variant="outline" className="w-full">
+              <LogIn className="mr-2 h-4 w-4" />
+              Ir para Login
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
