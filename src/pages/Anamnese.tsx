@@ -362,6 +362,7 @@ export default function Anamnese() {
           foto_lado_url: formData.foto_lado_url,
           foto_costas_url: formData.foto_costas_url,
           observacoes_adicionais: formData.observacoes_adicionais,
+          preferencias_treino: formData.preferencias_treino,
           anamnese_completa: true,
           updated_at: new Date().toISOString(),
         })
