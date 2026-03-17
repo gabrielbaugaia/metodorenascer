@@ -214,6 +214,7 @@ export default function Anamnese() {
         foto_lado_url: profile.foto_lado_url || prev.foto_lado_url,
         foto_costas_url: profile.foto_costas_url || prev.foto_costas_url,
         observacoes_adicionais: profile.observacoes_adicionais || prev.observacoes_adicionais,
+        preferencias_treino: (profile as any).preferencias_treino || prev.preferencias_treino,
       }));
 
       setProfileLoaded(true);
