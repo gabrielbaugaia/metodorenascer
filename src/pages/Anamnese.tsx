@@ -63,6 +63,9 @@ interface FormData {
   
   // Observações
   observacoes_adicionais: string;
+  
+  // Preferências de Treino
+  preferencias_treino: string;
 }
 
 const initialFormData: FormData = {
