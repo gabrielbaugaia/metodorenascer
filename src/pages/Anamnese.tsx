@@ -402,6 +402,7 @@ export default function Anamnese() {
         sleepQuality: formData.qualidade_sono,
         stressLevel: formData.nivel_estresse,
         observations: formData.observacoes_adicionais,
+        preferencias_treino: formData.preferencias_treino,
         // Routine fields for meal scheduling (REQUIRED for nutrition protocol)
         horario_treino: formData.horario_treino || "18:00",
         horario_acorda: formData.horario_acorda || "06:00",
