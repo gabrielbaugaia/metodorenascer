@@ -12,6 +12,7 @@ import { PersonalDataFields } from "@/components/anamnese/PersonalDataFields";
 import { TrainingHistoryFields } from "@/components/anamnese/TrainingHistoryFields";
 import { HealthAndHabitsFields } from "@/components/anamnese/HealthAndHabitsFields";
 import { ScheduleAndPhotosFields } from "@/components/anamnese/ScheduleAndPhotosFields";
+import { TrainingPreferencesSection } from "@/components/anamnese/TrainingPreferencesSection";
 
 interface FormData {
   // Dados Pessoais
@@ -63,6 +64,9 @@ interface FormData {
   
   // Observações
   observacoes_adicionais: string;
+  
+  // Preferências de Treino
+  preferencias_treino: string;
 }
 
 const initialFormData: FormData = {
@@ -96,6 +100,7 @@ const initialFormData: FormData = {
   foto_lado_url: "",
   foto_costas_url: "",
   observacoes_adicionais: "",
+  preferencias_treino: "",
 };
 
 // Normalize nivel_condicionamento to match database constraint
@@ -210,6 +215,7 @@ export default function Anamnese() {
         foto_lado_url: profile.foto_lado_url || prev.foto_lado_url,
         foto_costas_url: profile.foto_costas_url || prev.foto_costas_url,
         observacoes_adicionais: profile.observacoes_adicionais || prev.observacoes_adicionais,
+        preferencias_treino: (profile as any).preferencias_treino || prev.preferencias_treino,
       }));
 
       setProfileLoaded(true);
@@ -357,6 +363,7 @@ export default function Anamnese() {
           foto_lado_url: formData.foto_lado_url,
           foto_costas_url: formData.foto_costas_url,
           observacoes_adicionais: formData.observacoes_adicionais,
+          preferencias_treino: formData.preferencias_treino,
           anamnese_completa: true,
           updated_at: new Date().toISOString(),
         })
@@ -396,6 +403,7 @@ export default function Anamnese() {
         sleepQuality: formData.qualidade_sono,
         stressLevel: formData.nivel_estresse,
         observations: formData.observacoes_adicionais,
+        preferencias_treino: formData.preferencias_treino,
         // Routine fields for meal scheduling (REQUIRED for nutrition protocol)
         horario_treino: formData.horario_treino || "18:00",
         horario_acorda: formData.horario_acorda || "06:00",
@@ -528,6 +536,12 @@ export default function Anamnese() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Preferências de Treino */}
+          <TrainingPreferencesSection
+            preferencias_treino={formData.preferencias_treino}
+            onChange={handleFieldChange}
+          />
 
           {/* Histórico de Treino e Condicionamento */}
           <TrainingHistoryFields 

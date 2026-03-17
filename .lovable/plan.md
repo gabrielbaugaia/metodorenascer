@@ -1,51 +1,63 @@
 
 
-# Área de Preferências de Treino — Pergunta aberta para personalização pela IA
+# Tendência 30 dias explicativa + Telas de detalhe dos sub-scores
 
 ## Resumo
 
-Adicionar um novo campo `preferencias_treino` na anamnese com perguntas orientadoras para que o aluno descreva seus desejos e prioridades de treino. A IA usará essa resposta junto com os dados da anamnese para gerar prescrições mais personalizadas.
+Duas melhorias na experiência do aluno:
+
+1. **Gráfico de Tendência 30 dias** — adicionar legenda explicativa abaixo do gráfico e tooltip enriquecido com contexto (o que significa cada número, o que as médias 7d/14d/30d representam).
+
+2. **Sub-score cards clicáveis** — cada card (Treino, Recuperação, Cognitivo, Consistência, Nutrição) abre um modal/sheet com:
+   - Gráfico de linha dos últimos 30 dias daquele pilar específico
+   - Explicação do que o pilar mede
+   - Como o score é calculado (linguagem simples)
+   - Dica de como melhorar
+   - Por que é importante preencher os dados
 
 ## Implementação
 
-### 1. Novo campo no banco de dados (migration)
+### 1. SisTrendChart.tsx — Legenda explicativa
 
-Adicionar coluna `preferencias_treino TEXT` na tabela `profiles`.
+Adicionar abaixo do gráfico:
+- Texto explicativo: "Este gráfico mostra a evolução do seu Shape Intelligence Score™ nos últimos 30 dias."
+- Explicação das médias: "7d = média dos últimos 7 dias · 14d = últimos 14 · 30d = média geral do mês"
+- Indicador de tendência: se avg7 > avg30 → "Sua tendência está subindo ↑" (verde), se avg7 < avg30 → "Sua tendência está caindo ↓" (vermelho)
+- Dica: "Preencha seus dados diariamente para manter a precisão do gráfico."
 
-### 2. Novo componente: `TrainingPreferencesSection.tsx`
+### 2. SisSubScoreCards.tsx — Cards clicáveis com Sheet de detalhe
 
-Card com título "Seus Desejos para o Treino" e um Textarea com placeholder orientador:
+Tornar cada card clicável → abre um `Sheet` (drawer de baixo) com:
 
-> "Conte-nos sobre suas preferências de treino. Por exemplo: Quer dar mais ênfase em glúteos e pernas? Prefere não treinar muito braço? Gosta de treinos mais curtos e intensos ou mais longos e leves? Tem algum exercício favorito ou que não gosta? Quer focar em força, resistência ou estética? Descreva livremente o que espera do seu programa."
+**Conteúdo do Sheet por pilar:**
 
-O campo é opcional mas com uma nota incentivando: "Quanto mais detalhes, mais personalizado será seu treino."
+| Pilar | O que mede | Como melhorar |
+|---|---|---|
+| Treino | Volume e intensidade dos treinos registrados | Registre séries e RPE após cada treino |
+| Recuperação | Qualidade do sono e nível de estresse | Registre horas de sono e estresse diariamente |
+| Cognitivo | Clareza mental, foco e disposição | Faça o check-in cognitivo de 1 minuto |
+| Consistência | Frequência de registros ao longo do tempo | Registre dados todos os dias, mesmo nos dias de descanso |
+| Nutrição | Adesão ao plano alimentar e registro de refeições | Registre suas refeições no Diário Nutricional |
 
-### 3. Integração na Anamnese (`Anamnese.tsx`)
+Cada Sheet inclui:
+- Ícone + título do pilar
+- Score atual (grande)
+- Mini gráfico de linha 30 dias (dados do `scores30dFull`)
+- Texto "O que este número significa" com explicação simples
+- Texto "Como melhorar" com ação prática
+- Texto "Por que preencher?" enfatizando que dados vazios = score baixo
 
-- Adicionar `preferencias_treino` ao `FormData` e `initialFormData`
-- Renderizar o novo componente entre Objetivos e Histórico de Treino
-- Salvar no `profiles` junto com os demais campos
-- Incluir no `userContext` passado para geração de protocolos
+### 3. Dados necessários
 
-### 4. Prompt de treino (`prompts/treino.ts`)
-
-Adicionar ao `getTreinoUserPrompt` uma seção dedicada:
-
-```
-### PREFERÊNCIAS PESSOAIS DO ALUNO ###
-${userContext.preferencias_treino || "Nenhuma preferência específica informada."}
-
-IMPORTANTE: Respeite as preferências descritas acima ao montar o protocolo. 
-Se o aluno pediu ênfase em algum grupo muscular, aumente o volume desse grupo. 
-Se pediu para não treinar muito algo, reduza o volume mas mantenha o mínimo funcional.
-```
+Os dados de 30 dias por pilar já existem em `scores30dFull` do `useSisScore`. Basta passar esse array para o componente e extrair o campo correspondente (ex: `mechanical_score`, `recovery_score`, etc.).
 
 ## Arquivos alterados
 
 | Arquivo | Ação |
 |---|---|
-| Nova migration SQL | Adicionar coluna `preferencias_treino` em `profiles` |
-| `src/components/anamnese/TrainingPreferencesSection.tsx` | Novo componente com textarea orientado |
-| `src/pages/Anamnese.tsx` | Integrar novo campo no form e no userContext |
-| `supabase/functions/generate-protocol/prompts/treino.ts` | Incluir preferências no prompt da IA |
+| `src/components/sis/SisTrendChart.tsx` | Adicionar legenda explicativa + indicador de tendência |
+| `src/components/sis/SisSubScoreCards.tsx` | Tornar cards clicáveis, abrir Sheet com gráfico + explicações |
+| `src/pages/Renascer.tsx` | Passar `scores30dFull` para SisSubScoreCards |
+
+Nenhuma migration necessária — todos os dados já existem.
 
