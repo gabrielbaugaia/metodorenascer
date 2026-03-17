@@ -99,6 +99,7 @@ const initialFormData: FormData = {
   foto_lado_url: "",
   foto_costas_url: "",
   observacoes_adicionais: "",
+  preferencias_treino: "",
 };
 
 // Normalize nivel_condicionamento to match database constraint
