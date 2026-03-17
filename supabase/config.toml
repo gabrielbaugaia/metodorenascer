@@ -138,3 +138,6 @@ verify_jwt = false
 
 [functions.analyze-meal-photo]
 verify_jwt = true
+
+[functions.send-welcome-credentials]
+verify_jwt = false
