@@ -53,7 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Tente recarregar ou voltar para o início.
               </p>
               
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {import.meta.env.DEV && this.state.error && (
                 <div className="mt-4 p-3 bg-muted rounded-lg text-left">
                   <p className="text-xs font-mono text-muted-foreground break-all">
                     {this.state.error.message}

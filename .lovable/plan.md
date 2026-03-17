@@ -1,45 +1,63 @@
 
 
-# Correção do fluxo pós-pagamento + acesso imediato
+# Tendência 30 dias explicativa + Telas de detalhe dos sub-scores
 
-## Problemas identificados
+## Resumo
 
-1. **Build error**: `ErrorBoundary.tsx` usa `process.env.NODE_ENV` que não existe no Vite — trocar por `import.meta.env.DEV`.
+Duas melhorias na experiência do aluno:
 
-2. **`finalize-checkout` não sincroniza entitlements**: A função atualiza a tabela `subscriptions` mas **não chama** `syncEntitlement` nem atualiza a tabela `entitlements`. Resultado: o cliente paga, a subscription é criada, mas o sistema de permissões ainda mostra `none`.
+1. **Gráfico de Tendência 30 dias** — adicionar legenda explicativa abaixo do gráfico e tooltip enriquecido com contexto (o que significa cada número, o que as médias 7d/14d/30d representam).
 
-3. **Checkout de guest frágil**: O auto-login depende do webhook ter processado antes do redirect. Se o webhook atrasa (comum), o cliente cai no `/auth` sem saber a senha provisória.
+2. **Sub-score cards clicáveis** — cada card (Treino, Recuperação, Cognitivo, Consistência, Nutrição) abre um modal/sheet com:
+   - Gráfico de linha dos últimos 30 dias daquele pilar específico
+   - Explicação do que o pilar mede
+   - Como o score é calculado (linguagem simples)
+   - Dica de como melhorar
+   - Por que é importante preencher os dados
 
-4. **Credenciais nunca são exibidas ao cliente**: Se o auto-login falha, não há como o cliente saber a senha provisória gerada.
+## Implementação
 
-## Solução
+### 1. SisTrendChart.tsx — Legenda explicativa
 
-### 1. Fix build error (`ErrorBoundary.tsx`)
-Trocar `process.env.NODE_ENV === 'development'` por `import.meta.env.DEV`.
+Adicionar abaixo do gráfico:
+- Texto explicativo: "Este gráfico mostra a evolução do seu Shape Intelligence Score™ nos últimos 30 dias."
+- Explicação das médias: "7d = média dos últimos 7 dias · 14d = últimos 14 · 30d = média geral do mês"
+- Indicador de tendência: se avg7 > avg30 → "Sua tendência está subindo ↑" (verde), se avg7 < avg30 → "Sua tendência está caindo ↓" (vermelho)
+- Dica: "Preencha seus dados diariamente para manter a precisão do gráfico."
 
-### 2. Fix `finalize-checkout` — sincronizar entitlements
-Após o upsert na tabela `subscriptions`, adicionar upsert na tabela `entitlements` com `access_level: 'full'` (ou `trial_limited` para trialing). Isso garante que mesmo se o webhook falhar, o acesso é liberado imediatamente pelo `finalize-checkout` chamado na página de sucesso.
+### 2. SisSubScoreCards.tsx — Cards clicáveis com Sheet de detalhe
 
-### 3. Melhorar `CheckoutSuccess` — fallback com credenciais visíveis
-Quando o auto-login do guest falhar:
-- Mostrar na tela o email e a senha provisória retornados pelo `complete-guest-checkout`
-- Botão "Copiar senha" e "Ir para Login" para que o cliente consiga acessar manualmente
-- Retry automático do `finalize-checkout` a cada 3s (até 5 tentativas) para cobrir atrasos do webhook
+Tornar cada card clicável → abre um `Sheet` (drawer de baixo) com:
 
-### 4. Enviar email com credenciais (edge function `send-welcome-credentials`)
-Nova edge function que envia email via Resend com:
-- Email de boas-vindas
-- Senha provisória
-- Link direto para o login
-- Chamada pelo webhook no `checkout.session.completed` quando cria guest user
+**Conteúdo do Sheet por pilar:**
+
+| Pilar | O que mede | Como melhorar |
+|---|---|---|
+| Treino | Volume e intensidade dos treinos registrados | Registre séries e RPE após cada treino |
+| Recuperação | Qualidade do sono e nível de estresse | Registre horas de sono e estresse diariamente |
+| Cognitivo | Clareza mental, foco e disposição | Faça o check-in cognitivo de 1 minuto |
+| Consistência | Frequência de registros ao longo do tempo | Registre dados todos os dias, mesmo nos dias de descanso |
+| Nutrição | Adesão ao plano alimentar e registro de refeições | Registre suas refeições no Diário Nutricional |
+
+Cada Sheet inclui:
+- Ícone + título do pilar
+- Score atual (grande)
+- Mini gráfico de linha 30 dias (dados do `scores30dFull`)
+- Texto "O que este número significa" com explicação simples
+- Texto "Como melhorar" com ação prática
+- Texto "Por que preencher?" enfatizando que dados vazios = score baixo
+
+### 3. Dados necessários
+
+Os dados de 30 dias por pilar já existem em `scores30dFull` do `useSisScore`. Basta passar esse array para o componente e extrair o campo correspondente (ex: `mechanical_score`, `recovery_score`, etc.).
 
 ## Arquivos alterados
 
 | Arquivo | Ação |
 |---|---|
-| `src/components/ErrorBoundary.tsx` | Fix `process.env` → `import.meta.env.DEV` |
-| `supabase/functions/finalize-checkout/index.ts` | Adicionar sync de entitlements após upsert |
-| `src/pages/CheckoutSuccess.tsx` | Mostrar credenciais como fallback, retry automático |
-| `supabase/functions/send-welcome-credentials/index.ts` | Nova função para enviar email com senha provisória |
-| `supabase/functions/stripe-webhook/index.ts` | Chamar `send-welcome-credentials` após criar guest user |
+| `src/components/sis/SisTrendChart.tsx` | Adicionar legenda explicativa + indicador de tendência |
+| `src/components/sis/SisSubScoreCards.tsx` | Tornar cards clicáveis, abrir Sheet com gráfico + explicações |
+| `src/pages/Renascer.tsx` | Passar `scores30dFull` para SisSubScoreCards |
+
+Nenhuma migration necessária — todos os dados já existem.
 
