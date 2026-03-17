@@ -12,6 +12,7 @@ import { PersonalDataFields } from "@/components/anamnese/PersonalDataFields";
 import { TrainingHistoryFields } from "@/components/anamnese/TrainingHistoryFields";
 import { HealthAndHabitsFields } from "@/components/anamnese/HealthAndHabitsFields";
 import { ScheduleAndPhotosFields } from "@/components/anamnese/ScheduleAndPhotosFields";
+import { TrainingPreferencesSection } from "@/components/anamnese/TrainingPreferencesSection";
 
 interface FormData {
   // Dados Pessoais
