@@ -1,47 +1,63 @@
 
 
-# Ajuste tipográfico do PDF de Evolução
+# Tendência 30 dias explicativa + Telas de detalhe dos sub-scores
 
-## Problema
+## Resumo
 
-O PDF atual usa tamanhos de fonte inconsistentes (6px, 7px, 8px, 9px, 14px), cores de texto variadas (cinzas diferentes, laranja, preto), barras laranjas em excesso e espaçamento apertado entre linhas — resultando num visual confuso e desorganizado.
+Duas melhorias na experiência do aluno:
 
-## Solução
+1. **Gráfico de Tendência 30 dias** — adicionar legenda explicativa abaixo do gráfico e tooltip enriquecido com contexto (o que significa cada número, o que as médias 7d/14d/30d representam).
 
-Padronizar todo o documento com tipografia limpa e hierarquia clara usando apenas **3 estilos visuais**: normal, negrito e laranja (pontual).
+2. **Sub-score cards clicáveis** — cada card (Treino, Recuperação, Cognitivo, Consistência, Nutrição) abre um modal/sheet com:
+   - Gráfico de linha dos últimos 30 dias daquele pilar específico
+   - Explicação do que o pilar mede
+   - Como o score é calculado (linguagem simples)
+   - Dica de como melhorar
+   - Por que é importante preencher os dados
 
-### Padrão tipográfico unificado
+## Implementação
 
-| Elemento | Tamanho | Estilo | Cor |
-|---|---|---|---|
-| Header do documento | 14px | Bold | Branco (sobre barra laranja) |
-| Título da página (nome do cliente) | 13px | Bold | Preto (#1a1a1a) |
-| Título de seção | 9px | Bold | Laranja (#FF4500) — texto, sem barra |
-| Subtítulo/label | 8px | Bold | Cinza escuro (#333) |
-| Corpo de texto | 8px | Normal | Preto (#282828) |
-| Texto secundário (datas, rodapé) | 7px | Normal | Cinza (#888) |
+### 1. SisTrendChart.tsx — Legenda explicativa
 
-### Mudanças principais
+Adicionar abaixo do gráfico:
+- Texto explicativo: "Este gráfico mostra a evolução do seu Shape Intelligence Score™ nos últimos 30 dias."
+- Explicação das médias: "7d = média dos últimos 7 dias · 14d = últimos 14 · 30d = média geral do mês"
+- Indicador de tendência: se avg7 > avg30 → "Sua tendência está subindo ↑" (verde), se avg7 < avg30 → "Sua tendência está caindo ↓" (vermelho)
+- Dica: "Preencha seus dados diariamente para manter a precisão do gráfico."
 
-1. **Remover barras laranjas das seções** — substituir por texto laranja bold com linha separadora fina cinza abaixo. Manter barra laranja apenas no header do topo da página.
+### 2. SisSubScoreCards.tsx — Cards clicáveis com Sheet de detalhe
 
-2. **Espaçamento entre linhas** — aumentar de 3.5pt para 4.5pt no corpo e de 4pt para 5pt nas metas/listas. Adicionar 3pt de padding após cada seção.
+Tornar cada card clicável → abre um `Sheet` (drawer de baixo) com:
 
-3. **Espaçamento entre letras** — usar `doc.setCharSpace(0.2)` para melhorar legibilidade do corpo.
+**Conteúdo do Sheet por pilar:**
 
-4. **Cores simplificadas** — apenas 3 cores: preto para texto, cinza (#888) para secundário, laranja (#FF4500) apenas para títulos de seção e destaques pontuais.
+| Pilar | O que mede | Como melhorar |
+|---|---|---|
+| Treino | Volume e intensidade dos treinos registrados | Registre séries e RPE após cada treino |
+| Recuperação | Qualidade do sono e nível de estresse | Registre horas de sono e estresse diariamente |
+| Cognitivo | Clareza mental, foco e disposição | Faça o check-in cognitivo de 1 minuto |
+| Consistência | Frequência de registros ao longo do tempo | Registre dados todos os dias, mesmo nos dias de descanso |
+| Nutrição | Adesão ao plano alimentar e registro de refeições | Registre suas refeições no Diário Nutricional |
 
-5. **Campos compactos (label: valor)** — label em cinza normal, valor em preto bold, mesma linha com tab consistente.
+Cada Sheet inclui:
+- Ícone + título do pilar
+- Score atual (grande)
+- Mini gráfico de linha 30 dias (dados do `scores30dFull`)
+- Texto "O que este número significa" com explicação simples
+- Texto "Como melhorar" com ação prática
+- Texto "Por que preencher?" enfatizando que dados vazios = score baixo
 
-6. **Caixa motivacional** — fundo cinza claro (#F5F5F5) com borda fina cinza em vez de laranja.
+### 3. Dados necessários
 
-7. **Labels de foto** — sem "▸", apenas texto bold em preto com separador fino.
+Os dados de 30 dias por pilar já existem em `scores30dFull` do `useSisScore`. Basta passar esse array para o componente e extrair o campo correspondente (ex: `mechanical_score`, `recovery_score`, etc.).
 
-## Arquivo alterado
+## Arquivos alterados
 
 | Arquivo | Ação |
 |---|---|
-| `src/lib/generateEvolutionPdf.ts` | Refatorar tipografia, espaçamento e cores |
+| `src/components/sis/SisTrendChart.tsx` | Adicionar legenda explicativa + indicador de tendência |
+| `src/components/sis/SisSubScoreCards.tsx` | Tornar cards clicáveis, abrir Sheet com gráfico + explicações |
+| `src/pages/Renascer.tsx` | Passar `scores30dFull` para SisSubScoreCards |
 
-Nenhuma migration necessária.
+Nenhuma migration necessária — todos os dados já existem.
 
