@@ -1127,11 +1127,14 @@ export type Database = {
           active_calories: number | null
           created_at: string | null
           date: string
+          distance_km: number | null
+          exercise_minutes: number | null
           hrv_ms: number | null
           id: string
           resting_hr: number | null
           sleep_minutes: number | null
           source: string | null
+          standing_hours: number | null
           steps: number | null
           updated_at: string | null
           user_id: string
@@ -1140,11 +1143,14 @@ export type Database = {
           active_calories?: number | null
           created_at?: string | null
           date: string
+          distance_km?: number | null
+          exercise_minutes?: number | null
           hrv_ms?: number | null
           id?: string
           resting_hr?: number | null
           sleep_minutes?: number | null
           source?: string | null
+          standing_hours?: number | null
           steps?: number | null
           updated_at?: string | null
           user_id: string
@@ -1153,11 +1159,14 @@ export type Database = {
           active_calories?: number | null
           created_at?: string | null
           date?: string
+          distance_km?: number | null
+          exercise_minutes?: number | null
           hrv_ms?: number | null
           id?: string
           resting_hr?: number | null
           sleep_minutes?: number | null
           source?: string | null
+          standing_hours?: number | null
           steps?: number | null
           updated_at?: string | null
           user_id?: string
