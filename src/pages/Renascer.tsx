@@ -212,6 +212,17 @@ export default function Renascer() {
         {/* Manual Input (kept) */}
         <ManualInput dataMode={dataMode} todayLog={todayLog} onSaveSuccess={handleSaveSuccess} />
 
+        {/* Batch upload button */}
+        <Button
+          variant="outline"
+          className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10"
+          onClick={() => setBatchUploadOpen(true)}
+        >
+          <CalendarDays className="h-4 w-4" />
+          Recuperar Semana (até 7 prints)
+        </Button>
+        <BatchFitnessUpload open={batchUploadOpen} onOpenChange={setBatchUploadOpen} />
+
         {/* Recent Logs History (kept) */}
         <RecentLogsHistory />
 

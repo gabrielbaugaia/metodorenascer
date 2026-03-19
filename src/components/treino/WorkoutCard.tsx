@@ -216,6 +216,11 @@ export function WorkoutCard({
                   </p>
                 </div>
               )}
+
+              {/* Workout Notes */}
+              {protocoloId && (
+                <WorkoutNotes protocoloId={protocoloId} workoutDay={day} />
+              )}
             </CardContent>
           </CollapsibleContent>
         </Collapsible>

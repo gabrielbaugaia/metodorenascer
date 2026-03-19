@@ -30,7 +30,7 @@ export function WorkoutNotes({ protocoloId, workoutDay }: WorkoutNotesProps) {
         .eq("protocolo_id", protocoloId)
         .eq("workout_day", workoutDay)
         .maybeSingle();
-      return data as { id: string; note: string; created_at: string } | null;
+      return data as unknown as { id: string; note: string; created_at: string } | null;
     },
   });
 
