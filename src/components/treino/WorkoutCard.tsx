@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { ExerciseTable } from "./ExerciseTable";
 import { ExerciseVideoModal } from "./ExerciseVideoModal";
 import { WorkoutSessionManager } from "./WorkoutSessionManager";
+import { WorkoutNotes } from "./WorkoutNotes";
 
 interface Exercise {
   name: string;
