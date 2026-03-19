@@ -26,7 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Flame, Download, History, Loader2 } from "lucide-react";
+import { ExternalLink, Flame, Download, History, Loader2, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { generateSisReportPdf } from "@/lib/generateSisReportPdf";
 import { toast } from "sonner";
