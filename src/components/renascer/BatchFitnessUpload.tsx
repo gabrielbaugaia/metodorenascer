@@ -153,6 +153,9 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
         };
         if (day.steps != null) healthData.steps = day.steps;
         if (day.active_calories != null) healthData.active_calories = day.active_calories;
+        if (day.exercise_minutes != null) healthData.exercise_minutes = day.exercise_minutes;
+        if (day.standing_hours != null) healthData.standing_hours = day.standing_hours;
+        if (day.distance_km != null) healthData.distance_km = day.distance_km;
 
         await supabase
           .from("health_daily")
