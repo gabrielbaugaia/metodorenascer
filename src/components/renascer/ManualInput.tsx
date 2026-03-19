@@ -205,6 +205,9 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       };
       if (stepsVal !== null) healthData.steps = stepsVal;
       if (activeCalsVal !== null) healthData.active_calories = activeCalsVal;
+      if (exerciseMinsVal !== null) healthData.exercise_minutes = exerciseMinsVal;
+      if (standingHrsVal !== null) healthData.standing_hours = standingHrsVal;
+      if (distanceKmVal !== null) healthData.distance_km = distanceKmVal;
 
       const { error: e2 } = await supabase
         .from("health_daily")
@@ -214,6 +217,8 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
       queryClient.invalidateQueries({ queryKey: ["recent-logs-history"] });
+      queryClient.invalidateQueries({ queryKey: ["health-daily"] });
+      queryClient.invalidateQueries({ queryKey: ["health-workouts-recent"] });
       toast.success("Dia registrado. Seu Score foi atualizado.");
       onSaveSuccess?.();
     },

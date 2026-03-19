@@ -1,4 +1,4 @@
-import { Footprints, Flame, Moon, HeartPulse, Activity, Watch } from "lucide-react";
+import { Footprints, Flame, Moon, HeartPulse, Activity, Watch, Timer, Route } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -131,6 +131,12 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
             )}
             {todayData.hrv_ms && (
               <MetricCard icon={Activity} label="HRV" value={Number(todayData.hrv_ms).toFixed(0)} unit="ms" color="bg-green-500/10 text-green-500" source={src} />
+            )}
+            {(todayData as any).exercise_minutes != null && (todayData as any).exercise_minutes > 0 && (
+              <MetricCard icon={Timer} label="Exercício" value={(todayData as any).exercise_minutes} unit="min" color="bg-emerald-500/10 text-emerald-500" source={src} />
+            )}
+            {(todayData as any).distance_km != null && (todayData as any).distance_km > 0 && (
+              <MetricCard icon={Route} label="Distância" value={Number((todayData as any).distance_km).toFixed(1)} unit="km" color="bg-cyan-500/10 text-cyan-500" source={src} />
             )}
           </div>
         ) : (

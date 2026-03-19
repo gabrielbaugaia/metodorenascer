@@ -1,43 +1,63 @@
 
 
-# Fix: Dados de fitness não atualizam métricas do cliente
+# Tendência 30 dias explicativa + Telas de detalhe dos sub-scores
 
-## Problemas identificados
+## Resumo
 
-1. **Tabela `health_daily` não tem colunas para `exercise_minutes`, `standing_hours`, `distance_km`** — o batch upload salva esses dados em `manual_day_logs` mas só sincroniza `steps` e `active_calories` para `health_daily`. O dashboard "Dados do Corpo" lê de `health_daily` e mostra tudo zerado.
+Duas melhorias na experiência do aluno:
 
-2. **Cache não invalidado** — O BatchFitnessUpload invalida `recent-logs-history`, `renascer-score` e `sis-scores-30d`, mas **não invalida `health-daily`** (query key usada pelo `useHealthData` e pela página DadosCorpo). Os dados são salvos mas a UI nunca atualiza.
+1. **Gráfico de Tendência 30 dias** — adicionar legenda explicativa abaixo do gráfico e tooltip enriquecido com contexto (o que significa cada número, o que as médias 7d/14d/30d representam).
 
-3. **ManualInput (upload de 3 imagens) mesmo problema** — extrai dados de fitness via OCR mas só sincroniza steps + active_calories para `health_daily`.
+2. **Sub-score cards clicáveis** — cada card (Treino, Recuperação, Cognitivo, Consistência, Nutrição) abre um modal/sheet com:
+   - Gráfico de linha dos últimos 30 dias daquele pilar específico
+   - Explicação do que o pilar mede
+   - Como o score é calculado (linguagem simples)
+   - Dica de como melhorar
+   - Por que é importante preencher os dados
 
-4. **DadosCorpo "Últimos 7 dias" mostra "0 passos, 0 kcal"** porque as linhas em `health_daily` existem (do registro de sono) mas sem steps/calories preenchidos quando vindos do OCR.
+## Implementação
 
-## Solução
+### 1. SisTrendChart.tsx — Legenda explicativa
 
-### 1. Migration: adicionar colunas em `health_daily`
-Adicionar `exercise_minutes`, `standing_hours` e `distance_km` na tabela `health_daily` para que todos os dados de fitness fiquem disponíveis para o dashboard.
+Adicionar abaixo do gráfico:
+- Texto explicativo: "Este gráfico mostra a evolução do seu Shape Intelligence Score™ nos últimos 30 dias."
+- Explicação das médias: "7d = média dos últimos 7 dias · 14d = últimos 14 · 30d = média geral do mês"
+- Indicador de tendência: se avg7 > avg30 → "Sua tendência está subindo ↑" (verde), se avg7 < avg30 → "Sua tendência está caindo ↓" (vermelho)
+- Dica: "Preencha seus dados diariamente para manter a precisão do gráfico."
 
-### 2. Fix `BatchFitnessUpload.tsx` — sync completo + invalidação
-- Sincronizar **todos** os campos extraídos (exercise_minutes, standing_hours, distance_km) para `health_daily`, não só steps e active_calories.
-- Adicionar invalidação de `health-daily` e `health-workouts-recent` no onSuccess.
+### 2. SisSubScoreCards.tsx — Cards clicáveis com Sheet de detalhe
 
-### 3. Fix `ManualInput.tsx` — sync completo
-- Mesmo fix: sincronizar exercise_minutes, standing_hours, distance_km para `health_daily` ao salvar.
-- Adicionar invalidação de `health-daily`.
+Tornar cada card clicável → abre um `Sheet` (drawer de baixo) com:
 
-### 4. Atualizar `HealthDashboardTab.tsx` — exibir exercise_minutes e distance
-- Mostrar exercise_minutes e distance_km nos cards do dashboard quando disponíveis.
+**Conteúdo do Sheet por pilar:**
 
-### 5. Atualizar `useHealthData.ts` — expandir interface
-- Adicionar os novos campos na interface `HealthDaily`.
+| Pilar | O que mede | Como melhorar |
+|---|---|---|
+| Treino | Volume e intensidade dos treinos registrados | Registre séries e RPE após cada treino |
+| Recuperação | Qualidade do sono e nível de estresse | Registre horas de sono e estresse diariamente |
+| Cognitivo | Clareza mental, foco e disposição | Faça o check-in cognitivo de 1 minuto |
+| Consistência | Frequência de registros ao longo do tempo | Registre dados todos os dias, mesmo nos dias de descanso |
+| Nutrição | Adesão ao plano alimentar e registro de refeições | Registre suas refeições no Diário Nutricional |
+
+Cada Sheet inclui:
+- Ícone + título do pilar
+- Score atual (grande)
+- Mini gráfico de linha 30 dias (dados do `scores30dFull`)
+- Texto "O que este número significa" com explicação simples
+- Texto "Como melhorar" com ação prática
+- Texto "Por que preencher?" enfatizando que dados vazios = score baixo
+
+### 3. Dados necessários
+
+Os dados de 30 dias por pilar já existem em `scores30dFull` do `useSisScore`. Basta passar esse array para o componente e extrair o campo correspondente (ex: `mechanical_score`, `recovery_score`, etc.).
 
 ## Arquivos alterados
 
 | Arquivo | Ação |
 |---|---|
-| Nova migration SQL | Adicionar 3 colunas em `health_daily` |
-| `src/components/renascer/BatchFitnessUpload.tsx` | Sync completo + invalidar `health-daily` |
-| `src/components/renascer/ManualInput.tsx` | Sync completo + invalidar `health-daily` |
-| `src/hooks/useHealthData.ts` | Expandir interface HealthDaily |
-| `src/components/health/HealthDashboardTab.tsx` | Exibir exercise_minutes e distance |
+| `src/components/sis/SisTrendChart.tsx` | Adicionar legenda explicativa + indicador de tendência |
+| `src/components/sis/SisSubScoreCards.tsx` | Tornar cards clicáveis, abrir Sheet com gráfico + explicações |
+| `src/pages/Renascer.tsx` | Passar `scores30dFull` para SisSubScoreCards |
+
+Nenhuma migration necessária — todos os dados já existem.
 
