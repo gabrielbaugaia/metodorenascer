@@ -202,7 +202,7 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
         .eq("date", log.date);
       if (error) throw error;
 
-      // Sync health_daily
+      // Sync health_daily with ALL fields
       const healthData: Record<string, unknown> = {
         user_id: user.id,
         date: log.date,
@@ -210,6 +210,9 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
       };
       if (fitnessData.steps != null) healthData.steps = fitnessData.steps;
       if (fitnessData.active_calories != null) healthData.active_calories = fitnessData.active_calories;
+      if (fitnessData.exercise_minutes != null) healthData.exercise_minutes = fitnessData.exercise_minutes;
+      if (fitnessData.standing_hours != null) healthData.standing_hours = fitnessData.standing_hours;
+      if (fitnessData.distance_km != null) healthData.distance_km = fitnessData.distance_km;
 
       await supabase
         .from("health_daily")
