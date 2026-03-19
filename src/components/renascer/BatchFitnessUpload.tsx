@@ -6,10 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, subDays, isAfter, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarDays, Camera, X, Loader2, CheckCircle, Plus, Upload } from "lucide-react";
+import { CalendarDays, Camera, X, Loader2, CheckCircle, Plus, Upload, AlertTriangle, Pencil } from "lucide-react";
 
 interface ExtractedDay {
   date: string;
@@ -20,11 +21,21 @@ interface ExtractedDay {
   distance_km: number | null;
   file: File;
   base64: string;
+  dateAmbiguous: boolean;
+  dateEditing: boolean;
 }
 
 interface BatchFitnessUploadProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function isDateInWindow(dateStr: string, windowDays = 10): boolean {
+  const date = new Date(dateStr + "T12:00:00");
+  const today = startOfDay(new Date());
+  today.setHours(23, 59, 59, 999);
+  const windowStart = startOfDay(subDays(new Date(), windowDays));
+  return !isBefore(date, windowStart) && !isAfter(date, today);
 }
 
 export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadProps) {
@@ -81,6 +92,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
         if (error) throw error;
 
         const detectedDate = data?.detected_date || format(new Date(), "yyyy-MM-dd");
+        const dateAmbiguous = !!data?.date_ambiguous || !isDateInWindow(detectedDate);
 
         // Merge with existing result for same date
         const existing = results.find((r) => r.date === detectedDate);
@@ -90,6 +102,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
           if (data?.exercise_minutes != null) existing.exercise_minutes = data.exercise_minutes;
           if (data?.standing_hours != null) existing.standing_hours = data.standing_hours;
           if (data?.distance_km != null) existing.distance_km = data.distance_km;
+          if (dateAmbiguous) existing.dateAmbiguous = true;
         } else {
           results.push({
             date: detectedDate,
@@ -100,6 +113,8 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
             distance_km: data?.distance_km ?? null,
             file: files[i].file,
             base64: files[i].preview,
+            dateAmbiguous,
+            dateEditing: false,
           });
         }
       } catch (err) {
@@ -113,6 +128,24 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
     setStep("review");
     setProcessing(false);
   };
+
+  const updateDayDate = (idx: number, newDate: string) => {
+    setExtractedDays((prev) =>
+      prev.map((d, i) =>
+        i === idx
+          ? { ...d, date: newDate, dateAmbiguous: !isDateInWindow(newDate), dateEditing: false }
+          : d
+      )
+    );
+  };
+
+  const toggleDateEditing = (idx: number) => {
+    setExtractedDays((prev) =>
+      prev.map((d, i) => (i === idx ? { ...d, dateEditing: !d.dateEditing } : d))
+    );
+  };
+
+  const hasInvalidDates = extractedDays.some((d) => !isDateInWindow(d.date));
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -145,7 +178,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
           );
         if (e1) console.warn("Upsert error:", e1);
 
-        // Sync health_daily
+        // Sync health_daily with ALL fields
         const healthData: Record<string, unknown> = {
           user_id: user.id,
           date: day.date,
@@ -298,42 +331,79 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
         {step === "review" && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Confira os dados extraídos antes de salvar:
+              Confira os dados e <strong>datas</strong> extraídos antes de salvar:
             </p>
 
+            {hasInvalidDates && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                  Algumas datas parecem incorretas (fora dos últimos 10 dias). Corrija antes de salvar.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-3">
-              {extractedDays.map((day, idx) => (
-                <div key={idx} className="rounded-lg border border-border/50 p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">
-                      {format(new Date(day.date + "T12:00:00"), "EEE, dd/MM", { locale: ptBR })}
-                    </span>
-                    <Badge variant="outline" className="text-[10px]">
-                      {day.date}
-                    </Badge>
+              {extractedDays.map((day, idx) => {
+                const dateValid = isDateInWindow(day.date);
+                return (
+                  <div key={idx} className={`rounded-lg border p-3 space-y-2 ${!dateValid ? "border-yellow-500/50 bg-yellow-500/5" : "border-border/50"}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      {day.dateEditing ? (
+                        <Input
+                          type="date"
+                          value={day.date}
+                          max={format(new Date(), "yyyy-MM-dd")}
+                          onChange={(e) => updateDayDate(idx, e.target.value)}
+                          className="h-8 text-sm w-40 bg-muted/50"
+                          autoFocus
+                          onBlur={() => toggleDateEditing(idx)}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => toggleDateEditing(idx)}
+                          className="flex items-center gap-1.5 text-sm font-semibold hover:text-primary transition-colors"
+                        >
+                          {format(new Date(day.date + "T12:00:00"), "EEE, dd/MM/yyyy", { locale: ptBR })}
+                          <Pencil className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      )}
+                      <div className="flex items-center gap-1.5">
+                        {!dateValid && (
+                          <Badge variant="outline" className="text-[10px] border-yellow-500/50 text-yellow-600 dark:text-yellow-400">
+                            ⚠ Corrigir
+                          </Badge>
+                        )}
+                        {day.dateAmbiguous && dateValid && (
+                          <Badge variant="outline" className="text-[10px] border-blue-500/50 text-blue-500">
+                            Verificar
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      {day.steps != null && (
+                        <span>Passos: <span className="text-foreground font-medium">{day.steps.toLocaleString()}</span></span>
+                      )}
+                      {day.active_calories != null && (
+                        <span>Calorias: <span className="text-foreground font-medium">{day.active_calories}</span></span>
+                      )}
+                      {day.exercise_minutes != null && (
+                        <span>Exercício: <span className="text-foreground font-medium">{day.exercise_minutes} min</span></span>
+                      )}
+                      {day.standing_hours != null && (
+                        <span>Em pé: <span className="text-foreground font-medium">{day.standing_hours}h</span></span>
+                      )}
+                      {day.distance_km != null && (
+                        <span>Distância: <span className="text-foreground font-medium">{day.distance_km} km</span></span>
+                      )}
+                      {!day.steps && !day.active_calories && !day.exercise_minutes && (
+                        <span className="col-span-2 text-yellow-500">Nenhum dado detectado</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    {day.steps != null && (
-                      <span>Passos: <span className="text-foreground font-medium">{day.steps.toLocaleString()}</span></span>
-                    )}
-                    {day.active_calories != null && (
-                      <span>Calorias: <span className="text-foreground font-medium">{day.active_calories}</span></span>
-                    )}
-                    {day.exercise_minutes != null && (
-                      <span>Exercício: <span className="text-foreground font-medium">{day.exercise_minutes} min</span></span>
-                    )}
-                    {day.standing_hours != null && (
-                      <span>Em pé: <span className="text-foreground font-medium">{day.standing_hours}h</span></span>
-                    )}
-                    {day.distance_km != null && (
-                      <span>Distância: <span className="text-foreground font-medium">{day.distance_km} km</span></span>
-                    )}
-                    {!day.steps && !day.active_calories && !day.exercise_minutes && (
-                      <span className="col-span-2 text-yellow-500">Nenhum dado detectado</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex gap-2">
@@ -342,7 +412,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
               </Button>
               <Button
                 onClick={() => saveMutation.mutate()}
-                disabled={saving || extractedDays.length === 0}
+                disabled={saving || extractedDays.length === 0 || hasInvalidDates}
                 className="flex-1"
               >
                 {saving ? (
