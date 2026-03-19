@@ -359,6 +359,7 @@ export default function Treino() {
                       onComplete={(durationSeconds?: number, sessionId?: string) => handleCompleteWorkout(workout, durationSeconds, sessionId)}
                       todayCompleted={todayCompleted}
                       autoStartSession={activeSessionWorkout === `${workout.day} — ${workout.focus}`}
+                      protocoloId={protocol?.id}
                     />
                   ))}
                   {lockedWorkouts.length > 0 && (
