@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { ExerciseTable } from "./ExerciseTable";
 import { ExerciseVideoModal } from "./ExerciseVideoModal";
 import { WorkoutSessionManager } from "./WorkoutSessionManager";
+import { WorkoutNotes } from "./WorkoutNotes";
 
 interface Exercise {
   name: string;
@@ -34,6 +35,7 @@ interface WorkoutCardProps {
   onComplete?: (durationSeconds?: number, sessionId?: string) => void;
   todayCompleted?: boolean;
   autoStartSession?: boolean;
+  protocoloId?: string;
 }
 
 export function WorkoutCard({
@@ -47,6 +49,7 @@ export function WorkoutCard({
   onComplete,
   todayCompleted = false,
   autoStartSession = false,
+  protocoloId,
 }: WorkoutCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
@@ -212,6 +215,11 @@ export function WorkoutCard({
                     Treino de hoje já foi registrado!
                   </p>
                 </div>
+              )}
+
+              {/* Workout Notes */}
+              {protocoloId && (
+                <WorkoutNotes protocoloId={protocoloId} workoutDay={day} />
               )}
             </CardContent>
           </CollapsibleContent>

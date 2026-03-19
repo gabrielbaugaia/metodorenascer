@@ -21,11 +21,12 @@ import { RecentLogsHistory } from "@/components/renascer/RecentLogsHistory";
 import { BehaviorProfileBadge } from "@/components/renascer/BehaviorProfileBadge";
 import { MicroWinsCard } from "@/components/renascer/MicroWinsCard";
 import { ActiveChallengeCard } from "@/components/renascer/ActiveChallengeCard";
+import { BatchFitnessUpload } from "@/components/renascer/BatchFitnessUpload";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Flame, Download, History, Loader2 } from "lucide-react";
+import { ExternalLink, Flame, Download, History, Loader2, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { generateSisReportPdf } from "@/lib/generateSisReportPdf";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ export default function Renascer() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [backfilling, setBackfilling] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [batchUploadOpen, setBatchUploadOpen] = useState(false);
 
   // Legacy score (kept for ManualInput compatibility)
   const { todayLog, isLoading: legacyLoading } = useRenascerScore();
@@ -209,6 +211,17 @@ export default function Renascer() {
 
         {/* Manual Input (kept) */}
         <ManualInput dataMode={dataMode} todayLog={todayLog} onSaveSuccess={handleSaveSuccess} />
+
+        {/* Batch upload button */}
+        <Button
+          variant="outline"
+          className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10"
+          onClick={() => setBatchUploadOpen(true)}
+        >
+          <CalendarDays className="h-4 w-4" />
+          Recuperar Semana (até 7 prints)
+        </Button>
+        <BatchFitnessUpload open={batchUploadOpen} onOpenChange={setBatchUploadOpen} />
 
         {/* Recent Logs History (kept) */}
         <RecentLogsHistory />
