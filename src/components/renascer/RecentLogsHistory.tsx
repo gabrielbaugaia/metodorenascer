@@ -221,6 +221,8 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recent-logs-history"] });
       queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
+      queryClient.invalidateQueries({ queryKey: ["health-daily"] });
+      queryClient.invalidateQueries({ queryKey: ["sis-scores-30d"] });
       toast.success(`Dados de fitness atualizados para ${format(new Date(log.date + "T12:00:00"), "dd/MM", { locale: ptBR })}!`);
       setFiles([]);
       setPreviews([]);
