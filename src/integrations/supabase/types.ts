@@ -1295,6 +1295,10 @@ export type Database = {
           fitness_screenshot_path: string | null
           fitness_screenshot_path_2: string | null
           fitness_screenshot_path_3: string | null
+          fitness_screenshot_path_4: string | null
+          fitness_screenshot_path_5: string | null
+          fitness_screenshot_path_6: string | null
+          fitness_screenshot_path_7: string | null
           id: string
           rpe: number | null
           sleep_hours: number | null
@@ -1315,6 +1319,10 @@ export type Database = {
           fitness_screenshot_path?: string | null
           fitness_screenshot_path_2?: string | null
           fitness_screenshot_path_3?: string | null
+          fitness_screenshot_path_4?: string | null
+          fitness_screenshot_path_5?: string | null
+          fitness_screenshot_path_6?: string | null
+          fitness_screenshot_path_7?: string | null
           id?: string
           rpe?: number | null
           sleep_hours?: number | null
@@ -1335,6 +1343,10 @@ export type Database = {
           fitness_screenshot_path?: string | null
           fitness_screenshot_path_2?: string | null
           fitness_screenshot_path_3?: string | null
+          fitness_screenshot_path_4?: string | null
+          fitness_screenshot_path_5?: string | null
+          fitness_screenshot_path_6?: string | null
+          fitness_screenshot_path_7?: string | null
           id?: string
           rpe?: number | null
           sleep_hours?: number | null
@@ -2770,6 +2782,44 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "active_workout_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_notes: {
+        Row: {
+          created_at: string | null
+          id: string
+          note: string
+          protocolo_id: string
+          updated_at: string | null
+          user_id: string
+          workout_day: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          note: string
+          protocolo_id: string
+          updated_at?: string | null
+          user_id: string
+          workout_day: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          note?: string
+          protocolo_id?: string
+          updated_at?: string | null
+          user_id?: string
+          workout_day?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_notes_protocolo_id_fkey"
+            columns: ["protocolo_id"]
+            isOneToOne: false
+            referencedRelation: "protocolos"
             referencedColumns: ["id"]
           },
         ]
