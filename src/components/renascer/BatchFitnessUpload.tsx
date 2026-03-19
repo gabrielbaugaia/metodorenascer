@@ -177,6 +177,8 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
       queryClient.invalidateQueries({ queryKey: ["recent-logs-history"] });
       queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
       queryClient.invalidateQueries({ queryKey: ["sis-scores-30d"] });
+      queryClient.invalidateQueries({ queryKey: ["health-daily"] });
+      queryClient.invalidateQueries({ queryKey: ["health-workouts-recent"] });
       toast.success(`${extractedDays.length} dia(s) registrado(s) com sucesso!`);
       setStep("done");
       setSaving(false);

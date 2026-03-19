@@ -11,6 +11,9 @@ export interface HealthDaily {
   sleep_minutes: number;
   resting_hr: number | null;
   hrv_ms: number | null;
+  exercise_minutes: number | null;
+  standing_hours: number | null;
+  distance_km: number | null;
   source: string;
   updated_at: string;
 }
