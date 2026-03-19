@@ -34,6 +34,7 @@ interface WorkoutCardProps {
   onComplete?: (durationSeconds?: number, sessionId?: string) => void;
   todayCompleted?: boolean;
   autoStartSession?: boolean;
+  protocoloId?: string;
 }
 
 export function WorkoutCard({
