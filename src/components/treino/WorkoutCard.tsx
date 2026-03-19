@@ -48,6 +48,7 @@ export function WorkoutCard({
   onComplete,
   todayCompleted = false,
   autoStartSession = false,
+  protocoloId,
 }: WorkoutCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
