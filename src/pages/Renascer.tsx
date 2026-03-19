@@ -21,6 +21,7 @@ import { RecentLogsHistory } from "@/components/renascer/RecentLogsHistory";
 import { BehaviorProfileBadge } from "@/components/renascer/BehaviorProfileBadge";
 import { MicroWinsCard } from "@/components/renascer/MicroWinsCard";
 import { ActiveChallengeCard } from "@/components/renascer/ActiveChallengeCard";
+import { BatchFitnessUpload } from "@/components/renascer/BatchFitnessUpload";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
