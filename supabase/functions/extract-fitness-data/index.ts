@@ -6,6 +6,63 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/**
+ * Given a raw detected_date from OCR, normalize it to fall within the last 10 days.
+ * The OCR often returns wrong years (2020, 2024, 2025) because the screenshot
+ * only shows day/month or weekday. We fix the year to the current one and
+ * verify the date is recent.
+ */
+function normalizeDate(rawDate: string | null): { date: string | null; ambiguous: boolean } {
+  if (!rawDate) return { date: null, ambiguous: false };
+
+  // Parse the raw date
+  const parts = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!parts) return { date: null, ambiguous: true };
+
+  const [, yearStr, monthStr, dayStr] = parts;
+  const month = parseInt(monthStr, 10);
+  const day = parseInt(dayStr, 10);
+
+  // Get current date info
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const currentDay = now.getDate();
+
+  // Try current year first
+  let candidateYear = currentYear;
+  let candidate = new Date(candidateYear, month - 1, day);
+
+  // If the candidate is in the future (more than 1 day ahead), try previous year
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(23, 59, 59, 999);
+
+  if (candidate > tomorrow) {
+    candidateYear = currentYear - 1;
+    candidate = new Date(candidateYear, month - 1, day);
+  }
+
+  // Check if it's within the last 10 days
+  const tenDaysAgo = new Date(now);
+  tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+  tenDaysAgo.setHours(0, 0, 0, 0);
+
+  const withinWindow = candidate >= tenDaysAgo && candidate <= tomorrow;
+
+  // Format the normalized date
+  const normalizedDate = `${candidateYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+  // If the original year matched, it's not ambiguous and within window
+  const originalYear = parseInt(yearStr, 10);
+  const yearWasChanged = originalYear !== candidateYear;
+
+  return {
+    date: normalizedDate,
+    ambiguous: yearWasChanged || !withinWindow,
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -34,6 +91,9 @@ serve(async (req) => {
     // Strip data URI prefix if present
     const base64Clean = image_base64.replace(/^data:image\/[a-z]+;base64,/, "");
 
+    const currentYear = new Date().getFullYear();
+    const todayStr = new Date().toISOString().split("T")[0];
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -45,15 +105,23 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content:
-              "You are a fitness data extraction assistant. You analyze screenshots from fitness apps (Apple Fitness, Google Fit, Samsung Health, Garmin, etc.) and extract numeric health metrics visible on screen. Always use the extract_fitness_data tool to return structured data. If a value is not visible in the image, set it to null. For distance, always convert to kilometers. Also extract the date shown in the screenshot if visible (e.g. 'Thursday', 'Feb 26', '26/02/2025') and convert it to YYYY-MM-DD format. If the date shows only a weekday name, calculate the most recent past occurrence of that weekday. If no date is visible, set detected_date to null.",
+            content: `You are a fitness data extraction assistant. You analyze screenshots from fitness apps (Apple Fitness, Google Fit, Samsung Health, Garmin, etc.) and extract numeric health metrics visible on screen. Always use the extract_fitness_data tool to return structured data. If a value is not visible in the image, set it to null. For distance, always convert to kilometers.
+
+CRITICAL DATE RULES:
+- Today's date is ${todayStr}. The current year is ${currentYear}.
+- The user is uploading screenshots from THE LAST 7 DAYS. All dates MUST be within the last 10 days.
+- If the screenshot shows a date like "Thursday" or "Thu", calculate the most recent past Thursday relative to today (${todayStr}).
+- If the screenshot shows "Mar 13" or "13/03" without a year, ALWAYS use the current year ${currentYear}.
+- NEVER return years like 2020, 2024, or 2025 unless it is actually that year. The current year is ${currentYear}.
+- If no date is visible at all, set detected_date to null.
+- The returned date MUST be in YYYY-MM-DD format using year ${currentYear} unless the date is clearly from a previous month that would make it future (in which case use ${currentYear - 1}).`,
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Analyze this fitness app screenshot. Extract all visible health metrics (steps, active calories, exercise minutes, standing hours, distance in km) AND the date shown on screen.",
+                text: `Analyze this fitness app screenshot. Extract all visible health metrics (steps, active calories, exercise minutes, standing hours, distance in km) AND the date shown on screen. Remember: today is ${todayStr}, use year ${currentYear} for any detected dates.`,
               },
               {
                 type: "image_url",
@@ -95,7 +163,7 @@ serve(async (req) => {
                   },
                   detected_date: {
                     type: ["string", "null"],
-                    description: "Date shown in the screenshot in YYYY-MM-DD format. null if not visible.",
+                    description: `Date shown in the screenshot in YYYY-MM-DD format. Use year ${currentYear}. null if not visible.`,
                   },
                 },
                 required: ["steps", "active_calories", "exercise_minutes", "standing_hours", "distance_km", "detected_date"],
@@ -141,6 +209,11 @@ serve(async (req) => {
     }
 
     const extracted = JSON.parse(toolCall.function.arguments);
+
+    // Post-process: normalize the date to prevent wrong years
+    const { date: normalizedDate, ambiguous } = normalizeDate(extracted.detected_date);
+    extracted.detected_date = normalizedDate;
+    extracted.date_ambiguous = ambiguous;
 
     return new Response(JSON.stringify(extracted), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
