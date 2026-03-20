@@ -117,7 +117,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
             <MetricCard
               icon={Footprints}
               label="Passos"
-              value={todayData.steps.toLocaleString("pt-BR")}
+              value={displayData.steps.toLocaleString("pt-BR")}
               color="bg-blue-500/10 text-blue-500"
               emptyValue={stepsEmpty}
               source={stepsEmpty ? "indisponivel" : src}
@@ -126,7 +126,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
             <MetricCard
               icon={Flame}
               label="Calorias Ativas"
-              value={todayData.active_calories}
+              value={displayData.active_calories}
               unit="kcal"
               color="bg-orange-500/10 text-orange-500"
               emptyValue={calEmpty}
@@ -141,17 +141,17 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
               emptyValue={sleepVal === 0}
               source={sleepSrc}
             />
-            {todayData.resting_hr && (
-              <MetricCard icon={HeartPulse} label="FC Repouso" value={todayData.resting_hr} unit="bpm" color="bg-red-500/10 text-red-500" source={src} />
+            {displayData.resting_hr && (
+              <MetricCard icon={HeartPulse} label="FC Repouso" value={displayData.resting_hr} unit="bpm" color="bg-red-500/10 text-red-500" source={src} />
             )}
-            {todayData.hrv_ms && (
-              <MetricCard icon={Activity} label="HRV" value={Number(todayData.hrv_ms).toFixed(0)} unit="ms" color="bg-green-500/10 text-green-500" source={src} />
+            {displayData.hrv_ms && (
+              <MetricCard icon={Activity} label="HRV" value={Number(displayData.hrv_ms).toFixed(0)} unit="ms" color="bg-green-500/10 text-green-500" source={src} />
             )}
-            {(todayData as any).exercise_minutes != null && (todayData as any).exercise_minutes > 0 && (
-              <MetricCard icon={Timer} label="Exercício" value={(todayData as any).exercise_minutes} unit="min" color="bg-emerald-500/10 text-emerald-500" source={src} />
+            {(displayData as any).exercise_minutes != null && (displayData as any).exercise_minutes > 0 && (
+              <MetricCard icon={Timer} label="Exercício" value={(displayData as any).exercise_minutes} unit="min" color="bg-emerald-500/10 text-emerald-500" source={src} />
             )}
-            {(todayData as any).distance_km != null && (todayData as any).distance_km > 0 && (
-              <MetricCard icon={Route} label="Distância" value={Number((todayData as any).distance_km).toFixed(1)} unit="km" color="bg-cyan-500/10 text-cyan-500" source={src} />
+            {(displayData as any).distance_km != null && (displayData as any).distance_km > 0 && (
+              <MetricCard icon={Route} label="Distância" value={Number((displayData as any).distance_km).toFixed(1)} unit="km" color="bg-cyan-500/10 text-cyan-500" source={src} />
             )}
           </div>
         ) : (
