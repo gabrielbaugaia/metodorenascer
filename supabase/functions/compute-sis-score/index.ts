@@ -291,7 +291,6 @@ Deno.serve(async (req) => {
         userId = target_user_id;
       }
     }
-    }
 
     if (backfill) {
       const results: any[] = [];
