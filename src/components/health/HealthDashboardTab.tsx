@@ -84,20 +84,35 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
     );
   }
 
-  const src = resolveSource(todayData?.source);
+  // Fallback: if today has no meaningful data, use most recent day that does
+  const hasMeaningfulData = (d: HealthDaily | null) =>
+    d && ((d.steps ?? 0) > 0 || (d.active_calories ?? 0) > 0 || (d.sleep_minutes ?? 0) > 0 || d.resting_hr || d.hrv_ms);
+
+  const displayData = hasMeaningfulData(todayData)
+    ? todayData
+    : dailyData.find((d) => hasMeaningfulData(d)) ?? todayData;
+
+  const isToday = displayData === todayData || displayData?.date === todayData?.date;
+  const displayLabel = isToday
+    ? "Hoje"
+    : displayData
+      ? `Último registro: ${format(new Date(displayData.date + "T12:00:00"), "dd/MM", { locale: ptBR })}`
+      : "Hoje";
+
+  const src = resolveSource(displayData?.source);
   const isAuto = src === "auto";
 
-  const stepsEmpty = !isAuto && (todayData?.steps === 0 || !todayData?.steps);
-  const calEmpty = !isAuto && (todayData?.active_calories === 0 || !todayData?.active_calories);
-  const sleepVal = todayData?.sleep_minutes ?? 0;
+  const stepsEmpty = !isAuto && (displayData?.steps === 0 || !displayData?.steps);
+  const calEmpty = !isAuto && (displayData?.active_calories === 0 || !displayData?.active_calories);
+  const sleepVal = displayData?.sleep_minutes ?? 0;
   const sleepSrc = sleepVal > 0 ? src : "indisponivel";
 
   return (
     <div className="space-y-6">
       {/* Cards do dia */}
       <div>
-        <h3 className="text-sm font-medium text-muted-foreground mb-3">Hoje</h3>
-        {todayData ? (
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">{displayLabel}</h3>
+        {displayData ? (
           <div className="grid grid-cols-2 gap-3">
             <MetricCard
               icon={Footprints}

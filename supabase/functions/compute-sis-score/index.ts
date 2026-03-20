@@ -180,8 +180,9 @@ function computeAlerts(recoveryScore: number | null, mechanicalScore: number | n
   if (recentSleep.length >= 3 && recentSleep.every((l: any) => (l.sleep_hours || 0) < 6)) {
     alerts.push({ type: "sleep_deficit", priority: "alta", message: "Déficit de sono por 3 dias (<6h)", action: "Sono é o maior fator de recuperação. Priorize." });
   }
-  const recentStress = dayLogs.filter((l: any) => l.date >= d3ago && l.stress_level);
-  if (recentStress.length >= 3 && recentStress.every((l: any) => (l.stress_level || 0) >= 4)) {
+  const recentStress = dayLogs.filter((l: any) => l.date >= d3ago && l.stress_level != null);
+  // stress_level is 0-100; threshold at 70 (equivalent to old 4 on 1-5 scale)
+  if (recentStress.length >= 3 && recentStress.every((l: any) => (l.stress_level || 0) >= 70)) {
     alerts.push({ type: "stress_high", priority: "media", message: "Estresse elevado por 3 dias consecutivos", action: "Considere práticas de gestão de estresse" });
   }
   return alerts;
