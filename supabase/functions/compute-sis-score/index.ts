@@ -267,22 +267,30 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authErr } = await createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!).auth.getUser(token);
-    if (authErr || !user) return createErrorResponse(req, "Não autorizado", 401);
-
     const body = await req.json().catch(() => ({}));
     const { target_date, backfill, target_user_id } = body;
 
-    let userId = user.id;
-    if (target_user_id && target_user_id !== user.id) {
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      if (!roleData) return createErrorResponse(req, "Não autorizado - admin required", 403);
+    let userId: string;
+
+    // Allow service role key to call directly with target_user_id
+    if (token === serviceKey && target_user_id) {
       userId = target_user_id;
+    } else {
+      const { data: { user }, error: authErr } = await createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!).auth.getUser(token);
+      if (authErr || !user) return createErrorResponse(req, "Não autorizado", 401);
+
+      userId = user.id;
+      if (target_user_id && target_user_id !== user.id) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+        if (!roleData) return createErrorResponse(req, "Não autorizado - admin required", 403);
+        userId = target_user_id;
+      }
+    }
     }
 
     if (backfill) {
