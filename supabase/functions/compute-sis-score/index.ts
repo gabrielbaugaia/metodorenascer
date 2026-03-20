@@ -52,7 +52,9 @@ function computeRecovery(dayLogs: any[], healthDaily: any[], today: string) {
 
   const sleepH = todayDayLog?.sleep_hours || 0;
   const sleepComp = clamp((sleepH / 8) * 100, 0, 100);
-  const stressLvl = todayDayLog?.stress_level || 3;
+  // stress_level is saved as 0-100 by the UI slider; normalize to 1-5 for the formula
+  const stressRaw = todayDayLog?.stress_level ?? 50;
+  const stressLvl = 1 + (stressRaw / 100) * 4; // 0→1, 50→3, 100→5
   const stressComp = (1 - (stressLvl - 1) / 4) * 100;
   const energyLvl = todayDayLog?.energy_focus || 3;
   const fatigueComp = map15(energyLvl);
