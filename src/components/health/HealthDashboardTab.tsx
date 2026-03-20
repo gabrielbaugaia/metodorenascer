@@ -84,25 +84,40 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
     );
   }
 
-  const src = resolveSource(todayData?.source);
+  // Fallback: if today has no meaningful data, use most recent day that does
+  const hasMeaningfulData = (d: HealthDaily | null) =>
+    d && ((d.steps ?? 0) > 0 || (d.active_calories ?? 0) > 0 || (d.sleep_minutes ?? 0) > 0 || d.resting_hr || d.hrv_ms);
+
+  const displayData = hasMeaningfulData(todayData)
+    ? todayData
+    : dailyData.find((d) => hasMeaningfulData(d)) ?? todayData;
+
+  const isToday = displayData === todayData || displayData?.date === todayData?.date;
+  const displayLabel = isToday
+    ? "Hoje"
+    : displayData
+      ? `Último registro: ${format(new Date(displayData.date + "T12:00:00"), "dd/MM", { locale: ptBR })}`
+      : "Hoje";
+
+  const src = resolveSource(displayData?.source);
   const isAuto = src === "auto";
 
-  const stepsEmpty = !isAuto && (todayData?.steps === 0 || !todayData?.steps);
-  const calEmpty = !isAuto && (todayData?.active_calories === 0 || !todayData?.active_calories);
-  const sleepVal = todayData?.sleep_minutes ?? 0;
+  const stepsEmpty = !isAuto && (displayData?.steps === 0 || !displayData?.steps);
+  const calEmpty = !isAuto && (displayData?.active_calories === 0 || !displayData?.active_calories);
+  const sleepVal = displayData?.sleep_minutes ?? 0;
   const sleepSrc = sleepVal > 0 ? src : "indisponivel";
 
   return (
     <div className="space-y-6">
       {/* Cards do dia */}
       <div>
-        <h3 className="text-sm font-medium text-muted-foreground mb-3">Hoje</h3>
-        {todayData ? (
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">{displayLabel}</h3>
+        {displayData ? (
           <div className="grid grid-cols-2 gap-3">
             <MetricCard
               icon={Footprints}
               label="Passos"
-              value={todayData.steps.toLocaleString("pt-BR")}
+              value={displayData.steps.toLocaleString("pt-BR")}
               color="bg-blue-500/10 text-blue-500"
               emptyValue={stepsEmpty}
               source={stepsEmpty ? "indisponivel" : src}
@@ -111,7 +126,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
             <MetricCard
               icon={Flame}
               label="Calorias Ativas"
-              value={todayData.active_calories}
+              value={displayData.active_calories}
               unit="kcal"
               color="bg-orange-500/10 text-orange-500"
               emptyValue={calEmpty}
@@ -126,17 +141,17 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
               emptyValue={sleepVal === 0}
               source={sleepSrc}
             />
-            {todayData.resting_hr && (
-              <MetricCard icon={HeartPulse} label="FC Repouso" value={todayData.resting_hr} unit="bpm" color="bg-red-500/10 text-red-500" source={src} />
+            {displayData.resting_hr && (
+              <MetricCard icon={HeartPulse} label="FC Repouso" value={displayData.resting_hr} unit="bpm" color="bg-red-500/10 text-red-500" source={src} />
             )}
-            {todayData.hrv_ms && (
-              <MetricCard icon={Activity} label="HRV" value={Number(todayData.hrv_ms).toFixed(0)} unit="ms" color="bg-green-500/10 text-green-500" source={src} />
+            {displayData.hrv_ms && (
+              <MetricCard icon={Activity} label="HRV" value={Number(displayData.hrv_ms).toFixed(0)} unit="ms" color="bg-green-500/10 text-green-500" source={src} />
             )}
-            {(todayData as any).exercise_minutes != null && (todayData as any).exercise_minutes > 0 && (
-              <MetricCard icon={Timer} label="Exercício" value={(todayData as any).exercise_minutes} unit="min" color="bg-emerald-500/10 text-emerald-500" source={src} />
+            {(displayData as any).exercise_minutes != null && (displayData as any).exercise_minutes > 0 && (
+              <MetricCard icon={Timer} label="Exercício" value={(displayData as any).exercise_minutes} unit="min" color="bg-emerald-500/10 text-emerald-500" source={src} />
             )}
-            {(todayData as any).distance_km != null && (todayData as any).distance_km > 0 && (
-              <MetricCard icon={Route} label="Distância" value={Number((todayData as any).distance_km).toFixed(1)} unit="km" color="bg-cyan-500/10 text-cyan-500" source={src} />
+            {(displayData as any).distance_km != null && (displayData as any).distance_km > 0 && (
+              <MetricCard icon={Route} label="Distância" value={Number((displayData as any).distance_km).toFixed(1)} unit="km" color="bg-cyan-500/10 text-cyan-500" source={src} />
             )}
           </div>
         ) : (

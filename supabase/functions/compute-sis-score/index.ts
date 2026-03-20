@@ -52,7 +52,9 @@ function computeRecovery(dayLogs: any[], healthDaily: any[], today: string) {
 
   const sleepH = todayDayLog?.sleep_hours || 0;
   const sleepComp = clamp((sleepH / 8) * 100, 0, 100);
-  const stressLvl = todayDayLog?.stress_level || 3;
+  // stress_level is saved as 0-100 by the UI slider; normalize to 1-5 for the formula
+  const stressRaw = todayDayLog?.stress_level ?? 50;
+  const stressLvl = 1 + (stressRaw / 100) * 4; // 0→1, 50→3, 100→5
   const stressComp = (1 - (stressLvl - 1) / 4) * 100;
   const energyLvl = todayDayLog?.energy_focus || 3;
   const fatigueComp = map15(energyLvl);
@@ -178,8 +180,9 @@ function computeAlerts(recoveryScore: number | null, mechanicalScore: number | n
   if (recentSleep.length >= 3 && recentSleep.every((l: any) => (l.sleep_hours || 0) < 6)) {
     alerts.push({ type: "sleep_deficit", priority: "alta", message: "Déficit de sono por 3 dias (<6h)", action: "Sono é o maior fator de recuperação. Priorize." });
   }
-  const recentStress = dayLogs.filter((l: any) => l.date >= d3ago && l.stress_level);
-  if (recentStress.length >= 3 && recentStress.every((l: any) => (l.stress_level || 0) >= 4)) {
+  const recentStress = dayLogs.filter((l: any) => l.date >= d3ago && l.stress_level != null);
+  // stress_level is 0-100; threshold at 70 (equivalent to old 4 on 1-5 scale)
+  if (recentStress.length >= 3 && recentStress.every((l: any) => (l.stress_level || 0) >= 70)) {
     alerts.push({ type: "stress_high", priority: "media", message: "Estresse elevado por 3 dias consecutivos", action: "Considere práticas de gestão de estresse" });
   }
   return alerts;
@@ -264,22 +267,29 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authErr } = await createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!).auth.getUser(token);
-    if (authErr || !user) return createErrorResponse(req, "Não autorizado", 401);
-
     const body = await req.json().catch(() => ({}));
     const { target_date, backfill, target_user_id } = body;
 
-    let userId = user.id;
-    if (target_user_id && target_user_id !== user.id) {
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      if (!roleData) return createErrorResponse(req, "Não autorizado - admin required", 403);
+    let userId: string;
+
+    // Allow service role key to call directly with target_user_id
+    if (token === serviceKey && target_user_id) {
       userId = target_user_id;
+    } else {
+      const { data: { user }, error: authErr } = await createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!).auth.getUser(token);
+      if (authErr || !user) return createErrorResponse(req, "Não autorizado", 401);
+
+      userId = user.id;
+      if (target_user_id && target_user_id !== user.id) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+        if (!roleData) return createErrorResponse(req, "Não autorizado - admin required", 403);
+        userId = target_user_id;
+      }
     }
 
     if (backfill) {
