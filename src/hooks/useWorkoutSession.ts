@@ -382,8 +382,8 @@ export function useWorkoutSession(exercises: Exercise[]) {
   );
 
   const canLogSet = useCallback(() => {
-    return !restTimer.active;
-  }, [restTimer.active]);
+    return true; // Allow logging even during rest — timer is non-blocking
+  }, []);
 
   const getCompletedSets = useCallback(
     (exerciseName: string) => {

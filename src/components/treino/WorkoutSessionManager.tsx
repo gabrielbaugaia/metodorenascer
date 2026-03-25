@@ -166,8 +166,8 @@ export function WorkoutSessionManager({
 
   return (
     <div className="space-y-4">
-      {/* Rest countdown overlay — only when modal is NOT open */}
-      {session.restTimer.active && !modalOpen && (
+      {/* Rest countdown banner — non-blocking, always visible */}
+      {session.restTimer.active && (
         <RestCountdown
           remainingSeconds={session.restTimer.remainingSeconds}
           totalSeconds={
@@ -179,7 +179,7 @@ export function WorkoutSessionManager({
           }
           exerciseName={session.restTimer.exerciseName}
         />
-      )}
+      )
 
       {/* Header with timer */}
       <div className="flex items-center justify-between sticky top-0 z-40 bg-background/95 backdrop-blur-sm py-2 -mx-1 px-1">
