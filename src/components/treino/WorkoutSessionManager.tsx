@@ -166,8 +166,8 @@ export function WorkoutSessionManager({
 
   return (
     <div className="space-y-4">
-      {/* Rest countdown overlay — only when modal is NOT open */}
-      {session.restTimer.active && !modalOpen && (
+      {/* Rest countdown banner — non-blocking, always visible */}
+      {session.restTimer.active && (
         <RestCountdown
           remainingSeconds={session.restTimer.remainingSeconds}
           totalSeconds={

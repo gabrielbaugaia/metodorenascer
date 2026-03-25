@@ -748,6 +748,39 @@ export type Database = {
           },
         ]
       }
+      ecg_records: {
+        Row: {
+          classification: string | null
+          created_at: string | null
+          file_url: string
+          heart_rate_bpm: number | null
+          id: string
+          notes: string | null
+          recorded_at: string
+          user_id: string
+        }
+        Insert: {
+          classification?: string | null
+          created_at?: string | null
+          file_url: string
+          heart_rate_bpm?: number | null
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          user_id: string
+        }
+        Update: {
+          classification?: string | null
+          created_at?: string | null
+          file_url?: string
+          heart_rate_bpm?: number | null
+          id?: string
+          notes?: string | null
+          recorded_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       engagement_summary: {
         Row: {
           id: string
@@ -1125,6 +1158,7 @@ export type Database = {
       health_daily: {
         Row: {
           active_calories: number | null
+          avg_hr_bpm: number | null
           created_at: string | null
           date: string
           distance_km: number | null
@@ -1141,6 +1175,7 @@ export type Database = {
         }
         Insert: {
           active_calories?: number | null
+          avg_hr_bpm?: number | null
           created_at?: string | null
           date: string
           distance_km?: number | null
@@ -1157,6 +1192,7 @@ export type Database = {
         }
         Update: {
           active_calories?: number | null
+          avg_hr_bpm?: number | null
           created_at?: string | null
           date?: string
           distance_km?: number | null

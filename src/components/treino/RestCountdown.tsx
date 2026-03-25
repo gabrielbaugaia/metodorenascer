@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 interface RestCountdownProps {
   remainingSeconds: number;
@@ -23,11 +24,7 @@ export function RestCountdown({
 }: RestCountdownProps) {
   const progress = totalSeconds > 0 ? 1 - remainingSeconds / totalSeconds : 0;
   const isInline = variant === "inline";
-  const radius = isInline ? 38 : 58;
-  const viewBox = isInline ? "0 0 88 88" : "0 0 128 128";
-  const center = isInline ? 44 : 64;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference * (1 - progress);
+  const isUrgent = remainingSeconds <= 10 && remainingSeconds > 0;
 
   const minutes = Math.floor(remainingSeconds / 60);
   const seconds = remainingSeconds % 60;
@@ -39,36 +36,25 @@ export function RestCountdown({
   const motivational =
     MOTIVATIONAL[Math.floor(remainingSeconds / 5) % MOTIVATIONAL.length];
 
+  // Vibrate at 10s mark
+  useEffect(() => {
+    if (remainingSeconds === 10 && navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 100]);
+    }
+  }, [remainingSeconds]);
+
   if (isInline) {
+    const inlineR = 38;
+    const inlineCirc = 2 * Math.PI * inlineR;
     return (
       <div className="flex flex-col items-center gap-3 py-4 animate-fade-in">
         <div className="relative w-24 h-24">
-          <svg className="w-full h-full -rotate-90" viewBox={viewBox}>
-            <circle
-              cx={center}
-              cy={center}
-              r={radius}
-              fill="none"
-              stroke="hsl(var(--muted))"
-              strokeWidth="5"
-            />
-            <circle
-              cx={center}
-              cy={center}
-              r={radius}
-              fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
-              className="transition-[stroke-dashoffset] duration-300"
-            />
+          <svg className="w-full h-full -rotate-90" viewBox="0 0 88 88">
+            <circle cx={44} cy={44} r={inlineR} fill="none" stroke="hsl(var(--muted))" strokeWidth="5" />
+            <circle cx={44} cy={44} r={inlineR} fill="none" stroke="hsl(var(--primary))" strokeWidth="5" strokeLinecap="round" strokeDasharray={inlineCirc} strokeDashoffset={inlineCirc * (1 - progress)} className="transition-[stroke-dashoffset] duration-300" />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-foreground tabular-nums">
-              {timeDisplay}
-            </span>
+            <span className="text-2xl font-bold text-foreground tabular-nums">{timeDisplay}</span>
           </div>
         </div>
         <p className="text-xs text-muted-foreground italic text-center">{motivational}</p>
@@ -76,47 +62,40 @@ export function RestCountdown({
     );
   }
 
+  // Banner mode — compact fixed top bar, non-blocking
+  const bannerR = 18;
+  const bannerCirc = 2 * Math.PI * bannerR;
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center gap-6 animate-fade-in">
-      {/* Circular progress */}
-      <div className="relative w-40 h-40">
-        <svg className="w-full h-full -rotate-90" viewBox={viewBox}>
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke="hsl(var(--muted))"
-            strokeWidth="6"
-          />
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke="hsl(var(--primary))"
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-            className="transition-[stroke-dashoffset] duration-300"
-          />
+    <div
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 px-4 py-2 flex items-center gap-3 animate-fade-in transition-colors duration-300",
+        isUrgent
+          ? "bg-destructive/95 backdrop-blur-sm"
+          : "bg-primary/95 backdrop-blur-sm"
+      )}
+    >
+      {/* Mini circular progress */}
+      <div className="relative w-9 h-9 shrink-0">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 44 44">
+          <circle cx={22} cy={22} r={bannerR} fill="none" stroke="hsl(0 0% 100% / 0.25)" strokeWidth="3" />
+          <circle cx={22} cy={22} r={bannerR} fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeDasharray={bannerCirc} strokeDashoffset={bannerCirc * (1 - progress)} className="transition-[stroke-dashoffset] duration-300" />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-4xl font-bold text-foreground tabular-nums">
-            {timeDisplay}
-          </span>
-          <span className="text-xs text-muted-foreground mt-1">segundos</span>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-[11px] font-bold text-white tabular-nums">{timeDisplay}</span>
         </div>
       </div>
 
       {/* Info */}
-      <div className="text-center space-y-2 max-w-xs px-4">
-        <p className="text-sm font-semibold text-primary uppercase tracking-wider">
-          Intervalo de Descanso
-        </p>
-        <p className="text-xs text-muted-foreground">{exerciseName}</p>
-        <p className="text-sm text-muted-foreground italic">{motivational}</p>
+      <div className="flex-1 min-w-0">
+        {isUrgent ? (
+          <p className="text-xs font-bold text-white animate-pulse">
+            ⚡ Volte para o foco agora!
+          </p>
+        ) : (
+          <p className="text-xs font-medium text-white/90 truncate">
+            Descanso — {exerciseName}
+          </p>
+        )}
       </div>
     </div>
   );

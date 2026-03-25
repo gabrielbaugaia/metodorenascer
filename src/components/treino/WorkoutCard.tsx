@@ -7,11 +7,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, Clock, CheckCircle, Flame, Dumbbell, Play } from "lucide-react";
+import { ChevronDown, Clock, CheckCircle, Flame, Dumbbell, Play, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExerciseTable } from "./ExerciseTable";
 import { ExerciseVideoModal } from "./ExerciseVideoModal";
 import { WorkoutSessionManager } from "./WorkoutSessionManager";
+import { ManualSetLogger } from "./ManualSetLogger";
 import { WorkoutNotes } from "./WorkoutNotes";
 
 interface Exercise {
@@ -55,6 +56,7 @@ export function WorkoutCard({
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [sessionMode, setSessionMode] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
 
   // Auto-resume active session when returning from background
   useEffect(() => {
@@ -81,6 +83,13 @@ export function WorkoutCard({
     }
   };
 
+  const handleManualComplete = (durationSeconds?: number, sessionId?: string) => {
+    setManualMode(false);
+    if (onComplete) {
+      onComplete(durationSeconds, sessionId);
+    }
+  };
+
   // Session mode - full screen workout tracker
   if (sessionMode) {
     return (
@@ -89,6 +98,18 @@ export function WorkoutCard({
         exercises={safeExercises}
         onComplete={handleSessionComplete}
         onCancel={() => setSessionMode(false)}
+      />
+    );
+  }
+
+  // Manual mode - post-workout logger
+  if (manualMode) {
+    return (
+      <ManualSetLogger
+        workoutName={`${day} — ${focus}`}
+        exercises={safeExercises}
+        onComplete={handleManualComplete}
+        onCancel={() => setManualMode(false)}
       />
     );
   }
@@ -195,18 +216,32 @@ export function WorkoutCard({
               />
 
               {!completed && !todayCompleted && onComplete && (
-                <Button 
-                  variant="fire" 
-                  className="mt-4 w-full" 
-                  size="lg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSessionMode(true);
-                  }}
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Iniciar Treino
-                </Button>
+                <div className="mt-4 flex gap-2">
+                  <Button 
+                    variant="fire" 
+                    className="flex-1" 
+                    size="lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSessionMode(true);
+                    }}
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Iniciar Treino
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setManualMode(true);
+                    }}
+                    className="shrink-0"
+                  >
+                    <ClipboardList className="w-4 h-4 mr-1.5" />
+                    Cargas
+                  </Button>
+                </div>
               )}
               {todayCompleted && !completed && (
                 <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-center">

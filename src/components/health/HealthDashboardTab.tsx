@@ -1,10 +1,11 @@
-import { Footprints, Flame, Moon, HeartPulse, Activity, Watch, Timer, Route } from "lucide-react";
+import { Footprints, Flame, Moon, HeartPulse, Activity, Watch, Timer, Route, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { HealthDaily } from "@/hooks/useHealthData";
+import { EcgUploadCard } from "./EcgUploadCard";
 
 interface HealthDashboardTabProps {
   todayData: HealthDaily | null;
@@ -70,6 +71,27 @@ function MetricCard({ icon: Icon, label, value, unit, color, source, subtitle, e
   );
 }
 
+// Simple sparkline for cardiovascular trends
+function MiniSparkline({ data, color }: { data: number[]; color: string }) {
+  if (data.length < 2) return null;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const w = 120;
+  const h = 32;
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return (
+    <svg width={w} height={h} className="mt-1">
+      <polyline fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={points} />
+    </svg>
+  );
+}
+
 export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnectClick }: HealthDashboardTabProps) {
   if (dailyData.length === 0) {
     return (
@@ -84,7 +106,6 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
     );
   }
 
-  // Fallback: if today has no meaningful data, use most recent day that does
   const hasMeaningfulData = (d: HealthDaily | null) =>
     d && ((d.steps ?? 0) > 0 || (d.active_calories ?? 0) > 0 || (d.sleep_minutes ?? 0) > 0 || d.resting_hr || d.hrv_ms);
 
@@ -106,6 +127,12 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
   const calEmpty = !isAuto && (displayData?.active_calories === 0 || !displayData?.active_calories);
   const sleepVal = displayData?.sleep_minutes ?? 0;
   const sleepSrc = sleepVal > 0 ? src : "indisponivel";
+
+  // Cardiovascular data from last 7 days
+  const restingHrValues = dailyData.map(d => d.resting_hr).filter((v): v is number => v !== null && v > 0);
+  const hrvValues = dailyData.map(d => d.hrv_ms).filter((v): v is number => v !== null && v > 0);
+  const avgHrValues = dailyData.map(d => d.avg_hr_bpm).filter((v): v is number => v !== null && v > 0);
+  const hasCardioData = restingHrValues.length > 0 || hrvValues.length > 0 || avgHrValues.length > 0;
 
   return (
     <div className="space-y-6">
@@ -141,11 +168,26 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
               emptyValue={sleepVal === 0}
               source={sleepSrc}
             />
-            {displayData.resting_hr && (
-              <MetricCard icon={HeartPulse} label="FC Repouso" value={displayData.resting_hr} unit="bpm" color="bg-red-500/10 text-red-500" source={src} />
-            )}
-            {displayData.hrv_ms && (
-              <MetricCard icon={Activity} label="HRV" value={Number(displayData.hrv_ms).toFixed(0)} unit="ms" color="bg-green-500/10 text-green-500" source={src} />
+            <MetricCard
+              icon={HeartPulse}
+              label="FC Repouso"
+              value={displayData.resting_hr ?? "—"}
+              unit="bpm"
+              color="bg-red-500/10 text-red-500"
+              emptyValue={!displayData.resting_hr}
+              source={displayData.resting_hr ? src : "indisponivel"}
+            />
+            <MetricCard
+              icon={Activity}
+              label="VFC (HRV)"
+              value={displayData.hrv_ms ? Number(displayData.hrv_ms).toFixed(0) : "—"}
+              unit="ms"
+              color="bg-green-500/10 text-green-500"
+              emptyValue={!displayData.hrv_ms}
+              source={displayData.hrv_ms ? src : "indisponivel"}
+            />
+            {displayData.avg_hr_bpm != null && displayData.avg_hr_bpm > 0 && (
+              <MetricCard icon={Heart} label="BPM Diário" value={displayData.avg_hr_bpm} unit="bpm" color="bg-pink-500/10 text-pink-500" source={src} />
             )}
             {(displayData as any).exercise_minutes != null && (displayData as any).exercise_minutes > 0 && (
               <MetricCard icon={Timer} label="Exercício" value={(displayData as any).exercise_minutes} unit="min" color="bg-emerald-500/10 text-emerald-500" source={src} />
@@ -158,6 +200,75 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
           <p className="text-sm text-muted-foreground">Sem dados para hoje ainda.</p>
         )}
       </div>
+
+      {/* Saúde Cardiovascular */}
+      {hasCardioData && (
+        <div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+            <HeartPulse className="h-4 w-4 text-red-500" />
+            Saúde Cardiovascular — 7 dias
+          </h3>
+          <div className="grid grid-cols-1 gap-3">
+            {restingHrValues.length > 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">FC Repouso</p>
+                      <p className="text-lg font-bold">
+                        {restingHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Média: {Math.round(restingHrValues.reduce((a, b) => a + b, 0) / restingHrValues.length)} bpm
+                      </p>
+                    </div>
+                    <MiniSparkline data={[...restingHrValues].reverse()} color="hsl(0, 72%, 51%)" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {hrvValues.length > 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">VFC (HRV)</p>
+                      <p className="text-lg font-bold">
+                        {hrvValues[0].toFixed(0)} <span className="text-xs font-normal text-muted-foreground">ms</span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Média: {Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)} ms
+                      </p>
+                    </div>
+                    <MiniSparkline data={[...hrvValues].reverse()} color="hsl(142, 71%, 45%)" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {avgHrValues.length > 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">BPM Diário</p>
+                      <p className="text-lg font-bold">
+                        {avgHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Média: {Math.round(avgHrValues.reduce((a, b) => a + b, 0) / avgHrValues.length)} bpm
+                      </p>
+                    </div>
+                    <MiniSparkline data={[...avgHrValues].reverse()} color="hsl(330, 81%, 60%)" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ECG */}
+      <EcgUploadCard />
 
       {/* Últimos 7 dias */}
       <div>

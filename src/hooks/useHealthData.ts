@@ -14,6 +14,7 @@ export interface HealthDaily {
   exercise_minutes: number | null;
   standing_hours: number | null;
   distance_km: number | null;
+  avg_hr_bpm: number | null;
   source: string;
   updated_at: string;
 }
