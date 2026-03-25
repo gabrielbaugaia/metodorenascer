@@ -105,12 +105,14 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a fitness data extraction assistant. You analyze screenshots from fitness apps (Apple Fitness, Google Fit, Samsung Health, Garmin, etc.) and extract numeric health metrics visible on screen. Always use the extract_fitness_data tool to return structured data. If a value is not visible in the image, set it to null. For distance, always convert to kilometers.
+            content: `You are a fitness data extraction assistant. You analyze screenshots from fitness apps (Apple Fitness, Google Fit, Samsung Health, Garmin, Athlytic, AutoSleep, Heart Analyzer, Whoop, Oura, etc.) and extract numeric health metrics visible on screen. Always use the extract_fitness_data tool to return structured data. If a value is not visible in the image, set it to null. For distance, always convert to kilometers.
 
-Also look for cardiovascular metrics:
-- Resting heart rate (FC de repouso / Resting HR) in BPM
-- Heart rate variability (VFC / HRV) in milliseconds
-- Average daily heart rate (BPM médio / Avg HR) in BPM
+CARDIOVASCULAR METRICS — Map these labels to the correct fields:
+- resting_hr: "FC de repouso", "Resting HR", "BPM ao despertar", "BPM ao acordar", "Waking HR", "Waking BPM", "FC ao acordar", "Resting Heart Rate"
+- hrv_ms: "VFC", "HRV", "VFC ao despertar", "VFC ao acordar", "Waking HRV", "Heart Rate Variability", "Variabilidade"
+- avg_hr_bpm: "BPM diário", "BPM médio", "Avg HR", "Daily HR", "Average Heart Rate", "FC média", "Média BPM"
+
+IMPORTANT: Many wellness apps (Athlytic, AutoSleep, Heart Analyzer) show "BPM ao despertar" which is the waking/resting heart rate → map to resting_hr. "VFC ao despertar" is waking HRV → map to hrv_ms. "BPM diário" is the daily average → map to avg_hr_bpm. Do NOT leave these null if they are visible in the image.
 
 CRITICAL DATE RULES:
 - Today's date is ${todayStr}. The current year is ${currentYear}.
@@ -126,7 +128,7 @@ CRITICAL DATE RULES:
             content: [
               {
                 type: "text",
-                text: `Analyze this fitness app screenshot. Extract all visible health metrics (steps, active calories, exercise minutes, standing hours, distance in km, resting heart rate, HRV, average heart rate) AND the date shown on screen. Remember: today is ${todayStr}, use year ${currentYear} for any detected dates.`,
+                text: `Analyze this fitness app screenshot. Extract ALL visible health metrics including: steps, active calories, exercise minutes, standing hours, distance in km, resting heart rate (also called "BPM ao despertar" or "Waking HR"), HRV (also called "VFC ao despertar"), and average daily heart rate (also called "BPM diário"). Also extract the date shown on screen. Remember: today is ${todayStr}, use year ${currentYear} for any detected dates. Pay special attention to cardiovascular data from wellness apps.`,
               },
               {
                 type: "image_url",
