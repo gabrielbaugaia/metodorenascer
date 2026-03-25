@@ -104,6 +104,9 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
     exercise_minutes: log.exercise_minutes,
     standing_hours: log.standing_hours,
     distance_km: log.distance_km,
+    resting_hr: (log as any).resting_hr ?? null,
+    hrv_ms: (log as any).hrv_ms ?? null,
+    avg_hr_bpm: (log as any).avg_hr_bpm ?? null,
   });
   const [dirty, setDirty] = useState(false);
 
@@ -143,6 +146,9 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
               exercise_minutes: data.exercise_minutes != null ? data.exercise_minutes : prev.exercise_minutes,
               standing_hours: data.standing_hours != null ? data.standing_hours : prev.standing_hours,
               distance_km: data.distance_km != null ? data.distance_km : prev.distance_km,
+              resting_hr: data.resting_hr != null ? data.resting_hr : prev.resting_hr,
+              hrv_ms: data.hrv_ms != null ? data.hrv_ms : prev.hrv_ms,
+              avg_hr_bpm: data.avg_hr_bpm != null ? data.avg_hr_bpm : prev.avg_hr_bpm,
             }));
             setDirty(true);
             toast.success("Dados lidos da imagem!");
@@ -213,6 +219,9 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
       if (fitnessData.exercise_minutes != null) healthData.exercise_minutes = fitnessData.exercise_minutes;
       if (fitnessData.standing_hours != null) healthData.standing_hours = fitnessData.standing_hours;
       if (fitnessData.distance_km != null) healthData.distance_km = fitnessData.distance_km;
+      if (fitnessData.resting_hr != null) healthData.resting_hr = fitnessData.resting_hr;
+      if (fitnessData.hrv_ms != null) healthData.hrv_ms = fitnessData.hrv_ms;
+      if (fitnessData.avg_hr_bpm != null) healthData.avg_hr_bpm = fitnessData.avg_hr_bpm;
 
       await supabase
         .from("health_daily")
