@@ -179,7 +179,7 @@ export function WorkoutSessionManager({
           }
           exerciseName={session.restTimer.exerciseName}
         />
-      )
+      )}
 
       {/* Header with timer */}
       <div className="flex items-center justify-between sticky top-0 z-40 bg-background/95 backdrop-blur-sm py-2 -mx-1 px-1">
