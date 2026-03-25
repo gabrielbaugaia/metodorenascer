@@ -19,6 +19,9 @@ interface ExtractedDay {
   exercise_minutes: number | null;
   standing_hours: number | null;
   distance_km: number | null;
+  resting_hr: number | null;
+  hrv_ms: number | null;
+  avg_hr_bpm: number | null;
   file: File;
   base64: string;
   dateAmbiguous: boolean;
@@ -102,6 +105,9 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
           if (data?.exercise_minutes != null) existing.exercise_minutes = data.exercise_minutes;
           if (data?.standing_hours != null) existing.standing_hours = data.standing_hours;
           if (data?.distance_km != null) existing.distance_km = data.distance_km;
+          if (data?.resting_hr != null) existing.resting_hr = data.resting_hr;
+          if (data?.hrv_ms != null) existing.hrv_ms = data.hrv_ms;
+          if (data?.avg_hr_bpm != null) existing.avg_hr_bpm = data.avg_hr_bpm;
           if (dateAmbiguous) existing.dateAmbiguous = true;
         } else {
           results.push({
@@ -111,6 +117,9 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
             exercise_minutes: data?.exercise_minutes ?? null,
             standing_hours: data?.standing_hours ?? null,
             distance_km: data?.distance_km ?? null,
+            resting_hr: data?.resting_hr ?? null,
+            hrv_ms: data?.hrv_ms ?? null,
+            avg_hr_bpm: data?.avg_hr_bpm ?? null,
             file: files[i].file,
             base64: files[i].preview,
             dateAmbiguous,
@@ -189,6 +198,9 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
         if (day.exercise_minutes != null) healthData.exercise_minutes = day.exercise_minutes;
         if (day.standing_hours != null) healthData.standing_hours = day.standing_hours;
         if (day.distance_km != null) healthData.distance_km = day.distance_km;
+        if (day.resting_hr != null) healthData.resting_hr = day.resting_hr;
+        if (day.hrv_ms != null) healthData.hrv_ms = day.hrv_ms;
+        if (day.avg_hr_bpm != null) healthData.avg_hr_bpm = day.avg_hr_bpm;
 
         await supabase
           .from("health_daily")
@@ -396,6 +408,15 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
                       )}
                       {day.distance_km != null && (
                         <span>Distância: <span className="text-foreground font-medium">{day.distance_km} km</span></span>
+                      )}
+                      {day.resting_hr != null && (
+                        <span>FC Rep: <span className="text-foreground font-medium">{day.resting_hr} bpm</span></span>
+                      )}
+                      {day.hrv_ms != null && (
+                        <span>VFC: <span className="text-foreground font-medium">{day.hrv_ms} ms</span></span>
+                      )}
+                      {day.avg_hr_bpm != null && (
+                        <span>BPM médio: <span className="text-foreground font-medium">{day.avg_hr_bpm}</span></span>
                       )}
                       {!day.steps && !day.active_calories && !day.exercise_minutes && (
                         <span className="col-span-2 text-yellow-500">Nenhum dado detectado</span>
