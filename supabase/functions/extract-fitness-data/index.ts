@@ -107,6 +107,11 @@ serve(async (req) => {
             role: "system",
             content: `You are a fitness data extraction assistant. You analyze screenshots from fitness apps (Apple Fitness, Google Fit, Samsung Health, Garmin, etc.) and extract numeric health metrics visible on screen. Always use the extract_fitness_data tool to return structured data. If a value is not visible in the image, set it to null. For distance, always convert to kilometers.
 
+Also look for cardiovascular metrics:
+- Resting heart rate (FC de repouso / Resting HR) in BPM
+- Heart rate variability (VFC / HRV) in milliseconds
+- Average daily heart rate (BPM médio / Avg HR) in BPM
+
 CRITICAL DATE RULES:
 - Today's date is ${todayStr}. The current year is ${currentYear}.
 - The user is uploading screenshots from THE LAST 7 DAYS. All dates MUST be within the last 10 days.
@@ -121,7 +126,7 @@ CRITICAL DATE RULES:
             content: [
               {
                 type: "text",
-                text: `Analyze this fitness app screenshot. Extract all visible health metrics (steps, active calories, exercise minutes, standing hours, distance in km) AND the date shown on screen. Remember: today is ${todayStr}, use year ${currentYear} for any detected dates.`,
+                text: `Analyze this fitness app screenshot. Extract all visible health metrics (steps, active calories, exercise minutes, standing hours, distance in km, resting heart rate, HRV, average heart rate) AND the date shown on screen. Remember: today is ${todayStr}, use year ${currentYear} for any detected dates.`,
               },
               {
                 type: "image_url",
@@ -161,12 +166,24 @@ CRITICAL DATE RULES:
                     type: ["number", "null"],
                     description: "Distance in kilometers",
                   },
+                  resting_hr: {
+                    type: ["number", "null"],
+                    description: "Resting heart rate in BPM",
+                  },
+                  hrv_ms: {
+                    type: ["number", "null"],
+                    description: "Heart rate variability (HRV) in milliseconds",
+                  },
+                  avg_hr_bpm: {
+                    type: ["number", "null"],
+                    description: "Average daily heart rate in BPM",
+                  },
                   detected_date: {
                     type: ["string", "null"],
                     description: `Date shown in the screenshot in YYYY-MM-DD format. Use year ${currentYear}. null if not visible.`,
                   },
                 },
-                required: ["steps", "active_calories", "exercise_minutes", "standing_hours", "distance_km", "detected_date"],
+                required: ["steps", "active_calories", "exercise_minutes", "standing_hours", "distance_km", "resting_hr", "hrv_ms", "avg_hr_bpm", "detected_date"],
                 additionalProperties: false,
               },
             },
