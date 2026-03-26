@@ -111,6 +111,13 @@ RESPONDA EXATAMENTE NESTE FORMATO JSON:
     "sugestoes": ["sugestão específica 1", "sugestão específica 2"],
     "observacoes": "comentário geral sobre ajustes na dieta"
   },
+  "analise_fisiologica": {
+    "vfc_status": "adequada | baixa | muito_baixa",
+    "fc_repouso_status": "adequada | elevada | muito_elevada",
+    "recuperacao": "boa | moderada | insuficiente",
+    "sono_status": "adequado | insuficiente",
+    "observacoes": "Interpretação integrada dos dados fisiológicos com as mudanças visuais"
+  },
   "metasProximos30Dias": [
     "Meta específica 1",
     "Meta específica 2", 

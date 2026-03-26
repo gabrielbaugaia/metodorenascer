@@ -388,6 +388,68 @@ export default function Evolucao() {
           signOrFallback(uploadedPaths.costas ?? null),
         ]);
 
+        // Fetch health data for physiological context
+        let healthData = null;
+        try {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          
+          const { data: healthRows } = await supabase
+            .from("health_daily")
+            .select("hrv_ms, resting_hr, avg_hr_bpm, sleep_minutes, steps, active_calories, date")
+            .eq("user_id", user.id)
+            .gte("date", thirtyDaysAgo.toISOString().split("T")[0])
+            .order("date", { ascending: true });
+
+          if (healthRows && healthRows.length > 0) {
+            const avg = (arr: (number | null)[]) => {
+              const valid = arr.filter((v): v is number => v != null && v > 0);
+              return valid.length > 0 ? Math.round(valid.reduce((a, b) => a + b, 0) / valid.length) : null;
+            };
+
+            const hrvValues = healthRows.map(r => r.hrv_ms);
+            const validHrv = hrvValues.filter((v): v is number => v != null && v > 0);
+            let hrvTrend: string | null = null;
+            if (validHrv.length >= 4) {
+              const firstHalf = validHrv.slice(0, Math.floor(validHrv.length / 2));
+              const secondHalf = validHrv.slice(Math.floor(validHrv.length / 2));
+              const avgFirst = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+              const avgSecond = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+              const diff = ((avgSecond - avgFirst) / avgFirst) * 100;
+              hrvTrend = diff > 5 ? "subindo" : diff < -5 ? "caindo" : "estável";
+            }
+
+            const sleepMinutes = healthRows.map(r => r.sleep_minutes);
+            const avgSleepMin = avg(sleepMinutes);
+
+            // Fetch latest SIS score
+            let latestSisScore: number | null = null;
+            const { data: sisData } = await supabase
+              .from("sis_scores_daily" as any)
+              .select("composite_score")
+              .eq("user_id", user.id)
+              .order("date", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (sisData) {
+              latestSisScore = (sisData as any).composite_score;
+            }
+
+            healthData = {
+              avgHrv: avg(hrvValues),
+              hrvTrend,
+              avgRestingHr: avg(healthRows.map(r => r.resting_hr)),
+              avgDailyHr: avg(healthRows.map(r => r.avg_hr_bpm)),
+              avgSleepHours: avgSleepMin ? +(avgSleepMin / 60).toFixed(1) : null,
+              avgSteps: avg(healthRows.map(r => r.steps)),
+              avgActiveCalories: avg(healthRows.map(r => r.active_calories)),
+              latestSisScore,
+            };
+          }
+        } catch (healthErr) {
+          console.error("Error fetching health data for evolution:", healthErr);
+        }
+
         const response = await supabase.functions.invoke("analyze-evolution", {
           body: {
             anamnesePhotos: {
@@ -406,6 +468,7 @@ export default function Evolucao() {
               currentWeight: parseFloat(newWeight),
               notes: notes,
             },
+            healthData,
           },
         });
 
