@@ -14,7 +14,8 @@ serve(async (req) => {
     const { 
       anamnesePhotos, 
       evolutionPhotos, 
-      clientData 
+      clientData,
+      healthData 
     } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -39,6 +40,18 @@ DADOS DO CLIENTE:
 - Peso atual: ${clientData.currentWeight || "Não informado"} kg
 - Variação de peso: ${clientData.initialWeight && clientData.currentWeight ? `${(clientData.currentWeight - clientData.initialWeight).toFixed(1)} kg` : "Não calculável"}
 - Observações do cliente: ${clientData.notes || "Nenhuma"}
+
+${healthData ? `### DADOS FISIOLÓGICOS (últimos 30 dias) ###
+- VFC média (ms): ${healthData.avgHrv ?? "Não disponível"}
+- VFC tendência: ${healthData.hrvTrend ?? "Não disponível"} (subindo = boa adaptação, caindo = possível overtraining)
+- FC de repouso média (BPM): ${healthData.avgRestingHr ?? "Não disponível"}
+- BPM diário médio: ${healthData.avgDailyHr ?? "Não disponível"}
+- Sono médio (horas): ${healthData.avgSleepHours ?? "Não disponível"}
+- Passos diários médios: ${healthData.avgSteps ?? "Não disponível"}
+- Calorias ativas médias: ${healthData.avgActiveCalories ?? "Não disponível"}
+- Score SIS mais recente: ${healthData.latestSisScore ?? "Não disponível"}
+
+IMPORTANTE: Use estes dados fisiológicos para enriquecer sua análise. Se a VFC estiver baixa ou caindo, sugira reduzir volume. Se a FC de repouso estiver alta, priorize recuperação. Se o sono estiver baixo, ajuste recomendações.` : ""}
 
 INSTRUÇÕES DE ANÁLISE:
 1. Compare VISUALMENTE cada ângulo (frente, lado, costas) entre ANTES e DEPOIS
