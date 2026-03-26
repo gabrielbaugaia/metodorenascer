@@ -1,65 +1,58 @@
 
 
-# Plano: Área de Treino Aeróbico Separado
+# Plano: Pop-up de Campanha "Indique e Ganhe" + Gestão Admin de Banners
 
 ## O que será criado
 
-Uma seção dedicada para registrar treinos aeróbicos (cardio em jejum, corrida, bike, esteira, etc.) independente do protocolo de musculação. O cliente poderá:
-
-- Registrar tipo de aeróbico (bike, esteira, rua, elíptico, etc.)
-- Informar duração, distância e se foi em jejum
-- Anexar print do Apple Fitness/app de treino para extrair dados via OCR
-- Ver histórico dos treinos aeróbicos com métricas acumuladas
-
-Os dados serão computados no sistema (calorias, minutos de exercício) integrando com `health_daily` e alimentando o Score SIS e as prescrições.
-
----
+1. **Admin Dashboard**: Seção para criar/gerenciar campanhas de indicação com upload de banner (imagem), texto, e definição de benefícios/cashback por plano fechado
+2. **Pop-up no cliente**: Ao logar, o aluno vê um modal com o banner da campanha ativa, seu código de indicação, e botão para compartilhar. Aparece uma vez por sessão (controlado via localStorage)
+3. **Regras de cashback por plano**: O admin define qual plano gera cashback e quanto, vinculando ao sistema de referral já existente
 
 ## Estrutura técnica
 
-### 1. Tabela `cardio_sessions` (migration)
+### 1. Tabela `referral_campaigns` (migration)
+
 ```
-id, user_id, session_date, cardio_type (bike/esteira/rua/eliptico/natacao/outro),
-duration_minutes, distance_km, calories_burned, avg_hr_bpm, max_hr_bpm,
-fasting (boolean), notes, fitness_screenshot_url, created_at
+id, title, description, banner_image_url, 
+cashback_rules (jsonb - ex: [{ plan_type: "trimestral", cashback_amount: 1 }]),
+active (boolean), starts_at, ends_at, created_at, updated_at
 ```
-Com RLS para user ver/inserir/editar/deletar os próprios registros e admin ver todos.
 
-### 2. Nova página `src/pages/Cardio.tsx`
-- Formulário para registrar sessão: tipo (select), duração, distância, jejum (toggle), notas
-- Upload de print do Fitness (reutiliza OCR `extract-fitness-data` para extrair calorias, FC, distância)
-- Histórico em cards com filtro por semana/mês
-- Stats resumo: total km, total minutos, sessões no mês
+RLS: admin ALL, usuários autenticados SELECT (apenas campanhas ativas).
 
-### 3. Componentes novos
-- `src/components/cardio/CardioLogForm.tsx` — formulário de registro
-- `src/components/cardio/CardioHistoryList.tsx` — lista de sessões anteriores
-- `src/components/cardio/CardioStatsHeader.tsx` — KPIs do topo (km total, min total, sessões)
+### 2. Storage
 
-### 4. Integração com o sistema existente
-- Ao salvar sessão, sincronizar `exercise_minutes` e `active_calories` em `health_daily` (mesma lógica do OCR)
-- Contabilizar no `workout_completions` como tipo "cardio" para manter streak e engajamento
-- Dados disponíveis para `generate-protocol` e `analyze-evolution` (já leem `health_daily`)
+Reutilizar bucket `blog-assets` (público) para upload dos banners de campanha.
 
-### 5. Navegação
-- Adicionar "Aeróbico" no `ClientSidebar` (ícone HeartPulse ou similar)
-- Rota `/cardio` protegida por `SubscriptionGuard`
-- Link rápido na página Renascer (Hoje)
+### 3. Componente Pop-up: `src/components/referral/ReferralCampaignPopup.tsx`
 
-### 6. OCR do print
-- Reutilizar `extract-fitness-data` edge function — já extrai calorias, distância, FC
-- No formulário, ao anexar print, chamar a function e pré-preencher os campos automaticamente
+- Ao montar o Dashboard do cliente, busca campanha ativa (`active = true` e dentro do período)
+- Se existe e não foi vista nesta sessão (`sessionStorage`), exibe modal com:
+  - Banner (imagem full-width)
+  - Código de indicação do aluno (já existe em `referral_codes`)
+  - Botões "Copiar Link" e "Compartilhar WhatsApp"
+  - Botão fechar / "Não mostrar novamente"
+- Exibido para TODOS os clientes autenticados com assinatura ativa
+
+### 4. Admin: `src/components/admin/ReferralCampaignManager.tsx`
+
+- Card no AdminDashboard para gerenciar campanhas
+- Upload de imagem (banner)
+- Campos: título, descrição, regras de cashback por plano
+- Toggle ativo/inativo
+- Apenas 1 campanha ativa por vez (ao ativar uma, desativa as outras)
+
+### 5. Integração com cashback existente
+
+O sistema de cashback já funciona (`increment_cashback_balance`, `profiles.cashback_balance`). A novidade é que as `cashback_rules` da campanha definem QUAIS planos geram cashback e quanto, refinando o comportamento atual.
 
 ## Arquivos
 
 | Arquivo | Ação |
 |---|---|
-| Migration SQL | Criar tabela `cardio_sessions` com RLS |
-| `src/pages/Cardio.tsx` | Nova página principal |
-| `src/components/cardio/CardioLogForm.tsx` | Formulário de registro |
-| `src/components/cardio/CardioHistoryList.tsx` | Histórico |
-| `src/components/cardio/CardioStatsHeader.tsx` | KPIs |
-| `src/App.tsx` | Adicionar rota `/cardio` |
-| `src/components/layout/ClientSidebar.tsx` | Adicionar item "Aeróbico" |
-| `src/components/navigation/BottomNav.tsx` | Avaliar inclusão no nav mobile |
+| Migration SQL | Criar tabela `referral_campaigns` com RLS |
+| `src/components/referral/ReferralCampaignPopup.tsx` | Novo - modal/pop-up para o cliente |
+| `src/components/admin/ReferralCampaignManager.tsx` | Novo - gestão de campanhas no admin |
+| `src/pages/Dashboard.tsx` | Adicionar `<ReferralCampaignPopup />` |
+| `src/pages/admin/AdminDashboard.tsx` | Adicionar seção de campanhas de indicação |
 
