@@ -368,5 +368,7 @@ A refeição pré-sono DEVE estar na última posição.
 - Substitutos NÃO devem conter alimentos restritos
 - Use alimentos acessíveis e práticos para o dia a dia brasileiro
 
+${healthContext || ""}
+
 ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}`;
 }
