@@ -293,7 +293,8 @@ export function getNutricaoUserPrompt(
   planType: string,
   durationWeeks: number,
   weeksPerCycle: number,
-  adjustments?: string
+  adjustments?: string,
+  healthContext?: string
 ): string {
   const schedule = buildMealSchedule(
     (userContext.horario_acorda as string) || "06:00",
