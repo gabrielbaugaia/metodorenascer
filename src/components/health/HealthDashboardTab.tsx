@@ -1,4 +1,5 @@
-import { Footprints, Flame, Moon, HeartPulse, Activity, Watch, Timer, Route, Heart } from "lucide-react";
+import { useState } from "react";
+import { Footprints, Flame, Moon, HeartPulse, Activity, Watch, Timer, Route, Heart, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { HealthDaily } from "@/hooks/useHealthData";
 import { EcgUploadCard } from "./EcgUploadCard";
+import { HealthMetricDetailDrawer, type MetricKey } from "./HealthMetricDetailDrawer";
 
 interface HealthDashboardTabProps {
   todayData: HealthDaily | null;
@@ -42,7 +44,7 @@ function SourceBadge({ source, subtitle }: { source: SourceType; subtitle?: stri
   );
 }
 
-function MetricCard({ icon: Icon, label, value, unit, color, source, subtitle, emptyValue }: {
+function MetricCard({ icon: Icon, label, value, unit, color, source, subtitle, emptyValue, onClick }: {
   icon: React.ElementType;
   label: string;
   value: string | number;
@@ -51,14 +53,19 @@ function MetricCard({ icon: Icon, label, value, unit, color, source, subtitle, e
   source?: SourceType;
   subtitle?: string;
   emptyValue?: boolean;
+  onClick?: () => void;
 }) {
+  const isClickable = !!onClick && !emptyValue;
   return (
-    <Card>
+    <Card
+      className={isClickable ? "cursor-pointer active:scale-[0.98] transition-transform" : ""}
+      onClick={isClickable ? onClick : undefined}
+    >
       <CardContent className="p-4 flex items-center gap-3">
         <div className={`p-2 rounded-lg ${color}`}>
           <Icon className="h-5 w-5" />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground">{label}</p>
           <p className="text-lg font-bold">
             {emptyValue ? "—" : value}
@@ -66,6 +73,9 @@ function MetricCard({ icon: Icon, label, value, unit, color, source, subtitle, e
           </p>
           {source && <SourceBadge source={source} subtitle={subtitle} />}
         </div>
+        {isClickable && (
+          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        )}
       </CardContent>
     </Card>
   );
@@ -93,6 +103,8 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnectClick }: HealthDashboardTabProps) {
+  const [drawerMetric, setDrawerMetric] = useState<MetricKey | null>(null);
+
   if (dailyData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
@@ -149,6 +161,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
               emptyValue={stepsEmpty}
               source={stepsEmpty ? "indisponivel" : src}
               subtitle={stepsEmpty ? "Fonte: indisponível" : undefined}
+              onClick={() => setDrawerMetric("steps")}
             />
             <MetricCard
               icon={Flame}
@@ -159,6 +172,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
               emptyValue={calEmpty}
               source={calEmpty ? "indisponivel" : src}
               subtitle={calEmpty ? "Estimativa disponível após registrar treinos ou conectar dispositivo" : undefined}
+              onClick={() => setDrawerMetric("active_calories")}
             />
             <MetricCard
               icon={Moon}
@@ -167,6 +181,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
               color="bg-indigo-500/10 text-indigo-500"
               emptyValue={sleepVal === 0}
               source={sleepSrc}
+              onClick={() => setDrawerMetric("sleep_minutes")}
             />
             <MetricCard
               icon={HeartPulse}
@@ -176,6 +191,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
               color="bg-red-500/10 text-red-500"
               emptyValue={!displayData.resting_hr}
               source={displayData.resting_hr ? src : "indisponivel"}
+              onClick={() => setDrawerMetric("resting_hr")}
             />
             <MetricCard
               icon={Activity}
@@ -185,15 +201,16 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
               color="bg-green-500/10 text-green-500"
               emptyValue={!displayData.hrv_ms}
               source={displayData.hrv_ms ? src : "indisponivel"}
+              onClick={() => setDrawerMetric("hrv_ms")}
             />
             {displayData.avg_hr_bpm != null && displayData.avg_hr_bpm > 0 && (
-              <MetricCard icon={Heart} label="BPM Diário" value={displayData.avg_hr_bpm} unit="bpm" color="bg-pink-500/10 text-pink-500" source={src} />
+              <MetricCard icon={Heart} label="BPM Diário" value={displayData.avg_hr_bpm} unit="bpm" color="bg-pink-500/10 text-pink-500" source={src} onClick={() => setDrawerMetric("avg_hr_bpm")} />
             )}
             {(displayData as any).exercise_minutes != null && (displayData as any).exercise_minutes > 0 && (
-              <MetricCard icon={Timer} label="Exercício" value={(displayData as any).exercise_minutes} unit="min" color="bg-emerald-500/10 text-emerald-500" source={src} />
+              <MetricCard icon={Timer} label="Exercício" value={(displayData as any).exercise_minutes} unit="min" color="bg-emerald-500/10 text-emerald-500" source={src} onClick={() => setDrawerMetric("exercise_minutes")} />
             )}
             {(displayData as any).distance_km != null && (displayData as any).distance_km > 0 && (
-              <MetricCard icon={Route} label="Distância" value={Number((displayData as any).distance_km).toFixed(1)} unit="km" color="bg-cyan-500/10 text-cyan-500" source={src} />
+              <MetricCard icon={Route} label="Distância" value={Number((displayData as any).distance_km).toFixed(1)} unit="km" color="bg-cyan-500/10 text-cyan-500" source={src} onClick={() => setDrawerMetric("distance_km")} />
             )}
           </div>
         ) : (
@@ -210,7 +227,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
           </h3>
           <div className="grid grid-cols-1 gap-3">
             {restingHrValues.length > 0 && (
-              <Card>
+              <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={() => setDrawerMetric("resting_hr")}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -222,13 +239,16 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         Média: {Math.round(restingHrValues.reduce((a, b) => a + b, 0) / restingHrValues.length)} bpm
                       </p>
                     </div>
-                    <MiniSparkline data={[...restingHrValues].reverse()} color="hsl(0, 72%, 51%)" />
+                    <div className="flex items-center gap-2">
+                      <MiniSparkline data={[...restingHrValues].reverse()} color="hsl(0, 72%, 51%)" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             )}
             {hrvValues.length > 0 && (
-              <Card>
+              <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={() => setDrawerMetric("hrv_ms")}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -240,13 +260,16 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         Média: {Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)} ms
                       </p>
                     </div>
-                    <MiniSparkline data={[...hrvValues].reverse()} color="hsl(142, 71%, 45%)" />
+                    <div className="flex items-center gap-2">
+                      <MiniSparkline data={[...hrvValues].reverse()} color="hsl(142, 71%, 45%)" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             )}
             {avgHrValues.length > 0 && (
-              <Card>
+              <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={() => setDrawerMetric("avg_hr_bpm")}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -258,7 +281,10 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         Média: {Math.round(avgHrValues.reduce((a, b) => a + b, 0) / avgHrValues.length)} bpm
                       </p>
                     </div>
-                    <MiniSparkline data={[...avgHrValues].reverse()} color="hsl(330, 81%, 60%)" />
+                    <div className="flex items-center gap-2">
+                      <MiniSparkline data={[...avgHrValues].reverse()} color="hsl(330, 81%, 60%)" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -290,6 +316,14 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
           ))}
         </div>
       </div>
+
+      {/* Detail drawer */}
+      <HealthMetricDetailDrawer
+        open={drawerMetric !== null}
+        onClose={() => setDrawerMetric(null)}
+        metric={drawerMetric ?? "steps"}
+        dailyData={dailyData}
+      />
     </div>
   );
 }
