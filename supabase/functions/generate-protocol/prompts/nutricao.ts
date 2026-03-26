@@ -293,7 +293,8 @@ export function getNutricaoUserPrompt(
   planType: string,
   durationWeeks: number,
   weeksPerCycle: number,
-  adjustments?: string
+  adjustments?: string,
+  healthContext?: string
 ): string {
   const schedule = buildMealSchedule(
     (userContext.horario_acorda as string) || "06:00",
@@ -366,6 +367,8 @@ A refeição pré-sono DEVE estar na última posição.
 - Adapte para condições de saúde (${condicoes})
 - Substitutos NÃO devem conter alimentos restritos
 - Use alimentos acessíveis e práticos para o dia a dia brasileiro
+
+${healthContext || ""}
 
 ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}`;
 }

@@ -278,6 +278,83 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // ==== BUSCAR DADOS FISIOLÓGICOS DO HEALTH_DAILY ====
+    let healthContext = "";
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { data: healthRows } = await supabaseClient
+        .from("health_daily")
+        .select("hrv_ms, resting_hr, avg_hr_bpm, sleep_minutes, steps, active_calories, exercise_minutes, date")
+        .eq("user_id", targetUserId)
+        .gte("date", thirtyDaysAgo.toISOString().split("T")[0])
+        .order("date", { ascending: true });
+
+      if (healthRows && healthRows.length > 0) {
+        const avg = (arr: (number | null)[]) => {
+          const valid = arr.filter((v): v is number => v != null && v > 0);
+          return valid.length > 0 ? Math.round(valid.reduce((a, b) => a + b, 0) / valid.length) : null;
+        };
+
+        const hrvValues = healthRows.map(r => r.hrv_ms);
+        const validHrv = hrvValues.filter((v): v is number => v != null && v > 0);
+        let hrvTrend = "sem dados suficientes";
+        if (validHrv.length >= 4) {
+          const firstHalf = validHrv.slice(0, Math.floor(validHrv.length / 2));
+          const secondHalf = validHrv.slice(Math.floor(validHrv.length / 2));
+          const avgFirst = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+          const avgSecond = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+          const diff = ((avgSecond - avgFirst) / avgFirst) * 100;
+          hrvTrend = diff > 5 ? "subindo (boa adaptação)" : diff < -5 ? "caindo (possível overtraining)" : "estável";
+        }
+
+        const avgHrv = avg(hrvValues);
+        const avgRestingHr = avg(healthRows.map(r => r.resting_hr));
+        const avgDailyHr = avg(healthRows.map(r => r.avg_hr_bpm));
+        const avgSleepMin = avg(healthRows.map(r => r.sleep_minutes));
+        const avgSteps = avg(healthRows.map(r => r.steps));
+        const avgExerciseMin = avg(healthRows.map(r => r.exercise_minutes));
+        const avgActiveCal = avg(healthRows.map(r => r.active_calories));
+
+        // Fetch latest SIS score
+        let sisScore: number | null = null;
+        try {
+          const { data: sisData } = await supabaseClient
+            .from("sis_scores_daily")
+            .select("composite_score")
+            .eq("user_id", targetUserId)
+            .order("date", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (sisData) sisScore = (sisData as any).composite_score;
+        } catch { /* ignore */ }
+
+        healthContext = `
+### DADOS FISIOLÓGICOS REAIS (últimos 30 dias - ${healthRows.length} registros) ###
+- VFC média: ${avgHrv ?? "N/D"} ms | Tendência: ${hrvTrend}
+- FC de repouso média: ${avgRestingHr ?? "N/D"} BPM
+- BPM diário médio: ${avgDailyHr ?? "N/D"}
+- Sono médio: ${avgSleepMin ? (avgSleepMin / 60).toFixed(1) : "N/D"} horas
+- Passos diários: ${avgSteps ?? "N/D"}
+- Minutos de exercício: ${avgExerciseMin ?? "N/D"} min/dia
+- Calorias ativas: ${avgActiveCal ?? "N/D"} kcal/dia
+${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
+
+⚠️ USE ESTES DADOS para ajustar o protocolo:
+- VFC baixa (<20ms) ou caindo → reduzir volume, priorizar recuperação
+- FC repouso alta (>75 BPM) → incluir mais aeróbico de baixa intensidade
+- Sono < 6h → sugerir ajustes de horário e não prescrever treinos muito intensos
+- VFC subindo + FC repouso caindo = boa adaptação, pode progredir normalmente
+`;
+        console.log(`[generate-protocol] Health context loaded: ${healthRows.length} days of data`);
+      } else {
+        console.log(`[generate-protocol] No health_daily data found for user ${targetUserId}`);
+      }
+    } catch (healthErr) {
+      console.error("[generate-protocol] Error fetching health data:", healthErr);
+    }
+
     // Determinar duração do protocolo baseado no plano
     const durationWeeks = planDurationWeeks[planType?.toLowerCase()] || 4;
     
@@ -316,10 +393,10 @@ serve(async (req) => {
     if (tipo === "treino") {
       // P1 FIX: Passar lista de exercícios para o prompt
       systemPrompt = getTreinoSystemPrompt(durationWeeks, weeksPerCycle, totalCycles, exerciseNames);
-      userPrompt = getTreinoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments);
+      userPrompt = getTreinoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments, healthContext);
     } else if (tipo === "nutricao") {
       systemPrompt = getNutricaoSystemPrompt(durationWeeks, weeksPerCycle);
-      userPrompt = getNutricaoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments);
+      userPrompt = getNutricaoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments, healthContext);
     } else if (tipo === "mindset") {
       systemPrompt = getMindsetSystemPrompt(durationWeeks, weeksPerCycle);
       userPrompt = getMindsetUserPrompt(userContext, planType, durationWeeks, formattedAdjustments);

@@ -251,7 +251,8 @@ export function getTreinoUserPrompt(
   planType: string,
   durationWeeks: number,
   weeksPerCycle: number,
-  adjustments?: string
+  adjustments?: string,
+  healthContext?: string
 ): string {
   const preferencias = (userContext as any).preferencias_treino;
   
@@ -262,6 +263,8 @@ ${JSON.stringify(userContext, null, 2)}
 
 ### PLANO ###
 Tipo: ${planType || 'mensal'} (${durationWeeks} semanas)
+
+${healthContext || ""}
 
 ${preferencias ? `### PREFERÊNCIAS PESSOAIS DO ALUNO ###
 ${preferencias}
