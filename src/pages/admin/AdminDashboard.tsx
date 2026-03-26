@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AdminAlertsPanel } from "@/components/admin/AdminAlertsPanel";
+import { ReferralCampaignManager } from "@/components/admin/ReferralCampaignManager";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   Users, 
@@ -332,6 +333,9 @@ export default function AdminDashboard() {
             ))}
           </div>
         </div>
+
+        {/* Referral Campaign Manager */}
+        <ReferralCampaignManager />
 
         {/* 4. Insights — Colapsado por padrão */}
         <Collapsible open={insightsOpen} onOpenChange={setInsightsOpen}>

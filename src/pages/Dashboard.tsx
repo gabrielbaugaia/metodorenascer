@@ -14,6 +14,7 @@ import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
 import { PlanSelectionGrid } from "@/components/dashboard/PlanSelectionGrid";
 import { WeeklyCheckinModal } from "@/components/checkin/WeeklyCheckinModal";
+import { ReferralCampaignPopup } from "@/components/referral/ReferralCampaignPopup";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
@@ -349,6 +350,7 @@ export default function Dashboard() {
   return (
     <ClientLayout>
       <OnboardingTour />
+      <ReferralCampaignPopup />
 
       <div className="container mx-auto max-w-xl space-y-6">
         {/* Alerta de Anamnese Pendente */}
