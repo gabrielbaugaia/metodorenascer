@@ -1,69 +1,65 @@
 
 
-# Diagnóstico: Dados cardiovasculares NÃO estão integrados na prescrição nem na evolução
+# Plano: Área de Treino Aeróbico Separado
 
-## Situação atual
+## O que será criado
 
-Analisei todo o fluxo e confirmei que os dados avançados de saúde (VFC, FC repouso, BPM diário) **NÃO são usados** em dois pontos críticos:
+Uma seção dedicada para registrar treinos aeróbicos (cardio em jejum, corrida, bike, esteira, etc.) independente do protocolo de musculação. O cliente poderá:
 
-### 1. Análise de Evolução (`analyze-evolution`)
-- Recebe apenas: fotos (antes/depois), peso inicial, peso atual e notas do cliente
-- **Não recebe**: dados de `health_daily` (VFC, FC repouso, sono, passos, calorias ativas)
-- A IA compara apenas visualmente as fotos, sem contexto fisiológico
+- Registrar tipo de aeróbico (bike, esteira, rua, elíptico, etc.)
+- Informar duração, distância e se foi em jejum
+- Anexar print do Apple Fitness/app de treino para extrair dados via OCR
+- Ver histórico dos treinos aeróbicos com métricas acumuladas
 
-### 2. Geração de Protocolos (`generate-protocol`)
-- Recebe: dados da anamnese (perfil, objetivo, horários, restrições) + ajustes de evolução visual
-- **Não recebe**: histórico de `health_daily`, tendência de VFC, FC de repouso, volume de treino real, qualidade de sono
-- O `evolutionAdjustments` já existe e funciona, mas vem apenas da análise visual das fotos — não dos dados numéricos de saúde
-
-### O que JÁ funciona
-- VFC, FC repouso e BPM alimentam o **SIS Score** (compute-sis-score) e o **dashboard de saúde**
-- Mas esses dados param ali — não chegam ao sistema de prescrição
+Os dados serão computados no sistema (calorias, minutos de exercício) integrando com `health_daily` e alimentando o Score SIS e as prescrições.
 
 ---
 
-## Plano de integração
+## Estrutura técnica
 
-### 1. Enriquecer `analyze-evolution` com dados de saúde
-No `analyze-evolution/index.ts`, além das fotos e peso, passar os últimos 30 dias de `health_daily` para a IA comparar:
-- Tendência de VFC (subindo = boa adaptação, caindo = overtraining)
-- FC de repouso (caindo = bom condicionamento)
-- Média de sono, passos, calorias ativas
-- Score SIS médio do período
+### 1. Tabela `cardio_sessions` (migration)
+```
+id, user_id, session_date, cardio_type (bike/esteira/rua/eliptico/natacao/outro),
+duration_minutes, distance_km, calories_burned, avg_hr_bpm, max_hr_bpm,
+fasting (boolean), notes, fitness_screenshot_url, created_at
+```
+Com RLS para user ver/inserir/editar/deletar os próprios registros e admin ver todos.
 
-A IA poderá então sugerir ajustes baseados em dados fisiológicos reais, não só visuais.
+### 2. Nova página `src/pages/Cardio.tsx`
+- Formulário para registrar sessão: tipo (select), duração, distância, jejum (toggle), notas
+- Upload de print do Fitness (reutiliza OCR `extract-fitness-data` para extrair calorias, FC, distância)
+- Histórico em cards com filtro por semana/mês
+- Stats resumo: total km, total minutos, sessões no mês
 
-### 2. Enriquecer `generate-protocol` com snapshot de saúde
-No `generate-protocol/index.ts`, antes de gerar o protocolo, buscar os últimos 14-30 dias de `health_daily` do usuário e passar como contexto adicional no prompt:
-- VFC média e tendência
-- FC de repouso média
-- Horas de sono médias
-- Volume de atividade (passos, calorias)
-- Score SIS mais recente
+### 3. Componentes novos
+- `src/components/cardio/CardioLogForm.tsx` — formulário de registro
+- `src/components/cardio/CardioHistoryList.tsx` — lista de sessões anteriores
+- `src/components/cardio/CardioStatsHeader.tsx` — KPIs do topo (km total, min total, sessões)
 
-Isso permite que a IA ajuste intensidade, volume e recuperação com base em dados reais.
+### 4. Integração com o sistema existente
+- Ao salvar sessão, sincronizar `exercise_minutes` e `active_calories` em `health_daily` (mesma lógica do OCR)
+- Contabilizar no `workout_completions` como tipo "cardio" para manter streak e engajamento
+- Dados disponíveis para `generate-protocol` e `analyze-evolution` (já leem `health_daily`)
 
-### 3. Atualizar o frontend que chama `analyze-evolution`
-No componente que dispara a análise de evolução (provavelmente em `Evolucao.tsx`), buscar e enviar os dados de `health_daily` junto com as fotos.
+### 5. Navegação
+- Adicionar "Aeróbico" no `ClientSidebar` (ícone HeartPulse ou similar)
+- Rota `/cardio` protegida por `SubscriptionGuard`
+- Link rápido na página Renascer (Hoje)
 
----
+### 6. OCR do print
+- Reutilizar `extract-fitness-data` edge function — já extrai calorias, distância, FC
+- No formulário, ao anexar print, chamar a function e pré-preencher os campos automaticamente
 
-## Arquivos a modificar
+## Arquivos
 
-| Arquivo | Mudança |
+| Arquivo | Ação |
 |---|---|
-| `supabase/functions/analyze-evolution/index.ts` | Receber `healthData` no body, incluir no prompt como contexto fisiológico |
-| `supabase/functions/generate-protocol/index.ts` | Buscar `health_daily` dos últimos 30 dias do usuário e injetar no prompt |
-| `supabase/functions/generate-protocol/prompts/treino.ts` | Adicionar seção de contexto fisiológico no system prompt |
-| `supabase/functions/generate-protocol/prompts/nutricao.ts` | Adicionar contexto de sono e recuperação no prompt |
-| `src/pages/Evolucao.tsx` (ou componente que chama analyze-evolution) | Passar dados de health_daily na chamada |
-
-## Resultado esperado
-
-Após a implementação, quando gerar um novo protocolo ou análise de evolução, a IA verá dados como:
-- "VFC média 18ms (baixa), tendência estável → cuidado com volume excessivo"
-- "FC repouso 99 BPM (elevada) → priorizar recuperação e aeróbico leve"
-- "Sono médio 5.5h → ajustar horário de treino e suplementação"
-
-Transformando os dados coletados em decisões de prescrição inteligentes.
+| Migration SQL | Criar tabela `cardio_sessions` com RLS |
+| `src/pages/Cardio.tsx` | Nova página principal |
+| `src/components/cardio/CardioLogForm.tsx` | Formulário de registro |
+| `src/components/cardio/CardioHistoryList.tsx` | Histórico |
+| `src/components/cardio/CardioStatsHeader.tsx` | KPIs |
+| `src/App.tsx` | Adicionar rota `/cardio` |
+| `src/components/layout/ClientSidebar.tsx` | Adicionar item "Aeróbico" |
+| `src/components/navigation/BottomNav.tsx` | Avaliar inclusão no nav mobile |
 
