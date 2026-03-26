@@ -2080,6 +2080,45 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_campaigns: {
+        Row: {
+          active: boolean
+          banner_image_url: string | null
+          cashback_rules: Json
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          id: string
+          starts_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          banner_image_url?: string | null
+          cashback_rules?: Json
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          starts_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          banner_image_url?: string | null
+          cashback_rules?: Json
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          starts_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       referral_codes: {
         Row: {
           code: string
