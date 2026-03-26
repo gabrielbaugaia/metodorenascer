@@ -540,6 +540,62 @@ export type Database = {
           },
         ]
       }
+      cardio_sessions: {
+        Row: {
+          avg_hr_bpm: number | null
+          calories_burned: number | null
+          cardio_type: string
+          created_at: string
+          distance_km: number | null
+          duration_minutes: number | null
+          fasting: boolean
+          fitness_screenshot_url: string | null
+          id: string
+          max_hr_bpm: number | null
+          notes: string | null
+          session_date: string
+          user_id: string
+        }
+        Insert: {
+          avg_hr_bpm?: number | null
+          calories_burned?: number | null
+          cardio_type?: string
+          created_at?: string
+          distance_km?: number | null
+          duration_minutes?: number | null
+          fasting?: boolean
+          fitness_screenshot_url?: string | null
+          id?: string
+          max_hr_bpm?: number | null
+          notes?: string | null
+          session_date?: string
+          user_id: string
+        }
+        Update: {
+          avg_hr_bpm?: number | null
+          calories_burned?: number | null
+          cardio_type?: string
+          created_at?: string
+          distance_km?: number | null
+          duration_minutes?: number | null
+          fasting?: boolean
+          fitness_screenshot_url?: string | null
+          id?: string
+          max_hr_bpm?: number | null
+          notes?: string | null
+          session_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cardio_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkins: {
         Row: {
           ai_analysis: string | null
