@@ -9,7 +9,7 @@ import { CardioStatsHeader } from "@/components/cardio/CardioStatsHeader";
 import { CardioLogForm } from "@/components/cardio/CardioLogForm";
 import { CardioHistoryList } from "@/components/cardio/CardioHistoryList";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { HeartPulse } from "lucide-react";
+
 import { startOfMonth, format } from "date-fns";
 
 export default function Cardio() {
@@ -134,8 +134,7 @@ export default function Cardio() {
       <div className="space-y-6 max-w-3xl mx-auto pb-24">
         <PageHeader
           title="Aeróbico"
-          description="Registre e acompanhe seus treinos de cardio"
-          icon={<HeartPulse className="h-5 w-5" />}
+          subtitle="Registre e acompanhe seus treinos de cardio"
         />
 
         <CardioStatsHeader stats={stats} />
