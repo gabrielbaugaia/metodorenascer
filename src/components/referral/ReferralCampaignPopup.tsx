@@ -138,7 +138,7 @@ export function ReferralCampaignPopup() {
               {copied ? <CheckCircle className="h-4 w-4 mr-1.5" /> : <Copy className="h-4 w-4 mr-1.5" />}
               {copied ? "Copiado" : "Copiar Link"}
             </Button>
-            <Button onClick={shareWhatsApp} className="flex-1 bg-green-600 hover:bg-green-700" size="sm">
+            <Button onClick={shareWhatsApp} className="flex-1 bg-primary hover:bg-primary/90" size="sm">
               <Share2 className="h-4 w-4 mr-1.5" />
               WhatsApp
             </Button>

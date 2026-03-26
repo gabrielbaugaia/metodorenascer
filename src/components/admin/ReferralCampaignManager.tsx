@@ -112,13 +112,13 @@ export function ReferralCampaignManager() {
     try {
       const { error } = await supabase
         .from("referral_campaigns")
-        .insert({
+        .insert([{
           title: title.trim(),
           description: description.trim() || null,
           banner_image_url: bannerUrl || null,
-          cashback_rules: rules.filter(r => r.plan_type.trim()),
+          cashback_rules: rules.filter(r => r.plan_type.trim()) as any,
           active: false,
-        });
+        }]);
 
       if (error) throw error;
 
