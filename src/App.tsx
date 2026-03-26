@@ -65,6 +65,7 @@ const ConnectDashboard = lazy(() => import("./pages/connect/ConnectDashboard"));
 const ConnectSync = lazy(() => import("./pages/connect/ConnectSync"));
 const Renascer = lazy(() => import("./pages/Renascer"));
 const NutricaoTracking = lazy(() => import("./pages/NutricaoTracking"));
+const Cardio = lazy(() => import("./pages/Cardio"));
 const AnamneseExterna = lazy(() => import("./pages/AnamneseExterna"));
 
 const queryClient = new QueryClient({
@@ -127,6 +128,7 @@ const App = () => (
             <Route path="/dados-corpo" element={<SubscriptionGuard><DadosCorpo /></SubscriptionGuard>} />
             <Route path="/renascer" element={<SubscriptionGuard><Renascer /></SubscriptionGuard>} />
             <Route path="/nutricao-diario" element={<SubscriptionGuard><NutricaoTracking /></SubscriptionGuard>} />
+            <Route path="/cardio" element={<SubscriptionGuard><Cardio /></SubscriptionGuard>} />
 
             {/* ROTAS ADMIN (protegidas por AdminGuard) */}
             <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />

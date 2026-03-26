@@ -49,6 +49,7 @@ const clientMenuItems = [
   { title: "Hoje", url: "/renascer", icon: Flame },
   { title: "Evolução", url: "/evolucao", icon: Camera },
   { title: "Treino", url: "/treino", icon: Dumbbell },
+  { title: "Aeróbico", url: "/cardio", icon: HeartPulse },
   { title: "Nutrição", url: "/nutricao", icon: Apple },
   { title: "Diário Nutricional", url: "/nutricao-diario", icon: Apple },
   { title: "Receitas", url: "/receitas", icon: ChefHat },
