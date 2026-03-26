@@ -1,37 +1,69 @@
 
 
-# Fix: OCR não extrai VFC e BPM ao despertar de apps de bem-estar
+# Diagnóstico: Dados cardiovasculares NÃO estão integrados na prescrição nem na evolução
 
-## Problema
+## Situação atual
 
-O print enviado é de um app de wellness (tipo Athlytic) que mostra "BPM diário: 108", "BPM ao despertar: 99" e "VFC ao despertar: 18". O prompt da IA no `extract-fitness-data` não menciona esses termos em português, então a IA não consegue mapear corretamente:
+Analisei todo o fluxo e confirmei que os dados avançados de saúde (VFC, FC repouso, BPM diário) **NÃO são usados** em dois pontos críticos:
 
-- **BPM ao despertar** → deveria ser `resting_hr` (FC de repouso)
-- **VFC ao despertar** → deveria ser `hrv_ms`
-- **BPM diário** → deveria ser `avg_hr_bpm`
+### 1. Análise de Evolução (`analyze-evolution`)
+- Recebe apenas: fotos (antes/depois), peso inicial, peso atual e notas do cliente
+- **Não recebe**: dados de `health_daily` (VFC, FC repouso, sono, passos, calorias ativas)
+- A IA compara apenas visualmente as fotos, sem contexto fisiológico
 
-## Correção
+### 2. Geração de Protocolos (`generate-protocol`)
+- Recebe: dados da anamnese (perfil, objetivo, horários, restrições) + ajustes de evolução visual
+- **Não recebe**: histórico de `health_daily`, tendência de VFC, FC de repouso, volume de treino real, qualidade de sono
+- O `evolutionAdjustments` já existe e funciona, mas vem apenas da análise visual das fotos — não dos dados numéricos de saúde
 
-### 1. Expandir o prompt do OCR com vocabulário de apps de wellness
+### O que JÁ funciona
+- VFC, FC repouso e BPM alimentam o **SIS Score** (compute-sis-score) e o **dashboard de saúde**
+- Mas esses dados param ali — não chegam ao sistema de prescrição
 
-No arquivo `supabase/functions/extract-fitness-data/index.ts`, atualizar o system prompt para incluir explicitamente os termos em português usados por apps como Athlytic, AutoSleep, e similares:
+---
 
-```
-- BPM ao despertar / BPM ao acordar / Waking HR → resting_hr
-- VFC ao despertar / VFC ao acordar / Waking HRV → hrv_ms  
-- BPM diário / BPM médio / Avg HR / Daily HR → avg_hr_bpm
-- Bem-estar score → ignorar (não é campo extraído)
-```
+## Plano de integração
 
-Também adicionar na mensagem do user que apps de wellness (Athlytic, AutoSleep, Heart Analyzer) usam nomenclatura diferente.
+### 1. Enriquecer `analyze-evolution` com dados de saúde
+No `analyze-evolution/index.ts`, além das fotos e peso, passar os últimos 30 dias de `health_daily` para a IA comparar:
+- Tendência de VFC (subindo = boa adaptação, caindo = overtraining)
+- FC de repouso (caindo = bom condicionamento)
+- Média de sono, passos, calorias ativas
+- Score SIS médio do período
 
-### 2. Nenhuma mudança no frontend necessária
+A IA poderá então sugerir ajustes baseados em dados fisiológicos reais, não só visuais.
 
-O `BatchFitnessUpload.tsx` já exibe e sincroniza `resting_hr`, `hrv_ms` e `avg_hr_bpm` corretamente. O `HealthDashboardTab.tsx` já mostra esses cards. O problema é exclusivamente na extração — a IA não reconhece os labels.
+### 2. Enriquecer `generate-protocol` com snapshot de saúde
+No `generate-protocol/index.ts`, antes de gerar o protocolo, buscar os últimos 14-30 dias de `health_daily` do usuário e passar como contexto adicional no prompt:
+- VFC média e tendência
+- FC de repouso média
+- Horas de sono médias
+- Volume de atividade (passos, calorias)
+- Score SIS mais recente
 
-## Arquivo alterado
+Isso permite que a IA ajuste intensidade, volume e recuperação com base em dados reais.
+
+### 3. Atualizar o frontend que chama `analyze-evolution`
+No componente que dispara a análise de evolução (provavelmente em `Evolucao.tsx`), buscar e enviar os dados de `health_daily` junto com as fotos.
+
+---
+
+## Arquivos a modificar
 
 | Arquivo | Mudança |
 |---|---|
-| `supabase/functions/extract-fitness-data/index.ts` | Expandir prompt com termos PT-BR de apps wellness |
+| `supabase/functions/analyze-evolution/index.ts` | Receber `healthData` no body, incluir no prompt como contexto fisiológico |
+| `supabase/functions/generate-protocol/index.ts` | Buscar `health_daily` dos últimos 30 dias do usuário e injetar no prompt |
+| `supabase/functions/generate-protocol/prompts/treino.ts` | Adicionar seção de contexto fisiológico no system prompt |
+| `supabase/functions/generate-protocol/prompts/nutricao.ts` | Adicionar contexto de sono e recuperação no prompt |
+| `src/pages/Evolucao.tsx` (ou componente que chama analyze-evolution) | Passar dados de health_daily na chamada |
+
+## Resultado esperado
+
+Após a implementação, quando gerar um novo protocolo ou análise de evolução, a IA verá dados como:
+- "VFC média 18ms (baixa), tendência estável → cuidado com volume excessivo"
+- "FC repouso 99 BPM (elevada) → priorizar recuperação e aeróbico leve"
+- "Sono médio 5.5h → ajustar horário de treino e suplementação"
+
+Transformando os dados coletados em decisões de prescrição inteligentes.
 
