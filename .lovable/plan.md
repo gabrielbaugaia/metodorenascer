@@ -1,58 +1,50 @@
 
 
-# Plano: Pop-up de Campanha "Indique e Ganhe" + Gestão Admin de Banners
+# Plano: Cards de Saúde clicáveis com detalhe premium
 
-## O que será criado
+## O que muda
 
-1. **Admin Dashboard**: Seção para criar/gerenciar campanhas de indicação com upload de banner (imagem), texto, e definição de benefícios/cashback por plano fechado
-2. **Pop-up no cliente**: Ao logar, o aluno vê um modal com o banner da campanha ativa, seu código de indicação, e botão para compartilhar. Aparece uma vez por sessão (controlado via localStorage)
-3. **Regras de cashback por plano**: O admin define qual plano gera cashback e quanto, vinculando ao sistema de referral já existente
+Cada card de métrica no painel "Dados do Corpo" (Passos, Calorias, Sono, FC Repouso, VFC, BPM Diário, Exercício, Distância) passa a ser **clicável**. Ao tocar, abre um Drawer (mesmo padrão visual do SIS pillar detail) com:
 
-## Estrutura técnica
+1. **Valor atual** grande e colorido (verde/amarelo/vermelho conforme faixa saudável)
+2. **Gráfico de 7 dias** com sparkline usando Recharts (mesma lib já usada no SIS)
+3. **Tendência**: seta + texto ("melhorando", "estável", "em queda") comparando últimos 3 dias vs anteriores
+4. **O que significa**: explicação científica em linguagem simples e natural
+5. **Orientação para amanhã**: dica prática e personalizada baseada no valor atual
 
-### 1. Tabela `referral_campaigns` (migration)
+## Conteúdo científico por métrica
 
-```
-id, title, description, banner_image_url, 
-cashback_rules (jsonb - ex: [{ plan_type: "trimestral", cashback_amount: 1 }]),
-active (boolean), starts_at, ends_at, created_at, updated_at
-```
+| Métrica | Faixas | Orientação |
+|---|---|---|
+| Passos | <5k risco, 5-8k moderado, >8k ideal | Caminhar mais 2000 passos = +10min vida |
+| Calorias Ativas | Contextual (>300 bom) | Manter NEAT alto, subir escadas |
+| Sono | <6h risco, 6-7h moderado, 7-9h ideal | Higiene do sono, regularidade |
+| FC Repouso | >75 alerta, 60-75 normal, <60 atlético | Tendência caindo = bom condicionamento |
+| VFC (HRV) | <20 baixo, 20-50 moderado, >50 bom | VFC subindo = boa adaptação ao treino |
+| BPM Diário | >100 elevado, 70-100 normal, <70 ótimo | Monitorar picos de estresse |
+| Exercício | Quantitativo | Meta OMS 150min/semana |
+| Distância | Quantitativo | Progressão gradual de 10%/semana |
 
-RLS: admin ALL, usuários autenticados SELECT (apenas campanhas ativas).
+## Implementação técnica
 
-### 2. Storage
+### 1. Refatorar `MetricCard` em `HealthDashboardTab.tsx`
+- Adicionar `onClick` e `cursor-pointer` + `ChevronRight` quando há dados
+- Passar `dailyData` (7 dias) para extrair série histórica por métrica
 
-Reutilizar bucket `blog-assets` (público) para upload dos banners de campanha.
+### 2. Criar `HealthMetricDetailDrawer` (componente interno ou separado)
+- Reutilizar exatamente o padrão visual do `PillarDetailDrawer` do SIS:
+  - Score grande colorido no topo
+  - Gráfico Recharts LineChart com dados de 7 dias
+  - Cards de "O que significa", "Como melhorar", "Orientação"
+- Calcular1 tendência (média últimos 3 vs anteriores)
 
-### 3. Componente Pop-up: `src/components/referral/ReferralCampaignPopup.tsx`
+### 3. Dadosreen usados: `dailyData` já  disponível no componente (7 dias de `health_daily`)
 
-- Ao montar o Dashboard do cliente, busca campanha ativa (`active = true` e dentro do período)
-- Se existe e não foi vista nesta sessão (`sessionStorage`), exibe modal com:
-  - Banner (imagem full-width)
-  - Código de indicação do aluno (já existe em `referral_codes`)
-  - Botões "Copiar Link" e "Compartilhar WhatsApp"
-  - Botão fechar / "Não mostrar novamente"
-- Exibido para TODOS os clientes autenticados com assinatura ativa
+## Arquivos alterados
 
-### 4. Admin: `src/components/admin/ReferralCampaignManager.tsx`
-
-- Card no AdminDashboard para gerenciar campanhas
-- Upload de imagem (banner)
-- Campos: título, descrição, regras de cashback por plano
-- Toggle ativo/inativo
-- Apenas 1 campanha ativa por vez (ao ativar uma, desativa as outras)
-
-### 5. Integração com cashback existente
-
-O sistema de cashback já funciona (`increment_cashback_balance`, `profiles.cashback_balance`). A novidade é que as `cashback_rules` da campanha definem QUAIS planos geram cashback e quanto, refinando o comportamento atual.
-
-## Arquivos
-
-| Arquivo | Ação |
+| Arquivo | Mudança |
 |---|---|
-| Migration SQL | Criar tabela `referral_campaigns` com RLS |
-| `src/components/referral/ReferralCampaignPopup.tsx` | Novo - modal/pop-up para o cliente |
-| `src/components/admin/ReferralCampaignManager.tsx` | Novo - gestão de campanhas no admin |
-| `src/pages/Dashboard.tsx` | Adicionar `<ReferralCampaignPopup />` |
-| `src/pages/admin/AdminDashboard.tsx` | Adicionar seção de campanhas de indicação |
+| `src/components/health/HealthDashboardTab.tsx` | MetricCard clicável + state para drawer aberto + HealthMetricDetailDrawer com gráfico e orientações |
+
+Nenhuma migration necessária - todos os dados já existem em `health_daily`.
 
