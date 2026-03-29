@@ -59,13 +59,15 @@ export function SisCognitiveCheckin() {
 
       if (error) throw error;
 
-      // Trigger score recomputation
-      await supabase.functions.invoke("compute-sis-score", {
-        body: { target_date: today },
-      });
+      // Trigger score recomputation + mental wellness
+      await Promise.all([
+        supabase.functions.invoke("compute-sis-score", { body: { target_date: today } }),
+        supabase.functions.invoke("compute-mental-wellness", { body: { target_date: today } }),
+      ]);
 
       queryClient.invalidateQueries({ queryKey: ["sis-scores-30d"] });
       queryClient.invalidateQueries({ queryKey: ["sis-streak"] });
+      queryClient.invalidateQueries({ queryKey: ["mental-wellness-scores"] });
       toast.success("Check-in cognitivo salvo!");
       setOpen(false);
     } catch (err) {

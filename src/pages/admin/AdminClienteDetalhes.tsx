@@ -1634,6 +1634,22 @@ export default function AdminClienteDetalhes() {
           </CardContent>
         </Card>
 
+        {/* Mental Wellness Insights (Admin view) */}
+        {id && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Inteligência Mental
+              </CardTitle>
+              <CardDescription>Índices de saúde mental calculados automaticamente</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MindsetInsightsPanelAdmin userId={id} />
+            </CardContent>
+          </Card>
+        )}
+
         {/* Renascer Mode */}
         {id && <AdminRenascerSection clientId={id} />}
 
