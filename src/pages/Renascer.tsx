@@ -15,6 +15,7 @@ import { SisSubScoreCards } from "@/components/sis/SisSubScoreCards";
 import { SisAlerts } from "@/components/sis/SisAlerts";
 import { SisTrendChart } from "@/components/sis/SisTrendChart";
 import { SisCognitiveCheckin } from "@/components/sis/SisCognitiveCheckin";
+import { MindsetInsightsPanel } from "@/components/mindset/MindsetInsightsPanel";
 import { MiniConfetti } from "@/components/renascer/MiniConfetti";
 import { ManualInput } from "@/components/renascer/ManualInput";
 import { RecentLogsHistory } from "@/components/renascer/RecentLogsHistory";
@@ -197,6 +198,9 @@ export default function Renascer() {
 
         {/* Cognitive Quick Check-in */}
         <SisCognitiveCheckin />
+
+        {/* Mental Wellness Insights */}
+        <MindsetInsightsPanel />
 
         {/* Data mode toggle */}
         <div className="flex items-center justify-between px-1">
