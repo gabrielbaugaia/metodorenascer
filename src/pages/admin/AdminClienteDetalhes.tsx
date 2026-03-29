@@ -39,6 +39,7 @@ import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection"
 import { AdminAccessControlSection } from "@/components/admin/AdminAccessControlSection";
 import { AdminRenascerSection } from "@/components/admin/AdminRenascerSection";
 import { BodyAssessmentImport } from "@/components/admin/BodyAssessmentImport";
+import { MindsetInsightsPanel } from "@/components/mindset/MindsetInsightsPanel";
 import {
   Dialog,
   DialogContent,
@@ -1633,6 +1634,22 @@ export default function AdminClienteDetalhes() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Mental Wellness Insights (Admin view) */}
+        {id && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Inteligência Mental
+              </CardTitle>
+              <CardDescription>Índices de saúde mental calculados automaticamente</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MindsetInsightsPanel userId={id} />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Renascer Mode */}
         {id && <AdminRenascerSection clientId={id} />}

@@ -18,6 +18,10 @@ const fields = [
   { key: "focus", label: "Foco", emoji: "🎯" },
   { key: "irritability", label: "Irritabilidade", emoji: "😤" },
   { key: "food_discipline", label: "Disciplina Alimentar", emoji: "🥗" },
+  { key: "mood", label: "Humor", emoji: "😊" },
+  { key: "anxiety", label: "Ansiedade", emoji: "😰" },
+  { key: "training_motivation", label: "Motivação p/ Treinar", emoji: "💪" },
+  { key: "sleep_quality", label: "Qualidade do Sono", emoji: "🌙" },
 ] as const;
 
 export function SisCognitiveCheckin() {
@@ -31,7 +35,12 @@ export function SisCognitiveCheckin() {
     focus: 3,
     irritability: 3,
     food_discipline: 3,
+    mood: 3,
+    anxiety: 3,
+    training_motivation: 3,
+    sleep_quality: 3,
     alcohol: false,
+    social_interaction: true,
     notes: "",
   });
 
@@ -50,13 +59,15 @@ export function SisCognitiveCheckin() {
 
       if (error) throw error;
 
-      // Trigger score recomputation
-      await supabase.functions.invoke("compute-sis-score", {
-        body: { target_date: today },
-      });
+      // Trigger score recomputation + mental wellness
+      await Promise.all([
+        supabase.functions.invoke("compute-sis-score", { body: { target_date: today } }),
+        supabase.functions.invoke("compute-mental-wellness", { body: { target_date: today } }),
+      ]);
 
       queryClient.invalidateQueries({ queryKey: ["sis-scores-30d"] });
       queryClient.invalidateQueries({ queryKey: ["sis-streak"] });
+      queryClient.invalidateQueries({ queryKey: ["mental-wellness-scores"] });
       toast.success("Check-in cognitivo salvo!");
       setOpen(false);
     } catch (err) {
@@ -99,6 +110,14 @@ export function SisCognitiveCheckin() {
             <Switch
               checked={values.alcohol}
               onCheckedChange={(v) => setValues(prev => ({ ...prev, alcohol: v }))}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">🤝 Interação social hoje?</Label>
+            <Switch
+              checked={values.social_interaction}
+              onCheckedChange={(v) => setValues(prev => ({ ...prev, social_interaction: v }))}
             />
           </div>
 

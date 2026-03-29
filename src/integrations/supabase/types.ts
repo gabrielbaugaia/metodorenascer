@@ -1460,6 +1460,56 @@ export type Database = {
         }
         Relationships: []
       }
+      mental_wellness_scores: {
+        Row: {
+          alerts: Json | null
+          body_mind_divergence: number | null
+          burnout_index: number | null
+          compulsion_risk: number | null
+          created_at: string | null
+          date: string
+          id: string
+          motivation_trend: number | null
+          resilience_index: number | null
+          sleep_mood_correlation: number | null
+          user_id: string
+        }
+        Insert: {
+          alerts?: Json | null
+          body_mind_divergence?: number | null
+          burnout_index?: number | null
+          compulsion_risk?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          motivation_trend?: number | null
+          resilience_index?: number | null
+          sleep_mood_correlation?: number | null
+          user_id: string
+        }
+        Update: {
+          alerts?: Json | null
+          body_mind_divergence?: number | null
+          burnout_index?: number | null
+          compulsion_risk?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          motivation_trend?: number | null
+          resilience_index?: number | null
+          sleep_mood_correlation?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mental_wellness_scores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_sends: {
         Row: {
           clicked_at: string | null
@@ -2203,6 +2253,7 @@ export type Database = {
       sis_cognitive_checkins: {
         Row: {
           alcohol: boolean | null
+          anxiety: number | null
           created_at: string | null
           date: string
           focus: number | null
@@ -2211,11 +2262,16 @@ export type Database = {
           irritability: number | null
           mental_clarity: number | null
           mental_energy: number | null
+          mood: number | null
           notes: string | null
+          sleep_quality: number | null
+          social_interaction: boolean | null
+          training_motivation: number | null
           user_id: string
         }
         Insert: {
           alcohol?: boolean | null
+          anxiety?: number | null
           created_at?: string | null
           date: string
           focus?: number | null
@@ -2224,11 +2280,16 @@ export type Database = {
           irritability?: number | null
           mental_clarity?: number | null
           mental_energy?: number | null
+          mood?: number | null
           notes?: string | null
+          sleep_quality?: number | null
+          social_interaction?: boolean | null
+          training_motivation?: number | null
           user_id: string
         }
         Update: {
           alcohol?: boolean | null
+          anxiety?: number | null
           created_at?: string | null
           date?: string
           focus?: number | null
@@ -2237,7 +2298,11 @@ export type Database = {
           irritability?: number | null
           mental_clarity?: number | null
           mental_energy?: number | null
+          mood?: number | null
           notes?: string | null
+          sleep_quality?: number | null
+          social_interaction?: boolean | null
+          training_motivation?: number | null
           user_id?: string
         }
         Relationships: [
