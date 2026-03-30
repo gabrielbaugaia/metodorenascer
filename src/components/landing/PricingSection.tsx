@@ -253,6 +253,20 @@ export function PricingSection() {
             </Card>
           ))}
         </div>
+
+        {/* Cancellation Policy */}
+        <div className="mt-12 max-w-2xl mx-auto text-center space-y-3">
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <ShieldCheck className="w-5 h-5 text-primary" />
+            <span className="text-sm font-semibold text-foreground">Política de cancelamento transparente</span>
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Você pode cancelar sua assinatura a qualquer momento após o período de teste.
+            Para evitar a cobrança do próximo ciclo, solicite o cancelamento com pelo menos
+            30 dias de antecedência da próxima fatura. Garantia de 7 dias de arrependimento
+            conforme o Código de Defesa do Consumidor (Art. 49).
+          </p>
+        </div>
       </div>
     </section>
   );
