@@ -1,22 +1,18 @@
 
 
-# Plano: Ajustar política de cancelamento — aceite dos termos na compra
+# Plano: Atualizar FAQ de cancelamento
 
-## O que muda
+Atualizar a resposta da pergunta "Posso cancelar a qualquer momento?" no `FAQSection.tsx` para alinhar com os termos da `PricingSection`.
 
-Ajustar o texto da política de cancelamento na `PricingSection.tsx` para deixar claro que **ao realizar a compra, o cliente declara estar ciente e de acordo com os termos de cancelamento** estabelecidos entre empresa e cliente.
+## Texto atualizado
 
-## Texto atualizado proposto
+**Pergunta**: Posso cancelar a qualquer momento?
 
-> **Política de cancelamento transparente**
->
-> Ao adquirir qualquer plano, você declara estar ciente e de acordo com os termos de cancelamento estabelecidos entre empresa e cliente. Você pode cancelar sua assinatura a qualquer momento após o período de teste, solicitando com pelo menos 30 dias de antecedência da próxima fatura para evitar cobranças do ciclo seguinte. Garantia de 7 dias de arrependimento conforme o Código de Defesa do Consumidor (Art. 49).
+**Resposta**: Sim. Ao adquirir qualquer plano, você declara estar ciente e de acordo com os termos de cancelamento estabelecidos entre empresa e cliente. Você pode cancelar sua assinatura a qualquer momento após o período de teste, solicitando com pelo menos 30 dias de antecedência da próxima fatura para evitar cobranças do ciclo seguinte. Garantia de 7 dias de arrependimento conforme o Código de Defesa do Consumidor (Art. 49).
 
-## Arquivo alterado
+## Arquivo
 
 | Arquivo | Ação |
 |---|---|
-| `src/components/landing/PricingSection.tsx` | Atualizar texto do parágrafo de política (linhas 263-267) |
-
-Sem migrations. Alteração apenas textual.
+| `src/components/landing/FAQSection.tsx` | Atualizar `answer` do item "Posso cancelar a qualquer momento?" (~linha 28) |
 
