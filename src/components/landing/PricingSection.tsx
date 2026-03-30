@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, ShieldCheck } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
