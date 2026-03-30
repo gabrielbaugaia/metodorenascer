@@ -261,10 +261,11 @@ export function PricingSection() {
             <span className="text-sm font-semibold text-foreground">Política de cancelamento transparente</span>
           </div>
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Você pode cancelar sua assinatura a qualquer momento após o período de teste.
-            Para evitar a cobrança do próximo ciclo, solicite o cancelamento com pelo menos
-            30 dias de antecedência da próxima fatura. Garantia de 7 dias de arrependimento
-            conforme o Código de Defesa do Consumidor (Art. 49).
+            Ao adquirir qualquer plano, você declara estar ciente e de acordo com os termos de cancelamento
+            estabelecidos entre empresa e cliente. Você pode cancelar sua assinatura a qualquer momento após
+            o período de teste, solicitando com pelo menos 30 dias de antecedência da próxima fatura para
+            evitar cobranças do ciclo seguinte. Garantia de 7 dias de arrependimento conforme o Código de
+            Defesa do Consumidor (Art. 49).
           </p>
         </div>
       </div>
