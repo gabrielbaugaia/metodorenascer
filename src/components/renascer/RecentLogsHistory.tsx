@@ -102,6 +102,14 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
   const [previews, setPreviews] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [extracting, setExtracting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    sleep_hours: log.sleep_hours ?? 0,
+    stress_level: log.stress_level ?? 0,
+    energy_focus: log.energy_focus ?? 3,
+    trained_today: log.trained_today ?? false,
+    rpe: log.rpe ?? 5,
+  });
   const [fitnessData, setFitnessData] = useState({
     steps: log.steps,
     active_calories: log.active_calories,
