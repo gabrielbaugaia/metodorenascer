@@ -248,8 +248,46 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
       setFiles([]);
       setPreviews([]);
       setDirty(false);
+      setEditing(false);
     },
     onError: () => toast.error("Erro ao salvar. Tente novamente."),
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("Not authenticated");
+      const { error } = await supabase
+        .from("manual_day_logs")
+        .update({
+          sleep_hours: editData.sleep_hours,
+          stress_level: editData.stress_level,
+          energy_focus: editData.energy_focus,
+          trained_today: editData.trained_today,
+          rpe: editData.trained_today ? editData.rpe : null,
+        } as any)
+        .eq("user_id", user.id)
+        .eq("date", log.date);
+      if (error) throw error;
+
+      // Sync sleep to health_daily
+      await supabase
+        .from("health_daily")
+        .upsert({
+          user_id: user.id,
+          date: log.date,
+          source: "manual",
+          sleep_minutes: Math.round(editData.sleep_hours * 60),
+        } as any, { onConflict: "user_id,date" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recent-logs-history"] });
+      queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
+      queryClient.invalidateQueries({ queryKey: ["health-daily"] });
+      queryClient.invalidateQueries({ queryKey: ["sis-scores-30d"] });
+      toast.success("Dados do dia atualizados!");
+      setEditing(false);
+    },
+    onError: () => toast.error("Erro ao salvar edição."),
   });
 
   return (
