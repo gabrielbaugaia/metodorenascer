@@ -219,15 +219,26 @@ export default function Renascer() {
         <ManualInput dataMode={dataMode} todayLog={todayLog} onSaveSuccess={handleSaveSuccess} />
 
         {/* Batch upload button */}
-        <Button
-          variant="outline"
-          className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10"
-          onClick={() => setBatchUploadOpen(true)}
-        >
-          <CalendarDays className="h-4 w-4" />
-          Recuperar Semana (até 7 prints)
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/10"
+            onClick={() => setBatchUploadOpen(true)}
+          >
+            <CalendarDays className="h-4 w-4" />
+            Recuperar Semana
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/10"
+            onClick={() => setExcelImportOpen(true)}
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Importar Excel
+          </Button>
+        </div>
         <BatchFitnessUpload open={batchUploadOpen} onOpenChange={setBatchUploadOpen} />
+        <ExcelDataImport open={excelImportOpen} onOpenChange={setExcelImportOpen} />
 
         {/* Recent Logs History (kept) */}
         <RecentLogsHistory />
