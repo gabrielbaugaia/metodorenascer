@@ -4,9 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Moon, Zap, Brain, Camera, X, Loader2, ImageIcon } from "lucide-react";
+import { Moon, Zap, Brain, Camera, X, Loader2, ImageIcon, Pencil, Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { calcScore, classify } from "@/lib/renascerScoreCalc";
 import { toast } from "sonner";
@@ -98,6 +102,14 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
   const [previews, setPreviews] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [extracting, setExtracting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    sleep_hours: log.sleep_hours ?? 0,
+    stress_level: log.stress_level ?? 0,
+    energy_focus: log.energy_focus ?? 3,
+    trained_today: log.trained_today ?? false,
+    rpe: log.rpe ?? 5,
+  });
   const [fitnessData, setFitnessData] = useState({
     steps: log.steps,
     active_calories: log.active_calories,
@@ -236,8 +248,46 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
       setFiles([]);
       setPreviews([]);
       setDirty(false);
+      setEditing(false);
     },
     onError: () => toast.error("Erro ao salvar. Tente novamente."),
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("Not authenticated");
+      const { error } = await supabase
+        .from("manual_day_logs")
+        .update({
+          sleep_hours: editData.sleep_hours,
+          stress_level: editData.stress_level,
+          energy_focus: editData.energy_focus,
+          trained_today: editData.trained_today,
+          rpe: editData.trained_today ? editData.rpe : null,
+        } as any)
+        .eq("user_id", user.id)
+        .eq("date", log.date);
+      if (error) throw error;
+
+      // Sync sleep to health_daily
+      await supabase
+        .from("health_daily")
+        .upsert({
+          user_id: user.id,
+          date: log.date,
+          source: "manual",
+          sleep_minutes: Math.round(editData.sleep_hours * 60),
+        } as any, { onConflict: "user_id,date" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recent-logs-history"] });
+      queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
+      queryClient.invalidateQueries({ queryKey: ["health-daily"] });
+      queryClient.invalidateQueries({ queryKey: ["sis-scores-30d"] });
+      toast.success("Dados do dia atualizados!");
+      setEditing(false);
+    },
+    onError: () => toast.error("Erro ao salvar edição."),
   });
 
   return (
@@ -274,27 +324,116 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3 pt-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Sono</span>
-            <span className="font-medium">{log.sleep_hours ?? "—"} horas</span>
+          {/* Edit toggle button */}
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs text-muted-foreground"
+              onClick={() => setEditing(!editing)}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              {editing ? "Cancelar" : "Editar"}
+            </Button>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Estresse</span>
-            <span className="font-medium">{log.stress_level ?? "—"}/100</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Energia/Foco</span>
-            <span className="font-medium">{log.energy_focus ?? "—"}/5</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Treinou</span>
-            <span className="font-medium">{log.trained_today ? "Sim" : "Não"}</span>
-          </div>
-          {log.trained_today && (
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">RPE</span>
-              <span className="font-medium">{log.rpe ?? "—"}/10</span>
+
+          {editing ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Sono (horas)</Label>
+                <Input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="24"
+                  value={editData.sleep_hours}
+                  onChange={(e) => setEditData(d => ({ ...d, sleep_hours: parseFloat(e.target.value) || 0 }))}
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Estresse ({editData.stress_level}/100)</Label>
+                <Slider
+                  value={[editData.stress_level]}
+                  onValueChange={([v]) => setEditData(d => ({ ...d, stress_level: v }))}
+                  min={0}
+                  max={100}
+                  step={5}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Energia/Foco</Label>
+                <div className="flex gap-1.5">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <Button
+                      key={n}
+                      variant={editData.energy_focus === n ? "default" : "outline"}
+                      size="sm"
+                      className="flex-1 h-8 text-xs"
+                      onClick={() => setEditData(d => ({ ...d, energy_focus: n }))}
+                    >
+                      {n}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-muted-foreground">Treinou hoje</Label>
+                <Switch
+                  checked={editData.trained_today}
+                  onCheckedChange={(v) => setEditData(d => ({ ...d, trained_today: v }))}
+                />
+              </div>
+              {editData.trained_today && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">RPE ({editData.rpe}/10)</Label>
+                  <Slider
+                    value={[editData.rpe]}
+                    onValueChange={([v]) => setEditData(d => ({ ...d, rpe: v }))}
+                    min={1}
+                    max={10}
+                    step={1}
+                  />
+                </div>
+              )}
+              <Button
+                onClick={() => editMutation.mutate()}
+                disabled={editMutation.isPending}
+                className="w-full bg-primary text-primary-foreground"
+                size="sm"
+              >
+                {editMutation.isPending ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" />Salvando...</>
+                ) : (
+                  <><Save className="h-4 w-4 mr-2" />Salvar alterações</>
+                )}
+              </Button>
             </div>
+          ) : (
+            <>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Sono</span>
+                <span className="font-medium">{log.sleep_hours ?? "—"} horas</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Estresse</span>
+                <span className="font-medium">{log.stress_level ?? "—"}/100</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Energia/Foco</span>
+                <span className="font-medium">{log.energy_focus ?? "—"}/5</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Treinou</span>
+                <span className="font-medium">{log.trained_today ? "Sim" : "Não"}</span>
+              </div>
+              {log.trained_today && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">RPE</span>
+                  <span className="font-medium">{log.rpe ?? "—"}/10</span>
+                </div>
+              )}
+            </>
           )}
 
           {/* Fitness data */}
