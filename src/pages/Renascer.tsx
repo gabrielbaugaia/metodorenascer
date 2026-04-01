@@ -43,6 +43,7 @@ export default function Renascer() {
   const [backfilling, setBackfilling] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [batchUploadOpen, setBatchUploadOpen] = useState(false);
+  const [excelImportOpen, setExcelImportOpen] = useState(false);
 
   // Legacy score (kept for ManualInput compatibility)
   const { todayLog, isLoading: legacyLoading } = useRenascerScore();
