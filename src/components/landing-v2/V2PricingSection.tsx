@@ -1,5 +1,12 @@
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
+// Stripe links — substituir "#" pelos links reais quando criados no Stripe
+const STRIPE_LINKS = {
+  essencial: "#", // TODO: Stripe payment link Essencial
+  pro: "#",       // TODO: Stripe payment link PRO
+  elite: "#",     // TODO: Stripe payment link Elite (ou WhatsApp)
+};
+
 const plans = [
   {
     tier: "Nível 01",
@@ -18,6 +25,7 @@ const plans = [
     ],
     cta: "Começar com Essencial",
     featured: false,
+    stripeKey: "essencial" as keyof typeof STRIPE_LINKS,
   },
   {
     tier: "Nível 02",
@@ -37,6 +45,7 @@ const plans = [
     ],
     cta: "Começar com PRO",
     featured: true,
+    stripeKey: "pro" as keyof typeof STRIPE_LINKS,
   },
   {
     tier: "Nível 03",
@@ -56,9 +65,9 @@ const plans = [
     ],
     cta: "Falar com Baú",
     featured: false,
+    stripeKey: "elite" as keyof typeof STRIPE_LINKS,
   },
 ];
-
 const compareRows = [
   ["SIS Score™ diário", "✓", "✓", "✓"],
   ["Renascer Score™", "✓", "✓", "✓"],
@@ -133,7 +142,9 @@ export function V2PricingSection() {
             </ul>
 
             <a
-              href="#"
+              href={STRIPE_LINKS[p.stripeKey]}
+              target={STRIPE_LINKS[p.stripeKey] !== "#" ? "_blank" : undefined}
+              rel={STRIPE_LINKS[p.stripeKey] !== "#" ? "noopener noreferrer" : undefined}
               className={`font-mono-v2 text-[10px] tracking-[2.5px] uppercase p-[15px] text-center border block transition-all duration-200 ${
                 p.featured
                   ? "bg-primary border-primary text-primary-foreground hover:bg-transparent hover:text-primary"
