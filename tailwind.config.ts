@@ -78,6 +78,9 @@ export default {
       fontFamily: {
         display: ["Montserrat", "sans-serif"],
         sans: ["Inter", "sans-serif"],
+        "display-v2": ["Bebas Neue", "sans-serif"],
+        "body-v2": ["DM Sans", "sans-serif"],
+        "mono-v2": ["Space Mono", "monospace"],
       },
       keyframes: {
         "accordion-down": {
