@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 const navLinks = [
   { label: "Sistema", href: "#v2-sistema" },
@@ -30,9 +31,17 @@ export function V2Header() {
         ))}
       </div>
 
-      <a href="#v2-preco" className="font-mono-v2 text-[10px] tracking-[2px] uppercase bg-primary text-primary-foreground px-6 py-2.5 hover:bg-primary/80 transition-colors">
-        Ver Planos
-      </a>
+      <div className="flex items-center gap-4">
+        <Link
+          to="/auth"
+          className="font-mono-v2 text-[10px] tracking-[2px] uppercase text-muted-foreground hover:text-primary transition-colors hidden sm:inline-block"
+        >
+          Entrar
+        </Link>
+        <a href="#v2-preco" className="font-mono-v2 text-[10px] tracking-[2px] uppercase bg-primary text-primary-foreground px-6 py-2.5 hover:bg-primary/80 transition-colors">
+          Ver Planos
+        </a>
+      </div>
     </nav>
   );
 }
