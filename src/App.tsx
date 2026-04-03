@@ -67,6 +67,7 @@ const Renascer = lazy(() => import("./pages/Renascer"));
 const NutricaoTracking = lazy(() => import("./pages/NutricaoTracking"));
 const Cardio = lazy(() => import("./pages/Cardio"));
 const AnamneseExterna = lazy(() => import("./pages/AnamneseExterna"));
+const LandingV2 = lazy(() => import("./pages/LandingV2"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
