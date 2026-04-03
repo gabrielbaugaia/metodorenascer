@@ -67,6 +67,7 @@ const Renascer = lazy(() => import("./pages/Renascer"));
 const NutricaoTracking = lazy(() => import("./pages/NutricaoTracking"));
 const Cardio = lazy(() => import("./pages/Cardio"));
 const AnamneseExterna = lazy(() => import("./pages/AnamneseExterna"));
+const LandingV2 = lazy(() => import("./pages/LandingV2"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,6 +98,7 @@ const App = () => (
             <Routes>
               {/* ROTAS PÚBLICAS */}
             <Route path="/" element={<Index />} />
+            <Route path="/v2" element={<LandingV2 />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/entrar" element={<Auth />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
