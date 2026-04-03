@@ -142,7 +142,9 @@ export function V2PricingSection() {
             </ul>
 
             <a
-              href="#"
+              href={STRIPE_LINKS[p.stripeKey]}
+              target={STRIPE_LINKS[p.stripeKey] !== "#" ? "_blank" : undefined}
+              rel={STRIPE_LINKS[p.stripeKey] !== "#" ? "noopener noreferrer" : undefined}
               className={`font-mono-v2 text-[10px] tracking-[2.5px] uppercase p-[15px] text-center border block transition-all duration-200 ${
                 p.featured
                   ? "bg-primary border-primary text-primary-foreground hover:bg-transparent hover:text-primary"
