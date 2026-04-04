@@ -58,7 +58,7 @@ export function V2HeroSection() {
           </a>
           <a
             href="#v2-sistema"
-            className="font-mono-v2 text-[10px] sm:text-[11px] tracking-[1.5px] sm:tracking-[2px] uppercase bg-transparent text-muted-foreground px-8 sm:px-10 py-4 border border-border hover:border-primary hover:text-primary transition-all duration-200 inline-block whitespace-nowrap"
+            className="font-mono-v2 text-[10px] tracking-[1px] uppercase bg-transparent text-muted-foreground px-8 sm:px-10 py-4 border border-border hover:border-primary hover:text-primary transition-all duration-200 inline-block whitespace-nowrap"
           >
             Ver Como Funciona
           </a>
