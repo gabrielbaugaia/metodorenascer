@@ -29,9 +29,8 @@ export function V2HeroSection() {
 
       <div className={`relative z-[2] max-w-[900px] md:pl-7 transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"}`}>
         {/* Badge */}
-        <div className="inline-flex items-center gap-2.5 font-mono-v2 text-[10px] tracking-[3px] uppercase text-primary border border-primary/40 px-[18px] py-[7px] mb-11">
-          <span className="w-[7px] h-[7px] bg-primary rounded-full animate-pulse" />
-          Sistema Ativo — Abril 2026
+        <div className="inline-flex items-center font-mono-v2 text-[10px] tracking-[3px] uppercase text-primary border border-primary/40 px-[18px] py-[7px] mb-11">
+          Sistema Inteligente
         </div>
 
         <h1 className="font-display-v2 text-[clamp(72px,9vw,120px)] leading-[.92] tracking-[3px] text-foreground mb-1.5">
