@@ -60,7 +60,6 @@ Deno.serve(async (req) => {
 
     let dailyUpserted = false;
 
-    // Upsert daily data
     if (daily && typeof daily === "object") {
       const dailyRow: Record<string, unknown> = {
         user_id: userId,
@@ -76,6 +75,11 @@ Deno.serve(async (req) => {
       if (daily.exercise_minutes != null) dailyRow.exercise_minutes = daily.exercise_minutes;
       if (daily.standing_hours != null) dailyRow.standing_hours = daily.standing_hours;
       if (daily.distance_km != null) dailyRow.distance_km = daily.distance_km;
+      if (daily.sleeping_hr != null) dailyRow.sleeping_hr = daily.sleeping_hr;
+      if (daily.sleeping_hrv != null) dailyRow.sleeping_hrv = daily.sleeping_hrv;
+      if (daily.min_hr != null) dailyRow.min_hr = daily.min_hr;
+      if (daily.max_hr != null) dailyRow.max_hr = daily.max_hr;
+      if (daily.sedentary_hr != null) dailyRow.sedentary_hr = daily.sedentary_hr;
 
       const { error } = await supabase.from("health_daily").upsert(
         dailyRow,
@@ -85,7 +89,6 @@ Deno.serve(async (req) => {
       dailyUpserted = true;
     }
 
-    // Insert workouts with dedup via external_id
     let workoutsInserted = 0;
     if (Array.isArray(workouts) && workouts.length > 0) {
       const newRows = [];
@@ -93,7 +96,6 @@ Deno.serve(async (req) => {
       for (const w of workouts) {
         const externalId = w.external_id || null;
 
-        // Dedup: if external_id exists, check if already inserted
         if (externalId) {
           const { count } = await supabase
             .from("health_workouts")
@@ -102,7 +104,7 @@ Deno.serve(async (req) => {
             .eq("external_id", externalId);
 
           if (count && count > 0) {
-            continue; // already exists, skip
+            continue;
           }
         }
 

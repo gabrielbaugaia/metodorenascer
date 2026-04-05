@@ -72,6 +72,11 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
   const [restingHr, setRestingHr] = useState<string>("");
   const [hrvMs, setHrvMs] = useState<string>("");
   const [avgHrBpm, setAvgHrBpm] = useState<string>("");
+  const [sleepingHr, setSleepingHr] = useState<string>("");
+  const [sleepingHrv, setSleepingHrv] = useState<string>("");
+  const [minHr, setMinHr] = useState<string>("");
+  const [maxHr, setMaxHr] = useState<string>("");
+  const [sedentaryHr, setSedentaryHr] = useState<string>("");
 
   // Multi-screenshot support (up to 3)
   const [screenshotFiles, setScreenshotFiles] = useState<File[]>([]);
@@ -94,6 +99,11 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         if (data.resting_hr != null) setRestingHr(String(data.resting_hr));
         if (data.hrv_ms != null) setHrvMs(String(data.hrv_ms));
         if (data.avg_hr_bpm != null) setAvgHrBpm(String(data.avg_hr_bpm));
+        if (data.sleeping_hr != null) setSleepingHr(String(data.sleeping_hr));
+        if (data.sleeping_hrv != null) setSleepingHrv(String(data.sleeping_hrv));
+        if (data.min_hr != null) setMinHr(String(data.min_hr));
+        if (data.max_hr != null) setMaxHr(String(data.max_hr));
+        if (data.sedentary_hr != null) setSedentaryHr(String(data.sedentary_hr));
         // Auto-detect date from image
         if (data.detected_date) {
           const detected = data.detected_date as string;
@@ -180,6 +190,11 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       const restingHrVal = restingHr ? parseInt(restingHr) : null;
       const hrvMsVal = hrvMs ? parseInt(hrvMs) : null;
       const avgHrBpmVal = avgHrBpm ? parseInt(avgHrBpm) : null;
+      const sleepingHrVal = sleepingHr ? parseInt(sleepingHr) : null;
+      const sleepingHrvVal = sleepingHrv ? parseFloat(sleepingHrv) : null;
+      const minHrVal = minHr ? parseInt(minHr) : null;
+      const maxHrVal = maxHr ? parseInt(maxHr) : null;
+      const sedentaryHrVal = sedentaryHr ? parseInt(sedentaryHr) : null;
 
       // Upsert manual_day_logs
       const upsertData: Record<string, unknown> = {
@@ -198,6 +213,11 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         resting_hr: restingHrVal,
         hrv_ms: hrvMsVal,
         avg_hr_bpm: avgHrBpmVal,
+        sleeping_hr: sleepingHrVal,
+        sleeping_hrv: sleepingHrvVal,
+        min_hr: minHrVal,
+        max_hr: maxHrVal,
+        sedentary_hr: sedentaryHrVal,
       };
       if (screenshotPaths[0]) upsertData.fitness_screenshot_path = screenshotPaths[0];
       if (screenshotPaths[1]) upsertData.fitness_screenshot_path_2 = screenshotPaths[1];
@@ -223,6 +243,11 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       if (restingHrVal !== null) healthData.resting_hr = restingHrVal;
       if (hrvMsVal !== null) healthData.hrv_ms = hrvMsVal;
       if (avgHrBpmVal !== null) healthData.avg_hr_bpm = avgHrBpmVal;
+      if (sleepingHrVal !== null) healthData.sleeping_hr = sleepingHrVal;
+      if (sleepingHrvVal !== null) healthData.sleeping_hrv = sleepingHrvVal;
+      if (minHrVal !== null) healthData.min_hr = minHrVal;
+      if (maxHrVal !== null) healthData.max_hr = maxHrVal;
+      if (sedentaryHrVal !== null) healthData.sedentary_hr = sedentaryHrVal;
 
       const { error: e2 } = await supabase
         .from("health_daily")
@@ -266,7 +291,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
     );
   }
 
-  const hasFitnessData = steps || activeCals || exerciseMins || standingHrs || distanceKm || restingHr || hrvMs || avgHrBpm || screenshotFiles.length > 0;
+  const hasFitnessData = steps || activeCals || exerciseMins || standingHrs || distanceKm || restingHr || hrvMs || avgHrBpm || sleepingHr || sleepingHrv || minHr || maxHr || sedentaryHr || screenshotFiles.length > 0;
 
   return (
     <div className="rounded-xl border border-border/50 bg-card p-5 space-y-5">

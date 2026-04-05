@@ -22,6 +22,11 @@ interface ExtractedDay {
   resting_hr: number | null;
   hrv_ms: number | null;
   avg_hr_bpm: number | null;
+  sleeping_hr: number | null;
+  sleeping_hrv: number | null;
+  min_hr: number | null;
+  max_hr: number | null;
+  sedentary_hr: number | null;
   file: File;
   base64: string;
   dateAmbiguous: boolean;
@@ -108,6 +113,11 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
           if (data?.resting_hr != null) existing.resting_hr = data.resting_hr;
           if (data?.hrv_ms != null) existing.hrv_ms = data.hrv_ms;
           if (data?.avg_hr_bpm != null) existing.avg_hr_bpm = data.avg_hr_bpm;
+          if (data?.sleeping_hr != null) existing.sleeping_hr = data.sleeping_hr;
+          if (data?.sleeping_hrv != null) existing.sleeping_hrv = data.sleeping_hrv;
+          if (data?.min_hr != null) existing.min_hr = data.min_hr;
+          if (data?.max_hr != null) existing.max_hr = data.max_hr;
+          if (data?.sedentary_hr != null) existing.sedentary_hr = data.sedentary_hr;
           if (dateAmbiguous) existing.dateAmbiguous = true;
         } else {
           results.push({
@@ -120,6 +130,11 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
             resting_hr: data?.resting_hr ?? null,
             hrv_ms: data?.hrv_ms ?? null,
             avg_hr_bpm: data?.avg_hr_bpm ?? null,
+            sleeping_hr: data?.sleeping_hr ?? null,
+            sleeping_hrv: data?.sleeping_hrv ?? null,
+            min_hr: data?.min_hr ?? null,
+            max_hr: data?.max_hr ?? null,
+            sedentary_hr: data?.sedentary_hr ?? null,
             file: files[i].file,
             base64: files[i].preview,
             dateAmbiguous,
@@ -181,6 +196,14 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
               exercise_minutes: day.exercise_minutes,
               standing_hours: day.standing_hours,
               distance_km: day.distance_km,
+              resting_hr: day.resting_hr,
+              hrv_ms: day.hrv_ms,
+              avg_hr_bpm: day.avg_hr_bpm,
+              sleeping_hr: day.sleeping_hr,
+              sleeping_hrv: day.sleeping_hrv,
+              min_hr: day.min_hr,
+              max_hr: day.max_hr,
+              sedentary_hr: day.sedentary_hr,
               fitness_screenshot_path: path,
             } as any,
             { onConflict: "user_id,date" }
@@ -201,6 +224,11 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
         if (day.resting_hr != null) healthData.resting_hr = day.resting_hr;
         if (day.hrv_ms != null) healthData.hrv_ms = day.hrv_ms;
         if (day.avg_hr_bpm != null) healthData.avg_hr_bpm = day.avg_hr_bpm;
+        if (day.sleeping_hr != null) healthData.sleeping_hr = day.sleeping_hr;
+        if (day.sleeping_hrv != null) healthData.sleeping_hrv = day.sleeping_hrv;
+        if (day.min_hr != null) healthData.min_hr = day.min_hr;
+        if (day.max_hr != null) healthData.max_hr = day.max_hr;
+        if (day.sedentary_hr != null) healthData.sedentary_hr = day.sedentary_hr;
 
         await supabase
           .from("health_daily")

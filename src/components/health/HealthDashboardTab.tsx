@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Footprints, Flame, Moon, HeartPulse, Activity, Watch, Timer, Route, Heart, ChevronRight } from "lucide-react";
+import { Footprints, Flame, Moon, HeartPulse, Activity, Watch, Timer, Route, Heart, ChevronRight, BedDouble, ArrowDownUp, Armchair } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -144,7 +144,12 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
   const restingHrValues = dailyData.map(d => d.resting_hr).filter((v): v is number => v !== null && v > 0);
   const hrvValues = dailyData.map(d => d.hrv_ms).filter((v): v is number => v !== null && v > 0);
   const avgHrValues = dailyData.map(d => d.avg_hr_bpm).filter((v): v is number => v !== null && v > 0);
-  const hasCardioData = restingHrValues.length > 0 || hrvValues.length > 0 || avgHrValues.length > 0;
+  const sleepingHrValues = dailyData.map(d => d.sleeping_hr).filter((v): v is number => v !== null && v > 0);
+  const sleepingHrvValues = dailyData.map(d => d.sleeping_hrv).filter((v): v is number => v !== null && v > 0);
+  const minHrValues = dailyData.map(d => d.min_hr).filter((v): v is number => v !== null && v > 0);
+  const maxHrValues = dailyData.map(d => d.max_hr).filter((v): v is number => v !== null && v > 0);
+  const sedentaryHrValues = dailyData.map(d => d.sedentary_hr).filter((v): v is number => v !== null && v > 0);
+  const hasCardioData = restingHrValues.length > 0 || hrvValues.length > 0 || avgHrValues.length > 0 || sleepingHrValues.length > 0 || sleepingHrvValues.length > 0 || minHrValues.length > 0 || sedentaryHrValues.length > 0;
 
   return (
     <div className="space-y-6">
@@ -283,6 +288,96 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                     </div>
                     <div className="flex items-center gap-2">
                       <MiniSparkline data={[...avgHrValues].reverse()} color="hsl(330, 81%, 60%)" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {/* Sleeping HR */}
+            {sleepingHrValues.length > 0 && (
+              <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={() => setDrawerMetric("sleeping_hr")}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">FC ao Dormir</p>
+                      <p className="text-lg font-bold">
+                        {sleepingHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Média: {Math.round(sleepingHrValues.reduce((a, b) => a + b, 0) / sleepingHrValues.length)} bpm
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MiniSparkline data={[...sleepingHrValues].reverse()} color="hsl(262, 83%, 58%)" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {/* Sleeping HRV */}
+            {sleepingHrvValues.length > 0 && (
+              <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={() => setDrawerMetric("sleeping_hrv")}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">VFC ao Dormir</p>
+                      <p className="text-lg font-bold">
+                        {sleepingHrvValues[0].toFixed(0)} <span className="text-xs font-normal text-muted-foreground">ms</span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Média: {Math.round(sleepingHrvValues.reduce((a, b) => a + b, 0) / sleepingHrvValues.length)} ms
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MiniSparkline data={[...sleepingHrvValues].reverse()} color="hsl(142, 50%, 55%)" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {/* Min/Max HR */}
+            {(minHrValues.length > 0 || maxHrValues.length > 0) && (
+              <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={() => setDrawerMetric("min_hr")}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">MinMax BPM</p>
+                      <p className="text-lg font-bold">
+                        {minHrValues[0] ?? "—"} / {maxHrValues[0] ?? "—"} <span className="text-xs font-normal text-muted-foreground">bpm</span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {minHrValues.length > 0 && `Min média: ${Math.round(minHrValues.reduce((a, b) => a + b, 0) / minHrValues.length)}`}
+                        {minHrValues.length > 0 && maxHrValues.length > 0 && " · "}
+                        {maxHrValues.length > 0 && `Max média: ${Math.round(maxHrValues.reduce((a, b) => a + b, 0) / maxHrValues.length)}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {minHrValues.length > 1 && <MiniSparkline data={[...minHrValues].reverse()} color="hsl(200, 70%, 50%)" />}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {/* Sedentary HR */}
+            {sedentaryHrValues.length > 0 && (
+              <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={() => setDrawerMetric("sedentary_hr")}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground">BPM Sedentária</p>
+                      <p className="text-lg font-bold">
+                        {sedentaryHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Média: {Math.round(sedentaryHrValues.reduce((a, b) => a + b, 0) / sedentaryHrValues.length)} bpm
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MiniSparkline data={[...sedentaryHrValues].reverse()} color="hsl(30, 80%, 55%)" />
                       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                     </div>
                   </div>

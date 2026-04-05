@@ -15,6 +15,11 @@ export interface HealthDaily {
   standing_hours: number | null;
   distance_km: number | null;
   avg_hr_bpm: number | null;
+  sleeping_hr: number | null;
+  sleeping_hrv: number | null;
+  min_hr: number | null;
+  max_hr: number | null;
+  sedentary_hr: number | null;
   source: string;
   updated_at: string;
 }
@@ -41,17 +46,15 @@ function calculateReadiness(
 ): { score: number; recommendation: string } {
   if (data.length === 0) return { score: 0, recommendation: "Sem dados suficientes" };
 
-  const today = data[0]; // most recent
+  const today = data[0];
   let score = 100;
 
-  // Sleep penalties
   if (today.sleep_minutes < 300) {
     score -= 35;
   } else if (today.sleep_minutes < 360) {
     score -= 20;
   }
 
-  // Baselines (7-day averages excluding nulls)
   const restingHrs = data.map((d) => d.resting_hr).filter((v): v is number => v !== null);
   const hrvs = data.map((d) => d.hrv_ms).filter((v): v is number => v !== null);
 
@@ -70,7 +73,6 @@ function calculateReadiness(
   const hasRecentWorkout = recentWorkouts.length > 0;
   if (hasRecentWorkout) score -= 10;
 
-  // High-intensity workout + low sleep penalty
   const highIntensityTypes = ['hiit', 'running', 'cycling'];
   const hasHighIntensityRecent = recentWorkouts.some((w) =>
     highIntensityTypes.includes(w.type)
@@ -131,7 +133,6 @@ export function useHealthData() {
   const recentWorkouts = workoutsQuery.data || [];
   const readiness = calculateReadiness(dailyData, recentWorkouts);
 
-  // Last sync info
   const lastSync = dailyData.length > 0
     ? { date: dailyData[0].updated_at, source: dailyData[0].source }
     : null;
