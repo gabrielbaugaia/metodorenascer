@@ -1,97 +1,59 @@
 
-Plano: corrigir leitura do HeartWatch para importar valores diários reais e calcular a média corretamente
 
-Diagnóstico real
-- O problema principal está no `supabase/functions/extract-fitness-data/index.ts`: hoje ele só pode retornar 1 `hrv_ms` + 1 `detected_date` por imagem.
-- O print do HeartWatch anexado não é “um dia só”; ele mostra um período com vários dias (ex.: 30=18, 31=23, 01=38) e também um resumo/média de 21 dias (`Média 31`).
-- A função atual está misturando “valor diário” com “média do período”, porque o prompt não separa explicitamente:
-  - valor do dia
-  - média do período
-  - intervalo visível
-- Além disso, a função força datas dos “últimos 7/10 dias”, o que entra em conflito com prints de período como `23 de fev. - 5 de abr.`.
-- No app, `useHealthData.ts` busca só 7 dias e o `HealthDashboardTab.tsx` calcula médias sobre esses 7 dias, então mesmo com importação correta ele nunca vai refletir uma média de 21 dias igual à do HeartWatch.
+# Plano: Importar CSV granular do HeartWatch via ExcelDataImport
 
-O que vou implementar
-1. Tornar o OCR compatível com prints de período do HeartWatch
-- Atualizar `supabase/functions/extract-fitness-data/index.ts` para reconhecer dois modos:
-  - screenshot de 1 dia
-  - screenshot de período/multi-dia
-- Para HeartWatch, a resposta passará a separar:
-  - `days[]`: lista de dias individuais visíveis no print
-  - `summary`: média do período e intervalo visível
-- Regra crítica no prompt:
-  - nunca salvar a média de 21 dias como se fosse `hrv_ms` de um único dia
-  - usar a média apenas como resumo/validação
-- Exemplo esperado para o print:
-```text
-days:
-- 2026-03-30 => hrv_ms 18
-- 2026-03-31 => hrv_ms 23
-- 2026-04-01 => hrv_ms 38
-...
-summary:
-- metric: hrv_ms
-- period_days: 21
-- average: 31
-- range_start / range_end
-```
+## Problema
 
-2. Corrigir a inferência de datas para telas com intervalo
-- Remover a lógica rígida de “últimos 7 dias” para esse tipo de captura.
-- Fazer a data vir do cabeçalho do período (`23 de fev. - 5 de abr.`), dos rótulos de mês (`março`, `abr.`) e dos dias do calendário.
-- Marcar como ambíguo apenas quando realmente faltar contexto visual suficiente.
+O CSV do HeartWatch contém **~10.677 leituras individuais de BPM** (uma por medição ao longo do dia), não resumos diários. O importador atual (`ExcelDataImport`) espera 1 linha = 1 dia. Precisamos agregar automaticamente essas leituras em resumos diários.
 
-3. Salvar cada dia individualmente nas tabelas certas
-- Atualizar os fluxos que hoje esperam apenas 1 dia por screenshot:
-  - `src/components/renascer/ManualInput.tsx`
-  - `src/components/renascer/BatchFitnessUpload.tsx`
-  - `src/components/renascer/RecentLogsHistory.tsx`
-- Quando o OCR retornar `days[]`, o sistema fará upsert de cada data em:
-  - `manual_day_logs`
-  - `health_daily`
-- Isso mantém histórico, painel “Dados do Corpo” e score sincronizados.
+## Estrutura do CSV
 
-4. Manter compatibilidade com prints simples
-- Se a imagem tiver só 1 valor/dia, o comportamento continua como hoje.
-- Se a imagem for um gráfico/calendário com vários dias, o sistema troca para importação multi-dia automaticamente.
+| Coluna | Significado |
+|---|---|
+| ISO | Timestamp completo |
+| bpm | Valor da leitura |
+| Bpm ao dormir | Flag "1" = leitura durante sono |
+| Bpm sedentária | Flag "1" = leitura sedentária |
+| Caminhando | Flag "1" = caminhando |
+| Treino | Flag "1" = exercício |
+| Tipo | "repouso", "elevado", "alto repouso" |
 
-5. Corrigir média exibida no app
-- Atualizar `src/hooks/useHealthData.ts` para buscar histórico suficiente para métricas cardiovasculares (pelo menos 21 a 30 dias).
-- Atualizar `src/components/health/HealthDashboardTab.tsx` para:
-  - manter tendência visual de 7 dias, se quiser
-  - calcular médias com a janela correta quando a métrica vier de um contexto de 21 dias
-- A média exibida passará a ser calculada dos dias realmente salvos, em vez de depender do valor resumido lido do print.
+## Agregação por dia
 
-6. Ajustar exibição e revisão dos dados importados
-- Em `RecentLogsHistory.tsx`, mostrar corretamente os valores cardiovasculares importados por dia.
-- Se o OCR trouxer resumo do período, usar isso só como conferência durante revisão/importação, não como dado diário.
-- Opcionalmente, no drawer de detalhe (`HealthMetricDetailDrawer.tsx`), mostrar “média 7d” e “média 21d” separadas para evitar nova confusão.
+Para cada data única, calcular:
+- **avg_hr_bpm** = média de todos os bpm do dia
+- **sleeping_hr** = média dos bpm onde "Bpm ao dormir" = 1
+- **sedentary_hr** = média dos bpm onde "Bpm sedentária" = 1
+- **resting_hr** = média dos bpm onde Tipo = "repouso"
+- **min_hr** = mínimo bpm do dia
+- **max_hr** = máximo bpm do dia
 
-Arquivos principais
-- `supabase/functions/extract-fitness-data/index.ts`
-- `src/components/renascer/ManualInput.tsx`
-- `src/components/renascer/BatchFitnessUpload.tsx`
-- `src/components/renascer/RecentLogsHistory.tsx`
-- `src/hooks/useHealthData.ts`
-- `src/components/health/HealthDashboardTab.tsx`
-- possivelmente `src/components/health/HealthMetricDetailDrawer.tsx`
+## Alterações
 
-Banco de dados
-- Não deve precisar de nova tabela para resolver isso.
-- As tabelas atuais já suportam o essencial; o ajuste é principalmente de extração, mapeamento e cálculo.
+### 1. Expandir `ExcelDataImport.tsx`
 
-Resultado esperado
-- Um print de período do HeartWatch deixa de virar “1 valor errado”.
-- O sistema passa a importar dia por dia corretamente.
-- Exemplo: 30=18, 31=23, 01=38 serão gravados individualmente.
-- A média mostrada no app será calculada a partir desses dias gravados, e não confundida com o resumo do print.
-- “Hoje”, “Dados do Corpo” e histórico passam a refletir os valores reais.
+- Detectar formato HeartWatch pelo header (presença de "ISO" + "bpm" + "Bpm ao dormir")
+- Quando detectado, agregar as leituras por dia antes de montar as `ParsedRow[]`
+- Adicionar os campos `sleeping_hr`, `sedentary_hr`, `min_hr`, `max_hr` à interface `ParsedRow`
+- Incluir esses campos no upsert de `manual_day_logs` e `health_daily`
+- Mostrar na tabela de review os novos campos relevantes
 
-Fluxo desejado
-```text
-Print HeartWatch do período
--> OCR identifica intervalo + dias individuais + média resumida
--> salva cada dia em manual_day_logs e health_daily
--> app recalcula médias a partir dos dias salvos
--> painel mostra valores corretos por dia e média correta
-```
+### 2. Expandir `COLUMN_MAP` para suportar também importações HeartWatch resumidas
+
+- Adicionar mapeamentos: "bpm ao dormir" → sleeping_hr, "bpm sedentaria" → sedentary_hr, "min hr" → min_hr, "max hr" → max_hr
+
+### 3. Local de anexo no app
+
+O arquivo é anexado na mesma tela existente: **botão "Importar Excel"** na página Renascer ou na aba Dados do Corpo. Nenhum novo ponto de entrada é necessário.
+
+## Arquivo modificado
+- `src/components/renascer/ExcelDataImport.tsx`
+
+## Resultado esperado
+- Usuário anexa o CSV do HeartWatch
+- Sistema detecta que são leituras granulares
+- Agrega por dia (~95 dias de jan a abril)
+- Mostra preview com avg BPM, FC ao dormir, FC sedentária, min/max
+- Salva em `manual_day_logs` + `health_daily`
+- Dashboard atualiza imediatamente
+
