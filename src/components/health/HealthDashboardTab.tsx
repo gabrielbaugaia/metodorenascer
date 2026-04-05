@@ -279,7 +279,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {hrvValues[0].toFixed(0)} <span className="text-xs font-normal text-muted-foreground">ms</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)} ms
+                        7d: {avg(hrvValues)} · 21d: {avg(hrvValues21d) ?? "—"} ms
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -300,7 +300,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {avgHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(avgHrValues.reduce((a, b) => a + b, 0) / avgHrValues.length)} bpm
+                        7d: {avg(avgHrValues)} bpm
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -322,7 +322,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {sleepingHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(sleepingHrValues.reduce((a, b) => a + b, 0) / sleepingHrValues.length)} bpm
+                        7d: {avg(sleepingHrValues)} · 21d: {avg(sleepingHrValues21d) ?? "—"} bpm
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -344,7 +344,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {sleepingHrvValues[0].toFixed(0)} <span className="text-xs font-normal text-muted-foreground">ms</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(sleepingHrvValues.reduce((a, b) => a + b, 0) / sleepingHrvValues.length)} ms
+                        7d: {avg(sleepingHrvValues)} · 21d: {avg(sleepingHrvValues21d) ?? "—"} ms
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -366,9 +366,9 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {minHrValues[0] ?? "—"} / {maxHrValues[0] ?? "—"} <span className="text-xs font-normal text-muted-foreground">bpm</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        {minHrValues.length > 0 && `Min média: ${Math.round(minHrValues.reduce((a, b) => a + b, 0) / minHrValues.length)}`}
+                        {minHrValues.length > 0 && `Min 7d: ${avg(minHrValues)}`}
                         {minHrValues.length > 0 && maxHrValues.length > 0 && " · "}
-                        {maxHrValues.length > 0 && `Max média: ${Math.round(maxHrValues.reduce((a, b) => a + b, 0) / maxHrValues.length)}`}
+                        {maxHrValues.length > 0 && `Max 7d: ${avg(maxHrValues)}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -390,7 +390,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {sedentaryHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(sedentaryHrValues.reduce((a, b) => a + b, 0) / sedentaryHrValues.length)} bpm
+                        7d: {avg(sedentaryHrValues)} · 21d: {avg(sedentaryHrValues21d) ?? "—"} bpm
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
