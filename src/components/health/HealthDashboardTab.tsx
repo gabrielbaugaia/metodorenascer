@@ -244,8 +244,9 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
         <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
             <HeartPulse className="h-4 w-4 text-red-500" />
-            Saúde Cardiovascular — 7 dias
+            Saúde Cardiovascular
           </h3>
+          <p className="text-[10px] text-muted-foreground mb-3">Sparkline 7d · Médias 7d e 21d</p>
           <div className="grid grid-cols-1 gap-3">
             {restingHrValues.length > 0 && (
               <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={() => setDrawerMetric("resting_hr")}>
