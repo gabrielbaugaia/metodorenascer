@@ -69,6 +69,9 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
   const [exerciseMins, setExerciseMins] = useState<string>("");
   const [standingHrs, setStandingHrs] = useState<string>("");
   const [distanceKm, setDistanceKm] = useState<string>("");
+  const [restingHr, setRestingHr] = useState<string>("");
+  const [hrvMs, setHrvMs] = useState<string>("");
+  const [avgHrBpm, setAvgHrBpm] = useState<string>("");
 
   // Multi-screenshot support (up to 3)
   const [screenshotFiles, setScreenshotFiles] = useState<File[]>([]);
@@ -88,6 +91,9 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         if (data.exercise_minutes != null) setExerciseMins(String(data.exercise_minutes));
         if (data.standing_hours != null) setStandingHrs(String(data.standing_hours));
         if (data.distance_km != null) setDistanceKm(String(data.distance_km));
+        if (data.resting_hr != null) setRestingHr(String(data.resting_hr));
+        if (data.hrv_ms != null) setHrvMs(String(data.hrv_ms));
+        if (data.avg_hr_bpm != null) setAvgHrBpm(String(data.avg_hr_bpm));
         // Auto-detect date from image
         if (data.detected_date) {
           const detected = data.detected_date as string;
@@ -171,6 +177,9 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       const exerciseMinsVal = exerciseMins ? parseInt(exerciseMins) : null;
       const standingHrsVal = standingHrs ? parseInt(standingHrs) : null;
       const distanceKmVal = distanceKm ? parseFloat(distanceKm) : null;
+      const restingHrVal = restingHr ? parseInt(restingHr) : null;
+      const hrvMsVal = hrvMs ? parseInt(hrvMs) : null;
+      const avgHrBpmVal = avgHrBpm ? parseInt(avgHrBpm) : null;
 
       // Upsert manual_day_logs
       const upsertData: Record<string, unknown> = {
@@ -208,6 +217,9 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       if (exerciseMinsVal !== null) healthData.exercise_minutes = exerciseMinsVal;
       if (standingHrsVal !== null) healthData.standing_hours = standingHrsVal;
       if (distanceKmVal !== null) healthData.distance_km = distanceKmVal;
+      if (restingHrVal !== null) healthData.resting_hr = restingHrVal;
+      if (hrvMsVal !== null) healthData.hrv_ms = hrvMsVal;
+      if (avgHrBpmVal !== null) healthData.avg_hr_bpm = avgHrBpmVal;
 
       const { error: e2 } = await supabase
         .from("health_daily")
