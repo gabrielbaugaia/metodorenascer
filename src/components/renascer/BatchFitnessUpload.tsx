@@ -113,6 +113,11 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
           if (data?.resting_hr != null) existing.resting_hr = data.resting_hr;
           if (data?.hrv_ms != null) existing.hrv_ms = data.hrv_ms;
           if (data?.avg_hr_bpm != null) existing.avg_hr_bpm = data.avg_hr_bpm;
+          if (data?.sleeping_hr != null) existing.sleeping_hr = data.sleeping_hr;
+          if (data?.sleeping_hrv != null) existing.sleeping_hrv = data.sleeping_hrv;
+          if (data?.min_hr != null) existing.min_hr = data.min_hr;
+          if (data?.max_hr != null) existing.max_hr = data.max_hr;
+          if (data?.sedentary_hr != null) existing.sedentary_hr = data.sedentary_hr;
           if (dateAmbiguous) existing.dateAmbiguous = true;
         } else {
           results.push({
@@ -125,6 +130,11 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
             resting_hr: data?.resting_hr ?? null,
             hrv_ms: data?.hrv_ms ?? null,
             avg_hr_bpm: data?.avg_hr_bpm ?? null,
+            sleeping_hr: data?.sleeping_hr ?? null,
+            sleeping_hrv: data?.sleeping_hrv ?? null,
+            min_hr: data?.min_hr ?? null,
+            max_hr: data?.max_hr ?? null,
+            sedentary_hr: data?.sedentary_hr ?? null,
             file: files[i].file,
             base64: files[i].preview,
             dateAmbiguous,
