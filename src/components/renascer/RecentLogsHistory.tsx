@@ -27,6 +27,9 @@ interface DayLog {
   exercise_minutes: number | null;
   standing_hours: number | null;
   distance_km: number | null;
+  resting_hr: number | null;
+  hrv_ms: number | null;
+  avg_hr_bpm: number | null;
   fitness_screenshot_path: string | null;
   fitness_screenshot_path_2: string | null;
   fitness_screenshot_path_3: string | null;
@@ -44,7 +47,7 @@ export function RecentLogsHistory() {
       const sevenAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
       const { data } = await supabase
         .from("manual_day_logs")
-        .select("date, sleep_hours, stress_level, energy_focus, trained_today, rpe, steps, active_calories, exercise_minutes, standing_hours, distance_km, fitness_screenshot_path, fitness_screenshot_path_2, fitness_screenshot_path_3")
+        .select("date, sleep_hours, stress_level, energy_focus, trained_today, rpe, steps, active_calories, exercise_minutes, standing_hours, distance_km, resting_hr, hrv_ms, avg_hr_bpm, fitness_screenshot_path, fitness_screenshot_path_2, fitness_screenshot_path_3")
         .eq("user_id", user!.id)
         .gte("date", sevenAgo)
         .lte("date", today)
@@ -116,9 +119,9 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
     exercise_minutes: log.exercise_minutes,
     standing_hours: log.standing_hours,
     distance_km: log.distance_km,
-    resting_hr: (log as any).resting_hr ?? null,
-    hrv_ms: (log as any).hrv_ms ?? null,
-    avg_hr_bpm: (log as any).avg_hr_bpm ?? null,
+    resting_hr: log.resting_hr,
+    hrv_ms: log.hrv_ms,
+    avg_hr_bpm: log.avg_hr_bpm,
   });
   const [dirty, setDirty] = useState(false);
 
@@ -208,6 +211,9 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
         exercise_minutes: fitnessData.exercise_minutes,
         standing_hours: fitnessData.standing_hours,
         distance_km: fitnessData.distance_km,
+        resting_hr: fitnessData.resting_hr,
+        hrv_ms: fitnessData.hrv_ms,
+        avg_hr_bpm: fitnessData.avg_hr_bpm,
         fitness_screenshot_path: allPaths[0] || null,
         fitness_screenshot_path_2: allPaths[1] || null,
         fitness_screenshot_path_3: allPaths[2] || null,

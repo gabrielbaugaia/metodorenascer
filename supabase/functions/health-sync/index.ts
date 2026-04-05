@@ -62,17 +62,23 @@ Deno.serve(async (req) => {
 
     // Upsert daily data
     if (daily && typeof daily === "object") {
+      const dailyRow: Record<string, unknown> = {
+        user_id: userId,
+        date,
+        steps: daily.steps ?? 0,
+        active_calories: daily.active_calories ?? 0,
+        sleep_minutes: daily.sleep_minutes ?? 0,
+        resting_hr: daily.resting_hr ?? null,
+        hrv_ms: daily.hrv_ms ?? null,
+        source: daily.source ?? "unknown",
+      };
+      if (daily.avg_hr_bpm != null) dailyRow.avg_hr_bpm = daily.avg_hr_bpm;
+      if (daily.exercise_minutes != null) dailyRow.exercise_minutes = daily.exercise_minutes;
+      if (daily.standing_hours != null) dailyRow.standing_hours = daily.standing_hours;
+      if (daily.distance_km != null) dailyRow.distance_km = daily.distance_km;
+
       const { error } = await supabase.from("health_daily").upsert(
-        {
-          user_id: userId,
-          date,
-          steps: daily.steps ?? 0,
-          active_calories: daily.active_calories ?? 0,
-          sleep_minutes: daily.sleep_minutes ?? 0,
-          resting_hr: daily.resting_hr ?? null,
-          hrv_ms: daily.hrv_ms ?? null,
-          source: daily.source ?? "unknown",
-        },
+        dailyRow,
         { onConflict: "user_id,date" }
       );
       if (error) throw error;

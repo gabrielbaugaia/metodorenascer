@@ -195,6 +195,9 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         exercise_minutes: exerciseMinsVal,
         standing_hours: standingHrsVal,
         distance_km: distanceKmVal,
+        resting_hr: restingHrVal,
+        hrv_ms: hrvMsVal,
+        avg_hr_bpm: avgHrBpmVal,
       };
       if (screenshotPaths[0]) upsertData.fitness_screenshot_path = screenshotPaths[0];
       if (screenshotPaths[1]) upsertData.fitness_screenshot_path_2 = screenshotPaths[1];
@@ -263,7 +266,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
     );
   }
 
-  const hasFitnessData = steps || activeCals || exerciseMins || standingHrs || distanceKm || screenshotFiles.length > 0;
+  const hasFitnessData = steps || activeCals || exerciseMins || standingHrs || distanceKm || restingHr || hrvMs || avgHrBpm || screenshotFiles.length > 0;
 
   return (
     <div className="rounded-xl border border-border/50 bg-card p-5 space-y-5">
