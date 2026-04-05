@@ -258,7 +258,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {restingHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(restingHrValues.reduce((a, b) => a + b, 0) / restingHrValues.length)} bpm
+                        7d: {avg(restingHrValues)} · 21d: {avg(restingHrValues21d) ?? "—"} bpm
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
