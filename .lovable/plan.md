@@ -1,53 +1,64 @@
 
-Objetivo: corrigir o fluxo para que os dados apareçam e atualizem corretamente na aba “Dados do Corpo”, inclusive FC de Repouso, VFC e BPM médio.
 
-1. Ajustar a origem dos dados
-- Confirmar `health_daily` como fonte principal da aba `DadosCorpo`.
-- Garantir que todos os fluxos que registram saúde sincronizem de forma completa para `health_daily`, não só passos/calorias/sono.
+# Plano: Expandir métricas cardiovasculares do HeartWatch
 
-2. Corrigir o check-in principal (`src/components/renascer/ManualInput.tsx`)
-- Incluir `resting_hr`, `hrv_ms` e `avg_hr_bpm` também no `manual_day_logs`, para manter consistência com histórico e revisão.
-- Ampliar a lógica de “tem dados fitness” para considerar também FC repouso, VFC e BPM médio.
-- Após salvar, invalidar também queries relacionadas que dependem desses dados além de `health-daily`, para refletir imediatamente em todos os painéis.
+## Contexto
 
-3. Corrigir histórico e edição de dias (`src/components/renascer/RecentLogsHistory.tsx`)
-- Atualizar o `select` de `manual_day_logs` para buscar `resting_hr`, `hrv_ms` e `avg_hr_bpm`.
-- Ao editar/salvar um dia, persistir esses campos também em `manual_day_logs`, não apenas em `health_daily`.
-- Isso evita que o histórico mostre valores vazios enquanto a aba de saúde usa outra fonte.
+O HeartWatch fornece métricas detalhadas que o sistema atual não captura:
+- **BPM ao dormir** (sleeping HR) — não capturado
+- **VFC ao dormir** (sleeping HRV) — não capturado
+- **MinMax BPM** (min/max HR diário) — não capturado
+- **BPM sedentária** (sedentary HR) — não capturado
 
-4. Corrigir sincronização do conector móvel
-- Em `src/services/healthSync.ts`, incluir no payload também:
-  - `avg_hr_bpm`
-  - `exercise_minutes`
-  - `standing_hours`
-  - `distance_km`
-- Em `supabase/functions/health-sync/index.ts`, aceitar e salvar esses campos no `upsert` de `health_daily`.
-- Hoje o sync do conector está incompleto, então parte dos dados nunca chega à aba.
+Atualmente só capturamos: resting_hr (BPM ao despertar), hrv_ms (VFC ao despertar), avg_hr_bpm (BPM diário).
 
-5. Refinar atualização visual da aba Dados do Corpo
-- Em `src/hooks/useHealthData.ts`, manter a leitura de 7 dias, mas revisar se o fallback do dia exibido prioriza o registro mais recente com dados cardiovasculares quando o dia atual não tiver esses campos.
-- Assim evita aparecer “indisponível” mesmo quando existe dado recente válido.
+## Alterações
 
-6. Validar a interface da aba
-- Em `src/components/health/HealthDashboardTab.tsx`, manter os cards atuais, mas garantir que os estados de vazio considerem corretamente os campos cardiovasculares.
-- Verificar especialmente:
-  - FC Repouso
-  - VFC (HRV)
-  - BPM Diário
-  - cards do bloco “Saúde Cardiovascular — 7 dias”
+### 1. Migração de banco de dados
+Adicionar 5 novas colunas em `health_daily` e `manual_day_logs`:
+- `sleeping_hr` (integer) — FC ao dormir
+- `sleeping_hrv` (numeric) — VFC ao dormir
+- `min_hr` (integer) — BPM mínima do dia
+- `max_hr` (integer) — BPM máxima do dia
+- `sedentary_hr` (integer) — BPM sedentária
 
-Resultado esperado
-- Quando o aluno registrar print/manual/importação/sincronização, a aba “Dados do Corpo” passa a atualizar de forma consistente.
-- Se houver dado do dia, ele aparece.
-- Se não houver dado do dia, mas houver dado recente válido, o painel mostra esse último registro.
+### 2. Expandir OCR (`supabase/functions/extract-fitness-data/index.ts`)
+- Adicionar os 5 novos campos no schema do tool calling
+- Expandir o prompt para mapear terminologias HeartWatch:
+  - "BPM ao dormir" / "Sleeping HR" → sleeping_hr
+  - "VFC ao dormir" / "Sleeping HRV" → sleeping_hrv
+  - "MinMax bpm" / "Min HR" / "Max HR" → min_hr, max_hr
+  - "BPM sedentária" / "Sedentary HR" → sedentary_hr
 
-Detalhes técnicos
-- Arquivos principais:
-  - `src/components/renascer/ManualInput.tsx`
-  - `src/components/renascer/RecentLogsHistory.tsx`
-  - `src/hooks/useHealthData.ts`
-  - `src/components/health/HealthDashboardTab.tsx`
-  - `src/services/healthSync.ts`
-  - `supabase/functions/health-sync/index.ts`
-- Não deve precisar de nova tabela.
-- Pode exigir pequena atualização no backend function para o sync móvel ficar completo.
+### 3. Atualizar ManualInput (`src/components/renascer/ManualInput.tsx`)
+- Adicionar estados para os 5 novos campos
+- Capturar na resposta OCR
+- Incluir no upsert de `health_daily` e `manual_day_logs`
+
+### 4. Atualizar BatchFitnessUpload (`src/components/renascer/BatchFitnessUpload.tsx`)
+- Expandir interface `ExtractedDay` com os novos campos
+- Salvar no upsert
+
+### 5. Atualizar Dashboard (`src/components/health/HealthDashboardTab.tsx`)
+- Adicionar cards para: FC ao Dormir, VFC ao Dormir, BPM Min/Max, BPM Sedentária
+- Incluir sparklines de 7 dias na seção cardiovascular
+
+### 6. Atualizar tipos e hooks
+- `src/hooks/useHealthData.ts` — expandir interface `HealthDaily`
+- `src/services/healthSync.ts` — incluir novos campos no payload mobile
+- `supabase/functions/health-sync/index.ts` — aceitar e salvar novos campos
+
+### 7. Atualizar drawer de detalhes (`HealthMetricDetailDrawer`)
+- Adicionar novos MetricKeys para os campos expandidos
+
+## Arquivos modificados
+- Nova migração SQL
+- `supabase/functions/extract-fitness-data/index.ts`
+- `src/components/renascer/ManualInput.tsx`
+- `src/components/renascer/BatchFitnessUpload.tsx`
+- `src/components/health/HealthDashboardTab.tsx`
+- `src/components/health/HealthMetricDetailDrawer.tsx`
+- `src/hooks/useHealthData.ts`
+- `src/services/healthSync.ts`
+- `supabase/functions/health-sync/index.ts`
+
