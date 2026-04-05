@@ -83,6 +83,9 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
   const [screenshotPreviews, setScreenshotPreviews] = useState<string[]>([]);
   const [extracting, setExtracting] = useState(false);
 
+  // State for multi-day imports pending save
+  const [multiDayPending, setMultiDayPending] = useState<{ date: string; metric: string; value: number }[]>([]);
+
   const extractFitnessData = async (base64: string) => {
     try {
       setExtracting(true);
@@ -90,39 +93,51 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         body: { image_base64: base64 },
       });
       if (error) throw error;
-      if (data) {
-        if (data.steps != null) setSteps(String(data.steps));
-        if (data.active_calories != null) setActiveCals(String(data.active_calories));
-        if (data.exercise_minutes != null) setExerciseMins(String(data.exercise_minutes));
-        if (data.standing_hours != null) setStandingHrs(String(data.standing_hours));
-        if (data.distance_km != null) setDistanceKm(String(data.distance_km));
-        if (data.resting_hr != null) setRestingHr(String(data.resting_hr));
-        if (data.hrv_ms != null) setHrvMs(String(data.hrv_ms));
-        if (data.avg_hr_bpm != null) setAvgHrBpm(String(data.avg_hr_bpm));
-        if (data.sleeping_hr != null) setSleepingHr(String(data.sleeping_hr));
-        if (data.sleeping_hrv != null) setSleepingHrv(String(data.sleeping_hrv));
-        if (data.min_hr != null) setMinHr(String(data.min_hr));
-        if (data.max_hr != null) setMaxHr(String(data.max_hr));
-        if (data.sedentary_hr != null) setSedentaryHr(String(data.sedentary_hr));
-        // Auto-detect date from image
-        if (data.detected_date) {
-          const detected = data.detected_date as string;
-          const today = format(new Date(), "yyyy-MM-dd");
-          const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
-          if (detected === today) {
-            setDateOption("today");
-          } else if (detected === yesterday) {
-            setDateOption("yesterday");
-          } else {
-            setDateOption("custom");
-            setCustomDate(detected);
-          }
-          toast.success(`Dados lidos! Data detectada: ${format(new Date(detected + "T12:00:00"), "dd/MM/yyyy")}`);
-        } else {
-          toast.success("Dados lidos da imagem com sucesso!");
-        }
+      if (!data) return;
+
+      // Handle multi-day period screenshots
+      if (data.mode === "multi_day" && data.days?.length > 0) {
+        const metric = data.metric_type as string;
+        const days = data.days as { date: string; value: number }[];
+        setMultiDayPending((prev) => [...prev, ...days.map((d) => ({ date: d.date, metric, value: d.value }))]);
+        const avgLabel = data.summary_average != null ? ` (média período: ${data.summary_average})` : "";
+        toast.success(`${days.length} dias de ${metric} detectados${avgLabel}. Serão salvos ao registrar.`);
         setFitnessOpen(true);
+        return;
       }
+
+      // Single day mode (original)
+      if (data.steps != null) setSteps(String(data.steps));
+      if (data.active_calories != null) setActiveCals(String(data.active_calories));
+      if (data.exercise_minutes != null) setExerciseMins(String(data.exercise_minutes));
+      if (data.standing_hours != null) setStandingHrs(String(data.standing_hours));
+      if (data.distance_km != null) setDistanceKm(String(data.distance_km));
+      if (data.resting_hr != null) setRestingHr(String(data.resting_hr));
+      if (data.hrv_ms != null) setHrvMs(String(data.hrv_ms));
+      if (data.avg_hr_bpm != null) setAvgHrBpm(String(data.avg_hr_bpm));
+      if (data.sleeping_hr != null) setSleepingHr(String(data.sleeping_hr));
+      if (data.sleeping_hrv != null) setSleepingHrv(String(data.sleeping_hrv));
+      if (data.min_hr != null) setMinHr(String(data.min_hr));
+      if (data.max_hr != null) setMaxHr(String(data.max_hr));
+      if (data.sedentary_hr != null) setSedentaryHr(String(data.sedentary_hr));
+      // Auto-detect date from image
+      if (data.detected_date) {
+        const detected = data.detected_date as string;
+        const todayStr = format(new Date(), "yyyy-MM-dd");
+        const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+        if (detected === todayStr) {
+          setDateOption("today");
+        } else if (detected === yesterday) {
+          setDateOption("yesterday");
+        } else {
+          setDateOption("custom");
+          setCustomDate(detected);
+        }
+        toast.success(`Dados lidos! Data detectada: ${format(new Date(detected + "T12:00:00"), "dd/MM/yyyy")}`);
+      } else {
+        toast.success("Dados lidos da imagem com sucesso!");
+      }
+      setFitnessOpen(true);
     } catch (err) {
       console.error("OCR extraction failed:", err);
       toast.error("Não foi possível ler a imagem. Preencha manualmente.");
@@ -253,6 +268,24 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         .from("health_daily")
         .upsert(healthData as any, { onConflict: "user_id,date" });
       if (e2) console.warn("health_daily sync failed:", e2);
+
+      // Save multi-day period data (from HeartWatch trend screenshots)
+      if (multiDayPending.length > 0) {
+        for (const entry of multiDayPending) {
+          const dayData: Record<string, unknown> = {
+            user_id: user.id,
+            date: entry.date,
+            [entry.metric]: entry.value,
+          };
+          await supabase
+            .from("manual_day_logs")
+            .upsert({ user_id: user.id, date: entry.date, [entry.metric]: entry.value } as any, { onConflict: "user_id,date" });
+          await supabase
+            .from("health_daily")
+            .upsert({ ...dayData, source: "manual" } as any, { onConflict: "user_id,date" });
+        }
+        setMultiDayPending([]);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
