@@ -94,7 +94,7 @@ export function useHealthData() {
   const { user } = useAuth();
 
   const today = new Date().toISOString().split("T")[0];
-  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
   const twentyFourHoursAgo = new Date(Date.now() - 86400000).toISOString();
 
   const dailyQuery = useQuery({
@@ -104,9 +104,9 @@ export function useHealthData() {
         .from("health_daily")
         .select("*")
         .eq("user_id", user!.id)
-        .gte("date", sevenDaysAgo)
+        .gte("date", thirtyDaysAgo)
         .order("date", { ascending: false })
-        .limit(7);
+        .limit(30);
       if (error) throw error;
       return (data || []) as HealthDaily[];
     },

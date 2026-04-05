@@ -24,14 +24,10 @@ function normalizeDate(rawDate: string | null): { date: string | null; ambiguous
     candidateYear = currentYear - 1;
     candidate = new Date(candidateYear, month - 1, day);
   }
-  const tenDaysAgo = new Date(now);
-  tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-  tenDaysAgo.setHours(0, 0, 0, 0);
-  const withinWindow = candidate >= tenDaysAgo && candidate <= tomorrow;
   const normalizedDate = `${candidateYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   const originalYear = parseInt(yearStr, 10);
   const yearWasChanged = originalYear !== candidateYear;
-  return { date: normalizedDate, ambiguous: yearWasChanged || !withinWindow };
+  return { date: normalizedDate, ambiguous: yearWasChanged };
 }
 
 serve(async (req) => {
@@ -73,7 +69,11 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a fitness data extraction assistant. You analyze screenshots from fitness apps (Apple Fitness, Google Fit, Samsung Health, Garmin, Athlytic, AutoSleep, Heart Analyzer, HeartWatch, Whoop, Oura, etc.) and extract numeric health metrics visible on screen. Always use the extract_fitness_data tool to return structured data. If a value is not visible in the image, set it to null. For distance, always convert to kilometers.
+            content: `You are a fitness data extraction assistant. You analyze screenshots from fitness apps (Apple Fitness, Google Fit, Samsung Health, Garmin, Athlytic, AutoSleep, Heart Analyzer, HeartWatch, Whoop, Oura, etc.) and extract numeric health metrics visible on screen.
+
+IMPORTANT: You must determine if the screenshot shows:
+1. A SINGLE DAY view — showing metrics for one specific day
+2. A PERIOD/TREND view — showing a chart/calendar with data for MULTIPLE days (e.g., HeartWatch HRV trend over 21 days)
 
 CARDIOVASCULAR METRICS — Map these labels to the correct fields:
 - resting_hr: "FC de repouso", "Resting HR", "BPM ao despertar", "BPM ao acordar", "Waking HR", "Waking BPM", "FC ao acordar", "Resting Heart Rate"
@@ -85,32 +85,44 @@ CARDIOVASCULAR METRICS — Map these labels to the correct fields:
 - max_hr: "BPM máxima", "Max HR", "Max BPM", "Maximum Heart Rate", "FC máxima", "MinMax" (use the higher value)
 - sedentary_hr: "BPM sedentária", "Sedentary HR", "Sedentary BPM", "FC sedentária", "Resting/Sedentary"
 
-IMPORTANT: Many wellness apps (HeartWatch, Athlytic, AutoSleep, Heart Analyzer) use different names for the same metrics. In HeartWatch specifically:
-- "BPM ao despertar" is the waking/resting heart rate → map to resting_hr
-- "VFC ao despertar" is waking HRV → map to hrv_ms
-- "BPM diário" is the daily average → map to avg_hr_bpm
-- "BPM ao dormir" is sleeping HR → map to sleeping_hr
-- "VFC ao dormir" is sleeping HRV → map to sleeping_hrv
-- "MinMax bpm" shows min and max → map to min_hr and max_hr respectively
-- "BPM sedentária" is sedentary HR → map to sedentary_hr
+HeartWatch specific mappings:
+- "BPM ao despertar" → resting_hr
+- "VFC ao despertar" → hrv_ms
+- "BPM diário" → avg_hr_bpm
+- "BPM ao dormir" → sleeping_hr
+- "VFC ao dormir" → sleeping_hrv
+- "MinMax bpm" → min_hr and max_hr
+- "BPM sedentária" → sedentary_hr
 
-Do NOT leave these null if they are visible in the image. Ignore wellness/readiness/recovery scores that are not one of the supported numeric health fields.
+CRITICAL RULES FOR PERIOD/TREND SCREENSHOTS:
+- If the image shows a chart, calendar or grid with values for MULTIPLE DAYS (e.g., a bar chart with daily HRV values, a calendar with daily readings), you MUST use the extract_multi_day_data tool.
+- Extract EACH individual day's value separately into the days array.
+- The period average/summary shown (e.g., "Média 31", "Average 65 bpm") goes into summary_average — NEVER into a daily value.
+- Read dates from month labels, day numbers, and axis labels. Use year ${currentYear} unless clearly from a previous year.
+- If you see "11 / 137" or "X / Y" format, it typically means current_value / range or score — extract the individual daily values from the chart/calendar, not these summary numbers.
+- Common period headers: "23 de fev. - 5 de abr.", "Últimos 21 dias", "Last 30 days" — use these to determine the date range.
 
-CRITICAL DATE RULES:
+CRITICAL RULES FOR SINGLE DAY SCREENSHOTS:
+- Use the extract_fitness_data tool for single-day views.
 - Today's date is ${todayStr}. The current year is ${currentYear}.
-- The user is uploading screenshots from THE LAST 7 DAYS. All dates MUST be within the last 10 days.
-- If the screenshot shows a date like "Thursday" or "Thu", calculate the most recent past Thursday relative to today (${todayStr}).
-- If the screenshot shows "Mar 13" or "13/03" without a year, ALWAYS use the current year ${currentYear}.
-- NEVER return years like 2020, 2024, or 2025 unless it is actually that year. The current year is ${currentYear}.
-- If no date is visible at all, set detected_date to null.
-- The returned date MUST be in YYYY-MM-DD format using year ${currentYear} unless the date is clearly from a previous month that would make it future (in which case use ${currentYear - 1}).`,
+- If no year visible, use ${currentYear}. If date would be future, use ${currentYear - 1}.
+- If no date visible, set detected_date to null.
+
+Do NOT leave cardiovascular fields null if they are visible in the image.`,
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Analyze this fitness app screenshot. Extract ALL visible health metrics including: steps, active calories, exercise minutes, standing hours, distance in km, resting heart rate ("BPM ao despertar"/"Waking HR"), HRV ("VFC ao despertar"), average daily heart rate ("BPM diário"), sleeping heart rate ("BPM ao dormir"), sleeping HRV ("VFC ao dormir"), min/max heart rate ("MinMax bpm"), and sedentary heart rate ("BPM sedentária"). Also extract the date shown on screen. Remember: today is ${todayStr}, use year ${currentYear} for any detected dates. Pay special attention to cardiovascular data from wellness apps like HeartWatch, Athlytic, AutoSleep, and Heart Analyzer.`,
+                text: `Analyze this fitness app screenshot. Determine if it shows a SINGLE DAY or a PERIOD/TREND with multiple days.
+
+If SINGLE DAY: use extract_fitness_data to return all visible metrics.
+If PERIOD/TREND (chart/calendar with multiple days): use extract_multi_day_data to return individual daily values and the period summary.
+
+Look for: steps, active calories, exercise minutes, standing hours, distance km, resting HR, HRV, avg HR, sleeping HR, sleeping HRV, min/max HR, sedentary HR.
+
+Today is ${todayStr}, year ${currentYear}.`,
               },
               {
                 type: "image_url",
@@ -126,26 +138,26 @@ CRITICAL DATE RULES:
             type: "function",
             function: {
               name: "extract_fitness_data",
-              description: "Extract fitness metrics and date from a screenshot",
+              description: "Extract fitness metrics from a SINGLE DAY screenshot",
               parameters: {
                 type: "object",
                 properties: {
                   steps: { type: ["number", "null"], description: "Number of steps walked" },
-                  active_calories: { type: ["number", "null"], description: "Active calories burned (not total/resting)" },
-                  exercise_minutes: { type: ["number", "null"], description: "Minutes of exercise/activity" },
-                  standing_hours: { type: ["number", "null"], description: "Hours standing / move hours" },
-                  distance_km: { type: ["number", "null"], description: "Distance in kilometers" },
-                  resting_hr: { type: ["number", "null"], description: "Resting/waking heart rate in BPM" },
-                  hrv_ms: { type: ["number", "null"], description: "Waking heart rate variability (HRV) in ms" },
-                  avg_hr_bpm: { type: ["number", "null"], description: "Average daily heart rate in BPM" },
-                  sleeping_hr: { type: ["number", "null"], description: "Sleeping heart rate in BPM" },
+                  active_calories: { type: ["number", "null"], description: "Active calories burned" },
+                  exercise_minutes: { type: ["number", "null"], description: "Minutes of exercise" },
+                  standing_hours: { type: ["number", "null"], description: "Hours standing" },
+                  distance_km: { type: ["number", "null"], description: "Distance in km" },
+                  resting_hr: { type: ["number", "null"], description: "Resting/waking heart rate bpm" },
+                  hrv_ms: { type: ["number", "null"], description: "Waking HRV in ms" },
+                  avg_hr_bpm: { type: ["number", "null"], description: "Average daily heart rate bpm" },
+                  sleeping_hr: { type: ["number", "null"], description: "Sleeping heart rate bpm" },
                   sleeping_hrv: { type: ["number", "null"], description: "Sleeping HRV in ms" },
-                  min_hr: { type: ["number", "null"], description: "Minimum heart rate of the day in BPM" },
-                  max_hr: { type: ["number", "null"], description: "Maximum heart rate of the day in BPM" },
-                  sedentary_hr: { type: ["number", "null"], description: "Sedentary heart rate in BPM" },
+                  min_hr: { type: ["number", "null"], description: "Minimum heart rate bpm" },
+                  max_hr: { type: ["number", "null"], description: "Maximum heart rate bpm" },
+                  sedentary_hr: { type: ["number", "null"], description: "Sedentary heart rate bpm" },
                   detected_date: {
                     type: ["string", "null"],
-                    description: `Date shown in the screenshot in YYYY-MM-DD format. Use year ${currentYear}. null if not visible.`,
+                    description: `Date in YYYY-MM-DD format. Use year ${currentYear}. null if not visible.`,
                   },
                 },
                 required: ["steps", "active_calories", "exercise_minutes", "standing_hours", "distance_km", "resting_hr", "hrv_ms", "avg_hr_bpm", "sleeping_hr", "sleeping_hrv", "min_hr", "max_hr", "sedentary_hr", "detected_date"],
@@ -153,8 +165,54 @@ CRITICAL DATE RULES:
               },
             },
           },
+          {
+            type: "function",
+            function: {
+              name: "extract_multi_day_data",
+              description: "Extract data from a PERIOD/TREND screenshot showing multiple days (e.g., HeartWatch HRV chart, weekly calendar). Each visible daily value should be a separate entry in the days array.",
+              parameters: {
+                type: "object",
+                properties: {
+                  metric_type: {
+                    type: "string",
+                    enum: ["hrv_ms", "resting_hr", "avg_hr_bpm", "sleeping_hr", "sleeping_hrv", "min_hr", "max_hr", "sedentary_hr", "steps", "active_calories", "sleep_minutes", "exercise_minutes"],
+                    description: "Which metric this period chart is showing",
+                  },
+                  days: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        date: { type: "string", description: "Date in YYYY-MM-DD format" },
+                        value: { type: "number", description: "The metric value for this specific day" },
+                      },
+                      required: ["date", "value"],
+                    },
+                    description: "Individual daily values visible in the chart/calendar. Extract each day separately.",
+                  },
+                  summary_average: {
+                    type: ["number", "null"],
+                    description: "The period average shown (e.g., 'Média 31'). This is NOT a daily value.",
+                  },
+                  summary_period_days: {
+                    type: ["number", "null"],
+                    description: "Number of days in the period (e.g., 21 for '21 dias')",
+                  },
+                  range_start: {
+                    type: ["string", "null"],
+                    description: "Start date of the period in YYYY-MM-DD format",
+                  },
+                  range_end: {
+                    type: ["string", "null"],
+                    description: "End date of the period in YYYY-MM-DD format",
+                  },
+                },
+                required: ["metric_type", "days"],
+                additionalProperties: false,
+              },
+            },
+          },
         ],
-        tool_choice: { type: "function", function: { name: "extract_fitness_data" } },
       }),
     });
 
@@ -186,10 +244,38 @@ CRITICAL DATE RULES:
       });
     }
 
+    const fnName = toolCall.function.name;
     const extracted = JSON.parse(toolCall.function.arguments);
+
+    if (fnName === "extract_multi_day_data") {
+      // Multi-day response: normalize dates in days array
+      const normalizedDays = (extracted.days || []).map((d: { date: string; value: number }) => {
+        const { date, ambiguous } = normalizeDate(d.date);
+        return { date: date || d.date, value: d.value, date_ambiguous: ambiguous };
+      });
+
+      // Also normalize range dates
+      const rangeStart = extracted.range_start ? normalizeDate(extracted.range_start).date : null;
+      const rangeEnd = extracted.range_end ? normalizeDate(extracted.range_end).date : null;
+
+      return new Response(JSON.stringify({
+        mode: "multi_day",
+        metric_type: extracted.metric_type,
+        days: normalizedDays,
+        summary_average: extracted.summary_average ?? null,
+        summary_period_days: extracted.summary_period_days ?? null,
+        range_start: rangeStart,
+        range_end: rangeEnd,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Single day response (original behavior)
     const { date: normalizedDate, ambiguous } = normalizeDate(extracted.detected_date);
     extracted.detected_date = normalizedDate;
     extracted.date_ambiguous = ambiguous;
+    extracted.mode = "single_day";
 
     return new Response(JSON.stringify(extracted), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
