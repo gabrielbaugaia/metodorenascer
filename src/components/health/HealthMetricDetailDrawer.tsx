@@ -11,7 +11,7 @@ import { ptBR } from "date-fns/locale";
 import { TrendingUp, TrendingDown, Minus, Info, Lightbulb, BookOpen, ChevronRight } from "lucide-react";
 import type { HealthDaily } from "@/hooks/useHealthData";
 
-export type MetricKey = "steps" | "active_calories" | "sleep_minutes" | "resting_hr" | "hrv_ms" | "avg_hr_bpm" | "exercise_minutes" | "distance_km";
+export type MetricKey = "steps" | "active_calories" | "sleep_minutes" | "resting_hr" | "hrv_ms" | "avg_hr_bpm" | "exercise_minutes" | "distance_km" | "sleeping_hr" | "sleeping_hrv" | "min_hr" | "max_hr" | "sedentary_hr";
 
 interface MetricConfig {
   label: string;
@@ -154,6 +154,84 @@ const METRIC_CONFIGS: Record<MetricKey, MetricConfig> = {
         : v < 6
           ? "Boa distância! Para progredir, aumente gradualmente em no máximo 10% por semana para evitar lesões."
           : "Ótima mobilidade diária! Varie os terrenos e intensidades para continuar evoluindo.",
+  },
+  sleeping_hr: {
+    label: "FC ao Dormir",
+    unit: "bpm",
+    color: "text-violet-500",
+    chartColor: "hsl(262, 83%, 58%)",
+    ranges: { low: 55, mid: 70, high: 99999 },
+    rangeLabels: { low: "Ótimo", mid: "Normal", high: "Elevado" },
+    invertColor: true,
+    explanation: "A frequência cardíaca durante o sono reflete a qualidade da recuperação noturna. Valores baixos indicam que o corpo está descansando eficientemente. A FC ao dormir tende a ser mais baixa que a FC de repouso diurna e é um ótimo indicador de recuperação.",
+    tips: (v) =>
+      v > 70
+        ? "FC de sono elevada pode indicar estresse, má digestão noturna ou quarto muito quente. Evite refeições pesadas 2-3h antes de dormir."
+        : v > 55
+          ? "Faixa normal. Mantenha rotina de sono consistente e evite telas antes de dormir."
+          : "Excelente recuperação noturna! Seu corpo está descansando eficientemente.",
+  },
+  sleeping_hrv: {
+    label: "VFC ao Dormir",
+    unit: "ms",
+    color: "text-teal-500",
+    chartColor: "hsl(142, 50%, 55%)",
+    ranges: { low: 25, mid: 50, high: 99999 },
+    rangeLabels: { low: "Baixa", mid: "Moderada", high: "Boa" },
+    explanation: "A VFC durante o sono é considerada o melhor momento para medir a variabilidade cardíaca, pois elimina interferências da atividade diurna. Valores altos indicam boa recuperação autonômica e prontidão para o dia seguinte.",
+    tips: (v) =>
+      v < 25
+        ? "VFC de sono baixa sugere recuperação incompleta. Priorize 7-8h de sono e reduza estímulos noturnos."
+        : v < 50
+          ? "Moderada. Técnicas de respiração antes de dormir podem melhorar a VFC noturna."
+          : "Excelente VFC noturna! Indica ótima recuperação do sistema nervoso autônomo.",
+  },
+  min_hr: {
+    label: "BPM Mínima",
+    unit: "bpm",
+    color: "text-sky-500",
+    chartColor: "hsl(200, 70%, 50%)",
+    ranges: { low: 50, mid: 65, high: 99999 },
+    rangeLabels: { low: "Atlético", mid: "Normal", high: "Elevado" },
+    invertColor: true,
+    explanation: "A FC mínima do dia normalmente ocorre durante o sono profundo. É um dos melhores indicadores do condicionamento cardiovascular de longo prazo. Atletas bem treinados costumam ter mínimas abaixo de 50 bpm.",
+    tips: (v) =>
+      v > 65
+        ? "Valor mais alto que o esperado. Verifique se está dormindo bem e se o nível de estresse está controlado."
+        : v > 50
+          ? "Faixa normal. Treino aeróbico consistente ajuda a reduzir gradualmente a FC mínima."
+          : "Excelente condicionamento cardiovascular! Mantenha a consistência nos treinos.",
+  },
+  max_hr: {
+    label: "BPM Máxima",
+    unit: "bpm",
+    color: "text-rose-500",
+    chartColor: "hsl(350, 70%, 55%)",
+    ranges: { low: 120, mid: 160, high: 99999 },
+    rangeLabels: { low: "Baixa ativação", mid: "Moderada", high: "Alta intensidade" },
+    explanation: "A FC máxima diária indica o pico de esforço cardiovascular. Em dias de treino intenso, valores altos são esperados. Em dias de descanso, picos elevados podem indicar estresse ou ansiedade.",
+    tips: (v) =>
+      v > 160
+        ? "Alta ativação hoje! Certifique-se de que coincide com um treino planejado. Se não, monitore o estresse."
+        : v > 120
+          ? "Ativação moderada, condizente com atividade física leve a moderada."
+          : "Dia de baixa intensidade. Se era dia de treino, pode ser hora de aumentar a intensidade.",
+  },
+  sedentary_hr: {
+    label: "BPM Sedentária",
+    unit: "bpm",
+    color: "text-amber-500",
+    chartColor: "hsl(30, 80%, 55%)",
+    ranges: { low: 65, mid: 80, high: 99999 },
+    rangeLabels: { low: "Ótimo", mid: "Normal", high: "Elevado" },
+    invertColor: true,
+    explanation: "A FC sedentária mede seus batimentos quando você está parado mas acordado. É diferente da FC de repouso (que é medida logo ao despertar). Uma FC sedentária baixa indica bom condicionamento e baixo estresse crônico.",
+    tips: (v) =>
+      v > 80
+        ? "FC sedentária elevada pode indicar estresse, desidratação ou falta de condicionamento. Tente incluir pausas ativas e hidratação."
+        : v > 65
+          ? "Faixa normal. Continue com exercícios regulares e boa hidratação."
+          : "Excelente! Seu sistema cardiovascular está eficiente mesmo em repouso diurno.",
   },
 };
 
