@@ -185,6 +185,9 @@ export async function syncHealthData(token: string): Promise<SyncResult> {
       workouts,
     };
 
+    // Note: avg_hr_bpm, exercise_minutes, standing_hours, distance_km
+    // are not yet available from native bridges but the edge function accepts them
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/health-sync`, {
       method: 'POST',
       headers: {
