@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileSpreadsheet, Upload, Loader2, AlertTriangle, Check } from "lucide-react";
+import { FileSpreadsheet, Upload, Loader2, AlertTriangle, Check, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -28,6 +28,10 @@ interface ParsedRow {
   resting_hr?: number | null;
   hrv_ms?: number | null;
   avg_hr_bpm?: number | null;
+  sleeping_hr?: number | null;
+  sedentary_hr?: number | null;
+  min_hr?: number | null;
+  max_hr?: number | null;
 }
 
 const COLUMN_MAP: Record<string, keyof ParsedRow> = {
@@ -39,12 +43,16 @@ const COLUMN_MAP: Record<string, keyof ParsedRow> = {
   rpe: "rpe",
   passos: "steps", steps: "steps",
   calorias: "active_calories", active_calories: "active_calories", "calorias ativas": "active_calories",
-  exercicio: "exercise_minutes", exercise_minutes: "exercise_minutes", "minutos exercicio": "exercise_minutes", "min exercício": "exercise_minutes",
+  exercicio: "exercise_minutes", exercise_minutes: "exercise_minutes", "minutos exercicio": "exercise_minutes", "min exercicio": "exercise_minutes",
   "em pe": "standing_hours", standing_hours: "standing_hours", "horas em pe": "standing_hours",
   distancia: "distance_km", distance: "distance_km", distance_km: "distance_km",
   fc_repouso: "resting_hr", resting_hr: "resting_hr", "fc repouso": "resting_hr",
   vfc: "hrv_ms", hrv: "hrv_ms", hrv_ms: "hrv_ms",
   fc_media: "avg_hr_bpm", avg_hr_bpm: "avg_hr_bpm", "fc media": "avg_hr_bpm",
+  sleeping_hr: "sleeping_hr", "fc dormir": "sleeping_hr", "bpm ao dormir": "sleeping_hr",
+  sedentary_hr: "sedentary_hr", "fc sedentaria": "sedentary_hr", "bpm sedentaria": "sedentary_hr",
+  min_hr: "min_hr", "fc min": "min_hr", "bpm min": "min_hr",
+  max_hr: "max_hr", "fc max": "max_hr", "bpm max": "max_hr",
 };
 
 function normalizeCol(col: string): string {
@@ -56,14 +64,11 @@ function normalizeCol(col: string): string {
 function parseDate(val: unknown): string | null {
   if (!val) return null;
   if (typeof val === "number") {
-    // Excel serial date
     const d = XLSX.SSF.parse_date_code(val);
     if (d) return `${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}`;
   }
   const s = String(val).trim();
-  // Try yyyy-mm-dd
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  // Try dd/mm/yyyy
   const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
   if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
   return null;
@@ -83,10 +88,61 @@ function parseBool(val: unknown): boolean | null {
   return null;
 }
 
+/** Detect if the CSV is granular HeartWatch BPM data (one reading per row) */
+function isHeartWatchGranular(headers: string[]): boolean {
+  const norm = headers.map(h => normalizeCol(h));
+  return norm.includes("iso") && norm.includes("bpm") && norm.includes("bpm ao dormir");
+}
+
+/** Aggregate granular HeartWatch readings into daily summaries */
+function aggregateHeartWatch(json: Record<string, unknown>[]): ParsedRow[] {
+  const dayMap = new Map<string, { all: number[]; sleeping: number[]; sedentary: number[]; resting: number[] }>();
+
+  for (const row of json) {
+    const iso = String(row["ISO"] || "");
+    const dateStr = iso.substring(0, 10); // "2026-01-01"
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) continue;
+
+    const bpm = parseNum(row["bpm"]);
+    if (bpm == null || bpm <= 0) continue;
+
+    if (!dayMap.has(dateStr)) {
+      dayMap.set(dateStr, { all: [], sleeping: [], sedentary: [], resting: [] });
+    }
+    const day = dayMap.get(dateStr)!;
+    day.all.push(bpm);
+
+    const isSleeping = String(row["Bpm ao dormir"] || "").trim() === "1";
+    const isSedentary = String(row["Bpm sedentária"] || row["Bpm sedentaria"] || "").trim() === "1";
+    const tipo = normalizeCol(String(row["Tipo"] || ""));
+
+    if (isSleeping) day.sleeping.push(bpm);
+    if (isSedentary) day.sedentary.push(bpm);
+    if (tipo === "repouso") day.resting.push(bpm);
+  }
+
+  const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+
+  const results: ParsedRow[] = [];
+  for (const [date, data] of Array.from(dayMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
+    results.push({
+      date,
+      avg_hr_bpm: avg(data.all),
+      sleeping_hr: avg(data.sleeping),
+      sedentary_hr: avg(data.sedentary),
+      resting_hr: avg(data.resting),
+      min_hr: data.all.length ? Math.min(...data.all) : null,
+      max_hr: data.all.length ? Math.max(...data.all) : null,
+    });
+  }
+
+  return results;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  targetUserId?: string; // Admin can import for another user
+  targetUserId?: string;
 }
 
 export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
@@ -97,6 +153,7 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
   const [overwrite, setOverwrite] = useState(false);
   const [existingDates, setExistingDates] = useState<Set<string>>(new Set());
   const [step, setStep] = useState<"upload" | "review">("upload");
+  const [isHeartWatch, setIsHeartWatch] = useState(false);
 
   const userId = targetUserId || user?.id;
 
@@ -112,8 +169,32 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
 
       if (!json.length) { toast.error("Arquivo vazio"); return; }
 
-      // Map columns
       const rawHeaders = Object.keys(json[0]);
+
+      // Detect HeartWatch granular format
+      if (isHeartWatchGranular(rawHeaders)) {
+        setIsHeartWatch(true);
+        const aggregated = aggregateHeartWatch(json);
+        if (!aggregated.length) { toast.error("Nenhum dado válido encontrado"); return; }
+
+        toast.info(`HeartWatch detectado: ${json.length.toLocaleString()} leituras → ${aggregated.length} dias`);
+
+        const dates = aggregated.map(r => r.date);
+        const { data: existing } = await supabase
+          .from("manual_day_logs")
+          .select("date")
+          .eq("user_id", userId)
+          .in("date", dates);
+        setExistingDates(new Set((existing ?? []).map(e => e.date)));
+
+        setRows(aggregated);
+        setStep("review");
+        if (fileRef.current) fileRef.current.value = "";
+        return;
+      }
+
+      // Standard flow
+      setIsHeartWatch(false);
       const colMapping: Record<string, keyof ParsedRow> = {};
       for (const h of rawHeaders) {
         const norm = normalizeCol(h);
@@ -139,7 +220,6 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
 
       if (!parsed.length) { toast.error("Nenhuma linha válida encontrada"); return; }
 
-      // Check existing dates
       const dates = parsed.map(r => r.date);
       const { data: existing } = await supabase
         .from("manual_day_logs")
@@ -164,6 +244,7 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
 
       for (const row of rows) {
         const hasExisting = existingDates.has(row.date);
+        if (hasExisting && !overwrite) continue;
 
         // manual_day_logs upsert
         const logData: Record<string, unknown> = { user_id: userId, date: row.date };
@@ -177,16 +258,21 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
         if (row.exercise_minutes != null) logData.exercise_minutes = row.exercise_minutes;
         if (row.standing_hours != null) logData.standing_hours = row.standing_hours;
         if (row.distance_km != null) logData.distance_km = row.distance_km;
+        if (row.resting_hr != null) logData.resting_hr = row.resting_hr;
+        if (row.hrv_ms != null) logData.hrv_ms = row.hrv_ms;
+        if (row.avg_hr_bpm != null) logData.avg_hr_bpm = row.avg_hr_bpm;
+        if (row.sleeping_hr != null) logData.sleeping_hr = row.sleeping_hr;
+        if (row.sedentary_hr != null) logData.sedentary_hr = row.sedentary_hr;
+        if (row.min_hr != null) logData.min_hr = row.min_hr;
+        if (row.max_hr != null) logData.max_hr = row.max_hr;
 
-        if (!hasExisting || overwrite) {
-          await supabase
-            .from("manual_day_logs")
-            .upsert(logData as any, { onConflict: "user_id,date" });
-        }
+        await supabase
+          .from("manual_day_logs")
+          .upsert(logData as any, { onConflict: "user_id,date" });
 
         // health_daily upsert
         const healthData: Record<string, unknown> = {
-          user_id: userId, date: row.date, source: "manual",
+          user_id: userId, date: row.date, source: "heartwatch",
         };
         if (row.sleep_hours != null) healthData.sleep_minutes = Math.round(row.sleep_hours * 60);
         if (row.steps != null) healthData.steps = row.steps;
@@ -197,9 +283,13 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
         if (row.resting_hr != null) healthData.resting_hr = row.resting_hr;
         if (row.hrv_ms != null) healthData.hrv_ms = row.hrv_ms;
         if (row.avg_hr_bpm != null) healthData.avg_hr_bpm = row.avg_hr_bpm;
+        if (row.sleeping_hr != null) healthData.sleeping_hr = row.sleeping_hr;
+        if (row.sedentary_hr != null) healthData.sedentary_hr = row.sedentary_hr;
+        if (row.min_hr != null) healthData.min_hr = row.min_hr;
+        if (row.max_hr != null) healthData.max_hr = row.max_hr;
 
         const hasHealthFields = Object.keys(healthData).length > 3;
-        if (hasHealthFields && (!hasExisting || overwrite)) {
+        if (hasHealthFields) {
           await supabase
             .from("health_daily")
             .upsert(healthData as any, { onConflict: "user_id,date" });
@@ -214,12 +304,15 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
       toast.success(`${rows.length} dias importados com sucesso!`);
       setRows([]);
       setStep("upload");
+      setIsHeartWatch(false);
       onOpenChange(false);
     },
     onError: () => toast.error("Erro ao importar dados"),
   });
 
-  const reset = () => { setRows([]); setStep("upload"); setOverwrite(false); };
+  const reset = () => { setRows([]); setStep("upload"); setOverwrite(false); setIsHeartWatch(false); };
+
+  const effectiveRows = overwrite ? rows.length : rows.length - existingDates.size;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
@@ -254,6 +347,10 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
             <div className="text-xs text-muted-foreground space-y-1">
               <p className="font-medium">Colunas aceitas:</p>
               <p>Data, Sono, Estresse, Energia, Treinou, RPE, Passos, Calorias, Exercício, Em Pé, Distância, FC Repouso, VFC, FC Média</p>
+              <p className="mt-1 text-primary/70">
+                <Heart className="h-3 w-3 inline mr-1" />
+                CSVs granulares do HeartWatch são agregados automaticamente por dia
+              </p>
             </div>
           </div>
         )}
@@ -261,9 +358,17 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
         {step === "review" && (
           <div className="space-y-4 pt-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">{rows.length} dias encontrados</p>
+              <div>
+                <p className="text-sm font-medium">{rows.length} dias encontrados</p>
+                {isHeartWatch && (
+                  <Badge variant="secondary" className="text-[10px] mt-1">
+                    <Heart className="h-3 w-3 mr-1" />
+                    HeartWatch — dados agregados por dia
+                  </Badge>
+                )}
+              </div>
               <div className="flex items-center gap-2">
-                <Label className="text-xs text-muted-foreground">Sobrescrever existentes</Label>
+                <Label className="text-xs text-muted-foreground">Sobrescrever</Label>
                 <Switch checked={overwrite} onCheckedChange={setOverwrite} />
               </div>
             </div>
@@ -273,12 +378,25 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-xs">Data</TableHead>
-                    <TableHead className="text-xs">Sono</TableHead>
-                    <TableHead className="text-xs">Estresse</TableHead>
-                    <TableHead className="text-xs">Energia</TableHead>
-                    <TableHead className="text-xs">Passos</TableHead>
-                    <TableHead className="text-xs">FC Rep.</TableHead>
-                    <TableHead className="text-xs">VFC</TableHead>
+                    {isHeartWatch ? (
+                      <>
+                        <TableHead className="text-xs">BPM Méd</TableHead>
+                        <TableHead className="text-xs">Dormir</TableHead>
+                        <TableHead className="text-xs">Sed.</TableHead>
+                        <TableHead className="text-xs">Rep.</TableHead>
+                        <TableHead className="text-xs">Min</TableHead>
+                        <TableHead className="text-xs">Max</TableHead>
+                      </>
+                    ) : (
+                      <>
+                        <TableHead className="text-xs">Sono</TableHead>
+                        <TableHead className="text-xs">Estresse</TableHead>
+                        <TableHead className="text-xs">Energia</TableHead>
+                        <TableHead className="text-xs">Passos</TableHead>
+                        <TableHead className="text-xs">FC Rep.</TableHead>
+                        <TableHead className="text-xs">VFC</TableHead>
+                      </>
+                    )}
                     <TableHead className="text-xs w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -290,12 +408,25 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
                         <TableCell className="text-xs font-medium py-1.5">
                           {format(new Date(r.date + "T12:00:00"), "dd/MM")}
                         </TableCell>
-                        <TableCell className="text-xs py-1.5">{r.sleep_hours ?? "—"}</TableCell>
-                        <TableCell className="text-xs py-1.5">{r.stress_level ?? "—"}</TableCell>
-                        <TableCell className="text-xs py-1.5">{r.energy_focus ?? "—"}</TableCell>
-                        <TableCell className="text-xs py-1.5">{r.steps?.toLocaleString() ?? "—"}</TableCell>
-                        <TableCell className="text-xs py-1.5">{r.resting_hr ?? "—"}</TableCell>
-                        <TableCell className="text-xs py-1.5">{r.hrv_ms ?? "—"}</TableCell>
+                        {isHeartWatch ? (
+                          <>
+                            <TableCell className="text-xs py-1.5">{r.avg_hr_bpm ?? "—"}</TableCell>
+                            <TableCell className="text-xs py-1.5">{r.sleeping_hr ?? "—"}</TableCell>
+                            <TableCell className="text-xs py-1.5">{r.sedentary_hr ?? "—"}</TableCell>
+                            <TableCell className="text-xs py-1.5">{r.resting_hr ?? "—"}</TableCell>
+                            <TableCell className="text-xs py-1.5">{r.min_hr ?? "—"}</TableCell>
+                            <TableCell className="text-xs py-1.5">{r.max_hr ?? "—"}</TableCell>
+                          </>
+                        ) : (
+                          <>
+                            <TableCell className="text-xs py-1.5">{r.sleep_hours ?? "—"}</TableCell>
+                            <TableCell className="text-xs py-1.5">{r.stress_level ?? "—"}</TableCell>
+                            <TableCell className="text-xs py-1.5">{r.energy_focus ?? "—"}</TableCell>
+                            <TableCell className="text-xs py-1.5">{r.steps?.toLocaleString() ?? "—"}</TableCell>
+                            <TableCell className="text-xs py-1.5">{r.resting_hr ?? "—"}</TableCell>
+                            <TableCell className="text-xs py-1.5">{r.hrv_ms ?? "—"}</TableCell>
+                          </>
+                        )}
                         <TableCell className="text-xs py-1.5">
                           {exists ? (
                             <Badge variant="outline" className="text-[9px] px-1 py-0">
@@ -327,12 +458,12 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
               <Button
                 className="flex-1 bg-primary text-primary-foreground"
                 onClick={() => importMutation.mutate()}
-                disabled={importMutation.isPending}
+                disabled={importMutation.isPending || effectiveRows <= 0}
               >
                 {importMutation.isPending ? (
                   <><Loader2 className="h-4 w-4 animate-spin mr-2" />Importando...</>
                 ) : (
-                  <>Importar {overwrite ? rows.length : rows.length - existingDates.size} dias</>
+                  <>Importar {effectiveRows} dias</>
                 )}
               </Button>
             </div>
