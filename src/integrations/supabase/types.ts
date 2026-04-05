@@ -1388,6 +1388,7 @@ export type Database = {
       manual_day_logs: {
         Row: {
           active_calories: number | null
+          avg_hr_bpm: number | null
           created_at: string | null
           date: string
           distance_km: number | null
@@ -1400,7 +1401,9 @@ export type Database = {
           fitness_screenshot_path_5: string | null
           fitness_screenshot_path_6: string | null
           fitness_screenshot_path_7: string | null
+          hrv_ms: number | null
           id: string
+          resting_hr: number | null
           rpe: number | null
           sleep_hours: number | null
           standing_hours: number | null
@@ -1412,6 +1415,7 @@ export type Database = {
         }
         Insert: {
           active_calories?: number | null
+          avg_hr_bpm?: number | null
           created_at?: string | null
           date?: string
           distance_km?: number | null
@@ -1424,7 +1428,9 @@ export type Database = {
           fitness_screenshot_path_5?: string | null
           fitness_screenshot_path_6?: string | null
           fitness_screenshot_path_7?: string | null
+          hrv_ms?: number | null
           id?: string
+          resting_hr?: number | null
           rpe?: number | null
           sleep_hours?: number | null
           standing_hours?: number | null
@@ -1436,6 +1442,7 @@ export type Database = {
         }
         Update: {
           active_calories?: number | null
+          avg_hr_bpm?: number | null
           created_at?: string | null
           date?: string
           distance_km?: number | null
@@ -1448,7 +1455,9 @@ export type Database = {
           fitness_screenshot_path_5?: string | null
           fitness_screenshot_path_6?: string | null
           fitness_screenshot_path_7?: string | null
+          hrv_ms?: number | null
           id?: string
+          resting_hr?: number | null
           rpe?: number | null
           sleep_hours?: number | null
           standing_hours?: number | null
