@@ -140,15 +140,31 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
   const sleepVal = displayData?.sleep_minutes ?? 0;
   const sleepSrc = sleepVal > 0 ? src : "indisponivel";
 
-  // Cardiovascular data from last 7 days
-  const restingHrValues = dailyData.map(d => d.resting_hr).filter((v): v is number => v !== null && v > 0);
-  const hrvValues = dailyData.map(d => d.hrv_ms).filter((v): v is number => v !== null && v > 0);
-  const avgHrValues = dailyData.map(d => d.avg_hr_bpm).filter((v): v is number => v !== null && v > 0);
-  const sleepingHrValues = dailyData.map(d => d.sleeping_hr).filter((v): v is number => v !== null && v > 0);
-  const sleepingHrvValues = dailyData.map(d => d.sleeping_hrv).filter((v): v is number => v !== null && v > 0);
-  const minHrValues = dailyData.map(d => d.min_hr).filter((v): v is number => v !== null && v > 0);
-  const maxHrValues = dailyData.map(d => d.max_hr).filter((v): v is number => v !== null && v > 0);
-  const sedentaryHrValues = dailyData.map(d => d.sedentary_hr).filter((v): v is number => v !== null && v > 0);
+  // Cardiovascular data — split into 7d and 21d windows
+  const last7 = dailyData.slice(0, 7);
+  const last21 = dailyData.slice(0, 21);
+
+  const getValues = (data: HealthDaily[], key: keyof HealthDaily) =>
+    data.map(d => d[key] as number | null).filter((v): v is number => v !== null && v > 0);
+
+  const restingHrValues = getValues(last7, "resting_hr");
+  const hrvValues = getValues(last7, "hrv_ms");
+  const avgHrValues = getValues(last7, "avg_hr_bpm");
+  const sleepingHrValues = getValues(last7, "sleeping_hr");
+  const sleepingHrvValues = getValues(last7, "sleeping_hrv");
+  const minHrValues = getValues(last7, "min_hr");
+  const maxHrValues = getValues(last7, "max_hr");
+  const sedentaryHrValues = getValues(last7, "sedentary_hr");
+
+  // 21-day values for averages
+  const hrvValues21d = getValues(last21, "hrv_ms");
+  const restingHrValues21d = getValues(last21, "resting_hr");
+  const sleepingHrValues21d = getValues(last21, "sleeping_hr");
+  const sleepingHrvValues21d = getValues(last21, "sleeping_hrv");
+  const sedentaryHrValues21d = getValues(last21, "sedentary_hr");
+
+  const avg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+
   const hasCardioData = restingHrValues.length > 0 || hrvValues.length > 0 || avgHrValues.length > 0 || sleepingHrValues.length > 0 || sleepingHrvValues.length > 0 || minHrValues.length > 0 || sedentaryHrValues.length > 0;
 
   return (

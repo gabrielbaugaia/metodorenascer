@@ -38,7 +38,7 @@ interface BatchFitnessUploadProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function isDateInWindow(dateStr: string, windowDays = 10): boolean {
+function isDateInWindow(dateStr: string, windowDays = 45): boolean {
   const date = new Date(dateStr + "T12:00:00");
   const today = startOfDay(new Date());
   today.setHours(23, 59, 59, 999);
