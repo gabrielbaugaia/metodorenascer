@@ -38,7 +38,7 @@ interface BatchFitnessUploadProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function isDateInWindow(dateStr: string, windowDays = 10): boolean {
+function isDateInWindow(dateStr: string, windowDays = 45): boolean {
   const date = new Date(dateStr + "T12:00:00");
   const today = startOfDay(new Date());
   today.setHours(23, 59, 59, 999);
@@ -99,47 +99,75 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
         });
         if (error) throw error;
 
-        const detectedDate = data?.detected_date || format(new Date(), "yyyy-MM-dd");
-        const dateAmbiguous = !!data?.date_ambiguous || !isDateInWindow(detectedDate);
-
-        // Merge with existing result for same date
-        const existing = results.find((r) => r.date === detectedDate);
-        if (existing) {
-          if (data?.steps != null) existing.steps = data.steps;
-          if (data?.active_calories != null) existing.active_calories = data.active_calories;
-          if (data?.exercise_minutes != null) existing.exercise_minutes = data.exercise_minutes;
-          if (data?.standing_hours != null) existing.standing_hours = data.standing_hours;
-          if (data?.distance_km != null) existing.distance_km = data.distance_km;
-          if (data?.resting_hr != null) existing.resting_hr = data.resting_hr;
-          if (data?.hrv_ms != null) existing.hrv_ms = data.hrv_ms;
-          if (data?.avg_hr_bpm != null) existing.avg_hr_bpm = data.avg_hr_bpm;
-          if (data?.sleeping_hr != null) existing.sleeping_hr = data.sleeping_hr;
-          if (data?.sleeping_hrv != null) existing.sleeping_hrv = data.sleeping_hrv;
-          if (data?.min_hr != null) existing.min_hr = data.min_hr;
-          if (data?.max_hr != null) existing.max_hr = data.max_hr;
-          if (data?.sedentary_hr != null) existing.sedentary_hr = data.sedentary_hr;
-          if (dateAmbiguous) existing.dateAmbiguous = true;
+        // Handle multi-day period screenshots
+        if (data?.mode === "multi_day" && data.days?.length > 0) {
+          const metricType = data.metric_type as string;
+          const days = data.days as { date: string; value: number; date_ambiguous?: boolean }[];
+          for (const day of days) {
+            const existing = results.find((r) => r.date === day.date);
+            if (existing) {
+              (existing as any)[metricType] = day.value;
+              if (day.date_ambiguous) existing.dateAmbiguous = true;
+            } else {
+              const newDay: ExtractedDay = {
+                date: day.date,
+                steps: null, active_calories: null, exercise_minutes: null,
+                standing_hours: null, distance_km: null, resting_hr: null,
+                hrv_ms: null, avg_hr_bpm: null, sleeping_hr: null,
+                sleeping_hrv: null, min_hr: null, max_hr: null, sedentary_hr: null,
+                file: files[i].file, base64: files[i].preview,
+                dateAmbiguous: !!day.date_ambiguous, dateEditing: false,
+              };
+              (newDay as any)[metricType] = day.value;
+              results.push(newDay);
+            }
+          }
+          if (data.summary_average != null) {
+            toast.info(`Média do período (${data.summary_period_days ?? "?"}d): ${data.summary_average} — usada apenas como referência`);
+          }
         } else {
-          results.push({
-            date: detectedDate,
-            steps: data?.steps ?? null,
-            active_calories: data?.active_calories ?? null,
-            exercise_minutes: data?.exercise_minutes ?? null,
-            standing_hours: data?.standing_hours ?? null,
-            distance_km: data?.distance_km ?? null,
-            resting_hr: data?.resting_hr ?? null,
-            hrv_ms: data?.hrv_ms ?? null,
-            avg_hr_bpm: data?.avg_hr_bpm ?? null,
-            sleeping_hr: data?.sleeping_hr ?? null,
-            sleeping_hrv: data?.sleeping_hrv ?? null,
-            min_hr: data?.min_hr ?? null,
-            max_hr: data?.max_hr ?? null,
-            sedentary_hr: data?.sedentary_hr ?? null,
-            file: files[i].file,
-            base64: files[i].preview,
-            dateAmbiguous,
-            dateEditing: false,
-          });
+          // Single day mode (original)
+          const detectedDate = data?.detected_date || format(new Date(), "yyyy-MM-dd");
+          const dateAmbiguous = !!data?.date_ambiguous || !isDateInWindow(detectedDate);
+
+          const existing = results.find((r) => r.date === detectedDate);
+          if (existing) {
+            if (data?.steps != null) existing.steps = data.steps;
+            if (data?.active_calories != null) existing.active_calories = data.active_calories;
+            if (data?.exercise_minutes != null) existing.exercise_minutes = data.exercise_minutes;
+            if (data?.standing_hours != null) existing.standing_hours = data.standing_hours;
+            if (data?.distance_km != null) existing.distance_km = data.distance_km;
+            if (data?.resting_hr != null) existing.resting_hr = data.resting_hr;
+            if (data?.hrv_ms != null) existing.hrv_ms = data.hrv_ms;
+            if (data?.avg_hr_bpm != null) existing.avg_hr_bpm = data.avg_hr_bpm;
+            if (data?.sleeping_hr != null) existing.sleeping_hr = data.sleeping_hr;
+            if (data?.sleeping_hrv != null) existing.sleeping_hrv = data.sleeping_hrv;
+            if (data?.min_hr != null) existing.min_hr = data.min_hr;
+            if (data?.max_hr != null) existing.max_hr = data.max_hr;
+            if (data?.sedentary_hr != null) existing.sedentary_hr = data.sedentary_hr;
+            if (dateAmbiguous) existing.dateAmbiguous = true;
+          } else {
+            results.push({
+              date: detectedDate,
+              steps: data?.steps ?? null,
+              active_calories: data?.active_calories ?? null,
+              exercise_minutes: data?.exercise_minutes ?? null,
+              standing_hours: data?.standing_hours ?? null,
+              distance_km: data?.distance_km ?? null,
+              resting_hr: data?.resting_hr ?? null,
+              hrv_ms: data?.hrv_ms ?? null,
+              avg_hr_bpm: data?.avg_hr_bpm ?? null,
+              sleeping_hr: data?.sleeping_hr ?? null,
+              sleeping_hrv: data?.sleeping_hrv ?? null,
+              min_hr: data?.min_hr ?? null,
+              max_hr: data?.max_hr ?? null,
+              sedentary_hr: data?.sedentary_hr ?? null,
+              file: files[i].file,
+              base64: files[i].preview,
+              dateAmbiguous,
+              dateEditing: false,
+            });
+          }
         }
       } catch (err) {
         console.error(`Failed to extract image ${i + 1}:`, err);

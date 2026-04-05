@@ -140,15 +140,31 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
   const sleepVal = displayData?.sleep_minutes ?? 0;
   const sleepSrc = sleepVal > 0 ? src : "indisponivel";
 
-  // Cardiovascular data from last 7 days
-  const restingHrValues = dailyData.map(d => d.resting_hr).filter((v): v is number => v !== null && v > 0);
-  const hrvValues = dailyData.map(d => d.hrv_ms).filter((v): v is number => v !== null && v > 0);
-  const avgHrValues = dailyData.map(d => d.avg_hr_bpm).filter((v): v is number => v !== null && v > 0);
-  const sleepingHrValues = dailyData.map(d => d.sleeping_hr).filter((v): v is number => v !== null && v > 0);
-  const sleepingHrvValues = dailyData.map(d => d.sleeping_hrv).filter((v): v is number => v !== null && v > 0);
-  const minHrValues = dailyData.map(d => d.min_hr).filter((v): v is number => v !== null && v > 0);
-  const maxHrValues = dailyData.map(d => d.max_hr).filter((v): v is number => v !== null && v > 0);
-  const sedentaryHrValues = dailyData.map(d => d.sedentary_hr).filter((v): v is number => v !== null && v > 0);
+  // Cardiovascular data — split into 7d and 21d windows
+  const last7 = dailyData.slice(0, 7);
+  const last21 = dailyData.slice(0, 21);
+
+  const getValues = (data: HealthDaily[], key: keyof HealthDaily) =>
+    data.map(d => d[key] as number | null).filter((v): v is number => v !== null && v > 0);
+
+  const restingHrValues = getValues(last7, "resting_hr");
+  const hrvValues = getValues(last7, "hrv_ms");
+  const avgHrValues = getValues(last7, "avg_hr_bpm");
+  const sleepingHrValues = getValues(last7, "sleeping_hr");
+  const sleepingHrvValues = getValues(last7, "sleeping_hrv");
+  const minHrValues = getValues(last7, "min_hr");
+  const maxHrValues = getValues(last7, "max_hr");
+  const sedentaryHrValues = getValues(last7, "sedentary_hr");
+
+  // 21-day values for averages
+  const hrvValues21d = getValues(last21, "hrv_ms");
+  const restingHrValues21d = getValues(last21, "resting_hr");
+  const sleepingHrValues21d = getValues(last21, "sleeping_hr");
+  const sleepingHrvValues21d = getValues(last21, "sleeping_hrv");
+  const sedentaryHrValues21d = getValues(last21, "sedentary_hr");
+
+  const avg = (arr: number[]) => arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+
   const hasCardioData = restingHrValues.length > 0 || hrvValues.length > 0 || avgHrValues.length > 0 || sleepingHrValues.length > 0 || sleepingHrvValues.length > 0 || minHrValues.length > 0 || sedentaryHrValues.length > 0;
 
   return (
@@ -228,8 +244,9 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
         <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
             <HeartPulse className="h-4 w-4 text-red-500" />
-            Saúde Cardiovascular — 7 dias
+            Saúde Cardiovascular
           </h3>
+          <p className="text-[10px] text-muted-foreground mb-3">Sparkline 7d · Médias 7d e 21d</p>
           <div className="grid grid-cols-1 gap-3">
             {restingHrValues.length > 0 && (
               <Card className="cursor-pointer active:scale-[0.98] transition-transform" onClick={() => setDrawerMetric("resting_hr")}>
@@ -241,7 +258,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {restingHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(restingHrValues.reduce((a, b) => a + b, 0) / restingHrValues.length)} bpm
+                        7d: {avg(restingHrValues)} · 21d: {avg(restingHrValues21d) ?? "—"} bpm
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -262,7 +279,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {hrvValues[0].toFixed(0)} <span className="text-xs font-normal text-muted-foreground">ms</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(hrvValues.reduce((a, b) => a + b, 0) / hrvValues.length)} ms
+                        7d: {avg(hrvValues)} · 21d: {avg(hrvValues21d) ?? "—"} ms
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -283,7 +300,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {avgHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(avgHrValues.reduce((a, b) => a + b, 0) / avgHrValues.length)} bpm
+                        7d: {avg(avgHrValues)} bpm
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -305,7 +322,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {sleepingHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(sleepingHrValues.reduce((a, b) => a + b, 0) / sleepingHrValues.length)} bpm
+                        7d: {avg(sleepingHrValues)} · 21d: {avg(sleepingHrValues21d) ?? "—"} bpm
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -327,7 +344,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {sleepingHrvValues[0].toFixed(0)} <span className="text-xs font-normal text-muted-foreground">ms</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(sleepingHrvValues.reduce((a, b) => a + b, 0) / sleepingHrvValues.length)} ms
+                        7d: {avg(sleepingHrvValues)} · 21d: {avg(sleepingHrvValues21d) ?? "—"} ms
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -349,9 +366,9 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {minHrValues[0] ?? "—"} / {maxHrValues[0] ?? "—"} <span className="text-xs font-normal text-muted-foreground">bpm</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        {minHrValues.length > 0 && `Min média: ${Math.round(minHrValues.reduce((a, b) => a + b, 0) / minHrValues.length)}`}
+                        {minHrValues.length > 0 && `Min 7d: ${avg(minHrValues)}`}
                         {minHrValues.length > 0 && maxHrValues.length > 0 && " · "}
-                        {maxHrValues.length > 0 && `Max média: ${Math.round(maxHrValues.reduce((a, b) => a + b, 0) / maxHrValues.length)}`}
+                        {maxHrValues.length > 0 && `Max 7d: ${avg(maxHrValues)}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -373,7 +390,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
                         {sedentaryHrValues[0]} <span className="text-xs font-normal text-muted-foreground">bpm</span>
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Média: {Math.round(sedentaryHrValues.reduce((a, b) => a + b, 0) / sedentaryHrValues.length)} bpm
+                        7d: {avg(sedentaryHrValues)} · 21d: {avg(sedentaryHrValues21d) ?? "—"} bpm
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
