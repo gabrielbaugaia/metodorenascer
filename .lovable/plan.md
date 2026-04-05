@@ -1,47 +1,53 @@
 
+Objetivo: corrigir o fluxo para que os dados apareçam e atualizem corretamente na aba “Dados do Corpo”, inclusive FC de Repouso, VFC e BPM médio.
 
-# Plano: Corrigir VFC e FC Repouso que nunca aparecem no Dashboard
+1. Ajustar a origem dos dados
+- Confirmar `health_daily` como fonte principal da aba `DadosCorpo`.
+- Garantir que todos os fluxos que registram saúde sincronizem de forma completa para `health_daily`, não só passos/calorias/sono.
 
-## Problema
+2. Corrigir o check-in principal (`src/components/renascer/ManualInput.tsx`)
+- Incluir `resting_hr`, `hrv_ms` e `avg_hr_bpm` também no `manual_day_logs`, para manter consistência com histórico e revisão.
+- Ampliar a lógica de “tem dados fitness” para considerar também FC repouso, VFC e BPM médio.
+- Após salvar, invalidar também queries relacionadas que dependem desses dados além de `health-daily`, para refletir imediatamente em todos os painéis.
 
-O componente `ManualInput.tsx` (check-in diário principal) **não captura nem salva** os dados cardiovasculares extraídos pela IA (resting_hr, hrv_ms, avg_hr_bpm). A função OCR (`extract-fitness-data`) retorna esses campos corretamente, mas o ManualInput ignora todos eles em dois pontos:
+3. Corrigir histórico e edição de dias (`src/components/renascer/RecentLogsHistory.tsx`)
+- Atualizar o `select` de `manual_day_logs` para buscar `resting_hr`, `hrv_ms` e `avg_hr_bpm`.
+- Ao editar/salvar um dia, persistir esses campos também em `manual_day_logs`, não apenas em `health_daily`.
+- Isso evita que o histórico mostre valores vazios enquanto a aba de saúde usa outra fonte.
 
-1. **Extração OCR** (linha 86-90): captura steps, active_calories, exercise_minutes, standing_hours, distance_km — mas **não tem state** para resting_hr, hrv_ms, avg_hr_bpm
-2. **Upsert no health_daily** (linha 199-214): não inclui os campos cardiovasculares
+4. Corrigir sincronização do conector móvel
+- Em `src/services/healthSync.ts`, incluir no payload também:
+  - `avg_hr_bpm`
+  - `exercise_minutes`
+  - `standing_hours`
+  - `distance_km`
+- Em `supabase/functions/health-sync/index.ts`, aceitar e salvar esses campos no `upsert` de `health_daily`.
+- Hoje o sync do conector está incompleto, então parte dos dados nunca chega à aba.
 
-O `BatchFitnessUpload` já funciona corretamente (salva resting_hr, hrv_ms, avg_hr_bpm). O problema é exclusivo do ManualInput.
+5. Refinar atualização visual da aba Dados do Corpo
+- Em `src/hooks/useHealthData.ts`, manter a leitura de 7 dias, mas revisar se o fallback do dia exibido prioriza o registro mais recente com dados cardiovasculares quando o dia atual não tiver esses campos.
+- Assim evita aparecer “indisponível” mesmo quando existe dado recente válido.
 
-## Correções em `src/components/renascer/ManualInput.tsx`
+6. Validar a interface da aba
+- Em `src/components/health/HealthDashboardTab.tsx`, manter os cards atuais, mas garantir que os estados de vazio considerem corretamente os campos cardiovasculares.
+- Verificar especialmente:
+  - FC Repouso
+  - VFC (HRV)
+  - BPM Diário
+  - cards do bloco “Saúde Cardiovascular — 7 dias”
 
-### 1. Adicionar estados para dados cardiovasculares
-```ts
-const [restingHr, setRestingHr] = useState<string>("");
-const [hrvMs, setHrvMs] = useState<string>("");
-const [avgHrBpm, setAvgHrBpm] = useState<string>("");
-```
+Resultado esperado
+- Quando o aluno registrar print/manual/importação/sincronização, a aba “Dados do Corpo” passa a atualizar de forma consistente.
+- Se houver dado do dia, ele aparece.
+- Se não houver dado do dia, mas houver dado recente válido, o painel mostra esse último registro.
 
-### 2. Capturar os campos na resposta OCR (após linha 90)
-```ts
-if (data.resting_hr != null) setRestingHr(String(data.resting_hr));
-if (data.hrv_ms != null) setHrvMs(String(data.hrv_ms));
-if (data.avg_hr_bpm != null) setAvgHrBpm(String(data.avg_hr_bpm));
-```
-
-### 3. Parsear e incluir na mutation (junto com stepsVal, etc.)
-```ts
-const restingHrVal = restingHr ? parseInt(restingHr) : null;
-const hrvMsVal = hrvMs ? parseInt(hrvMs) : null;
-const avgHrBpmVal = avgHrBpm ? parseInt(avgHrBpm) : null;
-```
-
-### 4. Incluir no upsert do health_daily (após distanceKmVal)
-```ts
-if (restingHrVal !== null) healthData.resting_hr = restingHrVal;
-if (hrvMsVal !== null) healthData.hrv_ms = hrvMsVal;
-if (avgHrBpmVal !== null) healthData.avg_hr_bpm = avgHrBpmVal;
-```
-
-### 5. Limpar estados no reset (se existir)
-
-Apenas 1 arquivo modificado. Nenhuma alteração de banco de dados necessária.
-
+Detalhes técnicos
+- Arquivos principais:
+  - `src/components/renascer/ManualInput.tsx`
+  - `src/components/renascer/RecentLogsHistory.tsx`
+  - `src/hooks/useHealthData.ts`
+  - `src/components/health/HealthDashboardTab.tsx`
+  - `src/services/healthSync.ts`
+  - `supabase/functions/health-sync/index.ts`
+- Não deve precisar de nova tabela.
+- Pode exigir pequena atualização no backend function para o sync móvel ficar completo.
