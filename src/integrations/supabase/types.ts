@@ -1221,8 +1221,13 @@ export type Database = {
           exercise_minutes: number | null
           hrv_ms: number | null
           id: string
+          max_hr: number | null
+          min_hr: number | null
           resting_hr: number | null
+          sedentary_hr: number | null
           sleep_minutes: number | null
+          sleeping_hr: number | null
+          sleeping_hrv: number | null
           source: string | null
           standing_hours: number | null
           steps: number | null
@@ -1238,8 +1243,13 @@ export type Database = {
           exercise_minutes?: number | null
           hrv_ms?: number | null
           id?: string
+          max_hr?: number | null
+          min_hr?: number | null
           resting_hr?: number | null
+          sedentary_hr?: number | null
           sleep_minutes?: number | null
+          sleeping_hr?: number | null
+          sleeping_hrv?: number | null
           source?: string | null
           standing_hours?: number | null
           steps?: number | null
@@ -1255,8 +1265,13 @@ export type Database = {
           exercise_minutes?: number | null
           hrv_ms?: number | null
           id?: string
+          max_hr?: number | null
+          min_hr?: number | null
           resting_hr?: number | null
+          sedentary_hr?: number | null
           sleep_minutes?: number | null
+          sleeping_hr?: number | null
+          sleeping_hrv?: number | null
           source?: string | null
           standing_hours?: number | null
           steps?: number | null
@@ -1403,9 +1418,14 @@ export type Database = {
           fitness_screenshot_path_7: string | null
           hrv_ms: number | null
           id: string
+          max_hr: number | null
+          min_hr: number | null
           resting_hr: number | null
           rpe: number | null
+          sedentary_hr: number | null
           sleep_hours: number | null
+          sleeping_hr: number | null
+          sleeping_hrv: number | null
           standing_hours: number | null
           steps: number | null
           stress_level: number | null
@@ -1430,9 +1450,14 @@ export type Database = {
           fitness_screenshot_path_7?: string | null
           hrv_ms?: number | null
           id?: string
+          max_hr?: number | null
+          min_hr?: number | null
           resting_hr?: number | null
           rpe?: number | null
+          sedentary_hr?: number | null
           sleep_hours?: number | null
+          sleeping_hr?: number | null
+          sleeping_hrv?: number | null
           standing_hours?: number | null
           steps?: number | null
           stress_level?: number | null
@@ -1457,9 +1482,14 @@ export type Database = {
           fitness_screenshot_path_7?: string | null
           hrv_ms?: number | null
           id?: string
+          max_hr?: number | null
+          min_hr?: number | null
           resting_hr?: number | null
           rpe?: number | null
+          sedentary_hr?: number | null
           sleep_hours?: number | null
+          sleeping_hr?: number | null
+          sleeping_hrv?: number | null
           standing_hours?: number | null
           steps?: number | null
           stress_level?: number | null
