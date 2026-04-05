@@ -6,61 +6,32 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-/**
- * Given a raw detected_date from OCR, normalize it to fall within the last 10 days.
- * The OCR often returns wrong years (2020, 2024, 2025) because the screenshot
- * only shows day/month or weekday. We fix the year to the current one and
- * verify the date is recent.
- */
 function normalizeDate(rawDate: string | null): { date: string | null; ambiguous: boolean } {
   if (!rawDate) return { date: null, ambiguous: false };
-
-  // Parse the raw date
   const parts = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!parts) return { date: null, ambiguous: true };
-
   const [, yearStr, monthStr, dayStr] = parts;
   const month = parseInt(monthStr, 10);
   const day = parseInt(dayStr, 10);
-
-  // Get current date info
   const now = new Date();
   const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
-  const currentDay = now.getDate();
-
-  // Try current year first
   let candidateYear = currentYear;
   let candidate = new Date(candidateYear, month - 1, day);
-
-  // If the candidate is in the future (more than 1 day ahead), try previous year
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(23, 59, 59, 999);
-
   if (candidate > tomorrow) {
     candidateYear = currentYear - 1;
     candidate = new Date(candidateYear, month - 1, day);
   }
-
-  // Check if it's within the last 10 days
   const tenDaysAgo = new Date(now);
   tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
   tenDaysAgo.setHours(0, 0, 0, 0);
-
   const withinWindow = candidate >= tenDaysAgo && candidate <= tomorrow;
-
-  // Format the normalized date
   const normalizedDate = `${candidateYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
-  // If the original year matched, it's not ambiguous and within window
   const originalYear = parseInt(yearStr, 10);
   const yearWasChanged = originalYear !== candidateYear;
-
-  return {
-    date: normalizedDate,
-    ambiguous: yearWasChanged || !withinWindow,
-  };
+  return { date: normalizedDate, ambiguous: yearWasChanged || !withinWindow };
 }
 
 serve(async (req) => {
@@ -77,7 +48,6 @@ serve(async (req) => {
       });
     }
 
-    // Validate size (~5MB base64)
     if (image_base64.length > 7_000_000) {
       return new Response(JSON.stringify({ error: "Image too large" }), {
         status: 400,
@@ -88,9 +58,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    // Strip data URI prefix if present
     const base64Clean = image_base64.replace(/^data:image\/[a-z]+;base64,/, "");
-
     const currentYear = new Date().getFullYear();
     const todayStr = new Date().toISOString().split("T")[0];
 
@@ -111,8 +79,22 @@ CARDIOVASCULAR METRICS — Map these labels to the correct fields:
 - resting_hr: "FC de repouso", "Resting HR", "BPM ao despertar", "BPM ao acordar", "Waking HR", "Waking BPM", "FC ao acordar", "Resting Heart Rate"
 - hrv_ms: "VFC", "HRV", "VFC ao despertar", "VFC ao acordar", "Waking HRV", "Heart Rate Variability", "Variabilidade"
 - avg_hr_bpm: "BPM diário", "BPM médio", "Avg HR", "Daily HR", "Average Heart Rate", "FC média", "Média BPM"
+- sleeping_hr: "BPM ao dormir", "Sleeping HR", "Sleep HR", "FC ao dormir", "FC durante sono", "Sleeping Heart Rate", "BPM sleeping"
+- sleeping_hrv: "VFC ao dormir", "Sleeping HRV", "Sleep HRV", "VFC durante sono", "HRV ao dormir"
+- min_hr: "BPM mínima", "Min HR", "Min BPM", "Minimum Heart Rate", "FC mínima", "MinMax" (use the lower value)
+- max_hr: "BPM máxima", "Max HR", "Max BPM", "Maximum Heart Rate", "FC máxima", "MinMax" (use the higher value)
+- sedentary_hr: "BPM sedentária", "Sedentary HR", "Sedentary BPM", "FC sedentária", "Resting/Sedentary"
 
-IMPORTANT: Many wellness apps (HeartWatch, Athlytic, AutoSleep, Heart Analyzer) use different names for the same metrics. In HeartWatch specifically, "BPM ao despertar" is the waking/resting heart rate → map to resting_hr. "VFC ao despertar" is waking HRV → map to hrv_ms. "BPM diário" is the daily average → map to avg_hr_bpm. Do NOT leave these null if they are visible in the image. Ignore wellness/readiness/recovery scores that are not one of the supported numeric health fields.
+IMPORTANT: Many wellness apps (HeartWatch, Athlytic, AutoSleep, Heart Analyzer) use different names for the same metrics. In HeartWatch specifically:
+- "BPM ao despertar" is the waking/resting heart rate → map to resting_hr
+- "VFC ao despertar" is waking HRV → map to hrv_ms
+- "BPM diário" is the daily average → map to avg_hr_bpm
+- "BPM ao dormir" is sleeping HR → map to sleeping_hr
+- "VFC ao dormir" is sleeping HRV → map to sleeping_hrv
+- "MinMax bpm" shows min and max → map to min_hr and max_hr respectively
+- "BPM sedentária" is sedentary HR → map to sedentary_hr
+
+Do NOT leave these null if they are visible in the image. Ignore wellness/readiness/recovery scores that are not one of the supported numeric health fields.
 
 CRITICAL DATE RULES:
 - Today's date is ${todayStr}. The current year is ${currentYear}.
@@ -128,7 +110,7 @@ CRITICAL DATE RULES:
             content: [
               {
                 type: "text",
-                text: `Analyze this fitness app screenshot. Extract ALL visible health metrics including: steps, active calories, exercise minutes, standing hours, distance in km, resting heart rate (also called "BPM ao despertar" or "Waking HR"), HRV (also called "VFC ao despertar"), and average daily heart rate (also called "BPM diário"). Also extract the date shown on screen. Remember: today is ${todayStr}, use year ${currentYear} for any detected dates. Pay special attention to cardiovascular data from wellness apps like HeartWatch, Athlytic, AutoSleep, and Heart Analyzer, which use different nomenclature.`,
+                text: `Analyze this fitness app screenshot. Extract ALL visible health metrics including: steps, active calories, exercise minutes, standing hours, distance in km, resting heart rate ("BPM ao despertar"/"Waking HR"), HRV ("VFC ao despertar"), average daily heart rate ("BPM diário"), sleeping heart rate ("BPM ao dormir"), sleeping HRV ("VFC ao dormir"), min/max heart rate ("MinMax bpm"), and sedentary heart rate ("BPM sedentária"). Also extract the date shown on screen. Remember: today is ${todayStr}, use year ${currentYear} for any detected dates. Pay special attention to cardiovascular data from wellness apps like HeartWatch, Athlytic, AutoSleep, and Heart Analyzer.`,
               },
               {
                 type: "image_url",
@@ -148,44 +130,25 @@ CRITICAL DATE RULES:
               parameters: {
                 type: "object",
                 properties: {
-                  steps: {
-                    type: ["number", "null"],
-                    description: "Number of steps walked",
-                  },
-                  active_calories: {
-                    type: ["number", "null"],
-                    description: "Active calories burned (not total/resting)",
-                  },
-                  exercise_minutes: {
-                    type: ["number", "null"],
-                    description: "Minutes of exercise/activity",
-                  },
-                  standing_hours: {
-                    type: ["number", "null"],
-                    description: "Hours standing / move hours",
-                  },
-                  distance_km: {
-                    type: ["number", "null"],
-                    description: "Distance in kilometers",
-                  },
-                  resting_hr: {
-                    type: ["number", "null"],
-                    description: "Resting heart rate in BPM",
-                  },
-                  hrv_ms: {
-                    type: ["number", "null"],
-                    description: "Heart rate variability (HRV) in milliseconds",
-                  },
-                  avg_hr_bpm: {
-                    type: ["number", "null"],
-                    description: "Average daily heart rate in BPM",
-                  },
+                  steps: { type: ["number", "null"], description: "Number of steps walked" },
+                  active_calories: { type: ["number", "null"], description: "Active calories burned (not total/resting)" },
+                  exercise_minutes: { type: ["number", "null"], description: "Minutes of exercise/activity" },
+                  standing_hours: { type: ["number", "null"], description: "Hours standing / move hours" },
+                  distance_km: { type: ["number", "null"], description: "Distance in kilometers" },
+                  resting_hr: { type: ["number", "null"], description: "Resting/waking heart rate in BPM" },
+                  hrv_ms: { type: ["number", "null"], description: "Waking heart rate variability (HRV) in ms" },
+                  avg_hr_bpm: { type: ["number", "null"], description: "Average daily heart rate in BPM" },
+                  sleeping_hr: { type: ["number", "null"], description: "Sleeping heart rate in BPM" },
+                  sleeping_hrv: { type: ["number", "null"], description: "Sleeping HRV in ms" },
+                  min_hr: { type: ["number", "null"], description: "Minimum heart rate of the day in BPM" },
+                  max_hr: { type: ["number", "null"], description: "Maximum heart rate of the day in BPM" },
+                  sedentary_hr: { type: ["number", "null"], description: "Sedentary heart rate in BPM" },
                   detected_date: {
                     type: ["string", "null"],
                     description: `Date shown in the screenshot in YYYY-MM-DD format. Use year ${currentYear}. null if not visible.`,
                   },
                 },
-                required: ["steps", "active_calories", "exercise_minutes", "standing_hours", "distance_km", "resting_hr", "hrv_ms", "avg_hr_bpm", "detected_date"],
+                required: ["steps", "active_calories", "exercise_minutes", "standing_hours", "distance_km", "resting_hr", "hrv_ms", "avg_hr_bpm", "sleeping_hr", "sleeping_hrv", "min_hr", "max_hr", "sedentary_hr", "detected_date"],
                 additionalProperties: false,
               },
             },
@@ -198,21 +161,18 @@ CRITICAL DATE RULES:
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Muitas requisições. Tente novamente em alguns minutos." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Créditos de IA esgotados." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const errText = await response.text();
       console.error("AI gateway error:", response.status, errText);
       return new Response(JSON.stringify({ error: "Falha ao analisar imagem" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -222,14 +182,11 @@ CRITICAL DATE RULES:
     if (!toolCall?.function?.arguments) {
       console.error("No tool call in response:", JSON.stringify(result));
       return new Response(JSON.stringify({ error: "Não foi possível ler os dados da imagem" }), {
-        status: 422,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const extracted = JSON.parse(toolCall.function.arguments);
-
-    // Post-process: normalize the date to prevent wrong years
     const { date: normalizedDate, ambiguous } = normalizeDate(extracted.detected_date);
     extracted.detected_date = normalizedDate;
     extracted.date_ambiguous = ambiguous;
@@ -240,8 +197,7 @@ CRITICAL DATE RULES:
   } catch (e) {
     console.error("extract-fitness-data error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
