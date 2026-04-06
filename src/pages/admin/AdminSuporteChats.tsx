@@ -53,7 +53,8 @@ import {
   AlertTriangle,
   User,
   Circle,
-  ChevronRight
+  ChevronRight,
+  Plus
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -156,6 +157,15 @@ export default function AdminSuporteChats() {
   const [confirmClearSingle, setConfirmClearSingle] = useState(false);
   const [clearingAll, setClearingAll] = useState(false);
   const [clearingSingle, setClearingSingle] = useState(false);
+
+  // Estados para nova mensagem direta
+  const [showNewMessage, setShowNewMessage] = useState(false);
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientResults, setClientResults] = useState<{ id: string; full_name: string; email: string | null }[]>([]);
+  const [selectedClient, setSelectedClient] = useState<{ id: string; full_name: string; email: string | null } | null>(null);
+  const [newDirectMessage, setNewDirectMessage] = useState("");
+  const [searchingClients, setSearchingClients] = useState(false);
+  const [sendingDirect, setSendingDirect] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
