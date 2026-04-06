@@ -409,6 +409,77 @@ export default function AdminSuporteChats() {
     }
   };
 
+  // Buscar clientes para nova mensagem
+  const searchClients = async (term: string) => {
+    setClientSearch(term);
+    if (term.length < 2) { setClientResults([]); return; }
+    setSearchingClients(true);
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .or(`full_name.ilike.%${term}%,email.ilike.%${term}%`)
+        .limit(10);
+      setClientResults(data || []);
+    } catch { setClientResults([]); }
+    finally { setSearchingClients(false); }
+  };
+
+  // Enviar mensagem direta
+  const handleSendDirectMessage = async () => {
+    if (!selectedClient || !newDirectMessage.trim()) return;
+    setSendingDirect(true);
+    try {
+      const { data: existing } = await supabase
+        .from("conversas")
+        .select("id, mensagens")
+        .eq("user_id", selectedClient.id)
+        .limit(1)
+        .maybeSingle();
+
+      const newMsg = {
+        role: "admin",
+        content: newDirectMessage.trim(),
+        timestamp: new Date().toISOString(),
+        admin_name: "Gabriel Baú"
+      };
+
+      if (existing) {
+        const msgs = Array.isArray(existing.mensagens) ? existing.mensagens : [];
+        await supabase
+          .from("conversas")
+          .update({
+            mensagens: [...msgs, newMsg] as unknown as Json,
+            updated_at: new Date().toISOString(),
+            status: 'admin_intervention'
+          })
+          .eq("id", existing.id);
+      } else {
+        await supabase
+          .from("conversas")
+          .insert({
+            user_id: selectedClient.id,
+            tipo: "admin_direct",
+            mensagens: [newMsg] as unknown as Json,
+            status: "admin_intervention"
+          });
+      }
+
+      toast.success(`Mensagem enviada para ${selectedClient.full_name}`);
+      setShowNewMessage(false);
+      setSelectedClient(null);
+      setNewDirectMessage("");
+      setClientSearch("");
+      setClientResults([]);
+      fetchConversas();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao enviar mensagem");
+    } finally {
+      setSendingDirect(false);
+    }
+  };
+
   const getLastMessage = (mensagens: Conversa['mensagens']) => {
     if (!Array.isArray(mensagens) || mensagens.length === 0) {
       return "Sem mensagens";
