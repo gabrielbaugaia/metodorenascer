@@ -1,50 +1,30 @@
 
 
-# Plano: Notificações automáticas de renovação de protocolo (30d ajuste / 60d novo)
+# Plano: Pop-up de renovação de protocolo na área do cliente (30 e 90 dias)
 
 ## Objetivo
-
-Notificar o cliente automaticamente quando o protocolo ativo completar 30 dias (enviar dados de evolução para ajuste) e 60 dias (protocolo novo necessário). Inclui notificação in-app + push + email.
-
-## Como funciona
-
-```text
-Protocolo criado (dia 0)
-  └─ Dia 30 → Push + banner: "Envie fotos e medidas para ajustarmos seu protocolo"
-  └─ Dia 60 → Push + banner: "Seu protocolo expirou. Envie evolução para gerar o novo"
-```
+Criar um modal/pop-up que aparece automaticamente quando o cliente entra no dashboard, nos marcos de 30 e 90 dias do protocolo ativo, explicando a importância de enviar dados de evolução para renovar/ajustar o treino.
 
 ## Alterações
 
-### 1. Nova Edge Function `check-protocol-renewal/index.ts`
-- Busca todos os protocolos ativos (`ativo = true`) com `data_geracao`
-- Calcula dias desde a geração
-- Para cada usuário com protocolo ≥ 30 dias (e < 60): envia push + email de "ajuste" (se ainda não enviou nos últimos 7 dias)
-- Para ≥ 60 dias: envia push + email de "novo protocolo"
-- Usa `message_sends` para controle de cooldown (não reenviar se já notificou recentemente)
-- Será agendada via `pg_cron` para rodar diariamente
+### 1. Novo componente `ProtocolRenewalPopup.tsx`
+- Modal (Dialog) que aparece automaticamente ao abrir o dashboard
+- **30 dias**: tom motivacional — "Seu protocolo completou 30 dias! Para ajustarmos seu treino, nutrição e mentalidade, envie suas fotos e medidas de evolução."
+- **90 dias**: tom urgente — "Seu protocolo completou 90 dias! Um novo protocolo é essencial para continuar evoluindo. Envie seus dados agora."
+- Explica em 3-4 bullet points por que a troca é importante (adaptação muscular, platô, novos estímulos)
+- Botão principal "Enviar Evolução" → navega para `/evolucao`
+- Botão secundário "Lembrar depois"
+- Controle via `localStorage` para não mostrar mais de 1x por semana (chave com timestamp do último dismiss)
 
-### 2. Novo componente `ProtocolRenewalBanner.tsx`
-- Card/banner exibido no Dashboard quando protocolo ativo tem ≥ 28 dias
-- 28-59 dias: banner amarelo "Seu protocolo completa 30 dias. Envie seus dados de evolução para ajustarmos"
-- ≥ 60 dias: banner vermelho "Protocolo expirado. Envie fotos e medidas para gerar seu novo protocolo"
-- Botão de ação → direciona para página de Evolução
+### 2. Atualizar `Dashboard.tsx`
+- Importar e renderizar `ProtocolRenewalPopup` passando `daysSinceLastProtocol` (já calculado)
+- O pop-up aparece se dias ≥ 28 (pré-30) ou ≥ 85 (pré-90) e não foi dispensado nos últimos 7 dias
 
-### 3. Atualizar `notification_preferences`
-- Migração: adicionar coluna `protocol_renewal_enabled boolean default true`
-- Toggle nas configurações de notificação
-
-### 4. Atualizar `NotificationSettings.tsx`
-- Novo toggle "Lembrete de renovação de protocolo"
-
-### 5. Atualizar `Dashboard.tsx`
-- Incluir `ProtocolRenewalBanner` no topo do dashboard
+### 3. Atualizar Edge Function `check-protocol-renewal`
+- Adicionar marco de 90 dias (além dos 30 e 60 já existentes) com mensagem específica de "novo protocolo completo"
 
 ## Arquivos
-- **Novo**: `supabase/functions/check-protocol-renewal/index.ts`
-- **Novo**: `src/components/dashboard/ProtocolRenewalBanner.tsx`
-- **Migração**: adicionar `protocol_renewal_enabled` em `notification_preferences`
-- **Editar**: `src/components/notifications/NotificationSettings.tsx`
+- **Novo**: `src/components/dashboard/ProtocolRenewalPopup.tsx`
 - **Editar**: `src/pages/Dashboard.tsx`
-- **Editar**: `src/hooks/usePushNotifications.ts` (incluir novo campo)
+- **Editar**: `supabase/functions/check-protocol-renewal/index.ts`
 
