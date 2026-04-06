@@ -53,7 +53,8 @@ import {
   AlertTriangle,
   User,
   Circle,
-  ChevronRight
+  ChevronRight,
+  Plus
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -156,6 +157,15 @@ export default function AdminSuporteChats() {
   const [confirmClearSingle, setConfirmClearSingle] = useState(false);
   const [clearingAll, setClearingAll] = useState(false);
   const [clearingSingle, setClearingSingle] = useState(false);
+
+  // Estados para nova mensagem direta
+  const [showNewMessage, setShowNewMessage] = useState(false);
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientResults, setClientResults] = useState<{ id: string; full_name: string; email: string | null }[]>([]);
+  const [selectedClient, setSelectedClient] = useState<{ id: string; full_name: string; email: string | null } | null>(null);
+  const [newDirectMessage, setNewDirectMessage] = useState("");
+  const [searchingClients, setSearchingClients] = useState(false);
+  const [sendingDirect, setSendingDirect] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -399,6 +409,77 @@ export default function AdminSuporteChats() {
     }
   };
 
+  // Buscar clientes para nova mensagem
+  const searchClients = async (term: string) => {
+    setClientSearch(term);
+    if (term.length < 2) { setClientResults([]); return; }
+    setSearchingClients(true);
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .or(`full_name.ilike.%${term}%,email.ilike.%${term}%`)
+        .limit(10);
+      setClientResults(data || []);
+    } catch { setClientResults([]); }
+    finally { setSearchingClients(false); }
+  };
+
+  // Enviar mensagem direta
+  const handleSendDirectMessage = async () => {
+    if (!selectedClient || !newDirectMessage.trim()) return;
+    setSendingDirect(true);
+    try {
+      const { data: existing } = await supabase
+        .from("conversas")
+        .select("id, mensagens")
+        .eq("user_id", selectedClient.id)
+        .limit(1)
+        .maybeSingle();
+
+      const newMsg = {
+        role: "admin",
+        content: newDirectMessage.trim(),
+        timestamp: new Date().toISOString(),
+        admin_name: "Gabriel Baú"
+      };
+
+      if (existing) {
+        const msgs = Array.isArray(existing.mensagens) ? existing.mensagens : [];
+        await supabase
+          .from("conversas")
+          .update({
+            mensagens: [...msgs, newMsg] as unknown as Json,
+            updated_at: new Date().toISOString(),
+            status: 'admin_intervention'
+          })
+          .eq("id", existing.id);
+      } else {
+        await supabase
+          .from("conversas")
+          .insert({
+            user_id: selectedClient.id,
+            tipo: "admin_direct",
+            mensagens: [newMsg] as unknown as Json,
+            status: "admin_intervention"
+          });
+      }
+
+      toast.success(`Mensagem enviada para ${selectedClient.full_name}`);
+      setShowNewMessage(false);
+      setSelectedClient(null);
+      setNewDirectMessage("");
+      setClientSearch("");
+      setClientResults([]);
+      fetchConversas();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao enviar mensagem");
+    } finally {
+      setSendingDirect(false);
+    }
+  };
+
   const getLastMessage = (mensagens: Conversa['mensagens']) => {
     if (!Array.isArray(mensagens) || mensagens.length === 0) {
       return "Sem mensagens";
@@ -452,6 +533,10 @@ export default function AdminSuporteChats() {
             <p className="text-sm md:text-base text-muted-foreground">Monitore e intervenha nas conversas</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => setShowNewMessage(true)}>
+              <Plus className="h-4 w-4 md:mr-1" />
+              <span className="hidden md:inline">Nova Mensagem</span>
+            </Button>
             <Badge variant="outline" className="flex items-center gap-1">
               <MessageCircle className="h-3 w-3" />
               {conversas.length} conversas
@@ -889,6 +974,79 @@ export default function AdminSuporteChats() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Modal Nova Mensagem Direta */}
+        <Dialog open={showNewMessage} onOpenChange={(v) => {
+          setShowNewMessage(v);
+          if (!v) { setSelectedClient(null); setNewDirectMessage(""); setClientSearch(""); setClientResults([]); }
+        }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Nova Mensagem Direta</DialogTitle>
+              <DialogDescription>Busque um cliente e envie uma mensagem</DialogDescription>
+            </DialogHeader>
+
+            {!selectedClient ? (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome ou email..."
+                    value={clientSearch}
+                    onChange={(e) => searchClients(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {searchingClients && <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>}
+                {clientResults.length > 0 && (
+                  <ScrollArea className="max-h-60">
+                    <div className="space-y-1">
+                      {clientResults.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => setSelectedClient(c)}
+                          className="w-full text-left px-3 py-2.5 rounded-md hover:bg-muted/50 transition-colors"
+                        >
+                          <p className="text-sm font-medium">{c.full_name || "Sem nome"}</p>
+                          <p className="text-xs text-muted-foreground">{c.email}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+                {clientSearch.length >= 2 && !searchingClients && clientResults.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum cliente encontrado</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2">
+                  <div>
+                    <p className="text-sm font-medium">{selectedClient.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{selectedClient.email}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedClient(null)}>Trocar</Button>
+                </div>
+                <Textarea
+                  placeholder="Escreva sua mensagem..."
+                  value={newDirectMessage}
+                  onChange={(e) => setNewDirectMessage(e.target.value)}
+                  rows={4}
+                />
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setShowNewMessage(false)}>Cancelar</Button>
+              {selectedClient && (
+                <Button onClick={handleSendDirectMessage} disabled={sendingDirect || !newDirectMessage.trim()}>
+                  {sendingDirect ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
+                  Enviar
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </ClientLayout>
   );

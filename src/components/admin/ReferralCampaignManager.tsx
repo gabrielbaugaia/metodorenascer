@@ -7,12 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Megaphone, Upload, Loader2, Trash2, Plus, Image as ImageIcon } from "lucide-react";
 
-interface CashbackRule {
-  plan_type: string;
-  cashback_amount: number;
+interface BenefitRule {
+  benefit_type: "discount_percent" | "consultation" | "custom";
+  label: string;
+  description: string;
+  value?: number;
 }
 
 interface Campaign {
@@ -20,7 +23,7 @@ interface Campaign {
   title: string;
   description: string | null;
   banner_image_url: string | null;
-  cashback_rules: CashbackRule[];
+  cashback_rules: BenefitRule[];
   active: boolean;
   starts_at: string | null;
   ends_at: string | null;
@@ -33,16 +36,13 @@ export function ReferralCampaignManager() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // New campaign form
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
-  const [rules, setRules] = useState<CashbackRule[]>([{ plan_type: "Mensal", cashback_amount: 1 }]);
+  const [rules, setRules] = useState<BenefitRule[]>([{ benefit_type: "discount_percent", label: "10% de desconto", description: "", value: 10 }]);
   const [showForm, setShowForm] = useState(false);
 
-  useEffect(() => {
-    fetchCampaigns();
-  }, []);
+  useEffect(() => { fetchCampaigns(); }, []);
 
   const fetchCampaigns = async () => {
     const { data, error } = await supabase
@@ -53,7 +53,7 @@ export function ReferralCampaignManager() {
     if (!error && data) {
       setCampaigns(data.map(c => ({
         ...c,
-        cashback_rules: (c.cashback_rules as any[] || []) as CashbackRule[],
+        cashback_rules: (c.cashback_rules as any[] || []) as BenefitRule[],
       })));
     }
     setLoading(false);
@@ -62,52 +62,45 @@ export function ReferralCampaignManager() {
   const handleUploadBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     try {
       const ext = file.name.split(".").pop();
       const path = `referral-banners/${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("blog-assets")
-        .upload(path, file, { upsert: true });
-
+      const { error: uploadError } = await supabase.storage.from("blog-assets").upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from("blog-assets")
-        .getPublicUrl(path);
-
+      const { data: urlData } = supabase.storage.from("blog-assets").getPublicUrl(path);
       setBannerUrl(urlData.publicUrl);
       toast.success("Banner enviado!");
     } catch (err) {
       console.error(err);
       toast.error("Erro ao enviar banner");
-    } finally {
-      setUploading(false);
-    }
+    } finally { setUploading(false); }
   };
 
   const addRule = () => {
-    setRules([...rules, { plan_type: "", cashback_amount: 1 }]);
+    setRules([...rules, { benefit_type: "custom", label: "", description: "" }]);
   };
 
   const removeRule = (idx: number) => {
     setRules(rules.filter((_, i) => i !== idx));
   };
 
-  const updateRule = (idx: number, field: keyof CashbackRule, value: string | number) => {
+  const updateRule = (idx: number, updates: Partial<BenefitRule>) => {
     const updated = [...rules];
-    updated[idx] = { ...updated[idx], [field]: value };
+    updated[idx] = { ...updated[idx], ...updates };
+    if (updates.benefit_type === "discount_percent") {
+      updated[idx].label = `${updated[idx].value || 10}% de desconto`;
+    } else if (updates.benefit_type === "consultation" && !updated[idx].label) {
+      updated[idx].label = "Consulta 30min com Gabriel Baú";
+    }
+    if (updates.value !== undefined && updated[idx].benefit_type === "discount_percent") {
+      updated[idx].label = `${updates.value}% de desconto`;
+    }
     setRules(updated);
   };
 
   const handleCreate = async () => {
-    if (!title.trim()) {
-      toast.error("Título é obrigatório");
-      return;
-    }
-
+    if (!title.trim()) { toast.error("Título é obrigatório"); return; }
     setSaving(true);
     try {
       const { error } = await supabase
@@ -116,44 +109,28 @@ export function ReferralCampaignManager() {
           title: title.trim(),
           description: description.trim() || null,
           banner_image_url: bannerUrl || null,
-          cashback_rules: rules.filter(r => r.plan_type.trim()) as any,
+          cashback_rules: rules.filter(r => r.label.trim()) as any,
           active: false,
         }]);
-
       if (error) throw error;
-
       toast.success("Campanha criada!");
-      setTitle("");
-      setDescription("");
-      setBannerUrl("");
-      setRules([{ plan_type: "Mensal", cashback_amount: 1 }]);
+      setTitle(""); setDescription(""); setBannerUrl("");
+      setRules([{ benefit_type: "discount_percent", label: "10% de desconto", description: "", value: 10 }]);
       setShowForm(false);
       fetchCampaigns();
     } catch (err) {
       console.error(err);
       toast.error("Erro ao criar campanha");
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const toggleActive = async (campaign: Campaign) => {
     try {
-      // If activating, deactivate all others first
       if (!campaign.active) {
-        await supabase
-          .from("referral_campaigns")
-          .update({ active: false })
-          .neq("id", campaign.id);
+        await supabase.from("referral_campaigns").update({ active: false }).neq("id", campaign.id);
       }
-
-      const { error } = await supabase
-        .from("referral_campaigns")
-        .update({ active: !campaign.active })
-        .eq("id", campaign.id);
-
+      const { error } = await supabase.from("referral_campaigns").update({ active: !campaign.active }).eq("id", campaign.id);
       if (error) throw error;
-
       toast.success(campaign.active ? "Campanha desativada" : "Campanha ativada");
       fetchCampaigns();
     } catch (err) {
@@ -164,13 +141,8 @@ export function ReferralCampaignManager() {
 
   const deleteCampaign = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from("referral_campaigns")
-        .delete()
-        .eq("id", id);
-
+      const { error } = await supabase.from("referral_campaigns").delete().eq("id", id);
       if (error) throw error;
-
       toast.success("Campanha removida");
       fetchCampaigns();
     } catch (err) {
@@ -199,7 +171,7 @@ export function ReferralCampaignManager() {
               Campanhas de Indicação
             </CardTitle>
             <CardDescription className="text-xs mt-1">
-              Gerencie banners e regras de cashback para o "Indique e Ganhe"
+              Gerencie banners e benefícios para o "Indique e Ganhe"
             </CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={() => setShowForm(!showForm)}>
@@ -210,81 +182,79 @@ export function ReferralCampaignManager() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Create form */}
         {showForm && (
           <div className="border border-border rounded-lg p-4 space-y-4 bg-muted/20">
             <div className="space-y-2">
               <Label className="text-xs">Título</Label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Indique e Ganhe Cashback"
-              />
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Indique e Ganhe" />
             </div>
 
             <div className="space-y-2">
               <Label className="text-xs">Descrição</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Indique um amigo e ganhe benefícios..."
-                rows={2}
-              />
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Indique um amigo e ganhe benefícios..." rows={2} />
             </div>
 
             <div className="space-y-2">
               <Label className="text-xs">Banner (imagem)</Label>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 cursor-pointer border border-dashed border-border rounded-lg px-4 py-2.5 hover:border-primary/50 transition-colors">
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <span className="text-sm text-muted-foreground">
-                    {uploading ? "Enviando..." : "Upload"}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleUploadBanner}
-                    disabled={uploading}
-                  />
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 text-muted-foreground" />}
+                  <span className="text-sm text-muted-foreground">{uploading ? "Enviando..." : "Upload"}</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleUploadBanner} disabled={uploading} />
                 </label>
-                {bannerUrl && (
-                  <img src={bannerUrl} alt="Preview" className="h-12 rounded-md object-cover" />
-                )}
+                {bannerUrl && <img src={bannerUrl} alt="Preview" className="h-12 rounded-md object-cover" />}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs">Regras de Cashback</Label>
+              <Label className="text-xs">Benefícios para indicados</Label>
               {rules.map((rule, idx) => (
-                <div key={idx} className="flex items-center gap-2">
+                <div key={idx} className="space-y-2 border border-border/50 rounded-lg p-3 bg-background">
+                  <div className="flex items-center gap-2">
+                    <Select value={rule.benefit_type} onValueChange={(v) => updateRule(idx, { benefit_type: v as BenefitRule["benefit_type"] })}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="discount_percent">Desconto %</SelectItem>
+                        <SelectItem value="consultation">Consulta</SelectItem>
+                        <SelectItem value="custom">Personalizado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {rule.benefit_type === "discount_percent" && (
+                      <Input
+                        type="number"
+                        value={rule.value || ""}
+                        onChange={(e) => updateRule(idx, { value: Number(e.target.value) })}
+                        className="w-20"
+                        min={1}
+                        max={100}
+                        placeholder="%"
+                      />
+                    )}
+                    {rules.length > 1 && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 ml-auto" onClick={() => removeRule(idx)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                   <Input
-                    value={rule.plan_type}
-                    onChange={(e) => updateRule(idx, "plan_type", e.target.value)}
-                    placeholder="Tipo do plano"
-                    className="flex-1"
+                    value={rule.label}
+                    onChange={(e) => updateRule(idx, { label: e.target.value })}
+                    placeholder="Ex: 20% de desconto no plano"
+                    className="text-sm"
                   />
-                  <Input
-                    type="number"
-                    value={rule.cashback_amount}
-                    onChange={(e) => updateRule(idx, "cashback_amount", Number(e.target.value))}
-                    className="w-20"
-                    min={1}
+                  <Textarea
+                    value={rule.description}
+                    onChange={(e) => updateRule(idx, { description: e.target.value })}
+                    placeholder="Descrição do benefício (texto livre)..."
+                    rows={2}
+                    className="text-sm"
                   />
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">x cashback</span>
-                  {rules.length > 1 && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeRule(idx)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
                 </div>
               ))}
               <Button variant="ghost" size="sm" onClick={addRule} className="text-xs">
-                <Plus className="h-3 w-3 mr-1" /> Adicionar regra
+                <Plus className="h-3 w-3 mr-1" /> Adicionar benefício
               </Button>
             </div>
 
@@ -293,14 +263,11 @@ export function ReferralCampaignManager() {
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
                 Criar Campanha
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
-                Cancelar
-              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancelar</Button>
             </div>
           </div>
         )}
 
-        {/* Campaign list */}
         {campaigns.length === 0 && !showForm ? (
           <div className="text-center py-6">
             <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
@@ -312,9 +279,7 @@ export function ReferralCampaignManager() {
               <div key={c.id} className="border border-border/50 rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    {c.banner_image_url && (
-                      <img src={c.banner_image_url} alt="" className="h-10 w-14 object-cover rounded" />
-                    )}
+                    {c.banner_image_url && <img src={c.banner_image_url} alt="" className="h-10 w-14 object-cover rounded" />}
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{c.title}</p>
                       <p className="text-xs text-muted-foreground truncate">{c.description}</p>
@@ -332,9 +297,9 @@ export function ReferralCampaignManager() {
                 </div>
                 {c.cashback_rules.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {c.cashback_rules.map((r, idx) => (
+                    {c.cashback_rules.map((r: any, idx: number) => (
                       <span key={idx} className="text-[10px] bg-muted/50 px-2 py-0.5 rounded">
-                        {r.plan_type}: {r.cashback_amount}x
+                        {r.label || `${r.plan_type}: ${r.cashback_amount}x`}
                       </span>
                     ))}
                   </div>
