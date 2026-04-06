@@ -294,6 +294,17 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       queryClient.invalidateQueries({ queryKey: ["health-workouts-recent"] });
       toast.success("Dia registrado. Seu Score foi atualizado.");
       onSaveSuccess?.();
+
+      // Reset form for next entry
+      setScreenshotFiles([]);
+      setScreenshotPreviews([]);
+      setMultiDayPending([]);
+      setFitnessOpen(false);
+      setSteps(""); setActiveCals(""); setExerciseMins(""); setStandingHrs(""); setDistanceKm("");
+      setRestingHr(""); setHrvMs(""); setAvgHrBpm(""); setSleepingHr(""); setSleepingHrv("");
+      setMinHr(""); setMaxHr(""); setSedentaryHr("");
+      setSleep(7.5); setStress(30); setEnergy(3); setTrained(false); setRpe(7);
+      setDateOption("today");
     },
     onError: () => toast.error("Erro ao salvar. Tente novamente."),
   });
