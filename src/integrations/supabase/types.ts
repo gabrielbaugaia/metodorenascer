@@ -1806,6 +1806,7 @@ export type Database = {
           created_at: string
           id: string
           inactivity_reminder_enabled: boolean
+          protocol_renewal_enabled: boolean
           push_enabled: boolean
           updated_at: string
           user_id: string
@@ -1818,6 +1819,7 @@ export type Database = {
           created_at?: string
           id?: string
           inactivity_reminder_enabled?: boolean
+          protocol_renewal_enabled?: boolean
           push_enabled?: boolean
           updated_at?: string
           user_id: string
@@ -1830,6 +1832,7 @@ export type Database = {
           created_at?: string
           id?: string
           inactivity_reminder_enabled?: boolean
+          protocol_renewal_enabled?: boolean
           push_enabled?: boolean
           updated_at?: string
           user_id?: string
