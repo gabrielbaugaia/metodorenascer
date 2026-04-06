@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Bell, BellOff, Clock, Dumbbell, Camera, AlertCircle, Trophy, Loader2 } from "lucide-react";
+import { Bell, BellOff, Clock, Dumbbell, Camera, AlertCircle, Trophy, Loader2, RefreshCw } from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -239,6 +239,25 @@ export function NotificationSettings() {
                   checked={preferences.workout_completed_enabled}
                   onCheckedChange={(checked) =>
                     updatePreferences({ workout_completed_enabled: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <Label htmlFor="protocol-renewal">Renovação de protocolo</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Lembrete aos 30 e 60 dias
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="protocol-renewal"
+                  checked={preferences.protocol_renewal_enabled}
+                  onCheckedChange={(checked) =>
+                    updatePreferences({ protocol_renewal_enabled: checked })
                   }
                 />
               </div>

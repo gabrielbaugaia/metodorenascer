@@ -1,0 +1,1 @@
+ALTER TABLE public.notification_preferences ADD COLUMN protocol_renewal_enabled boolean NOT NULL DEFAULT true;

@@ -13,6 +13,7 @@ import { STRIPE_PRICE_IDS } from "@/lib/planConstants";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
 import { PlanSelectionGrid } from "@/components/dashboard/PlanSelectionGrid";
+import { ProtocolRenewalBanner } from "@/components/dashboard/ProtocolRenewalBanner";
 import { WeeklyCheckinModal } from "@/components/checkin/WeeklyCheckinModal";
 import { ReferralCampaignPopup } from "@/components/referral/ReferralCampaignPopup";
 import { Button } from "@/components/ui/button";
@@ -376,6 +377,12 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
+
+        {/* Protocol Renewal Banner */}
+        <ProtocolRenewalBanner
+          daysSinceLastProtocol={daysSinceLastProtocol}
+          needsEvolutionPhotos={needsEvolutionPhotos}
+        />
 
         {/* 1. Executive Status — ScoreRing */}
         <div className="flex flex-col items-center gap-4 py-4">
