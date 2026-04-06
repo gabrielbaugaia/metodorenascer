@@ -112,13 +112,19 @@ export function ReferralCampaignPopup() {
             )}
           </div>
 
-          {/* Cashback rules */}
+          {/* Benefit rules */}
           {campaign.cashback_rules && campaign.cashback_rules.length > 0 && (
             <div className="space-y-1.5">
               {campaign.cashback_rules.map((rule: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2 text-sm">
-                  <span className="text-muted-foreground">{rule.plan_type}</span>
-                  <span className="font-semibold text-primary">{rule.cashback_amount}x cashback</span>
+                <div key={idx} className="bg-muted/40 rounded-lg px-3 py-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-primary">
+                      {rule.label || `${rule.plan_type}: ${rule.cashback_amount}x cashback`}
+                    </span>
+                  </div>
+                  {rule.description && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{rule.description}</p>
+                  )}
                 </div>
               ))}
             </div>
