@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
       if (prefs && prefs.protocol_renewal_enabled === false) continue;
 
       // Determine notification type
-      const notificationType = daysSince >= 60 ? "protocol_expired" : "protocol_adjustment";
+      const notificationType = daysSince >= 85 ? "protocol_new_required" : daysSince >= 60 ? "protocol_expired" : "protocol_adjustment";
 
       // Check cooldown - don't resend if notified in last 7 days
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -63,11 +63,15 @@ Deno.serve(async (req) => {
       if (recentNotif && recentNotif.length > 0) continue;
 
       // Build notification content
-      const title = daysSince >= 60
+      const title = daysSince >= 85
+        ? "🚨 Novo protocolo necessário"
+        : daysSince >= 60
         ? "🔄 Protocolo expirado"
         : "📊 Ajuste de protocolo";
 
-      const body = daysSince >= 60
+      const body = daysSince >= 85
+        ? "Seu protocolo completou 90 dias. Seu corpo já se adaptou completamente — envie fotos e medidas para gerar um protocolo 100% novo."
+        : daysSince >= 60
         ? "Seu protocolo completou 60 dias. Envie fotos e medidas de evolução para gerar seu novo protocolo personalizado."
         : "Seu protocolo completou 30 dias. Envie seus dados de evolução para ajustarmos seu treino, dieta e mentalidade.";
 

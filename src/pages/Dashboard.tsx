@@ -14,6 +14,7 @@ import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { FullPageLoader } from "@/components/ui/loading-spinner";
 import { PlanSelectionGrid } from "@/components/dashboard/PlanSelectionGrid";
 import { ProtocolRenewalBanner } from "@/components/dashboard/ProtocolRenewalBanner";
+import { ProtocolRenewalPopup } from "@/components/dashboard/ProtocolRenewalPopup";
 import { WeeklyCheckinModal } from "@/components/checkin/WeeklyCheckinModal";
 import { ReferralCampaignPopup } from "@/components/referral/ReferralCampaignPopup";
 import { Button } from "@/components/ui/button";
@@ -352,6 +353,7 @@ export default function Dashboard() {
     <ClientLayout>
       <OnboardingTour />
       <ReferralCampaignPopup />
+      <ProtocolRenewalPopup daysSinceLastProtocol={daysSinceLastProtocol} />
 
       <div className="container mx-auto max-w-xl space-y-6">
         {/* Alerta de Anamnese Pendente */}
