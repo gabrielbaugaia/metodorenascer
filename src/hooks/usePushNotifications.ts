@@ -10,6 +10,7 @@ interface NotificationPreferences {
   checkin_reminder_enabled: boolean;
   inactivity_reminder_enabled: boolean;
   workout_completed_enabled: boolean;
+  protocol_renewal_enabled: boolean;
 }
 
 const VAPID_PUBLIC_KEY = "BNZ08K43QnOQZK8jPPUczn45yepS8kQ_4p4-Iv7-0qNyLfGlyPpvNughcc_MI6RFqPZIDvXPdG4Ha_HFoYRsIBE";
@@ -80,6 +81,7 @@ export function usePushNotifications() {
           checkin_reminder_enabled: data.checkin_reminder_enabled,
           inactivity_reminder_enabled: data.inactivity_reminder_enabled,
           workout_completed_enabled: data.workout_completed_enabled,
+          protocol_renewal_enabled: data.protocol_renewal_enabled ?? true,
         });
       } else {
         // Criar preferências padrão
@@ -90,6 +92,7 @@ export function usePushNotifications() {
           checkin_reminder_enabled: true,
           inactivity_reminder_enabled: true,
           workout_completed_enabled: true,
+          protocol_renewal_enabled: true,
         };
         
         await supabase.from("notification_preferences").insert({
