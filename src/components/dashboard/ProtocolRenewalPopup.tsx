@@ -15,8 +15,8 @@ interface ProtocolRenewalPopupProps {
   daysSinceLastProtocol: number;
 }
 
-const DISMISS_KEY = "protocol_renewal_popup_dismissed_at";
-const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const SHOW_COUNT_KEY = "protocol_renewal_popup_show_count";
+const MAX_SHOWS = 2;
 
 export function ProtocolRenewalPopup({ daysSinceLastProtocol }: ProtocolRenewalPopupProps) {
   const [open, setOpen] = useState(false);
@@ -29,24 +29,22 @@ export function ProtocolRenewalPopup({ daysSinceLastProtocol }: ProtocolRenewalP
   useEffect(() => {
     if (!shouldShow) return;
 
-    const lastDismissed = localStorage.getItem(DISMISS_KEY);
-    if (lastDismissed) {
-      const elapsed = Date.now() - Number(lastDismissed);
-      if (elapsed < COOLDOWN_MS) return;
-    }
+    const count = Number(localStorage.getItem(SHOW_COUNT_KEY) || 0);
+    if (count >= MAX_SHOWS) return;
 
     // Small delay so dashboard renders first
-    const timer = setTimeout(() => setOpen(true), 1200);
+    const timer = setTimeout(() => {
+      localStorage.setItem(SHOW_COUNT_KEY, String(count + 1));
+      setOpen(true);
+    }, 1200);
     return () => clearTimeout(timer);
   }, [shouldShow]);
 
   const handleDismiss = () => {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
     setOpen(false);
   };
 
   const handleGoToEvolution = () => {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
     setOpen(false);
     navigate("/evolucao");
   };
