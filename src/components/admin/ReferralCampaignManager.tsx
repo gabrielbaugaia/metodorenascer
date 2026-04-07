@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Megaphone, Upload, Loader2, Trash2, Plus, Image as ImageIcon } from "lucide-react";
+import { Megaphone, Upload, Loader2, Trash2, Plus, Image as ImageIcon, Pencil } from "lucide-react";
 
 interface BenefitRule {
   benefit_type: "discount_percent" | "consultation" | "custom";
@@ -35,6 +35,7 @@ export function ReferralCampaignManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
