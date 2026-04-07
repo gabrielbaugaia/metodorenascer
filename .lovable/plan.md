@@ -1,62 +1,41 @@
 
 
-# Plano: Mensagem direta do Admin + Benefícios flexíveis na campanha
+# Plano: 3 Ajustes — Pop-up limitado, Edição de campanha, Mensagem direta no suporte
 
-## Parte 1 — Sistema de mensagem direta do Admin no Suporte
+## 1. Pop-up de renovação: máximo 2 exibições (nunca mais)
 
-### Problema
-Hoje o admin só consegue responder conversas existentes. Não há como iniciar uma conversa com um cliente que ainda não abriu um chat de suporte.
+**Arquivo**: `src/components/dashboard/ProtocolRenewalPopup.tsx`
 
-### Solução
-Adicionar um botão "Nova Mensagem" no topo da página AdminSuporteChats que abre um modal com:
-- Campo de busca que filtra clientes ativos (por nome ou email) da tabela `profiles`
-- Ao selecionar um cliente, abre campo de texto para escrever a mensagem
-- Ao enviar, cria uma nova entrada na tabela `conversas` com `tipo: 'admin_direct'` e a mensagem do admin
-- O cliente verá essa mensagem ao abrir o suporte normalmente
+Trocar a lógica de cooldown de 7 dias para um contador permanente:
+- Nova chave `localStorage`: `protocol_renewal_popup_show_count` (número)
+- A cada exibição, incrementa o contador
+- Se contador >= 2, nunca mais exibe
+- Remover a lógica de cooldown por tempo
 
-### Alteração em `src/pages/admin/AdminSuporteChats.tsx`
-- Novo estado para modal de "Nova Mensagem"
-- Busca de clientes via `profiles` com filtro de texto
-- Lista selecionável de clientes
-- Criação de nova conversa via `supabase.from("conversas").insert()`
+## 2. Edição de campanhas de indicação
 
----
+**Arquivo**: `src/components/admin/ReferralCampaignManager.tsx`
 
-## Parte 2 — Benefícios flexíveis no pop-up de campanha
+- Adicionar estado `editingCampaign: Campaign | null`
+- Botão de editar (ícone lápis) ao lado do toggle/delete na listagem de campanhas
+- Ao clicar em editar, preenche o formulário existente com os dados da campanha selecionada
+- Botão muda de "Criar Campanha" para "Salvar Alterações"
+- No save, usa `.update()` em vez de `.insert()` quando `editingCampaign` existe
+- Ao cancelar, limpa o estado de edição
 
-### Problema
-O formulário de criação de campanha (`ReferralCampaignManager`) só permite regras de cashback com `plan_type` + `cashback_amount` (multiplicador numérico). O admin quer poder definir benefícios variados como:
-- 10%, 20%, 30% de desconto no plano
-- Consulta de 30 min com Gabriel Baú
-- Texto livre personalizado
+## 3. Suporte: mensagem direta para qualquer cliente cadastrado
 
-### Solução
-Alterar a estrutura de `cashback_rules` para aceitar benefícios flexíveis:
+**Arquivo**: `src/pages/admin/AdminSuporteChats.tsx`
 
-```typescript
-interface BenefitRule {
-  benefit_type: "discount_percent" | "consultation" | "custom";
-  label: string;        // ex: "20% de desconto", "Consulta 30min"
-  description: string;  // texto livre do admin
-  value?: number;       // percentual ou valor numérico (opcional)
-}
-```
+O modal de "Nova Mensagem" já existe (linha 536), mas precisa melhorias:
+- Garantir que o modal busca clientes da tabela `profiles` independente de terem conversa
+- Verificar que ao enviar, se não existe conversa para aquele `user_id`, cria uma nova com `tipo: 'admin_direct'`
+- A lógica já está implementada (linhas 429-481) — verificar se funciona corretamente e se o cliente vê a notificação na área de suporte
 
-### Alterações em `src/components/admin/ReferralCampaignManager.tsx`
-- Substituir interface `CashbackRule` por `BenefitRule`
-- Adicionar select de tipo de benefício (Desconto %, Consulta, Personalizado)
-- Campo `label` editável pelo admin
-- Campo `description` com texto livre
-- Campo numérico condicional (só para desconto %)
-
-### Alterações em `src/components/referral/ReferralCampaignPopup.tsx`
-- Atualizar renderização para mostrar os novos campos (`label` + `description`) em vez de `plan_type: Nx cashback`
-- Manter retrocompatibilidade com regras antigas (se `plan_type` existir, renderiza no formato antigo)
+Revisando o código, a funcionalidade de mensagem direta **já está implementada** (busca de clientes, criação/atualização de conversa). O foco será garantir que o modal esteja acessível e funcional, e que o cliente veja a mensagem ao abrir o suporte.
 
 ## Arquivos modificados
-- `src/pages/admin/AdminSuporteChats.tsx`
+- `src/components/dashboard/ProtocolRenewalPopup.tsx`
 - `src/components/admin/ReferralCampaignManager.tsx`
-- `src/components/referral/ReferralCampaignPopup.tsx`
-
-Nenhuma migração necessária — os campos JSONB já suportam qualquer estrutura.
+- `src/pages/admin/AdminSuporteChats.tsx` (verificação/ajuste menor se necessário)
 
