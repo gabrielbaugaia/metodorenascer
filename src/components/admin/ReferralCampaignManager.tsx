@@ -100,28 +100,54 @@ export function ReferralCampaignManager() {
     setRules(updated);
   };
 
-  const handleCreate = async () => {
+  const startEditing = (campaign: Campaign) => {
+    setEditingCampaign(campaign);
+    setTitle(campaign.title);
+    setDescription(campaign.description || "");
+    setBannerUrl(campaign.banner_image_url || "");
+    setRules(campaign.cashback_rules.length > 0 ? campaign.cashback_rules : [{ benefit_type: "discount_percent", label: "10% de desconto", description: "", value: 10 }]);
+    setShowForm(true);
+  };
+
+  const resetForm = () => {
+    setEditingCampaign(null);
+    setTitle("");
+    setDescription("");
+    setBannerUrl("");
+    setRules([{ benefit_type: "discount_percent", label: "10% de desconto", description: "", value: 10 }]);
+    setShowForm(false);
+  };
+
+  const handleSave = async () => {
     if (!title.trim()) { toast.error("Título é obrigatório"); return; }
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("referral_campaigns")
-        .insert([{
-          title: title.trim(),
-          description: description.trim() || null,
-          banner_image_url: bannerUrl || null,
-          cashback_rules: rules.filter(r => r.label.trim()) as any,
-          active: false,
-        }]);
-      if (error) throw error;
-      toast.success("Campanha criada!");
-      setTitle(""); setDescription(""); setBannerUrl("");
-      setRules([{ benefit_type: "discount_percent", label: "10% de desconto", description: "", value: 10 }]);
-      setShowForm(false);
+      const payload = {
+        title: title.trim(),
+        description: description.trim() || null,
+        banner_image_url: bannerUrl || null,
+        cashback_rules: rules.filter(r => r.label.trim()) as any,
+      };
+
+      if (editingCampaign) {
+        const { error } = await supabase
+          .from("referral_campaigns")
+          .update(payload)
+          .eq("id", editingCampaign.id);
+        if (error) throw error;
+        toast.success("Campanha atualizada!");
+      } else {
+        const { error } = await supabase
+          .from("referral_campaigns")
+          .insert([{ ...payload, active: false }]);
+        if (error) throw error;
+        toast.success("Campanha criada!");
+      }
+      resetForm();
       fetchCampaigns();
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao criar campanha");
+      toast.error(editingCampaign ? "Erro ao atualizar campanha" : "Erro ao criar campanha");
     } finally { setSaving(false); }
   };
 
