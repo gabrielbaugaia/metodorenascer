@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Megaphone, Upload, Loader2, Trash2, Plus, Image as ImageIcon } from "lucide-react";
+import { Megaphone, Upload, Loader2, Trash2, Plus, Image as ImageIcon, Pencil } from "lucide-react";
 
 interface BenefitRule {
   benefit_type: "discount_percent" | "consultation" | "custom";
@@ -35,6 +35,7 @@ export function ReferralCampaignManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -99,28 +100,54 @@ export function ReferralCampaignManager() {
     setRules(updated);
   };
 
-  const handleCreate = async () => {
+  const startEditing = (campaign: Campaign) => {
+    setEditingCampaign(campaign);
+    setTitle(campaign.title);
+    setDescription(campaign.description || "");
+    setBannerUrl(campaign.banner_image_url || "");
+    setRules(campaign.cashback_rules.length > 0 ? campaign.cashback_rules : [{ benefit_type: "discount_percent", label: "10% de desconto", description: "", value: 10 }]);
+    setShowForm(true);
+  };
+
+  const resetForm = () => {
+    setEditingCampaign(null);
+    setTitle("");
+    setDescription("");
+    setBannerUrl("");
+    setRules([{ benefit_type: "discount_percent", label: "10% de desconto", description: "", value: 10 }]);
+    setShowForm(false);
+  };
+
+  const handleSave = async () => {
     if (!title.trim()) { toast.error("Título é obrigatório"); return; }
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("referral_campaigns")
-        .insert([{
-          title: title.trim(),
-          description: description.trim() || null,
-          banner_image_url: bannerUrl || null,
-          cashback_rules: rules.filter(r => r.label.trim()) as any,
-          active: false,
-        }]);
-      if (error) throw error;
-      toast.success("Campanha criada!");
-      setTitle(""); setDescription(""); setBannerUrl("");
-      setRules([{ benefit_type: "discount_percent", label: "10% de desconto", description: "", value: 10 }]);
-      setShowForm(false);
+      const payload = {
+        title: title.trim(),
+        description: description.trim() || null,
+        banner_image_url: bannerUrl || null,
+        cashback_rules: rules.filter(r => r.label.trim()) as any,
+      };
+
+      if (editingCampaign) {
+        const { error } = await supabase
+          .from("referral_campaigns")
+          .update(payload)
+          .eq("id", editingCampaign.id);
+        if (error) throw error;
+        toast.success("Campanha atualizada!");
+      } else {
+        const { error } = await supabase
+          .from("referral_campaigns")
+          .insert([{ ...payload, active: false }]);
+        if (error) throw error;
+        toast.success("Campanha criada!");
+      }
+      resetForm();
       fetchCampaigns();
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao criar campanha");
+      toast.error(editingCampaign ? "Erro ao atualizar campanha" : "Erro ao criar campanha");
     } finally { setSaving(false); }
   };
 
@@ -174,7 +201,7 @@ export function ReferralCampaignManager() {
               Gerencie banners e benefícios para o "Indique e Ganhe"
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowForm(!showForm)}>
+          <Button variant="outline" size="sm" onClick={() => { resetForm(); setShowForm(true); }}>
             <Plus className="h-3.5 w-3.5 mr-1" />
             Nova
           </Button>
@@ -259,11 +286,11 @@ export function ReferralCampaignManager() {
             </div>
 
             <div className="flex gap-2 pt-2">
-              <Button onClick={handleCreate} disabled={saving} size="sm">
+              <Button onClick={handleSave} disabled={saving} size="sm">
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                Criar Campanha
+                {editingCampaign ? "Salvar Alterações" : "Criar Campanha"}
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancelar</Button>
+              <Button variant="ghost" size="sm" onClick={resetForm}>Cancelar</Button>
             </div>
           </div>
         )}
@@ -290,6 +317,9 @@ export function ReferralCampaignManager() {
                       {c.active ? "Ativa" : "Inativa"}
                     </Badge>
                     <Switch checked={c.active} onCheckedChange={() => toggleActive(c)} />
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditing(c)}>
+                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteCampaign(c.id)}>
                       <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>
