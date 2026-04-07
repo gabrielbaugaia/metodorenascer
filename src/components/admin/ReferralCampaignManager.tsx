@@ -201,7 +201,7 @@ export function ReferralCampaignManager() {
               Gerencie banners e benefícios para o "Indique e Ganhe"
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowForm(!showForm)}>
+          <Button variant="outline" size="sm" onClick={() => { resetForm(); setShowForm(true); }}>
             <Plus className="h-3.5 w-3.5 mr-1" />
             Nova
           </Button>
@@ -286,11 +286,11 @@ export function ReferralCampaignManager() {
             </div>
 
             <div className="flex gap-2 pt-2">
-              <Button onClick={handleCreate} disabled={saving} size="sm">
+              <Button onClick={handleSave} disabled={saving} size="sm">
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                Criar Campanha
+                {editingCampaign ? "Salvar Alterações" : "Criar Campanha"}
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancelar</Button>
+              <Button variant="ghost" size="sm" onClick={resetForm}>Cancelar</Button>
             </div>
           </div>
         )}
@@ -317,6 +317,9 @@ export function ReferralCampaignManager() {
                       {c.active ? "Ativa" : "Inativa"}
                     </Badge>
                     <Switch checked={c.active} onCheckedChange={() => toggleActive(c)} />
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEditing(c)}>
+                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteCampaign(c.id)}>
                       <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>
