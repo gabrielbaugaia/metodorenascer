@@ -1,41 +1,59 @@
 
 
-# Plano: 3 Ajustes — Pop-up limitado, Edição de campanha, Mensagem direta no suporte
+# Plano: Entrada manual de protocolo de treino com IA para transcrição automática
 
-## 1. Pop-up de renovação: máximo 2 exibições (nunca mais)
+## Objetivo
+Permitir que o admin cole ou escreva um protocolo de treino manualmente (ou anexe imagem/PDF) e a IA transcreva automaticamente para o formato estruturado do sistema, puxando GIFs e subindo o treino na hora.
 
-**Arquivo**: `src/components/dashboard/ProtocolRenewalPopup.tsx`
+## Como funciona
 
-Trocar a lógica de cooldown de 7 dias para um contador permanente:
-- Nova chave `localStorage`: `protocol_renewal_popup_show_count` (número)
-- A cada exibição, incrementa o contador
-- Se contador >= 2, nunca mais exibe
-- Remover a lógica de cooldown por tempo
+```text
+Admin abre protocolo do aluno → Aba "Gerar Novo" (já existe) + Nova aba "Entrada Manual"
+                                                                    │
+                                    ┌───────────────────────────────┘
+                                    ▼
+                          Textarea para colar/escrever protocolo
+                          + Upload de imagem/PDF
+                                    │
+                                    ▼
+                          Botão "Processar com IA"
+                                    │
+                                    ▼
+                    Edge Function transcreve → JSON estruturado
+                    (exercícios, séries, reps, dicas, GIFs)
+                                    │
+                                    ▼
+                         Salva como protocolo ativo
+                         Cliente vê imediatamente
+```
 
-## 2. Edição de campanhas de indicação
+## Alterações
 
-**Arquivo**: `src/components/admin/ReferralCampaignManager.tsx`
+### 1. Nova Edge Function `transcribe-manual-protocol`
+- Recebe: texto livre e/ou imagem base64 / URL do storage
+- Usa Lovable AI (gemini-3-flash-preview) para extrair exercícios no formato JSON do sistema (`TrainingContentNew`)
+- Consulta tabela `exercise_gifs` para auto-vincular GIFs por nome do exercício
+- Retorna JSON estruturado pronto para salvar na tabela `protocolos`
 
-- Adicionar estado `editingCampaign: Campaign | null`
-- Botão de editar (ícone lápis) ao lado do toggle/delete na listagem de campanhas
-- Ao clicar em editar, preenche o formulário existente com os dados da campanha selecionada
-- Botão muda de "Criar Campanha" para "Salvar Alterações"
-- No save, usa `.update()` em vez de `.insert()` quando `editingCampaign` existe
-- Ao cancelar, limpa o estado de edição
+### 2. Novo componente `ManualProtocolInput.tsx` (em `src/components/admin/`)
+- Tabs internas: "Escrever" | "Anexar"
+- **Escrever**: Textarea grande para colar/digitar protocolo livre (nome, séries, reps, instruções)
+- **Anexar**: Upload de imagem (foto de treino escrito) ou PDF — armazena no bucket `mqo-materials` e envia para a IA
+- Campo de orientações adicionais para a IA (ex: "foco em hipertrofia", "aluno intermediário")
+- Botão "Processar com IA" que chama a edge function
+- Após processar: insere o protocolo no banco como ativo e fecha o modal / atualiza a lista
 
-## 3. Suporte: mensagem direta para qualquer cliente cadastrado
+### 3. Integrar no `ProtocolEditor.tsx`
+- Ao lado do botão "Gerar Novo Protocolo", adicionar botão "Entrada Manual"
+- Ao clicar, abre o `ManualProtocolInput` como uma seção expansível (mesmo padrão do `showRegenerateInput`)
 
-**Arquivo**: `src/pages/admin/AdminSuporteChats.tsx`
+### 4. Integrar também no `AdminPlanos.tsx`
+- Na aba de Treino, ao lado do "Gerar Novo Protocolo de Treino", adicionar botão "Entrada Manual"
+- Usa o mesmo componente `ManualProtocolInput`
 
-O modal de "Nova Mensagem" já existe (linha 536), mas precisa melhorias:
-- Garantir que o modal busca clientes da tabela `profiles` independente de terem conversa
-- Verificar que ao enviar, se não existe conversa para aquele `user_id`, cria uma nova com `tipo: 'admin_direct'`
-- A lógica já está implementada (linhas 429-481) — verificar se funciona corretamente e se o cliente vê a notificação na área de suporte
-
-Revisando o código, a funcionalidade de mensagem direta **já está implementada** (busca de clientes, criação/atualização de conversa). O foco será garantir que o modal esteja acessível e funcional, e que o cliente veja a mensagem ao abrir o suporte.
-
-## Arquivos modificados
-- `src/components/dashboard/ProtocolRenewalPopup.tsx`
-- `src/components/admin/ReferralCampaignManager.tsx`
-- `src/pages/admin/AdminSuporteChats.tsx` (verificação/ajuste menor se necessário)
+## Arquivos
+- **Novo**: `supabase/functions/transcribe-manual-protocol/index.ts`
+- **Novo**: `src/components/admin/ManualProtocolInput.tsx`
+- **Editar**: `src/components/admin/ProtocolEditor.tsx` — adicionar botão + seção manual
+- **Editar**: `src/pages/admin/AdminPlanos.tsx` — adicionar botão de entrada manual na aba treino
 
