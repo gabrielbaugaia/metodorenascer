@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ManualProtocolInput } from "./ManualProtocolInput";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -282,6 +283,7 @@ export function ProtocolEditor({
   const [content, setContent] = useState<TrainingContent>(protocol.conteudo);
   const [adjustments, setAdjustments] = useState("");
   const [showRegenerateInput, setShowRegenerateInput] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
   const [gifPickerOpen, setGifPickerOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<SelectedExerciseIndex | null>(null);
   const [previewGif, setPreviewGif] = useState<string | null>(null);
@@ -442,7 +444,7 @@ export function ProtocolEditor({
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Button 
-            onClick={() => setShowRegenerateInput(!showRegenerateInput)}
+            onClick={() => { setShowRegenerateInput(!showRegenerateInput); setShowManualInput(false); }}
             variant="outline"
             disabled={regenerating}
             size="sm"
@@ -450,6 +452,15 @@ export function ProtocolEditor({
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             <span className="text-xs sm:text-sm">Gerar Novo Protocolo</span>
+          </Button>
+          <Button 
+            onClick={() => { setShowManualInput(!showManualInput); setShowRegenerateInput(false); }}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto"
+          >
+            <Dumbbell className="h-4 w-4 mr-2" />
+            <span className="text-xs sm:text-sm">Entrada Manual</span>
           </Button>
           <Button onClick={handleSave} disabled={saving} variant="fire" size="sm" className="w-full sm:w-auto">
             {saving ? (
@@ -490,6 +501,18 @@ export function ProtocolEditor({
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* Manual input */}
+      {showManualInput && (
+        <ManualProtocolInput
+          userId={protocol.user_id}
+          onSuccess={() => {
+            setShowManualInput(false);
+            window.location.reload();
+          }}
+          onCancel={() => setShowManualInput(false)}
+        />
       )}
 
       {/* FORMATO NOVO: Treinos A, B, C, D */}
