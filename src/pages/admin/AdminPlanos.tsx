@@ -57,6 +57,7 @@ import { NutritionProtocolEditor } from "@/components/admin/NutritionProtocolEdi
 import { MindsetProtocolEditor } from "@/components/admin/MindsetProtocolEditor";
 import { ClientAnamneseCard } from "@/components/admin/ClientAnamneseCard";
 import { PrescriptionAuditPanel } from "@/components/admin/PrescriptionAuditPanel";
+import { ManualProtocolInput } from "@/components/admin/ManualProtocolInput";
 
 interface Profile {
   full_name: string;
@@ -133,6 +134,7 @@ export default function AdminPlanos() {
   const [cleaningYouTube, setCleaningYouTube] = useState(false);
   const [cleanYouTubeDialog, setCleanYouTubeDialog] = useState(false);
   const [togglingProtocol, setTogglingProtocol] = useState<string | null>(null);
+  const [showManualInput, setShowManualInput] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -590,7 +592,7 @@ export default function AdminPlanos() {
 
               <TabsContent value="treino">
                 {userId && (
-                  <div className="mb-4">
+                  <div className="mb-4 flex flex-col sm:flex-row gap-2">
                     <Button 
                       variant="fire" 
                       onClick={() => handleGenerateProtocol(userId, "treino")}
@@ -603,6 +605,25 @@ export default function AdminPlanos() {
                       )}
                       {treinoProtocols.length > 0 ? "Gerar Novo Protocolo de Treino" : "Gerar Protocolo de Treino"}
                     </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowManualInput(!showManualInput)}
+                    >
+                      <Dumbbell className="h-4 w-4 mr-2" />
+                      Entrada Manual
+                    </Button>
+                  </div>
+                )}
+                {showManualInput && userId && (
+                  <div className="mb-4">
+                    <ManualProtocolInput
+                      userId={userId}
+                      onSuccess={() => {
+                        setShowManualInput(false);
+                        fetchProtocols();
+                      }}
+                      onCancel={() => setShowManualInput(false)}
+                    />
                   </div>
                 )}
                 <ProtocolTable protocols={treinoProtocols} tipo="treino" />
