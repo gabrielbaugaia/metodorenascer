@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTutorial, PageTutorialBanner } from "@/components/onboarding/PageTutorial";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SisScoreRing } from "@/components/sis/SisScoreRing";
 import { SisSubScoreCards } from "@/components/sis/SisSubScoreCards";
 import { SisAlerts } from "@/components/sis/SisAlerts";
@@ -124,7 +125,7 @@ export default function Renascer() {
 
   return (
     <ClientLayout>
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-6 pb-24 md:pb-6">
+      <div className="max-w-lg mx-auto px-4 py-6 pb-24 md:pb-6">
         <PageHeader
           title={`Olá, ${firstName}`}
           subtitle={`Hoje — ${todayFormatted}`}
@@ -133,185 +134,211 @@ export default function Renascer() {
 
         <PageTutorialBanner pageId="renascer" />
 
-        {/* 90-Day Transformation Journey */}
-        <TransformationPhaseCard />
+        <Tabs defaultValue="hoje" className="mt-4">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="hoje">Hoje</TabsTrigger>
+            <TabsTrigger value="historico">Histórico</TabsTrigger>
+            <TabsTrigger value="perfil">Perfil Mental</TabsTrigger>
+          </TabsList>
 
-        {/* SIS Score Ring */}
-        <div className="rounded-xl border border-border/50 bg-card p-6 flex flex-col items-center gap-4 relative">
-          <MiniConfetti active={showConfetti} />
-          <SisScoreRing
-            score={sis.score}
-            classification={sis.classification}
-            label={sis.label}
-            delta7vs30={sis.delta7vs30}
-            hasTodayScore={sis.hasTodayScore}
-          />
-          {sis.currentStreak > 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Flame className="h-3.5 w-3.5 text-orange-500" />
-              <span>{sis.currentStreak} dias consecutivos</span>
-              {sis.bestStreak > sis.currentStreak && (
-                <span className="text-muted-foreground/60">· recorde {sis.bestStreak}</span>
+          {/* ── TAB 1: HOJE ─────────────────────────────────────────── */}
+          <TabsContent value="hoje" className="space-y-6">
+            {/* SIS Score Ring */}
+            <div className="rounded-xl border border-border/50 bg-card p-6 flex flex-col items-center gap-4 relative">
+              <MiniConfetti active={showConfetti} />
+              <SisScoreRing
+                score={sis.score}
+                classification={sis.classification}
+                label={sis.label}
+                delta7vs30={sis.delta7vs30}
+                hasTodayScore={sis.hasTodayScore}
+              />
+              {sis.currentStreak > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Flame className="h-3.5 w-3.5 text-orange-500" />
+                  <span>{sis.currentStreak} dias consecutivos</span>
+                  {sis.bestStreak > sis.currentStreak && (
+                    <span className="text-muted-foreground/60">· recorde {sis.bestStreak}</span>
+                  )}
+                </div>
+              )}
+              {showFeedback && (
+                <p className="text-xs text-muted-foreground animate-fade-in transition-opacity">
+                  Atualizado. Continue no controle.
+                </p>
               )}
             </div>
-          )}
-          {showFeedback && (
-            <p className="text-xs text-muted-foreground animate-fade-in transition-opacity">
-              Atualizado. Continue no controle.
-            </p>
-          )}
-        </div>
 
-        {/* Behavioral Profile Badge */}
-        {behavior.profile && (
-          <BehaviorProfileBadge
-            profileType={behavior.profile.profile_type}
-            confidence={behavior.profile.confidence_score}
-          />
-        )}
+            {/* Alerts */}
+            <SisAlerts alerts={sis.alerts} />
 
-        {/* Micro Wins */}
-        <MicroWinsCard wins={behavior.microWins} />
+            {/* Cognitive Quick Check-in */}
+            <SisCognitiveCheckin />
 
-        {/* Active Challenge */}
-        {behavior.activeChallenge && behavior.activeChallengeInfo && (
-          <ActiveChallengeCard
-            challengeLabel={behavior.activeChallengeInfo.label}
-            targetDays={behavior.activeChallengeInfo.target}
-            currentStreak={sis.currentStreak}
-          />
-        )}
+            {/* Data mode toggle */}
+            <div className="flex items-center justify-between px-1">
+              <Label className="text-xs text-muted-foreground">Dados automáticos</Label>
+              <Switch
+                checked={dataMode === "auto"}
+                onCheckedChange={(checked) =>
+                  toggleModeMutation.mutate(checked ? "auto" : "manual")
+                }
+              />
+            </div>
 
+            {/* Manual Input */}
+            <ManualInput dataMode={dataMode} todayLog={todayLog} onSaveSuccess={handleSaveSuccess} />
 
-        <SisSubScoreCards
-          mechanical={sis.mechanical}
-          recovery={sis.recovery}
-          cognitive={sis.cognitive}
-          consistency={sis.consistency}
-          nutrition={sis.nutrition}
-          scores30dFull={sis.scores30dFull}
-        />
+            {/* Batch upload */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                onClick={() => setBatchUploadOpen(true)}
+              >
+                <CalendarDays className="h-4 w-4" />
+                Recuperar Semana
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                onClick={() => setExcelImportOpen(true)}
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Importar Excel
+              </Button>
+            </div>
+            <BatchFitnessUpload open={batchUploadOpen} onOpenChange={setBatchUploadOpen} />
+            <ExcelDataImport open={excelImportOpen} onOpenChange={setExcelImportOpen} />
+          </TabsContent>
 
-        {/* Alerts */}
-        <SisAlerts alerts={sis.alerts} />
+          {/* ── TAB 2: HISTÓRICO ─────────────────────────────────────── */}
+          <TabsContent value="historico" className="space-y-6">
+            {/* 90-Day Transformation Journey */}
+            <TransformationPhaseCard />
 
-        {/* Trend Chart */}
-        <SisTrendChart data={sis.scores30d} avg7={sis.avg7} avg14={sis.avg14} avg30={sis.avg30} />
+            {/* Trend Chart */}
+            <SisTrendChart
+              data={sis.scores30d}
+              avg7={sis.avg7}
+              avg14={sis.avg14}
+              avg30={sis.avg30}
+            />
 
-        {/* Cognitive Quick Check-in */}
-        <SisCognitiveCheckin />
+            {/* Recent Logs */}
+            <RecentLogsHistory />
 
-        {/* Mental Wellness Insights */}
-        <MindsetInsightsPanel />
+            {/* SIS Actions */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs"
+                disabled={backfilling}
+                onClick={async () => {
+                  setBackfilling(true);
+                  try {
+                    const { error } = await supabase.functions.invoke("compute-sis-score", {
+                      body: { backfill: true },
+                    });
+                    if (error) throw error;
+                    queryClient.invalidateQueries({ queryKey: ["sis-scores-30d"] });
+                    toast.success("Histórico SIS importado com sucesso!");
+                  } catch (e) {
+                    console.error("Backfill error:", e);
+                    toast.error("Erro ao importar histórico");
+                  } finally {
+                    setBackfilling(false);
+                  }
+                }}
+              >
+                {backfilling ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                ) : (
+                  <History className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                Importar Histórico
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 text-xs"
+                disabled={downloadingPdf || !sis.scores30d.length}
+                onClick={() => {
+                  setDownloadingPdf(true);
+                  try {
+                    generateSisReportPdf({
+                      userName: profile?.full_name || firstName || "Aluno",
+                      scores30d: sis.scores30dFull,
+                      avg7: sis.avg7,
+                      avg14: sis.avg14,
+                      avg30: sis.avg30,
+                      delta7vs30: sis.delta7vs30,
+                      currentStreak: sis.currentStreak,
+                      bestStreak: sis.bestStreak,
+                    });
+                    toast.success("PDF gerado com sucesso!");
+                  } catch (e) {
+                    console.error("PDF error:", e);
+                    toast.error("Erro ao gerar PDF");
+                  } finally {
+                    setDownloadingPdf(false);
+                  }
+                }}
+              >
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                Relatório SIS
+              </Button>
+            </div>
 
-        {/* Data mode toggle */}
-        <div className="flex items-center justify-between px-1">
-          <Label className="text-xs text-muted-foreground">Dados automáticos</Label>
-          <Switch
-            checked={dataMode === "auto"}
-            onCheckedChange={(checked) =>
-              toggleModeMutation.mutate(checked ? "auto" : "manual")
-            }
-          />
-        </div>
+            {/* Advanced panel link */}
+            <div className="text-center pt-2">
+              <Link
+                to="/dados-corpo"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                Painel Avançado
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          </TabsContent>
 
-        {/* Manual Input (kept) */}
-        <ManualInput dataMode={dataMode} todayLog={todayLog} onSaveSuccess={handleSaveSuccess} />
+          {/* ── TAB 3: PERFIL MENTAL ─────────────────────────────────── */}
+          <TabsContent value="perfil" className="space-y-6">
+            {/* Behavioral Profile Badge */}
+            {behavior.profile && (
+              <BehaviorProfileBadge
+                profileType={behavior.profile.profile_type}
+                confidence={behavior.profile.confidence_score}
+              />
+            )}
 
-        {/* Batch upload button */}
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/10"
-            onClick={() => setBatchUploadOpen(true)}
-          >
-            <CalendarDays className="h-4 w-4" />
-            Recuperar Semana
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/10"
-            onClick={() => setExcelImportOpen(true)}
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            Importar Excel
-          </Button>
-        </div>
-        <BatchFitnessUpload open={batchUploadOpen} onOpenChange={setBatchUploadOpen} />
-        <ExcelDataImport open={excelImportOpen} onOpenChange={setExcelImportOpen} />
+            {/* Micro Wins */}
+            <MicroWinsCard wins={behavior.microWins} />
 
-        {/* Recent Logs History (kept) */}
-        <RecentLogsHistory />
+            {/* Active Challenge */}
+            {behavior.activeChallenge && behavior.activeChallengeInfo && (
+              <ActiveChallengeCard
+                challengeLabel={behavior.activeChallengeInfo.label}
+                targetDays={behavior.activeChallengeInfo.target}
+                currentStreak={sis.currentStreak}
+              />
+            )}
 
-        {/* SIS Actions */}
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 text-xs"
-            disabled={backfilling}
-            onClick={async () => {
-              setBackfilling(true);
-              try {
-                const { error } = await supabase.functions.invoke("compute-sis-score", {
-                  body: { backfill: true },
-                });
-                if (error) throw error;
-                queryClient.invalidateQueries({ queryKey: ["sis-scores-30d"] });
-                toast.success("Histórico SIS importado com sucesso!");
-              } catch (e) {
-                console.error("Backfill error:", e);
-                toast.error("Erro ao importar histórico");
-              } finally {
-                setBackfilling(false);
-              }
-            }}
-          >
-            {backfilling ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <History className="h-3.5 w-3.5 mr-1.5" />}
-            Importar Histórico
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 text-xs"
-            disabled={downloadingPdf || !sis.scores30d.length}
-            onClick={() => {
-              setDownloadingPdf(true);
-              try {
-                generateSisReportPdf({
-                  userName: profile?.full_name || firstName || "Aluno",
-                  scores30d: sis.scores30dFull,
-                  avg7: sis.avg7,
-                  avg14: sis.avg14,
-                  avg30: sis.avg30,
-                  delta7vs30: sis.delta7vs30,
-                  currentStreak: sis.currentStreak,
-                  bestStreak: sis.bestStreak,
-                });
-                toast.success("PDF gerado com sucesso!");
-              } catch (e) {
-                console.error("PDF error:", e);
-                toast.error("Erro ao gerar PDF");
-              } finally {
-                setDownloadingPdf(false);
-              }
-            }}
-          >
-            <Download className="h-3.5 w-3.5 mr-1.5" />
-            Relatório SIS
-          </Button>
-        </div>
+            {/* SIS Sub-Scores */}
+            <SisSubScoreCards
+              mechanical={sis.mechanical}
+              recovery={sis.recovery}
+              cognitive={sis.cognitive}
+              consistency={sis.consistency}
+              nutrition={sis.nutrition}
+              scores30dFull={sis.scores30dFull}
+            />
 
-        {/* Advanced panel link */}
-        <div className="text-center pt-2">
-          <Link
-            to="/dados-corpo"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-          >
-            Painel Avançado
-            <ExternalLink className="h-3 w-3" />
-          </Link>
-        </div>
+            {/* Mental Wellness Insights */}
+            <MindsetInsightsPanel />
+          </TabsContent>
+        </Tabs>
       </div>
     </ClientLayout>
   );
