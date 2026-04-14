@@ -426,7 +426,7 @@ export default function Dashboard() {
 
         {/* 1. Executive Status — ScoreRing */}
         <div className="flex flex-col items-center gap-4 py-4">
-          <ScoreRing score={renascer.score} classification={renascer.classification} />
+          <ScoreRing score={renascer.score} classification={renascer.classification} emptyLabel={!renascer.todayLog ? "Registre seu dia" : undefined} />
           <StatusBadge classification={renascer.classification} statusText={renascer.statusText} />
           {renascer.recommendation.length > 0 && (
             <p className="text-xs text-muted-foreground text-center max-w-xs">{renascer.recommendation[0]}</p>
