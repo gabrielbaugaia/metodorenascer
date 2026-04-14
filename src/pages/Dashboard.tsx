@@ -8,7 +8,7 @@ import { useAchievements } from "@/hooks/useAchievements";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Target, Utensils, TrendingUp, Heart, CreditCard, Lock, Camera, AlertTriangle, Dumbbell, ClipboardCheck, Flame, ArrowRight, ChefHat } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { STRIPE_PRICE_IDS } from "@/lib/planConstants";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { PlanSelectionGrid } from "@/components/dashboard/PlanSelectionGrid";
@@ -306,7 +306,7 @@ export default function Dashboard() {
     try {
       await createCheckout(priceId);
     } catch (error) {
-      toast({ title: "Erro", description: "Não foi possível iniciar o checkout", variant: "destructive" });
+      toast.error("Não foi possível iniciar o checkout");
     }
   };
 
@@ -325,7 +325,7 @@ export default function Dashboard() {
     const handlePayNow = async () => {
       if (pendingPaymentInfo.priceId) {
         try { await createCheckout(pendingPaymentInfo.priceId); } catch (error) {
-          toast({ title: "Erro", description: "Não foi possível iniciar o pagamento", variant: "destructive" });
+          toast.error("Não foi possível iniciar o pagamento");
         }
       }
     };
@@ -426,7 +426,7 @@ export default function Dashboard() {
 
         {/* 1. Executive Status — ScoreRing */}
         <div className="flex flex-col items-center gap-4 py-4">
-          <ScoreRing score={renascer.score} classification={renascer.classification} />
+          <ScoreRing score={renascer.score} classification={renascer.classification} emptyLabel={!renascer.todayLog ? "Registre seu dia" : undefined} />
           <StatusBadge classification={renascer.classification} statusText={renascer.statusText} />
           {renascer.recommendation.length > 0 && (
             <p className="text-xs text-muted-foreground text-center max-w-xs">{renascer.recommendation[0]}</p>

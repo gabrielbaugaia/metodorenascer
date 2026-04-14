@@ -2301,13 +2301,13 @@ export default function AdminExerciseGifs() {
                 Adicionar Exercício
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-lg flex flex-col">
               <DialogHeader>
                 <DialogTitle>
                   {editingGif ? "Editar Exercício" : "Novo Exercício"}
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="space-y-4 py-4 overflow-y-auto max-h-[80vh]">
                 <div className="space-y-2">
                   <Label htmlFor="exercise_name_pt">Nome em Português *</Label>
                   <Input

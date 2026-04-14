@@ -4,9 +4,10 @@ interface ScoreRingProps {
   score: number;
   classification: string;
   celebrate?: boolean;
+  emptyLabel?: string;
 }
 
-export function ScoreRing({ score, classification, celebrate }: ScoreRingProps) {
+export function ScoreRing({ score, classification, celebrate, emptyLabel }: ScoreRingProps) {
   const radius = 80;
   const stroke = 10;
   const normalizedRadius = radius - stroke / 2;
@@ -89,28 +90,45 @@ export function ScoreRing({ score, classification, celebrate }: ScoreRingProps) 
             className="transition-all duration-700 ease-out"
             style={{ filter: `drop-shadow(0 0 8px ${color})` }}
           />
-          <text
-            x={radius}
-            y={radius - 8}
-            textAnchor="middle"
-            dominantBaseline="central"
-            className="fill-foreground font-bold"
-            fontSize="36"
-            transform={`rotate(90 ${radius} ${radius})`}
-          >
-            {displayScore}
-          </text>
-          <text
-            x={radius}
-            y={radius + 20}
-            textAnchor="middle"
-            dominantBaseline="central"
-            className="fill-muted-foreground"
-            fontSize="12"
-            transform={`rotate(90 ${radius} ${radius})`}
-          >
-            / 100
-          </text>
+          {score === 0 && emptyLabel ? (
+            <text
+              x={radius}
+              y={radius}
+              textAnchor="middle"
+              dominantBaseline="central"
+              className="fill-muted-foreground"
+              fontSize="13"
+              transform={`rotate(90 ${radius} ${radius})`}
+            >
+              <tspan x={radius} dy="-8">Registre</tspan>
+              <tspan x={radius} dy="17">seu dia</tspan>
+            </text>
+          ) : (
+            <>
+              <text
+                x={radius}
+                y={radius - 8}
+                textAnchor="middle"
+                dominantBaseline="central"
+                className="fill-foreground font-bold"
+                fontSize="36"
+                transform={`rotate(90 ${radius} ${radius})`}
+              >
+                {displayScore}
+              </text>
+              <text
+                x={radius}
+                y={radius + 20}
+                textAnchor="middle"
+                dominantBaseline="central"
+                className="fill-muted-foreground"
+                fontSize="12"
+                transform={`rotate(90 ${radius} ${radius})`}
+              >
+                / 100
+              </text>
+            </>
+          )}
         </svg>
       </div>
     </div>
