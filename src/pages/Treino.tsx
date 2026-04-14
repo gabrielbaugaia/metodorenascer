@@ -281,12 +281,18 @@ export default function Treino() {
 
         <PageTutorialBanner pageId="treino" />
 
-        {!entLoading && isBlocked && (
-          <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />
-        )}
-
         {isTrialing && (
           <TrialBanner isTrialing={isTrialing} onUpgradeClick={() => setShowUpgradeModal(true)} />
+        )}
+
+        {isBlocked && (
+          <EmptyState
+            icon={Lock}
+            title="Acesso bloqueado"
+            description="Seu acesso a este módulo está bloqueado. Faça upgrade para continuar treinando com seu protocolo personalizado."
+            ctaLabel="Ver opções de plano"
+            ctaAction={() => setShowUpgradeModal(true)}
+          />
         )}
 
         {workouts.length === 0 && !isBlocked ? (

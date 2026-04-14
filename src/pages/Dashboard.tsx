@@ -11,7 +11,6 @@ import { Target, Utensils, TrendingUp, Heart, CreditCard, Lock, Camera, AlertTri
 import { toast } from "@/hooks/use-toast";
 import { STRIPE_PRICE_IDS } from "@/lib/planConstants";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
-import { FullPageLoader } from "@/components/ui/loading-spinner";
 import { PlanSelectionGrid } from "@/components/dashboard/PlanSelectionGrid";
 import { ProtocolRenewalBanner } from "@/components/dashboard/ProtocolRenewalBanner";
 import { ProtocolRenewalPopup } from "@/components/dashboard/ProtocolRenewalPopup";
@@ -19,12 +18,47 @@ import { WeeklyCheckinModal } from "@/components/checkin/WeeklyCheckinModal";
 import { ReferralCampaignPopup } from "@/components/referral/ReferralCampaignPopup";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
 import { StatusBadge } from "@/components/renascer/StatusBadge";
 import { useRenascerScore } from "@/hooks/useRenascerScore";
 import { computeBodyIndicators, type DayLog } from "@/lib/bodyIndicators";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
+
+function DashboardSkeleton() {
+  return (
+    <div className="container mx-auto max-w-xl space-y-6 animate-pulse">
+      {/* Score ring skeleton */}
+      <div className="flex flex-col items-center gap-4 py-4">
+        <Skeleton className="w-36 h-36 rounded-full" />
+        <Skeleton className="h-5 w-28 rounded-full" />
+        <Skeleton className="h-3 w-48" />
+      </div>
+
+      {/* Daily action skeleton */}
+      <Skeleton className="h-16 w-full rounded-lg" />
+
+      {/* 3 indicator cards skeleton */}
+      <div className="grid grid-cols-3 gap-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="bg-card border border-border/50 rounded-lg p-3 flex flex-col items-center gap-2">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-6 w-10" />
+            <Skeleton className="h-2 w-12" />
+          </div>
+        ))}
+      </div>
+
+      {/* Quick access grid skeleton */}
+      <div className="grid grid-cols-2 gap-3">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const SUBSCRIPTION_PLANS = [
   {
@@ -279,7 +313,11 @@ export default function Dashboard() {
   const isLoading = authLoading || subLoading || checkingAnamnese || checkingPayment;
 
   if (isLoading) {
-    return <FullPageLoader />;
+    return (
+      <ClientLayout>
+        <DashboardSkeleton />
+      </ClientLayout>
+    );
   }
 
   // Pending payment screen
