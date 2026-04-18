@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -299,4 +299,59 @@
 }
 .animate-scoreGlow {
   animation: scoreGlow 800ms ease-in-out;
+}
+
+/* ============================================
+   Quiz Renascer — escopo isolado (.quiz-renascer)
+   Paleta dourada + tipografia serif premium.
+   Não afeta resto do app.
+   ============================================ */
+.quiz-renascer {
+  --background: 0 0% 4%;
+  --foreground: 40 10% 92%;
+  --card: 0 0% 7%;
+  --card-foreground: 40 10% 92%;
+  --popover: 0 0% 7%;
+  --popover-foreground: 40 10% 92%;
+  --primary: 40 70% 50%;
+  --primary-foreground: 0 0% 4%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 40 10% 92%;
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 55%;
+  --accent: 40 70% 50%;
+  --accent-foreground: 0 0% 4%;
+  --border: 0 0% 16%;
+  --input: 0 0% 16%;
+  --ring: 40 70% 50%;
+  --radius: 2px;
+  font-family: 'Inter', sans-serif;
+}
+
+.quiz-renascer .font-serif-display {
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.quiz-renascer .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: hsl(var(--primary));
+}
+
+@keyframes quizPulseSubtle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+.quiz-renascer .animate-pulse-subtle {
+  animation: quizPulseSubtle 2.5s ease-in-out infinite;
+}
+
+@keyframes quizFadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.quiz-renascer .animate-fade-in-up {
+  animation: quizFadeInUp 0.5s ease-out forwards;
 }
