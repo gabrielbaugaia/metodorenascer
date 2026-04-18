@@ -140,6 +140,14 @@ export default function AdminClientes() {
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
   const [showBatchPlanModal, setShowBatchPlanModal] = useState(false);
   const [batchLoading, setBatchLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
+  const [archiveModal, setArchiveModal] = useState<{
+    open: boolean;
+    mode: "archive" | "restore" | "delete";
+    ids: string[];
+    name?: string;
+    email?: string;
+  }>({ open: false, mode: "archive", ids: [] });
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     action: string;
