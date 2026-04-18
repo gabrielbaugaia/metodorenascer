@@ -1082,21 +1082,67 @@ export default function AdminClientes() {
           </DialogContent>
         </Dialog>
 
-        {/* Batch Actions */}
-        <BatchActionsBar
-          selectedCount={selectedClients.size}
-          onClearSelection={() => setSelectedClients(new Set())}
-          onChangePlan={() => setShowBatchPlanModal(true)}
-          onPause={() => handleBatchStatusChange("paused")}
-          onBlock={() => handleBatchStatusChange("blocked")}
-          onReactivate={() => handleBatchStatusChange("active")}
-          loading={batchLoading}
-        />
+        {/* Batch Actions (only on Active tab) */}
+        {activeTab === "active" && (
+          <BatchActionsBar
+            selectedCount={selectedClients.size}
+            onClearSelection={() => setSelectedClients(new Set())}
+            onChangePlan={() => setShowBatchPlanModal(true)}
+            onPause={() => handleBatchStatusChange("paused")}
+            onBlock={() => handleBatchStatusChange("blocked")}
+            onReactivate={() => handleBatchStatusChange("active")}
+            loading={batchLoading}
+          />
+        )}
+
+        {/* Floating archive/restore batch button */}
+        {selectedClients.size > 0 && (
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50">
+            {activeTab === "active" ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setArchiveModal({ open: true, mode: "archive", ids: Array.from(selectedClients) })
+                }
+                className="shadow-lg bg-card"
+              >
+                <Archive className="h-4 w-4 mr-2" />
+                Arquivar {selectedClients.size} selecionado{selectedClients.size > 1 ? "s" : ""}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setArchiveModal({ open: true, mode: "restore", ids: Array.from(selectedClients) })
+                }
+                className="shadow-lg bg-card"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Restaurar {selectedClients.size} selecionado{selectedClients.size > 1 ? "s" : ""}
+              </Button>
+            )}
+          </div>
+        )}
 
         <BatchPlanModal
           open={showBatchPlanModal}
           onOpenChange={setShowBatchPlanModal}
           selectedIds={Array.from(selectedClients)}
+          onComplete={() => {
+            setSelectedClients(new Set());
+            fetchClients();
+          }}
+        />
+
+        <ArchiveClientModal
+          open={archiveModal.open}
+          onOpenChange={(o) => setArchiveModal({ ...archiveModal, open: o })}
+          clientIds={archiveModal.ids}
+          clientName={archiveModal.name}
+          clientEmail={archiveModal.email}
+          mode={archiveModal.mode}
           onComplete={() => {
             setSelectedClients(new Set());
             fetchClients();
