@@ -503,6 +503,20 @@ export default function AdminClientes() {
           </div>
         </div>
 
+        {/* Tabs: Ativos / Arquivados */}
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as "active" | "archived"); setSelectedClients(new Set()); }}>
+          <TabsList>
+            <TabsTrigger value="active">
+              Ativos
+              <Badge variant="secondary" className="ml-2 text-[10px]">{activeCount}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="archived">
+              Arquivados
+              <Badge variant="secondary" className="ml-2 text-[10px]">{archivedCount}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         <Card variant="glass">
           <CardHeader className="pb-4">
             <div className="flex flex-col gap-4">
