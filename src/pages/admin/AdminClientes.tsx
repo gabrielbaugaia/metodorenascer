@@ -815,7 +815,7 @@ export default function AdminClientes() {
                           Reativar
                         </DropdownMenuItem>
                       )}
-                      {client.client_status !== "blocked" && (
+                      {client.client_status !== "blocked" && !client.archived_at && (
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() =>
@@ -830,6 +830,36 @@ export default function AdminClientes() {
                           <Ban className="h-4 w-4 mr-2" />
                           Bloquear
                         </DropdownMenuItem>
+                      )}
+                      {!client.archived_at ? (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setArchiveModal({ open: true, mode: "archive", ids: [client.id], name: client.full_name })
+                          }
+                        >
+                          <Archive className="h-4 w-4 mr-2" />
+                          Arquivar
+                        </DropdownMenuItem>
+                      ) : (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setArchiveModal({ open: true, mode: "restore", ids: [client.id], name: client.full_name })
+                            }
+                          >
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                            Restaurar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() =>
+                              setArchiveModal({ open: true, mode: "delete", ids: [client.id], name: client.full_name, email: client.email })
+                            }
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir permanentemente
+                          </DropdownMenuItem>
+                        </>
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
