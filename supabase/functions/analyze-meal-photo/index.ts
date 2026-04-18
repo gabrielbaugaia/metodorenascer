@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireAuthenticatedUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,14 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await requireAuthenticatedUser(req);
+    if (!auth.ok) {
+      return new Response(
+        JSON.stringify({ error: auth.message }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: auth.status }
+      );
+    }
+
     const { imageBase64 } = await req.json();
 
     if (!imageBase64) {

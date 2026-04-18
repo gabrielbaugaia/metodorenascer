@@ -5,6 +5,7 @@ import {
   createErrorResponse, 
   createSuccessResponse 
 } from "../_shared/cors.ts";
+import { requireAuthenticatedUser } from "../_shared/auth.ts";
 
 const buildPrompt = (clientData: Record<string, string>) => `Você é um especialista em avaliação física, composição corporal e análise postural clínica. Analise as 3 fotos corporais enviadas (frente, lado e costas) e forneça uma avaliação TÉCNICA completa.
 
@@ -104,6 +105,11 @@ serve(async (req) => {
   if (preflightResponse) return preflightResponse;
 
   try {
+    const auth = await requireAuthenticatedUser(req);
+    if (!auth.ok) {
+      return createErrorResponse(req, auth.message, auth.status);
+    }
+
     const { photos, clientData } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");

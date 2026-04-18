@@ -5,12 +5,18 @@ import {
   createErrorResponse, 
   createSuccessResponse 
 } from "../_shared/cors.ts";
+import { requireAuthenticatedUser } from "../_shared/auth.ts";
 
 serve(async (req) => {
   const preflightResponse = handleCorsPreflightRequest(req);
   if (preflightResponse) return preflightResponse;
 
   try {
+    const auth = await requireAuthenticatedUser(req);
+    if (!auth.ok) {
+      return createErrorResponse(req, auth.message, auth.status);
+    }
+
     const { 
       anamnesePhotos, 
       evolutionPhotos, 

@@ -5,6 +5,7 @@ import {
   createErrorResponse, 
   createSuccessResponse 
 } from "../_shared/cors.ts";
+import { requireAuthenticatedUser } from "../_shared/auth.ts";
 
 // Validate and sanitize ingredients
 function validateIngredients(ingredients: unknown): string[] {
@@ -40,6 +41,11 @@ serve(async (req) => {
   if (preflightResponse) return preflightResponse;
 
   try {
+    const auth = await requireAuthenticatedUser(req);
+    if (!auth.ok) {
+      return createErrorResponse(req, auth.message, auth.status);
+    }
+
     const body = await req.json();
     const ingredients = validateIngredients(body.ingredients);
 
