@@ -108,7 +108,8 @@ export default function AdminDashboard() {
       try {
         const { count: clientCount } = await supabase
           .from("profiles")
-          .select("*", { count: "exact", head: true });
+          .select("*", { count: "exact", head: true })
+          .is("archived_at", null);
 
         const { data: allSubs } = await supabase
           .from("subscriptions")
