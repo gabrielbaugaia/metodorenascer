@@ -1904,6 +1904,9 @@ export type Database = {
           acquisition_channel: string | null
           age: number | null
           anamnese_completa: boolean | null
+          archived_at: string | null
+          archived_by: string | null
+          archived_reason: string | null
           availability: string | null
           bebe_agua_frequente: boolean | null
           cashback_balance: number | null
@@ -1961,6 +1964,9 @@ export type Database = {
           acquisition_channel?: string | null
           age?: number | null
           anamnese_completa?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
           availability?: string | null
           bebe_agua_frequente?: boolean | null
           cashback_balance?: number | null
@@ -2018,6 +2024,9 @@ export type Database = {
           acquisition_channel?: string | null
           age?: number | null
           anamnese_completa?: boolean | null
+          archived_at?: string | null
+          archived_by?: string | null
+          archived_reason?: string | null
           availability?: string | null
           bebe_agua_frequente?: boolean | null
           cashback_balance?: number | null
