@@ -393,11 +393,19 @@ export default function AdminClientes() {
       }
     }
     
+    // Tab filter (archived vs active)
+    const isArchived = client.archived_at !== null;
+    if (activeTab === "active" && isArchived) return false;
+    if (activeTab === "archived" && !isArchived) return false;
+
     return matchesSearch && matchesPlan && matchesStartDate && matchesEndDate && matchesSex && matchesGoal && matchesEngagement;
   });
 
   const allSelected = filteredClients.length > 0 && filteredClients.every(c => selectedClients.has(c.id));
   const someSelected = filteredClients.some(c => selectedClients.has(c.id)) && !allSelected;
+
+  const archivedCount = clients.filter(c => c.archived_at !== null).length;
+  const activeCount = clients.length - archivedCount;
 
 
   const exportCSV = () => {
