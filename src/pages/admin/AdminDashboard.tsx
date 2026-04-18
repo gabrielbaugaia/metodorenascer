@@ -108,7 +108,8 @@ export default function AdminDashboard() {
       try {
         const { count: clientCount } = await supabase
           .from("profiles")
-          .select("*", { count: "exact", head: true });
+          .select("*", { count: "exact", head: true })
+          .is("archived_at", null);
 
         const { data: allSubs } = await supabase
           .from("subscriptions")
@@ -159,6 +160,7 @@ export default function AdminDashboard() {
         const { data: clients } = await supabase
           .from("profiles")
           .select("id, full_name, email, created_at, client_status")
+          .is("archived_at", null)
           .order("created_at", { ascending: false })
           .limit(5);
 
@@ -174,6 +176,7 @@ export default function AdminDashboard() {
           const { count: newCount } = await supabase
             .from("profiles")
             .select("*", { count: "exact", head: true })
+            .is("archived_at", null)
             .gte("created_at", monthStart)
             .lt("created_at", nextMonth);
 

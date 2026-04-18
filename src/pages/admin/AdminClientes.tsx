@@ -57,7 +57,10 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BatchActionsBar } from "@/components/admin/BatchActionsBar";
 import { BatchPlanModal } from "@/components/admin/BatchPlanModal";
+import { ArchiveClientModal } from "@/components/admin/ArchiveClientModal";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PLAN_TYPES, PLAN_NAMES } from "@/lib/planConstants";
+import { Archive, RotateCcw, Trash2 } from "lucide-react";
 
 interface Client {
   id: string;
@@ -70,6 +73,8 @@ interface Client {
   age: number | null;
   sexo: string | null;
   objetivo_principal: string | null;
+  archived_at: string | null;
+  archived_reason: string | null;
   lastAccess: string | null;
   protocolCount: {
     treino: number;
@@ -135,6 +140,14 @@ export default function AdminClientes() {
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
   const [showBatchPlanModal, setShowBatchPlanModal] = useState(false);
   const [batchLoading, setBatchLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
+  const [archiveModal, setArchiveModal] = useState<{
+    open: boolean;
+    mode: "archive" | "restore" | "delete";
+    ids: string[];
+    name?: string;
+    email?: string;
+  }>({ open: false, mode: "archive", ids: [] });
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     action: string;
@@ -203,6 +216,8 @@ export default function AdminClientes() {
 
           return {
             ...profile,
+            archived_at: (profile as any).archived_at ?? null,
+            archived_reason: (profile as any).archived_reason ?? null,
             subscription: sub,
             lastAccess: activityMap.get(profile.id) ?? null,
             protocolCount: protocolMap.get(profile.id) || { treino: 0, nutricao: 0, mindset: 0 },
@@ -380,11 +395,19 @@ export default function AdminClientes() {
       }
     }
     
+    // Tab filter (archived vs active)
+    const isArchived = client.archived_at !== null;
+    if (activeTab === "active" && isArchived) return false;
+    if (activeTab === "archived" && !isArchived) return false;
+
     return matchesSearch && matchesPlan && matchesStartDate && matchesEndDate && matchesSex && matchesGoal && matchesEngagement;
   });
 
   const allSelected = filteredClients.length > 0 && filteredClients.every(c => selectedClients.has(c.id));
   const someSelected = filteredClients.some(c => selectedClients.has(c.id)) && !allSelected;
+
+  const archivedCount = clients.filter(c => c.archived_at !== null).length;
+  const activeCount = clients.length - archivedCount;
 
 
   const exportCSV = () => {
@@ -481,6 +504,20 @@ export default function AdminClientes() {
             </Button>
           </div>
         </div>
+
+        {/* Tabs: Ativos / Arquivados */}
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as "active" | "archived"); setSelectedClients(new Set()); }}>
+          <TabsList>
+            <TabsTrigger value="active">
+              Ativos
+              <Badge variant="secondary" className="ml-2 text-[10px]">{activeCount}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="archived">
+              Arquivados
+              <Badge variant="secondary" className="ml-2 text-[10px]">{archivedCount}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         <Card variant="glass">
           <CardHeader className="pb-4">
@@ -780,7 +817,7 @@ export default function AdminClientes() {
                           Reativar
                         </DropdownMenuItem>
                       )}
-                      {client.client_status !== "blocked" && (
+                      {client.client_status !== "blocked" && !client.archived_at && (
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() =>
@@ -795,6 +832,36 @@ export default function AdminClientes() {
                           <Ban className="h-4 w-4 mr-2" />
                           Bloquear
                         </DropdownMenuItem>
+                      )}
+                      {!client.archived_at ? (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setArchiveModal({ open: true, mode: "archive", ids: [client.id], name: client.full_name })
+                          }
+                        >
+                          <Archive className="h-4 w-4 mr-2" />
+                          Arquivar
+                        </DropdownMenuItem>
+                      ) : (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setArchiveModal({ open: true, mode: "restore", ids: [client.id], name: client.full_name })
+                            }
+                          >
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                            Restaurar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() =>
+                              setArchiveModal({ open: true, mode: "delete", ids: [client.id], name: client.full_name, email: client.email })
+                            }
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir permanentemente
+                          </DropdownMenuItem>
+                        </>
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -924,7 +991,7 @@ export default function AdminClientes() {
                                 Reativar
                               </DropdownMenuItem>
                             )}
-                            {client.client_status !== "blocked" && (
+                            {client.client_status !== "blocked" && !client.archived_at && (
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() =>
@@ -939,6 +1006,36 @@ export default function AdminClientes() {
                                 <Ban className="h-4 w-4 mr-2" />
                                 Bloquear
                               </DropdownMenuItem>
+                            )}
+                            {!client.archived_at ? (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setArchiveModal({ open: true, mode: "archive", ids: [client.id], name: client.full_name })
+                                }
+                              >
+                                <Archive className="h-4 w-4 mr-2" />
+                                Arquivar
+                              </DropdownMenuItem>
+                            ) : (
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setArchiveModal({ open: true, mode: "restore", ids: [client.id], name: client.full_name })
+                                  }
+                                >
+                                  <RotateCcw className="h-4 w-4 mr-2" />
+                                  Restaurar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() =>
+                                    setArchiveModal({ open: true, mode: "delete", ids: [client.id], name: client.full_name, email: client.email })
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Excluir permanentemente
+                                </DropdownMenuItem>
+                              </>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -987,21 +1084,67 @@ export default function AdminClientes() {
           </DialogContent>
         </Dialog>
 
-        {/* Batch Actions */}
-        <BatchActionsBar
-          selectedCount={selectedClients.size}
-          onClearSelection={() => setSelectedClients(new Set())}
-          onChangePlan={() => setShowBatchPlanModal(true)}
-          onPause={() => handleBatchStatusChange("paused")}
-          onBlock={() => handleBatchStatusChange("blocked")}
-          onReactivate={() => handleBatchStatusChange("active")}
-          loading={batchLoading}
-        />
+        {/* Batch Actions (only on Active tab) */}
+        {activeTab === "active" && (
+          <BatchActionsBar
+            selectedCount={selectedClients.size}
+            onClearSelection={() => setSelectedClients(new Set())}
+            onChangePlan={() => setShowBatchPlanModal(true)}
+            onPause={() => handleBatchStatusChange("paused")}
+            onBlock={() => handleBatchStatusChange("blocked")}
+            onReactivate={() => handleBatchStatusChange("active")}
+            loading={batchLoading}
+          />
+        )}
+
+        {/* Floating archive/restore batch button */}
+        {selectedClients.size > 0 && (
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50">
+            {activeTab === "active" ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setArchiveModal({ open: true, mode: "archive", ids: Array.from(selectedClients) })
+                }
+                className="shadow-lg bg-card"
+              >
+                <Archive className="h-4 w-4 mr-2" />
+                Arquivar {selectedClients.size} selecionado{selectedClients.size > 1 ? "s" : ""}
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setArchiveModal({ open: true, mode: "restore", ids: Array.from(selectedClients) })
+                }
+                className="shadow-lg bg-card"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Restaurar {selectedClients.size} selecionado{selectedClients.size > 1 ? "s" : ""}
+              </Button>
+            )}
+          </div>
+        )}
 
         <BatchPlanModal
           open={showBatchPlanModal}
           onOpenChange={setShowBatchPlanModal}
           selectedIds={Array.from(selectedClients)}
+          onComplete={() => {
+            setSelectedClients(new Set());
+            fetchClients();
+          }}
+        />
+
+        <ArchiveClientModal
+          open={archiveModal.open}
+          onOpenChange={(o) => setArchiveModal({ ...archiveModal, open: o })}
+          clientIds={archiveModal.ids}
+          clientName={archiveModal.name}
+          clientEmail={archiveModal.email}
+          mode={archiveModal.mode}
           onComplete={() => {
             setSelectedClients(new Set());
             fetchClients();
