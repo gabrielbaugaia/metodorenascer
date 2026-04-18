@@ -1,59 +1,63 @@
 
 
-# Plano: Entrada manual de protocolo de treino com IA para transcrição automática
+# Plano: Substituir landing oficial pelo Quiz Renascer
 
-## Objetivo
-Permitir que o admin cole ou escreva um protocolo de treino manualmente (ou anexe imagem/PDF) e a IA transcreva automaticamente para o formato estruturado do sistema, puxando GIFs e subindo o treino na hora.
+## O que muda
 
-## Como funciona
+A nova rota `/` passa a ser o **Quiz Diagnóstico Renascer** (9 etapas — hero, 4 perguntas, resultado, mentor, método, sistema, oferta). A landing atual (`HeroSection`, `MentorSection`, etc.) sai do ar como página principal.
+
+Aluno atual continua entrando normalmente por um botão "Entrar" no canto superior direito.
+
+## Diagrama do fluxo
 
 ```text
-Admin abre protocolo do aluno → Aba "Gerar Novo" (já existe) + Nova aba "Entrada Manual"
-                                                                    │
-                                    ┌───────────────────────────────┘
-                                    ▼
-                          Textarea para colar/escrever protocolo
-                          + Upload de imagem/PDF
-                                    │
-                                    ▼
-                          Botão "Processar com IA"
-                                    │
-                                    ▼
-                    Edge Function transcreve → JSON estruturado
-                    (exercícios, séries, reps, dicas, GIFs)
-                                    │
-                                    ▼
-                         Salva como protocolo ativo
-                         Cliente vê imediatamente
+/ (Quiz)
+ ├─ Step 0: Hero "Diagnóstico em 60s"      ──> [Entrar] no topo direito ──> /auth
+ ├─ Step 1-4: 4 perguntas (sono, stress, compulsão, treino)
+ ├─ Step 5: Resultado com % de risco
+ ├─ Step 6: Quem é Gabriel Baú
+ ├─ Step 7: O método
+ ├─ Step 8: O que o sistema mostra
+ └─ Step 9: Oferta R$ 497 / 12x 49,70 ──> https://buy.stripe.com/5kQ7sKbAKcY03wtd0S2B206
 ```
 
-## Alterações
-
-### 1. Nova Edge Function `transcribe-manual-protocol`
-- Recebe: texto livre e/ou imagem base64 / URL do storage
-- Usa Lovable AI (gemini-3-flash-preview) para extrair exercícios no formato JSON do sistema (`TrainingContentNew`)
-- Consulta tabela `exercise_gifs` para auto-vincular GIFs por nome do exercício
-- Retorna JSON estruturado pronto para salvar na tabela `protocolos`
-
-### 2. Novo componente `ManualProtocolInput.tsx` (em `src/components/admin/`)
-- Tabs internas: "Escrever" | "Anexar"
-- **Escrever**: Textarea grande para colar/digitar protocolo livre (nome, séries, reps, instruções)
-- **Anexar**: Upload de imagem (foto de treino escrito) ou PDF — armazena no bucket `mqo-materials` e envia para a IA
-- Campo de orientações adicionais para a IA (ex: "foco em hipertrofia", "aluno intermediário")
-- Botão "Processar com IA" que chama a edge function
-- Após processar: insere o protocolo no banco como ativo e fecha o modal / atualiza a lista
-
-### 3. Integrar no `ProtocolEditor.tsx`
-- Ao lado do botão "Gerar Novo Protocolo", adicionar botão "Entrada Manual"
-- Ao clicar, abre o `ManualProtocolInput` como uma seção expansível (mesmo padrão do `showRegenerateInput`)
-
-### 4. Integrar também no `AdminPlanos.tsx`
-- Na aba de Treino, ao lado do "Gerar Novo Protocolo de Treino", adicionar botão "Entrada Manual"
-- Usa o mesmo componente `ManualProtocolInput`
-
 ## Arquivos
-- **Novo**: `supabase/functions/transcribe-manual-protocol/index.ts`
-- **Novo**: `src/components/admin/ManualProtocolInput.tsx`
-- **Editar**: `src/components/admin/ProtocolEditor.tsx` — adicionar botão + seção manual
-- **Editar**: `src/pages/admin/AdminPlanos.tsx` — adicionar botão de entrada manual na aba treino
+
+### 1. Copiar asset
+- `cross_project--copy_project_asset` → `src/assets/gabriel-bau-quiz.jpeg` (foto usada no Step 6)
+
+### 2. Novo componente: `src/pages/Quiz.tsx`
+Cópia integral do `Index.tsx` do projeto quiz, com 2 ajustes:
+- **Botão "Entrar" fixo no topo direito** (todos os steps): link para `/auth`, estilo discreto (border + texto pequeno em uppercase), visível em mobile e desktop.
+- Import da foto: `gabriel-bau-quiz.jpeg` no novo path.
+
+### 3. Tokens visuais do quiz (escopo isolado)
+O quiz usa paleta dourada própria (`--primary: 40 70% 50%`, fundo `0 0% 4%`, fonte `Cormorant Garamond`). Para **não quebrar o resto do app** (admin, área do aluno, V2), vou:
+- Adicionar import do Google Fonts (Cormorant Garamond) + utilitários `.font-serif-display`, `.eyebrow`, `.animate-pulse-subtle`, `.animate-fade-in-up` em `src/index.css` dentro de `@layer utilities` (são utilitários novos, não conflitam).
+- Aplicar as cores do quiz **inline via style/Tailwind arbitrário no próprio componente Quiz.tsx**, sem mexer nas variáveis HSL globais. Isso preserva os temas V1/V2/admin existentes.
+
+### 4. Roteamento: `src/App.tsx`
+- Atual: `<Route path="/" element={<Index />} />` (landing oficial)
+- Novo: `<Route path="/" element={<Quiz />} />`
+- A landing antiga vira `<Route path="/landing-classica" element={<Index />} />` (preserva acesso caso precise reverter ou comparar).
+- Rota `/auth` (entrada do aluno) já existe — sem mudanças.
+
+### 5. Preço & alunos atuais
+- **Quiz**: vende novo programa de 90 dias por R$ 497 / 12x 49,70 via link Stripe pronto (`buy.stripe.com/5kQ7sKbAKcY03wtd0S2B206`).
+- **Alunos atuais (R$ 49,90/mês)**: continuam intactos. O Stripe já está configurado no preço antigo, e o quiz aponta para um **price ID separado** — nada muda no banco, RLS, entitlements ou no plano deles.
+- Não preciso alterar `planConstants.ts`, `priceMappings.ts` nem webhook agora (o link Stripe é hospedado, não passa por `create-checkout`). Se quiser depois sincronizar entitlements para quem comprar pelo quiz, faço numa fase 2.
+
+## Detalhes técnicos
+
+- **Memória obsoleta a remover**: `landing/hero-cta-routing` e `landing/mentor-credibility-section` ficam válidas só na rota `/landing-classica`. Atualizo o `mem://index.md` notando que `/` agora é o quiz.
+- **SEO**: `document.title` no Quiz.tsx vira "Diagnóstico Renascer | Descubra seu risco de Burnout". Meta description igual.
+- **UTM tracking**: anexo `?utm_source=quiz&utm_medium=funil` ao link Stripe para diferenciar conversões da campanha quiz vs. checkout direto.
+- **Botão "Entrar"**: posicionado `fixed top-4 right-4 z-50`, ocultado apenas no Step 9 (para não competir com CTA de compra).
+
+## Resumo dos arquivos
+- **Novo**: `src/pages/Quiz.tsx`
+- **Novo asset**: `src/assets/gabriel-bau-quiz.jpeg` (copiado do projeto quiz)
+- **Editar**: `src/App.tsx` (trocar rota `/`)
+- **Editar**: `src/index.css` (adicionar fonte + utilitários do quiz)
+- **Editar**: `mem://index.md` (atualizar core: `/` agora é quiz funnel)
 
