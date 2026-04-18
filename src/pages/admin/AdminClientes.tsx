@@ -216,6 +216,8 @@ export default function AdminClientes() {
 
           return {
             ...profile,
+            archived_at: (profile as any).archived_at ?? null,
+            archived_reason: (profile as any).archived_reason ?? null,
             subscription: sub,
             lastAccess: activityMap.get(profile.id) ?? null,
             protocolCount: protocolMap.get(profile.id) || { treino: 0, nutricao: 0, mindset: 0 },
