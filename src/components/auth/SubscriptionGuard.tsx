@@ -96,9 +96,17 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
     }
   }, [isAdmin, authLoading, adminLoading, navigate]);
 
-  // Redirect: blocked access
+  // Redirect: archived account
   useEffect(() => {
     if (isLoading || !user || isAdmin) return;
+    if (archived) {
+      navigate(`/acesso-bloqueado?reason=archived`);
+    }
+  }, [isLoading, user, isAdmin, archived, navigate]);
+
+  // Redirect: blocked access
+  useEffect(() => {
+    if (isLoading || !user || isAdmin || archived) return;
 
     if (localBlocked) {
       const isFreeExpired = blockedReason?.toLowerCase().includes("30 dias");
@@ -111,7 +119,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
       navigate("/dashboard");
       return;
     }
-  }, [isLoading, user, isAdmin, localBlocked, blockedReason, localPending, subscribed, navigate]);
+  }, [isLoading, user, isAdmin, archived, localBlocked, blockedReason, localPending, subscribed, navigate]);
 
   // Redirect: no access at all
   useEffect(() => {
