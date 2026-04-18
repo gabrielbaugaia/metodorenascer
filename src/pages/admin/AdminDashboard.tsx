@@ -176,6 +176,7 @@ export default function AdminDashboard() {
           const { count: newCount } = await supabase
             .from("profiles")
             .select("*", { count: "exact", head: true })
+            .is("archived_at", null)
             .gte("created_at", monthStart)
             .lt("created_at", nextMonth);
 
