@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import {
+  getCorsHeaders,
+  handleCorsPreflightRequest,
+  createErrorResponse,
+  createSuccessResponse,
+} from "../_shared/cors.ts";
+import { requireAdminOrService } from "../_shared/auth.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -11,29 +13,29 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const preflight = handleCorsPreflightRequest(req);
+  if (preflight) return preflight;
 
   try {
     logStep("Function started");
 
+    // Only admins or trusted server processes (service role) may invoke this.
+    const auth = await requireAdminOrService(req);
+    if (!auth.ok) {
+      logStep("Auth rejected", { reason: auth.message });
+      return createErrorResponse(req, "Unauthorized", auth.status);
+    }
+
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
       logStep("RESEND_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Email service not configured", 500);
     }
 
     const { email, temp_password, plan_name } = await req.json();
 
     if (!email || !temp_password) {
-      return new Response(
-        JSON.stringify({ error: "email and temp_password are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "email and temp_password are required", 400);
     }
 
     logStep("Sending welcome email", { email, plan_name });
@@ -106,23 +108,14 @@ serve(async (req) => {
 
     if (!res.ok) {
       logStep("Resend error", { status: res.status, response: resData });
-      return new Response(
-        JSON.stringify({ error: "Failed to send email", details: resData }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createErrorResponse(req, "Failed to send email", 500);
     }
 
     logStep("Email sent successfully", { id: resData.id, email });
 
-    return new Response(
-      JSON.stringify({ success: true, id: resData.id }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createSuccessResponse(req, { success: true, id: resData.id });
   } catch (error) {
     logStep("Error", { error: error instanceof Error ? error.message : String(error) });
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createErrorResponse(req, "internal_error", 500);
   }
 });

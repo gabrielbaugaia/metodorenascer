@@ -1,11 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { 
-  getCorsHeaders, 
   handleCorsPreflightRequest, 
   createErrorResponse, 
   createSuccessResponse 
 } from "../_shared/cors.ts";
+import { requireAdminOrService } from "../_shared/auth.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -18,6 +18,12 @@ serve(async (req) => {
 
   try {
     logStep("Function started");
+
+    // Restrict to admins or the cron job (service role bearer).
+    const auth = await requireAdminOrService(req);
+    if (!auth.ok) {
+      return createErrorResponse(req, "Unauthorized", auth.status);
+    }
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",

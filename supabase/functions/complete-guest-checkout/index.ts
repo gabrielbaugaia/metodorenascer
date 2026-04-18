@@ -1,10 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import {
+  getCorsHeaders,
+  handleCorsPreflightRequest,
+  createErrorResponse,
+  createSuccessResponse,
+} from "../_shared/cors.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -12,9 +13,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const preflight = handleCorsPreflightRequest(req);
+  if (preflight) return preflight;
 
   try {
     logStep("Function started");
@@ -26,95 +26,70 @@ serve(async (req) => {
     );
 
     const { session_id } = await req.json();
-    
-    if (!session_id) {
-      logStep("Missing session_id");
-      return new Response(
-        JSON.stringify({ error: "session_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+
+    if (!session_id || typeof session_id !== "string") {
+      return createErrorResponse(req, "session_id is required", 400);
     }
 
     logStep("Looking up pending login", { session_id });
 
-    // Buscar pending_login não usado e não expirado
-    const { data: pending, error: pendingError } = await supabase
+    // Atomic claim: only return the row if it hasn't been used yet AND is still valid.
+    // We update used_at in the same statement to prevent race conditions and
+    // double-retrieval of the credentials.
+    const nowIso = new Date().toISOString();
+    const { data: claimed, error: claimError } = await supabase
       .from("pending_logins")
-      .select("user_id, temp_password, used_at, expires_at")
+      .update({ used_at: nowIso })
       .eq("session_id", session_id)
+      .is("used_at", null)
+      .gt("expires_at", nowIso)
+      .select("user_id, temp_password")
       .maybeSingle();
 
-    if (pendingError) {
-      logStep("Error fetching pending login", { error: pendingError.message });
-      return new Response(
-        JSON.stringify({ error: "database_error" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (claimError) {
+      logStep("Error claiming pending login", { error: claimError.message });
+      return createErrorResponse(req, "database_error", 500);
     }
 
-    if (!pending) {
-      logStep("Pending login not found");
-      return new Response(
-        JSON.stringify({ error: "not_found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!claimed) {
+      // Either not found, already used, or expired — do not leak which one.
+      logStep("Pending login unavailable (not found / used / expired)");
+      return createErrorResponse(req, "invalid_or_expired", 410);
     }
 
-    if (pending.used_at) {
-      logStep("Pending login already used");
-      return new Response(
-        JSON.stringify({ error: "already_used" }),
-        { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (new Date(pending.expires_at) < new Date()) {
-      logStep("Pending login expired");
-      return new Response(
-        JSON.stringify({ error: "expired" }),
-        { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Buscar email do usuário
+    // Fetch email
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("email")
-      .eq("id", pending.user_id)
+      .eq("id", claimed.user_id)
       .single();
 
     if (profileError || !profile?.email) {
-      logStep("Profile not found", { userId: pending.user_id });
-      return new Response(
-        JSON.stringify({ error: "profile_not_found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      logStep("Profile not found", { userId: claimed.user_id });
+      return createErrorResponse(req, "profile_not_found", 404);
     }
 
-    // Marcar como usado
-    const { error: updateError } = await supabase
+    const tempPassword = claimed.temp_password;
+
+    // Immediately wipe the plaintext password from the database so it can
+    // never be retrieved again, even by an attacker with DB read access.
+    const { error: wipeError } = await supabase
       .from("pending_logins")
-      .update({ used_at: new Date().toISOString() })
+      .update({ temp_password: "" })
       .eq("session_id", session_id);
 
-    if (updateError) {
-      logStep("Error marking as used", { error: updateError.message });
+    if (wipeError) {
+      logStep("Warning: failed to wipe temp_password", { error: wipeError.message });
     }
 
     logStep("Guest checkout completed", { email: profile.email });
 
-    return new Response(
-      JSON.stringify({
-        email: profile.email,
-        temp_password: pending.temp_password,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createSuccessResponse(req, {
+      email: profile.email,
+      temp_password: tempPassword,
+    });
   } catch (error) {
     logStep("Error", { error: error instanceof Error ? error.message : String(error) });
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createErrorResponse(req, "internal_error", 500);
   }
 });

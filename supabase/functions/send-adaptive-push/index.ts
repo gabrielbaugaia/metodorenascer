@@ -1,5 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getCorsHeaders, handleCorsPreflightRequest, createErrorResponse, createSuccessResponse } from "../_shared/cors.ts";
+import {
+  handleCorsPreflightRequest,
+  createErrorResponse,
+  createSuccessResponse,
+} from "../_shared/cors.ts";
+import { requireAdminOrService } from "../_shared/auth.ts";
 
 const PROFILE_MESSAGES: Record<string, { title: string; body: string }> = {
   consistent: {
@@ -25,11 +30,17 @@ Deno.serve(async (req) => {
   if (preflight) return preflight;
 
   try {
+    // Only admins or the platform cron (service role bearer) can trigger
+    // a broadcast push to all users.
+    const auth = await requireAdminOrService(req);
+    if (!auth.ok) {
+      return createErrorResponse(req, "Unauthorized", auth.status);
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Fetch all behavior profiles
     const { data: profiles, error } = await supabase
       .from("behavior_profiles")
       .select("user_id, profile_type");
@@ -61,8 +72,8 @@ Deno.serve(async (req) => {
           sentCount++;
         }
       } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        errors.push(`${profile.user_id}: ${msg}`);
+        const errMsg = e instanceof Error ? e.message : String(e);
+        errors.push(`${profile.user_id}: ${errMsg}`);
       }
     }
 
