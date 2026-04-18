@@ -165,7 +165,7 @@ serve(async (req) => {
 
 // Helper to block a user's subscription and update profile
 async function blockUser(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createClient<any, "public", any>>,
   subscriptionId: string,
   userId: string,
   reason: string,

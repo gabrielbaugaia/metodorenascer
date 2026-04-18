@@ -1,11 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 import { 
-  getCorsHeaders, 
   handleCorsPreflightRequest, 
   createErrorResponse, 
   createSuccessResponse 
 } from "../_shared/cors.ts";
+import { requireAuthenticatedUser, isAdmin } from "../_shared/auth.ts";
 
 interface PushPayload {
   title: string;
@@ -29,6 +29,15 @@ serve(async (req) => {
   if (preflightResponse) return preflightResponse;
 
   try {
+    // Reject anonymous callers. Allow:
+    //   - authenticated users (only to push to themselves)
+    //   - admins (to push to anyone)
+    //   - service role (internal cron / server-to-server)
+    const auth = await requireAuthenticatedUser(req);
+    if (!auth.ok) {
+      return createErrorResponse(req, "Unauthorized", auth.status);
+    }
+
     const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
     const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -47,6 +56,18 @@ serve(async (req) => {
 
     if (targetUserIds.length === 0) {
       throw new Error("Nenhum usuário especificado");
+    }
+
+    // Authorization: regular users may only target themselves.
+    if (auth.kind === "user") {
+      const callerId = auth.userId!;
+      const callerIsAdmin = await isAdmin(callerId);
+      if (!callerIsAdmin) {
+        const onlySelf = targetUserIds.every((id) => id === callerId);
+        if (!onlySelf) {
+          return createErrorResponse(req, "Forbidden: cannot push to other users", 403);
+        }
+      }
     }
 
     // Buscar subscriptions dos usuários
