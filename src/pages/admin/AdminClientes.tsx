@@ -57,7 +57,10 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BatchActionsBar } from "@/components/admin/BatchActionsBar";
 import { BatchPlanModal } from "@/components/admin/BatchPlanModal";
+import { ArchiveClientModal } from "@/components/admin/ArchiveClientModal";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PLAN_TYPES, PLAN_NAMES } from "@/lib/planConstants";
+import { Archive, RotateCcw, Trash2 } from "lucide-react";
 
 interface Client {
   id: string;
@@ -70,6 +73,8 @@ interface Client {
   age: number | null;
   sexo: string | null;
   objetivo_principal: string | null;
+  archived_at: string | null;
+  archived_reason: string | null;
   lastAccess: string | null;
   protocolCount: {
     treino: number;
