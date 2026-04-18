@@ -27,11 +27,12 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
   const [localBlocked, setLocalBlocked] = useState(false);
   const [blockedReason, setBlockedReason] = useState<string | null>(null);
   const [localPending, setLocalPending] = useState(false);
+  const [archived, setArchived] = useState(false);
   const [checkingLocal, setCheckingLocal] = useState(true);
   const accessVerified = useRef(false);
   const verifiedUserId = useRef<string | null>(null);
 
-  // Check for blocked/pending_payment in subscriptions table
+  // Check for blocked/pending_payment in subscriptions table + archived in profiles
   useEffect(() => {
     const checkLocal = async () => {
       if (!user) {
@@ -40,20 +41,31 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
       }
 
       try {
-        const { data } = await supabase
-          .from("subscriptions")
-          .select("status, access_blocked, blocked_reason")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const [subRes, profileRes] = await Promise.all([
+          supabase
+            .from("subscriptions")
+            .select("status, access_blocked, blocked_reason")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from("profiles")
+            .select("archived_at")
+            .eq("id", user.id)
+            .maybeSingle(),
+        ]);
 
+        const data = subRes.data;
         if (data?.access_blocked === true) {
           setLocalBlocked(true);
           setBlockedReason(data.blocked_reason ?? null);
         }
         if (data?.status === "pending_payment") {
           setLocalPending(true);
+        }
+        if ((profileRes.data as any)?.archived_at) {
+          setArchived(true);
         }
       } catch (err) {
         console.error("Error checking local subscription:", err);
