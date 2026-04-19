@@ -229,6 +229,41 @@ serve(async (req) => {
       // ========== CHECKOUT COMPLETED ==========
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        // 🆕 Mark quiz_lead as converted (works for both payment + subscription mode)
+        try {
+          const customerForLead = session.customer as string | null;
+          let leadEmail: string | null = null;
+          if (customerForLead) {
+            const c = await stripe.customers.retrieve(customerForLead);
+            if (!c.deleted && "email" in c) leadEmail = c.email;
+          }
+          if (!leadEmail && session.customer_details?.email) {
+            leadEmail = session.customer_details.email;
+          }
+          const leadRefId = session.client_reference_id;
+
+          const nowIso = new Date().toISOString();
+          if (leadRefId) {
+            await supabase
+              .from("quiz_leads")
+              .update({ status: "converted", converted_at: nowIso })
+              .eq("id", leadRefId);
+            logStep("Quiz lead marked converted by client_reference_id", { leadRefId });
+          } else if (leadEmail) {
+            await supabase
+              .from("quiz_leads")
+              .update({ status: "converted", converted_at: nowIso })
+              .eq("email", leadEmail.toLowerCase())
+              .neq("status", "converted");
+            logStep("Quiz lead marked converted by email", { email: leadEmail });
+          }
+        } catch (err) {
+          logStep("Failed to mark quiz_lead converted (non-blocking)", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+
         if (session.mode !== "subscription") break;
 
         const customerId = session.customer as string;
