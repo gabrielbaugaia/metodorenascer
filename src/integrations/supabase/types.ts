@@ -2181,6 +2181,75 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_leads: {
+        Row: {
+          clicked_checkout_at: string | null
+          contact_notes: string | null
+          contacted_at: string | null
+          contacted_by_admin: boolean
+          converted_at: string | null
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          quiz_answers: Json
+          risk_score: number
+          session_id: string | null
+          status: string
+          updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          viewed_offer_at: string | null
+          whatsapp: string
+        }
+        Insert: {
+          clicked_checkout_at?: string | null
+          contact_notes?: string | null
+          contacted_at?: string | null
+          contacted_by_admin?: boolean
+          converted_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          quiz_answers?: Json
+          risk_score?: number
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          viewed_offer_at?: string | null
+          whatsapp: string
+        }
+        Update: {
+          clicked_checkout_at?: string | null
+          contact_notes?: string | null
+          contacted_at?: string | null
+          contacted_by_admin?: boolean
+          converted_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          quiz_answers?: Json
+          risk_score?: number
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          viewed_offer_at?: string | null
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       referral_campaigns: {
         Row: {
           active: boolean
