@@ -68,6 +68,7 @@ const NutricaoTracking = lazy(() => import("./pages/NutricaoTracking"));
 const Cardio = lazy(() => import("./pages/Cardio"));
 const AnamneseExterna = lazy(() => import("./pages/AnamneseExterna"));
 const LandingV2 = lazy(() => import("./pages/LandingV2"));
+const AdminLeadsQuiz = lazy(() => import("./pages/admin/AdminLeadsQuiz"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -147,6 +148,7 @@ const App = () => (
             <Route path="/admin/metricas" element={<AdminGuard><AdminMetricas /></AdminGuard>} />
             <Route path="/admin/convites" element={<AdminGuard><AdminConvites /></AdminGuard>} />
             <Route path="/admin/leads" element={<AdminGuard><AdminLeads /></AdminGuard>} />
+            <Route path="/admin/leads-quiz" element={<AdminGuard><AdminLeadsQuiz /></AdminGuard>} />
             <Route path="/admin/blog" element={<AdminGuard><AdminBlog /></AdminGuard>} />
               <Route path="/admin/blog/:id" element={<AdminGuard><AdminBlogEditor /></AdminGuard>} />
               <Route path="/admin/commercial-plans" element={<AdminGuard><AdminCommercialPlans /></AdminGuard>} />

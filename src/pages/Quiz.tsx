@@ -1,10 +1,13 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import gabrielBauPhoto from "@/assets/gabriel-bau-quiz.jpeg";
-import { Check, ChevronRight, Shield, Award, Activity, Brain } from "lucide-react";
+import { Check, ChevronRight, Shield, Award, Activity, Brain, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const questions = [
   {
+    key: "sono",
     question: "Como foi seu sono nos últimos 7 dias?",
     options: [
       { text: "6h ou menos, acordo quebrado", score: 3 },
@@ -13,6 +16,7 @@ const questions = [
     ],
   },
   {
+    key: "stress",
     question: "Numa escala de 0 a 10, qual seu nível de stress hoje?",
     options: [
       { text: "8-10: No limite, prestes a explodir", score: 3 },
@@ -21,6 +25,7 @@ const questions = [
     ],
   },
   {
+    key: "compulsao",
     question: "Sobre compulsão alimentar, qual frase te representa?",
     options: [
       { text: '"Quando estresso, perco o controle e só vejo depois"', score: 3 },
@@ -29,6 +34,7 @@ const questions = [
     ],
   },
   {
+    key: "treino",
     question: "Qual seu momento atual com treino?",
     options: [
       { text: "Perdido, sem treinar ou sem resultado.", score: 3 },
@@ -41,10 +47,34 @@ const questions = [
 const CHECKOUT_URL =
   "https://buy.stripe.com/5kQ7sKbAKcY03wtd0S2B206?utm_source=quiz&utm_medium=funil";
 
+const TOTAL_STEPS = 10; // 0..10
+
 const Quiz = () => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [animKey, setAnimKey] = useState(0);
+
+  // Lead capture state
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // UTM capture (once on mount)
+  const utmRef = useRef<{
+    utm_source: string | null;
+    utm_medium: string | null;
+    utm_campaign: string | null;
+    utm_content: string | null;
+    session_id: string | null;
+  }>({
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
+    utm_content: null,
+    session_id: null,
+  });
 
   useEffect(() => {
     document.title = "Diagnóstico Renascer | Descubra seu risco de Burnout";
@@ -55,6 +85,16 @@ const Quiz = () => {
         "Diagnóstico em 60s do Método Renascer: descubra seu risco de Burnout, Compulsão Alimentar e Queda de Motivação com base em sono, stress e comportamento."
       );
     }
+
+    // Capture UTMs
+    const params = new URLSearchParams(window.location.search);
+    utmRef.current = {
+      utm_source: params.get("utm_source"),
+      utm_medium: params.get("utm_medium"),
+      utm_campaign: params.get("utm_campaign"),
+      utm_content: params.get("utm_content"),
+      session_id: localStorage.getItem("session_id") || null,
+    };
   }, []);
 
   const goTo = useCallback((s: number) => {
@@ -77,10 +117,93 @@ const Quiz = () => {
   const riskColor =
     riskScore >= 70 ? "hsl(0 84% 60%)" : riskScore >= 40 ? "hsl(40 90% 55%)" : "hsl(142 70% 45%)";
 
+  // Validation helpers
+  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  const isValidWhats = (w: string) => w.replace(/\D/g, "").length >= 10;
+
+  const handleSubmitLead = async () => {
+    if (!nome.trim() || nome.trim().length < 2) {
+      toast.error("Informe seu nome");
+      return;
+    }
+    if (!isValidEmail(email)) {
+      toast.error("Email inválido");
+      return;
+    }
+    if (!isValidWhats(whatsapp)) {
+      toast.error("WhatsApp inválido (incluir DDD)");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const quizAnswers: Record<string, { question: string; answer: string; score: number }> = {};
+      answers.forEach((score, i) => {
+        const q = questions[i];
+        const opt = q.options.find((o) => o.score === score);
+        quizAnswers[q.key] = {
+          question: q.question,
+          answer: opt?.text ?? "",
+          score,
+        };
+      });
+
+      const { data, error } = await supabase
+        .from("quiz_leads")
+        .insert({
+          nome: nome.trim(),
+          email: email.trim().toLowerCase(),
+          whatsapp: whatsapp.replace(/\D/g, ""),
+          quiz_answers: quizAnswers,
+          risk_score: riskScore,
+          status: "completed_quiz",
+          utm_source: utmRef.current.utm_source,
+          utm_medium: utmRef.current.utm_medium,
+          utm_campaign: utmRef.current.utm_campaign,
+          utm_content: utmRef.current.utm_content,
+          session_id: utmRef.current.session_id,
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+      setLeadId(data.id);
+      goTo(7);
+    } catch (err) {
+      console.error("Failed to submit quiz lead:", err);
+      toast.error("Erro ao enviar. Tente novamente.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Update lead funnel status as user progresses (best-effort)
+  const updateLeadStatus = useCallback(
+    async (status: "viewed_offer" | "clicked_checkout") => {
+      if (!leadId) return;
+      const patch: Record<string, unknown> = { status };
+      if (status === "viewed_offer") patch.viewed_offer_at = new Date().toISOString();
+      if (status === "clicked_checkout") patch.clicked_checkout_at = new Date().toISOString();
+      try {
+        await supabase.from("quiz_leads").update(patch).eq("id", leadId);
+      } catch (err) {
+        console.warn("Lead status update failed (non-blocking):", err);
+      }
+    },
+    [leadId]
+  );
+
+  // When user reaches the offer step, mark viewed_offer
+  useEffect(() => {
+    if (step === 10 && leadId) {
+      updateLeadStatus("viewed_offer");
+    }
+  }, [step, leadId, updateLeadStatus]);
+
   return (
     <div className="quiz-renascer min-h-screen bg-background text-foreground relative">
-      {/* Botão Entrar — fixo, oculto no Step 9 */}
-      {step !== 9 && (
+      {/* Botão Entrar — fixo, oculto na oferta */}
+      {step !== 10 && (
         <Link
           to="/auth"
           className="fixed top-4 right-4 z-50 inline-flex items-center gap-2 border border-border bg-card/80 backdrop-blur px-4 py-2 text-[0.65rem] uppercase tracking-[0.25em] font-medium text-foreground hover:border-primary hover:text-primary transition-colors rounded-sm"
@@ -196,14 +319,98 @@ const Quiz = () => {
               onClick={() => goTo(6)}
               className="animate-pulse-subtle bg-primary text-primary-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity"
             >
-              Quero análise completa
+              Liberar análise completa
             </button>
           </div>
         </section>
       )}
 
-      {/* Step 6 — Mentor */}
+      {/* Step 6 — Captura de Lead 🆕 */}
       {step === 6 && (
+        <section
+          key={animKey}
+          className="animate-fade-in-up flex min-h-screen flex-col items-center justify-center px-6"
+        >
+          <div className="w-full max-w-md">
+            <span className="eyebrow mb-6 inline-flex items-center gap-2">
+              <span className="inline-block h-px w-6 bg-primary" />
+              ÚLTIMO PASSO
+            </span>
+
+            <h2 className="font-serif-display text-[clamp(1.6rem,4.5vw,2.4rem)] font-light leading-tight mb-3">
+              Para liberar sua <em className="text-primary italic">análise completa</em>
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-8">
+              Preciso de 3 informações para Gabriel Baú revisar seu perfil pessoalmente e te enviar o diagnóstico clínico detalhado.
+            </p>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmitLead();
+              }}
+              className="flex flex-col gap-3"
+            >
+              <input
+                type="text"
+                placeholder="Seu nome completo"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                disabled={submitting}
+                maxLength={100}
+                autoComplete="name"
+                className="w-full border border-border bg-card px-4 py-3.5 rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+              />
+              <input
+                type="email"
+                placeholder="Seu melhor email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={submitting}
+                maxLength={200}
+                autoComplete="email"
+                inputMode="email"
+                className="w-full border border-border bg-card px-4 py-3.5 rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+              />
+              <input
+                type="tel"
+                placeholder="WhatsApp com DDD (ex: 11999999999)"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                disabled={submitting}
+                maxLength={20}
+                autoComplete="tel"
+                inputMode="tel"
+                className="w-full border border-border bg-card px-4 py-3.5 rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+              />
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="mt-4 bg-primary text-primary-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Enviando...
+                  </>
+                ) : (
+                  <>
+                    Liberar diagnóstico completo <ChevronRight size={16} strokeWidth={1.5} />
+                  </>
+                )}
+              </button>
+
+              <p className="text-[0.65rem] text-muted-foreground text-center mt-2 inline-flex items-center justify-center gap-1.5">
+                <Shield size={12} strokeWidth={1.5} className="text-primary" />
+                Seus dados estão seguros. Não fazemos spam.
+              </p>
+            </form>
+          </div>
+        </section>
+      )}
+
+      {/* Step 7 — Mentor */}
+      {step === 7 && (
         <section
           key={animKey}
           className="animate-fade-in-up flex min-h-screen flex-col items-center justify-center px-6"
@@ -244,7 +451,7 @@ const Quiz = () => {
             </div>
 
             <button
-              onClick={() => goTo(7)}
+              onClick={() => goTo(8)}
               className="bg-primary text-primary-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
             >
               Avançar e ver o método <ChevronRight size={16} strokeWidth={1.5} />
@@ -253,8 +460,8 @@ const Quiz = () => {
         </section>
       )}
 
-      {/* Step 7 — Método */}
-      {step === 7 && (
+      {/* Step 8 — Método */}
+      {step === 8 && (
         <section
           key={animKey}
           className="animate-fade-in-up flex min-h-screen flex-col items-center justify-center px-6"
@@ -279,7 +486,7 @@ const Quiz = () => {
             </div>
 
             <button
-              onClick={() => goTo(8)}
+              onClick={() => goTo(9)}
               className="bg-primary text-primary-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
             >
               Ver o que o sistema mostra <ChevronRight size={16} strokeWidth={1.5} />
@@ -288,8 +495,8 @@ const Quiz = () => {
         </section>
       )}
 
-      {/* Step 8 — Sistema */}
-      {step === 8 && (
+      {/* Step 9 — Sistema */}
+      {step === 9 && (
         <section
           key={animKey}
           className="animate-fade-in-up flex min-h-screen flex-col items-center justify-center px-6"
@@ -323,7 +530,7 @@ const Quiz = () => {
             </div>
 
             <button
-              onClick={() => goTo(9)}
+              onClick={() => goTo(10)}
               className="bg-primary text-primary-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
             >
               Ver a proposta completa <ChevronRight size={16} strokeWidth={1.5} />
@@ -332,8 +539,8 @@ const Quiz = () => {
         </section>
       )}
 
-      {/* Step 9 — Oferta */}
-      {step === 9 && (
+      {/* Step 10 — Oferta */}
+      {step === 10 && (
         <section
           key={animKey}
           className="animate-fade-in-up flex min-h-screen flex-col items-center justify-center px-6"
@@ -376,9 +583,10 @@ const Quiz = () => {
             </div>
 
             <a
-              href={CHECKOUT_URL}
+              href={leadId ? `${CHECKOUT_URL}&client_reference_id=${leadId}` : CHECKOUT_URL}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => updateLeadStatus("clicked_checkout")}
               className="animate-pulse-subtle block w-full bg-primary text-primary-foreground text-center px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity"
             >
               Garantir minha vaga agora
