@@ -1,99 +1,55 @@
 
 
-## Plano: Captura de leads do Quiz para reativação comercial
+## Diagnóstico — erro confirmado
 
-### Como vai funcionar
+Reproduzi o erro fazendo um INSERT como visitante anônimo (mesmo cenário da aluna):
 
-Adicionar um **passo de captura de contato** no quiz (entre o resultado e a oferta) onde a pessoa preenche **nome, email e WhatsApp** para "liberar a análise completa". Isso converte 100% dos quiz-completers em leads qualificados, mesmo quem não fecha a compra.
-
-Todos os dados ficam numa nova tabela `quiz_leads` com:
-- Respostas do quiz (sono, stress, compulsão, treino) → permite segmentar quem tem maior dor
-- Score de risco calculado (% burnout)
-- Status: `completed_quiz` / `viewed_offer` / `clicked_checkout` / `converted`
-- UTM source/medium para rastrear origem da campanha
-- Timestamp de cada etapa para identificar onde travou
-
-### Fluxo do quiz atualizado
-
-```text
-Step 0: Hero
-Step 1-4: Perguntas (sono, stress, compulsão, treino)
-Step 5: Resultado parcial (% risco) ──┐
-Step 6: 🆕 CAPTURA → Nome + Email + WhatsApp
-        └─ INSERT em quiz_leads (status: completed_quiz)
-Step 7: Mentor (Gabriel Baú)
-Step 8: Método
-Step 9: Sistema
-Step 10: Oferta R$ 497
-        └─ UPDATE status: viewed_offer
-        └─ Click no Stripe → UPDATE status: clicked_checkout
+```
+HTTP 401 — code 42501
+"new row violates row-level security policy for table quiz_leads"
 ```
 
-### Nova aba no admin: `/admin/leads-quiz`
+A tabela `quiz_leads` **está vazia** — nenhum lead foi salvo desde o deploy. Todas as pessoas que tentaram completar o quiz nas últimas horas viram esse mesmo erro.
 
-Painel com tabela filtrável:
-- **Filtros**: Score de risco (alto/médio/baixo), status (completou quiz / viu oferta / clicou checkout / converteu), data, UTM source
-- **Colunas**: Nome, WhatsApp, Email, Risco %, Quando completou, Última ação, Respostas detalhadas (expandível)
-- **Ações por lead**: Copiar WhatsApp, marcar como contatado, exportar CSV
-- **Métricas no topo**: Total de leads, taxa de conversão por etapa (funil visual: completou quiz → viu oferta → clicou checkout → comprou)
+### Causa raiz
 
-### Mudanças no banco
+A policy de INSERT existe (`"Anyone can submit quiz leads"` com `WITH CHECK true`), mas foi criada com role `{public}` em vez de explicitamente `{anon, authenticated}`. No Supabase/PostgREST, **policies destinadas ao role `public` não são aplicadas corretamente para usuários anônimos** quando o JWT é o anon key — precisa ser explícito.
 
-**Nova migration** — criar tabela `quiz_leads`:
-```text
-- id, created_at
-- nome, email, whatsapp
-- quiz_answers (jsonb com 4 respostas)
-- risk_score (0-100)
-- status: completed_quiz | viewed_offer | clicked_checkout | converted
-- utm_source, utm_medium, utm_campaign
-- viewed_offer_at, clicked_checkout_at, converted_at
-- contacted_by_admin (bool), contacted_at, contact_notes
-- session_id (correlaciona com analytics)
+### Correção (1 migration, ~30 segundos)
+
+Recriar a policy de INSERT apontando para os roles corretos:
+
+```sql
+DROP POLICY IF EXISTS "Anyone can submit quiz leads" ON public.quiz_leads;
+
+CREATE POLICY "Anyone can submit quiz leads"
+ON public.quiz_leads
+FOR INSERT
+TO anon, authenticated
+WITH CHECK (true);
 ```
 
-RLS:
-- INSERT público (anyone can submit)
-- SELECT/UPDATE só admin
-- Service role full access (para webhook Stripe marcar `converted`)
+E o mesmo para a policy de UPDATE pública (avançar funil de `viewed_offer` → `clicked_checkout`):
 
-### Mudanças no código
+```sql
+DROP POLICY IF EXISTS "Public can advance funnel status only" ON public.quiz_leads;
 
-**Editar `src/pages/Quiz.tsx`**:
-- Adicionar Step 6 com formulário (Nome, Email, WhatsApp) — validação básica e botão "Liberar análise completa"
-- Renumerar steps existentes (Mentor 6→7, Método 7→8, Sistema 8→9, Oferta 9→10)
-- Persistir `leadId` em estado para fazer UPDATE conforme avança
-- Atualizar contadores das barras de progresso
-- Capturar UTM da URL no mount
+CREATE POLICY "Public can advance funnel status only"
+ON public.quiz_leads
+FOR UPDATE
+TO anon, authenticated
+USING (status = ANY (ARRAY['completed_quiz','viewed_offer']))
+WITH CHECK (status = ANY (ARRAY['viewed_offer','clicked_checkout']));
+```
 
-**Nova página `src/pages/admin/AdminLeadsQuiz.tsx`**:
-- Tabela com filtros (reusar padrão de `AdminLeads.tsx` existente)
-- Funil visual no topo (4 cards: completaram → viram oferta → clicaram → converteram)
-- Modal lateral com detalhes do lead (respostas + ações de contato)
-- Export CSV dos leads filtrados
+### Validação após o fix
 
-**Editar `src/components/layout/AdminSidebar.tsx`** (ou onde fica o menu admin):
-- Adicionar item "Leads do Quiz" no menu
+1. Vou refazer o teste de INSERT anônimo via curl — deve retornar HTTP 201 com o `id` do lead
+2. Você abre o quiz em janela anônima, completa as 4 perguntas, preenche nome/email/WhatsApp e confirma que avança para a tela do mentor
+3. Confirma que aparece em `/admin/leads-quiz`
 
-**Editar `src/App.tsx`**:
-- Adicionar rota `/admin/leads-quiz`
+### Arquivos
+- **Nova migration** em `supabase/migrations/` — recriar 2 policies de `quiz_leads`
 
-**Editar `supabase/functions/stripe-webhook/index.ts`**:
-- Quando pagamento de R$ 497 é confirmado e o email bate com algum `quiz_leads`, fazer UPDATE `status='converted', converted_at=now()`
-
-### Onde isso ajuda comercialmente
-
-1. **Lista quente diária**: Quem completou o quiz nas últimas 24-48h e não comprou → contato imediato no WhatsApp
-2. **Segmentação por dor**: Risco >70% (burnout severo) → abordagem urgente "vi seu resultado, precisamos conversar"
-3. **Reengajamento**: Quem clicou no checkout mas não pagou → oferta especial / parcelamento
-4. **Campanhas de email/WhatsApp em massa**: Filtrar por risco + UTM e disparar oferta direcionada
-
-### Resumo dos arquivos
-
-- **Nova migration**: criar `quiz_leads` + RLS
-- **Editar**: `src/pages/Quiz.tsx` (adicionar step de captura)
-- **Nova página**: `src/pages/admin/AdminLeadsQuiz.tsx`
-- **Editar**: `src/App.tsx` (rota admin)
-- **Editar**: sidebar admin (item de menu)
-- **Editar**: `supabase/functions/stripe-webhook/index.ts` (marcar conversão)
+Nenhum código frontend muda. A aluna Adriana e qualquer pessoa que tente completar o quiz vão conseguir liberar a análise normalmente após esse fix.
 
