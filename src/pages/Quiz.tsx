@@ -137,6 +137,7 @@ const Quiz = () => {
 
     setSubmitting(true);
     try {
+      const newLeadId = crypto.randomUUID();
       const quizAnswers: Record<string, { question: string; answer: string; score: number }> = {};
       answers.forEach((score, i) => {
         const q = questions[i];
@@ -148,26 +149,23 @@ const Quiz = () => {
         };
       });
 
-      const { data, error } = await supabase
-        .from("quiz_leads")
-        .insert({
-          nome: nome.trim(),
-          email: email.trim().toLowerCase(),
-          whatsapp: whatsapp.replace(/\D/g, ""),
-          quiz_answers: quizAnswers,
-          risk_score: riskScore,
-          status: "completed_quiz",
-          utm_source: utmRef.current.utm_source,
-          utm_medium: utmRef.current.utm_medium,
-          utm_campaign: utmRef.current.utm_campaign,
-          utm_content: utmRef.current.utm_content,
-          session_id: utmRef.current.session_id,
-        })
-        .select("id")
-        .single();
+      const { error } = await supabase.from("quiz_leads").insert({
+        id: newLeadId,
+        nome: nome.trim(),
+        email: email.trim().toLowerCase(),
+        whatsapp: whatsapp.replace(/\D/g, ""),
+        quiz_answers: quizAnswers,
+        risk_score: riskScore,
+        status: "completed_quiz",
+        utm_source: utmRef.current.utm_source,
+        utm_medium: utmRef.current.utm_medium,
+        utm_campaign: utmRef.current.utm_campaign,
+        utm_content: utmRef.current.utm_content,
+        session_id: utmRef.current.session_id,
+      });
 
       if (error) throw error;
-      setLeadId(data.id);
+      setLeadId(newLeadId);
       goTo(7);
     } catch (err) {
       console.error("Failed to submit quiz lead:", err);
