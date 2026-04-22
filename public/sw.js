@@ -1,6 +1,6 @@
 // Service Worker para Push Notifications e Cache
-// v5: fix tela preta - força update imediato e notifica clientes
-const CACHE_NAME = 'renascer-cache-v5';
+// v6: força refresh para exibir novo item Reels no menu admin
+const CACHE_NAME = 'renascer-cache-v6';
 const STATIC_ASSETS = [
   '/',
   '/favicon.ico'
@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
 
 // Cache static assets on install
 self.addEventListener('install', function(event) {
-  console.log('[SW] Instalando v5');
+  console.log('[SW] Instalando v6');
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(STATIC_ASSETS);
@@ -19,7 +19,7 @@ self.addEventListener('install', function(event) {
 });
 
 self.addEventListener('activate', function(event) {
-  console.log('[SW] Ativando v5 - limpando caches antigos');
+  console.log('[SW] Ativando v6 - limpando caches antigos');
   event.waitUntil(
     caches.keys().then(function(cacheNames) {
       return Promise.all(
