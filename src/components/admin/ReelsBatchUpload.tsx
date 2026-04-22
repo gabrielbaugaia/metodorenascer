@@ -373,6 +373,8 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     if (fail === 0) toast.success(`Descrição gerada para ${ok} vídeos`);
     else toast.warning(`${ok} atualizados, ${fail} falharam`);
   };
+
+  const handleBulkStripAudio = async () => {
     const targets = drafts.filter((d) => !d.audioRemoved && (d.status === "idle" || d.status === "error"));
     if (!targets.length) {
       toast.info("Todos os vídeos já estão sem áudio");
@@ -429,7 +431,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
 
   const totalDone = drafts.filter((d) => d.status === "done").length;
   const totalUploading = drafts.filter((d) => d.status === "uploading").length;
-  const bulkBusy = bulkAi.running || bulkStrip.running || isSavingAll;
+  const bulkBusy = bulkAi.running || bulkDesc.running || bulkStrip.running || isSavingAll;
   const hasQueue = drafts.some((d) => d.status === "idle" || d.status === "error");
   const canBulkStrip = drafts.some((d) => !d.audioRemoved && (d.status === "idle" || d.status === "error"));
 
