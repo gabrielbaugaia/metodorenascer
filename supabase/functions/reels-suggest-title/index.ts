@@ -7,6 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+type Mode = "full" | "description_only";
+
 interface Body {
   // base64 frames (without data: prefix), 1-3 frames recommended
   frames: string[];
@@ -14,6 +16,10 @@ interface Body {
   category?: string;
   muscleGroup?: string;
   muscleGroups?: string[];
+  // controla se a IA gera tudo ou só a descrição
+  mode?: Mode;
+  // contexto opcional pro modo description_only
+  currentTitle?: string;
 }
 
 serve(async (req) => {
