@@ -228,12 +228,13 @@ Retorne via a ferramenta set_video_metadata preenchendo SOMENTE o campo descript
       }
     }
 
+    const payload =
+      resolvedMode === "description_only"
+        ? { description }
+        : { title, description, muscle_groups: groups };
+
     return new Response(
-      JSON.stringify({
-        title,
-        description,
-        muscle_groups: groups,
-      }),
+      JSON.stringify(payload),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
