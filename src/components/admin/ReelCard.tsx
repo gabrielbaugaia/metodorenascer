@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Trash2, Loader2, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MUSCLE_GROUPS } from "@/lib/muscleGroups";
+import { MuscleGroupMultiSelect } from "./MuscleGroupMultiSelect";
 
 export type ReelCategory = "execucao" | "dica" | "explicativo";
 
@@ -20,7 +21,7 @@ export interface ReelDraft {
   description: string;
   showDescription: boolean;
   category: ReelCategory;
-  muscleGroup: string;
+  muscleGroups: string[];
   audioRemoved: boolean;
   isVertical: boolean;
   duration: number;
@@ -123,12 +124,15 @@ export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onStripAud
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Grupo muscular</Label>
-              <Input
-                value={draft.muscleGroup}
-                onChange={(e) => onChange({ muscleGroup: e.target.value })}
-                placeholder="Ex: peito, costas..."
+              <Label className="text-xs">Grupos musculares</Label>
+              <MuscleGroupMultiSelect
+                value={draft.muscleGroups}
+                onChange={(value) => onChange({ muscleGroups: value })}
+                muscleGroups={[...MUSCLE_GROUPS]}
                 disabled={isBusy}
+                placeholder="Selecionar..."
+                className="w-full"
+                compact
               />
             </div>
           </div>
