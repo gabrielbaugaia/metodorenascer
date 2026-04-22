@@ -130,7 +130,9 @@ Retorne via a ferramenta set_video_metadata preenchendo SOMENTE o campo descript
               function: {
                 name: "set_video_metadata",
                 description:
-                  "Define título, descrição e grupos musculares do vídeo",
+                  resolvedMode === "description_only"
+                    ? "Define apenas a descrição do vídeo"
+                    : "Define título, descrição e grupos musculares do vídeo",
                 parameters: {
                   type: "object",
                   properties: {
@@ -156,7 +158,10 @@ Retorne via a ferramenta set_video_metadata preenchendo SOMENTE o campo descript
                         "Lista de 1 a 3 grupos musculares da lista fixa",
                     },
                   },
-                  required: ["title", "description", "muscle_groups"],
+                  required:
+                    resolvedMode === "description_only"
+                      ? ["description"]
+                      : ["title", "description", "muscle_groups"],
                   additionalProperties: false,
                 },
               },
