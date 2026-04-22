@@ -1,28 +1,62 @@
 
 
-## Ações em lote no upload de Reels
+## Reels Admin v2 — IA gera nome + descrição + grupo muscular, e gestão pós-publicação
 
-Adiciona dois botões no topo da tela de upload em lote (`/admin/reels`) que aplicam a IA e a remoção de áudio em **todos os vídeos da fila de uma vez**, sem precisar clicar card por card.
+Expande o sistema de Reels com 3 melhorias: a IA passa a gerar pacote completo (título + descrição + grupos musculares), grupo muscular vira seleção múltipla com lista pré-definida (não mais texto livre), e os vídeos já publicados ganham gestão completa (editar, ativar/desativar, excluir) na própria página de admin.
 
 ### O que muda
 
-No componente `src/components/admin/ReelsBatchUpload.tsx`, acima da grid de cards, aparece uma nova barra de ações em lote (só visível quando há ≥2 vídeos na fila e nenhum upload em andamento):
+**1. IA gera pacote completo (não só título)**
 
-- **✨ Reescrever todos os títulos com IA** — roda a sugestão de título sequencialmente em todos os cards (3 frames → Gemini → novo título). Mostra progresso "Processando 3 de 8…" e desabilita os outros botões enquanto roda. Se um card falhar, segue pro próximo e ao final mostra toast resumindo (ex: "7 títulos atualizados, 1 falhou").
-- **🔇 Remover áudio de todos** — aplica `stripAudio()` em paralelo (limite de 2 simultâneos pra não travar o navegador) em todos os vídeos que ainda não tiveram áudio removido. Marca o toggle "Remover áudio" como ativo em cada card processado e substitui o arquivo na fila pelo blob sem áudio. Barra de progresso global "5 de 8 processados".
+Quando o admin clica em "Reescrever com IA" (no card individual ou no botão em lote), a IA agora retorna 3 campos de uma vez:
+- **Título** (até 60 caracteres) — como já é hoje
+- **Descrição curta** (até 200 caracteres) explicando como executar/o que o vídeo mostra
+- **Grupos musculares** (array) detectados nos frames
 
-Os botões individuais por card continuam existindo — esses novos só são um atalho pro lote inteiro.
+Esses 3 campos preenchem automaticamente o card. Se o toggle "Mostrar descrição" estiver desligado, a descrição é gerada e salva mesmo assim — só não aparece pro aluno.
+
+**2. Grupo muscular: seleção múltipla com lista fixa**
+
+O campo de texto livre vira um seletor de múltiplos grupos musculares com lista pré-definida (mesma usada no resto do sistema):
+- Peito, Costas, Ombros, Bíceps, Tríceps, Antebraço
+- Quadríceps, Posterior, Glúteos, Panturrilha, Adutores, Abdutores
+- Abdômen, Lombar, Trapézio, Core, Cardio, Mobilidade, Alongamento, Corpo todo
+
+Reuso o componente `MuscleGroupMultiSelect` que já existe em `src/components/admin/`. A IA também escolhe da mesma lista fixa (passada no system prompt) pra garantir consistência.
+
+**3. Gestão de vídeos publicados na página `/admin/reels`**
+
+Embaixo da área de upload, adiciono uma seção "Vídeos publicados" com listagem dos reels já no banco. Cada item mostra thumbnail + título + status, e tem 3 ações:
+
+- **Editar** — abre modal com título, descrição, grupos musculares e categoria editáveis (mesmos campos do card de upload, sem o vídeo em si)
+- **Ativar / Desativar** — toggle que altera campo `is_active` na tabela `reels_videos`. Vídeo desativado não aparece pro aluno mas fica salvo
+- **Excluir** — confirmação dupla, remove o registro do banco e o arquivo do storage `reels-videos`
+
+Filtros simples no topo da listagem: busca por título + filtro por categoria + filtro por ativos/inativos.
 
 ### Detalhes técnicos
 
-- Reuso direto das funções já existentes: `captureKeyFrames` + edge function `reels-suggest-title` pra IA, e `stripAudio` de `reelsVideoUtils.ts` pra áudio.
-- Estado novo no `ReelsBatchUpload`: `bulkAiRunning`, `bulkStripRunning`, contadores de progresso.
-- Concorrência: IA roda 1 por vez (a edge function já é pesada); áudio roda 2 por vez via `Promise.all` em chunks.
-- Os botões ficam desabilitados se: fila vazia, upload em andamento, ou outra ação em lote rodando.
-- Toasts de sucesso/falha agregados ao final, não um por card.
+**Banco de dados**
+- Adicionar coluna `is_active boolean default true` na tabela `reels_videos` (migration)
+- Mudar coluna `muscle_group text` para `muscle_groups text[]` (migration com conversão dos valores existentes em array de 1 elemento)
+- Atualizar RLS: query do aluno passa a filtrar `is_active = true`
+
+**Edge function**
+- Renomear conceito da função `reels-suggest-title` para retornar pacote completo. Mantém o mesmo endpoint mas a tool call agora se chama `set_video_metadata` com 3 parâmetros: `title` (string), `description` (string ≤200), `muscle_groups` (array de strings da lista fixa)
+- System prompt atualizado: além do título, gera descrição curta em pt-BR explicando execução/dica, e seleciona 1-3 grupos musculares da lista fixa fornecida no próprio prompt
+- A lista fixa de grupos vira constante compartilhada em `supabase/functions/_shared/muscleGroups.ts` pra ser usada também na validação
+
+**Frontend**
+- `ReelCard.tsx`: substituir `<Input value={muscleGroup}>` pelo `MuscleGroupMultiSelect`. Trocar `muscleGroup: string` por `muscleGroups: string[]` no tipo `ReelDraft`
+- `ReelsBatchUpload.tsx`: handler `handleSuggestTitle` recebe agora `{title, description, muscle_groups}` e atualiza os 3 campos do draft. Bulk handler idem. Se descrição vier preenchida, ativa automaticamente o toggle "Mostrar descrição" no card
+- `AdminReels.tsx`: adicionar seção "Vídeos publicados" abaixo do upload. Componente novo `PublishedReelsList.tsx` faz o fetch + filtros + ações
+- Componente novo `EditReelModal.tsx` reutilizando os mesmos inputs do `ReelCard` (sem o preview de upload)
+- Página do aluno `Reels.tsx`: ajustar query pra filtrar `is_active = true` e ler `muscle_groups` (array) ao invés de `muscle_group` (string)
 
 ### Arquivos
-- **Editado**: `src/components/admin/ReelsBatchUpload.tsx` — adiciona barra de ações em lote + 2 handlers (`handleBulkRewriteTitles`, `handleBulkStripAudio`).
-
-Nenhuma migration, edge function nova ou alteração de banco — só frontend reaproveitando o que já existe.
+- 1 migration (coluna `is_active`, conversão `muscle_group` → `muscle_groups[]`)
+- Edge function editada: `supabase/functions/reels-suggest-title/index.ts` (retorna pacote completo)
+- 1 arquivo novo: `supabase/functions/_shared/muscleGroups.ts`
+- 2 componentes novos: `PublishedReelsList.tsx`, `EditReelModal.tsx`
+- Edits: `ReelCard.tsx`, `ReelsBatchUpload.tsx`, `AdminReels.tsx`, `Reels.tsx` (página do aluno)
 
