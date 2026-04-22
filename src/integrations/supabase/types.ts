@@ -2262,6 +2262,7 @@ export type Database = {
           id: string
           is_published: boolean
           muscle_group: string | null
+          muscle_groups: string[]
           original_filename: string | null
           show_description: boolean
           thumbnail_url: string | null
@@ -2280,6 +2281,7 @@ export type Database = {
           id?: string
           is_published?: boolean
           muscle_group?: string | null
+          muscle_groups?: string[]
           original_filename?: string | null
           show_description?: boolean
           thumbnail_url?: string | null
@@ -2298,6 +2300,7 @@ export type Database = {
           id?: string
           is_published?: boolean
           muscle_group?: string | null
+          muscle_groups?: string[]
           original_filename?: string | null
           show_description?: boolean
           thumbnail_url?: string | null
