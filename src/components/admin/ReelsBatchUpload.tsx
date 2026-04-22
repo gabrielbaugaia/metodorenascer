@@ -25,6 +25,8 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
   const [drafts, setDrafts] = useState<ReelDraft[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
+  const [bulkAi, setBulkAi] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
+  const [bulkStrip, setBulkStrip] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
 
   const updateDraft = useCallback((id: string, patch: Partial<ReelDraft>) => {
