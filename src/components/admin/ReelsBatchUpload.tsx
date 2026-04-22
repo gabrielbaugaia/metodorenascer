@@ -324,7 +324,55 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     else toast.warning(`${ok} atualizados, ${fail} falharam`);
   };
 
-  const handleBulkStripAudio = async () => {
+  const handleBulkGenerateDescription = async () => {
+    const targets = drafts.filter((d) => d.status === "idle" || d.status === "error");
+    if (!targets.length) {
+      toast.info("Nenhum vídeo na fila");
+      return;
+    }
+    setBulkDesc({ running: true, current: 0, total: targets.length });
+    let ok = 0;
+    let fail = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const draft = targets[i];
+      setBulkDesc({ running: true, current: i + 1, total: targets.length });
+      try {
+        updateDraft(draft.id, { status: "describing", error: undefined });
+        // eslint-disable-next-line no-await-in-loop
+        const { frames } = await captureKeyFrames(draft.file);
+        // eslint-disable-next-line no-await-in-loop
+        const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+          body: {
+            frames,
+            mode: "description_only",
+            category: draft.category,
+            muscleGroups: draft.muscleGroups.length ? draft.muscleGroups : undefined,
+            currentTitle: draft.title || undefined,
+          },
+        });
+        if (error) throw error;
+        const result = data as AiResponse;
+        if (result.description) {
+          updateDraft(draft.id, (prev) => ({
+            status: "idle",
+            description: result.description!,
+            showDescription: prev.showDescription || true,
+          }));
+          ok++;
+        } else {
+          updateDraft(draft.id, { status: "idle" });
+          fail++;
+        }
+      } catch (err) {
+        console.error("bulk description err", err);
+        updateDraft(draft.id, { status: "idle", error: "IA falhou" });
+        fail++;
+      }
+    }
+    setBulkDesc({ running: false, current: 0, total: 0 });
+    if (fail === 0) toast.success(`Descrição gerada para ${ok} vídeos`);
+    else toast.warning(`${ok} atualizados, ${fail} falharam`);
+  };
     const targets = drafts.filter((d) => !d.audioRemoved && (d.status === "idle" || d.status === "error"));
     if (!targets.length) {
       toast.info("Todos os vídeos já estão sem áudio");
