@@ -31,8 +31,9 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const { frames, category, muscleGroup, muscleGroups } =
+    const { frames, category, muscleGroup, muscleGroups, mode, currentTitle } =
       (await req.json()) as Body;
+    const resolvedMode: Mode = mode === "description_only" ? "description_only" : "full";
 
     if (!Array.isArray(frames) || frames.length === 0) {
       return new Response(
