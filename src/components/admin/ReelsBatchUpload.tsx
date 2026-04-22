@@ -502,6 +502,25 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
                     type="button"
                     variant="outline"
                     size="sm"
+                    onClick={handleBulkGenerateDescription}
+                    disabled={bulkBusy || !hasQueue}
+                  >
+                    {bulkDesc.running ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        Descrição {bulkDesc.current} de {bulkDesc.total}…
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-3.5 w-3.5 mr-1.5" />
+                        Gerar descrição em todos
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={handleBulkStripAudio}
                     disabled={bulkBusy || !canBulkStrip}
                   >
@@ -547,6 +566,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
                   setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
                 }}
                 onSuggestTitle={() => handleSuggestTitle(draft)}
+                onGenerateDescription={() => handleGenerateDescription(draft)}
                 onStripAudio={() => handleStripAudio(draft)}
               />
             ))}
