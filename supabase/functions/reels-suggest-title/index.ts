@@ -64,7 +64,7 @@ serve(async (req) => {
 
     const muscleList = MUSCLE_GROUPS.join(", ");
 
-    const systemPrompt = `Você é um especialista em fitness e copywriter de redes sociais.
+    const fullPrompt = `Você é um especialista em fitness e copywriter de redes sociais.
 Recebe frames de um vídeo curto vertical (estilo Reels) sobre exercícios/dicas/explicações de academia.
 
 Sua tarefa: gerar METADADOS COMPLETOS para o vídeo, em PORTUGUÊS BRASILEIRO:
@@ -84,13 +84,28 @@ Sua tarefa: gerar METADADOS COMPLETOS para o vídeo, em PORTUGUÊS BRASILEIRO:
 
 Use os 3 campos juntos via a ferramenta set_video_metadata.`;
 
+    const descOnlyPrompt = `Você é um especialista em fitness e copywriter de redes sociais.
+Recebe frames de um vídeo curto vertical (estilo Reels) sobre exercícios/dicas/explicações de academia.
+
+Sua tarefa: gerar APENAS a DESCRIÇÃO CURTA (até 200 caracteres) em PORTUGUÊS BRASILEIRO,
+explicando como executar o exercício ou a dica/conceito demonstrado. Linguagem clara e prática,
+voltada ao aluno. Sem emojis. Sem aspas. Termine com ponto final.
+
+${currentTitle ? `O vídeo já tem o título: "${currentTitle}". Use-o como contexto, mas não o repita literalmente na descrição.` : ""}
+
+Retorne via a ferramenta set_video_metadata preenchendo SOMENTE o campo description.`;
+
+    const systemPrompt = resolvedMode === "description_only" ? descOnlyPrompt : fullPrompt;
+
     const userMessage = {
       role: "user",
       content: [
         ...imageContents,
         {
           type: "text",
-          text: `Analise os frames e gere os metadados conforme as instruções.${hint}`,
+          text: resolvedMode === "description_only"
+            ? `Analise os frames e gere apenas a descrição conforme as instruções.${hint}`
+            : `Analise os frames e gere os metadados conforme as instruções.${hint}`,
         },
       ],
     };
