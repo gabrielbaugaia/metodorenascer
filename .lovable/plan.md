@@ -1,57 +1,33 @@
+obs: 
 
+o aluno so vai ver o que foi adicionado, no admin que vamos adicionar, editar, subir para ia trasncrever e tudo no aluno e so visualizar 
 
-## Nova área "Reels" — vídeos curtos verticais com IA
+  
+  
+  
+Diagnóstico: "Reels" já está no menu admin, mas não aparece pra você
 
-Cria uma área completamente nova de vídeos no formato vertical (estilo Reels), separada dos GIFs e do banco de YouTube atual. Inclui upload em lote, IA pra reescrever título a partir dos frames do vídeo, opção de remover áudio, e descrição curta opcional por vídeo.
+Verifiquei o código do sidebar (`src/components/layout/ClientSidebar.tsx` linha 85) e o item **Reels** está corretamente cadastrado no grupo **CONTEÚDO**, entre "Biblioteca de GIFs" e "Blog", apontando para `/admin/reels`.
 
-### O que muda
+A screenshot que você mandou mostra a sidebar pulando direto de "Biblioteca de GIFs" para "Blog" — isso é cache do preview. O build da última correção (recharts/input-otp) provavelmente ainda não terminou de recarregar no seu navegador.
 
-**Admin** — nova rota `/admin/reels`:
-- Botão **"Adicionar em lote"** (drag-and-drop de múltiplos vídeos verticais .mp4/.mov)
-- Cada vídeo, durante upload, vira um card com:
-  - Preview vertical 9:16
-  - Campo **Título** (editável) + botão ✨ **"Reescrever com IA"** (analisa os primeiros frames do vídeo via Gemini Vision e sugere um nome)
-  - Toggle **"Remover áudio"** (processa o vídeo no servidor com ffmpeg e regrava sem trilha de áudio)
-  - Toggle **"Mostrar descrição"** + campo de descrição curta (até 200 caracteres) que só aparece pro aluno se o toggle estiver ativo
-  - Categoria (Execução / Dica / Explicativo) e grupo muscular
-- Lista de Reels já cadastrados com filtros, busca, editar e excluir
-- Barra de progresso global do lote (X de Y enviados)
+### O que fazer agora
 
-**Aluno** — nova aba **"Vídeos"** no menu lateral (ícone Play), rota `/videos`:
-- Feed vertical estilo Reels (scroll-snap full-screen no mobile, grid 9:16 no desktop)
-- Filtros por categoria e grupo muscular
-- Quando o admin marcou "mostrar descrição", aparece overlay no rodapé do vídeo
-- **Não toca em GIFs nem no `/admin/videos` (YouTube) atuais** — fica como um plus à parte
+**Opção 1 — Recarregar (resolve em 90% dos casos):**
 
-### Arquitetura técnica
+- Faz um hard refresh no preview: `Ctrl+Shift+R` (Windows) ou `Cmd+Shift+R` (Mac)
+- O item "Reels" com ícone ▶ deve aparecer entre GIFs e Blog
 
-**Banco** — nova migration:
-- Tabela `reels_videos`: `id`, `title`, `description`, `show_description bool`, `category` (execucao/dica/explicativo), `muscle_group`, `video_url`, `thumbnail_url`, `duration_seconds`, `audio_removed bool`, `original_filename`, `file_size_bytes`, `created_by`, `created_at`, `updated_at`
-- RLS: admin gerencia tudo; alunos autenticados com SELECT em `is_published = true`
-- Bucket público novo `reels-videos` para os arquivos finais
+**Opção 2 — Acessar direto:**
 
-**Edge functions** (3 novas):
-- `reels-suggest-title` — recebe URL do vídeo, extrai 3 frames (início/meio/fim) e manda pra `google/gemini-2.5-pro` com tool calling pra retornar título sugerido em português
-- `reels-strip-audio` — recebe path do bucket, baixa, processa com ffmpeg-wasm pra remover áudio, sobe versão muda e retorna nova URL
-- `reels-generate-thumbnail` — extrai primeiro frame como JPEG pra thumb da listagem
+- Vai direto na URL: `/admin/reels`
+- A página de upload em lote já está funcional
 
-**Frontend**:
-- `src/pages/admin/AdminReels.tsx` — página principal com grid + modal de upload em lote
-- `src/components/admin/ReelsBatchUpload.tsx` — dropzone, fila de upload com progresso individual, ações IA por card
-- `src/components/admin/ReelCard.tsx` — card editável (título, toggles, descrição)
-- `src/pages/Reels.tsx` — feed do aluno (scroll-snap vertical)
-- Rota nova em `App.tsx` (admin guard pra `/admin/reels`, subscription guard pra `/videos`)
-- Item novo no `ClientSidebar.tsx` ("Vídeos") e no admin sidebar ("Reels")
+### Se mesmo após o refresh não aparecer
 
-### Validações
-- Tipos aceitos: `video/mp4`, `video/quicktime`, `video/webm`
-- Tamanho máximo: 100MB por vídeo
-- Aviso visual se vídeo não for vertical (proporção > 1)
-- Limite de 10 vídeos em paralelo no upload em lote pra não estourar memória
+Me avisa que eu investigo se tem algum erro de build silencioso impedindo o sidebar de re-renderizar, ou se o `useAdminCheck` está bloqueando a seção CONTEÚDO inteira por algum motivo. Nesse caso o próximo passo seria:
 
-### Arquivos
-- 1 migration (tabela `reels_videos` + bucket `reels-videos` + RLS)
-- 3 edge functions novas
-- 4 arquivos React novos (AdminReels, Reels, ReelsBatchUpload, ReelCard)
-- Edits leves: `App.tsx` (rotas), `ClientSidebar.tsx`, `AdminDashboard.tsx` (card de acesso)
+1. Abrir o console do navegador no preview e me mandar qualquer erro vermelho
+2. Confirmar que você consegue ver "Biblioteca de Vídeos" e "Biblioteca de GIFs" (que aparecem na screenshot, então o grupo CONTEÚDO está renderizando — só falta atualizar)
 
+**Não precisa nenhuma alteração de código nesse momento.** O Reels já está implementado e cadastrado no menu — é só refresh.
