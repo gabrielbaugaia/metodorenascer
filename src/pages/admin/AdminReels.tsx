@@ -104,7 +104,7 @@ export default function AdminReels() {
       <div className="space-y-6">
         <PageHeader
           title="Reels"
-          description="Vídeos curtos verticais para os alunos (execuções, dicas, explicativos)"
+          subtitle="Vídeos curtos verticais para os alunos (execuções, dicas, explicativos)"
           actions={
             <Button onClick={() => setShowUpload((v) => !v)}>
               <Plus className="h-4 w-4 mr-2" />
