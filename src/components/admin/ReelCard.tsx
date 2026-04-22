@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Trash2, Loader2, Volume2, VolumeX, AlertCircle } from "lucide-react";
+import { Sparkles, Trash2, Loader2, Volume2, VolumeX, AlertCircle, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MUSCLE_GROUPS } from "@/lib/muscleGroups";
 import { MuscleGroupMultiSelect } from "./MuscleGroupMultiSelect";
@@ -25,7 +25,7 @@ export interface ReelDraft {
   audioRemoved: boolean;
   isVertical: boolean;
   duration: number;
-  status: "idle" | "suggesting" | "stripping" | "uploading" | "done" | "error";
+  status: "idle" | "suggesting" | "describing" | "stripping" | "uploading" | "done" | "error";
   progress?: number;
   error?: string;
 }
@@ -35,6 +35,7 @@ interface ReelCardProps {
   onChange: (patch: Partial<ReelDraft>) => void;
   onRemove: () => void;
   onSuggestTitle: () => void;
+  onGenerateDescription: () => void;
   onStripAudio: () => void;
 }
 
@@ -44,8 +45,8 @@ const CATEGORY_LABEL: Record<ReelCategory, string> = {
   explicativo: "Explicativo",
 };
 
-export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onStripAudio }: ReelCardProps) {
-  const isBusy = ["suggesting", "stripping", "uploading"].includes(draft.status);
+export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onGenerateDescription, onStripAudio }: ReelCardProps) {
+  const isBusy = ["suggesting", "describing", "stripping", "uploading"].includes(draft.status);
   return (
     <Card className="overflow-hidden border-border bg-card">
       <div className="flex flex-col md:flex-row gap-4 p-4">
