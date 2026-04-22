@@ -36,6 +36,7 @@ import {
   Gift,
   Bell,
   BookOpen,
+  Play,
 } from "lucide-react";
 import { ENABLE_HEALTH_METRICS } from "@/lib/healthConfig";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +54,7 @@ const clientMenuItems = [
   { title: "Nutrição", url: "/nutricao", icon: Apple },
   { title: "Diário Nutricional", url: "/nutricao-diario", icon: Apple },
   { title: "Receitas", url: "/receitas", icon: ChefHat },
+  { title: "Vídeos", url: "/videos", icon: Play },
   { title: "Mindset", url: "/mindset", icon: Brain },
   { title: "Meu Perfil", url: "/meu-perfil", icon: User },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
@@ -80,6 +82,7 @@ const adminSections: AdminSection[] = [
     items: [
       { title: "Biblioteca de Vídeos", url: "/admin/videos", icon: Video },
       { title: "Biblioteca de GIFs", url: "/admin/gifs", icon: ImageIcon },
+      { title: "Reels", url: "/admin/reels", icon: Play },
       { title: "Blog", url: "/admin/blog", icon: PenSquare },
     ],
   },
