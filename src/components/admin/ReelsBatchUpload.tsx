@@ -133,6 +133,40 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     }
   };
 
+  const handleGenerateDescription = async (draft: ReelDraft) => {
+    updateDraft(draft.id, { status: "describing", error: undefined });
+    try {
+      const { frames } = await captureKeyFrames(draft.file);
+      const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+        body: {
+          frames,
+          mode: "description_only",
+          category: draft.category,
+          muscleGroups: draft.muscleGroups.length ? draft.muscleGroups : undefined,
+          currentTitle: draft.title || undefined,
+        },
+      });
+      if (error) throw error;
+      const result = data as AiResponse;
+      if (result.description) {
+        updateDraft(draft.id, (prev) => ({
+          status: "idle",
+          description: result.description!,
+          showDescription: prev.showDescription || true,
+        }));
+        toast.success("Descrição gerada");
+      } else {
+        updateDraft(draft.id, { status: "idle" });
+        toast.warning("IA não retornou descrição");
+      }
+    } catch (err) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : "Falha ao gerar descrição";
+      updateDraft(draft.id, { status: "idle", error: msg });
+      toast.error(msg);
+    }
+  };
+
   const handleStripAudio = async (draft: ReelDraft) => {
     updateDraft(draft.id, { status: "stripping", error: undefined });
     try {
