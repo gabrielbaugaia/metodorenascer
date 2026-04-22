@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Upload, Save, Loader2 } from "lucide-react";
+import { Upload, Save, Loader2, Sparkles, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -25,6 +25,8 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
   const [drafts, setDrafts] = useState<ReelDraft[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
+  const [bulkAi, setBulkAi] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
+  const [bulkStrip, setBulkStrip] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
 
   const updateDraft = useCallback((id: string, patch: Partial<ReelDraft>) => {
@@ -220,8 +222,106 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     }
   };
 
+  const handleBulkSuggestTitles = async () => {
+    const targets = drafts.filter((d) => d.status === "idle" || d.status === "error");
+    if (!targets.length) {
+      toast.info("Nenhum vídeo na fila");
+      return;
+    }
+    setBulkAi({ running: true, current: 0, total: targets.length });
+    let ok = 0;
+    let fail = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const draft = targets[i];
+      setBulkAi({ running: true, current: i + 1, total: targets.length });
+      try {
+        updateDraft(draft.id, { status: "suggesting", error: undefined });
+        // eslint-disable-next-line no-await-in-loop
+        const { frames } = await captureKeyFrames(draft.file);
+        // eslint-disable-next-line no-await-in-loop
+        const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+          body: { frames, category: draft.category, muscleGroup: draft.muscleGroup || undefined },
+        });
+        if (error) throw error;
+        const title = (data as { title?: string })?.title;
+        if (title) {
+          updateDraft(draft.id, { title, status: "idle" });
+          ok++;
+        } else {
+          updateDraft(draft.id, { status: "idle" });
+          fail++;
+        }
+      } catch (err) {
+        console.error("bulk title err", err);
+        updateDraft(draft.id, { status: "idle", error: "IA falhou" });
+        fail++;
+      }
+    }
+    setBulkAi({ running: false, current: 0, total: 0 });
+    if (fail === 0) toast.success(`${ok} títulos atualizados`);
+    else toast.warning(`${ok} títulos atualizados, ${fail} falharam`);
+  };
+
+  const handleBulkStripAudio = async () => {
+    const targets = drafts.filter((d) => !d.audioRemoved && (d.status === "idle" || d.status === "error"));
+    if (!targets.length) {
+      toast.info("Todos os vídeos já estão sem áudio");
+      return;
+    }
+    setBulkStrip({ running: true, current: 0, total: targets.length });
+    let done = 0;
+    let fail = 0;
+    const STRIP_PARALLEL = 2;
+    const queue = [...targets];
+
+    const worker = async () => {
+      while (queue.length) {
+        const draft = queue.shift();
+        if (!draft) break;
+        try {
+          updateDraft(draft.id, { status: "stripping", error: undefined });
+          // eslint-disable-next-line no-await-in-loop
+          const blob = await stripAudio(draft.file);
+          if (!blob) {
+            updateDraft(draft.id, { status: "idle", error: "Sem suporte" });
+            fail++;
+          } else {
+            const newFile = new File(
+              [blob],
+              draft.file.name.replace(/\.[^.]+$/, "") + "-muted.webm",
+              { type: blob.type }
+            );
+            const previewUrl = URL.createObjectURL(newFile);
+            try { URL.revokeObjectURL(draft.previewUrl); } catch { /* noop */ }
+            updateDraft(draft.id, {
+              file: newFile,
+              previewUrl,
+              audioRemoved: true,
+              status: "idle",
+            });
+            done++;
+          }
+        } catch (err) {
+          console.error("bulk strip err", err);
+          updateDraft(draft.id, { status: "idle", error: "Falha ao remover áudio" });
+          fail++;
+        }
+        setBulkStrip((prev) => ({ ...prev, current: done + fail }));
+      }
+    };
+
+    const workers = Array.from({ length: Math.min(STRIP_PARALLEL, queue.length) }, worker);
+    await Promise.all(workers);
+    setBulkStrip({ running: false, current: 0, total: 0 });
+    if (fail === 0) toast.success(`Áudio removido de ${done} vídeos`);
+    else toast.warning(`${done} processados, ${fail} falharam`);
+  };
+
   const totalDone = drafts.filter((d) => d.status === "done").length;
   const totalUploading = drafts.filter((d) => d.status === "uploading").length;
+  const bulkBusy = bulkAi.running || bulkStrip.running || isSavingAll;
+  const hasQueue = drafts.some((d) => d.status === "idle" || d.status === "error");
+  const canBulkStrip = drafts.some((d) => !d.audioRemoved && (d.status === "idle" || d.status === "error"));
 
   return (
     <div className="space-y-4">
@@ -260,6 +360,56 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
 
       {drafts.length > 0 && (
         <>
+          {drafts.length >= 2 && (
+            <Card className="p-3 bg-muted/40">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <div className="text-xs text-muted-foreground flex-1">
+                  Ações em lote para os {drafts.length} vídeos:
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkSuggestTitles}
+                    disabled={bulkBusy || !hasQueue}
+                  >
+                    {bulkAi.running ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        Processando {bulkAi.current} de {bulkAi.total}…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                        Reescrever títulos com IA
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkStripAudio}
+                    disabled={bulkBusy || !canBulkStrip}
+                  >
+                    {bulkStrip.running ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        Removendo áudio {bulkStrip.current} de {bulkStrip.total}…
+                      </>
+                    ) : (
+                      <>
+                        <VolumeX className="h-3.5 w-3.5 mr-1.5" />
+                        Remover áudio de todos
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
@@ -268,7 +418,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
               </div>
               <Progress value={(totalDone / drafts.length) * 100} className="h-1.5" />
             </div>
-            <Button onClick={handleSaveAll} disabled={isSavingAll || drafts.every((d) => d.status === "done")}>
+            <Button onClick={handleSaveAll} disabled={bulkBusy || drafts.every((d) => d.status === "done")}>
               {isSavingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
               Enviar todos
             </Button>
