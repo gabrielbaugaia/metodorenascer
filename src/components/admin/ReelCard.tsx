@@ -171,7 +171,24 @@ export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onGenerate
 
           {draft.showDescription && (
             <div>
-              <Label className="text-xs">Descrição (até 200 caracteres)</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label className="text-xs">Descrição (até 200 caracteres)</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={onGenerateDescription}
+                  disabled={isBusy}
+                  className="h-7 text-xs"
+                >
+                  {draft.status === "describing" ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <FileText className="h-3 w-3 mr-1" />
+                  )}
+                  Gerar descrição
+                </Button>
+              </div>
               <Textarea
                 value={draft.description}
                 onChange={(e) => onChange({ description: e.target.value.slice(0, 200) })}
@@ -181,6 +198,25 @@ export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onGenerate
                 disabled={isBusy}
               />
               <p className="text-[10px] text-muted-foreground text-right mt-1">{draft.description.length}/200</p>
+
+              {draft.description.trim() && (
+                <div className="mt-2">
+                  <p className="text-[10px] text-muted-foreground mb-1">Preview de como o aluno verá:</p>
+                  <div className="relative aspect-[9/16] max-w-[140px] rounded-md overflow-hidden bg-muted/60 border border-border">
+                    <video
+                      src={draft.previewUrl}
+                      className="absolute inset-0 w-full h-full object-cover opacity-70"
+                      muted
+                      playsInline
+                    />
+                    <div className="absolute left-0 right-0 bottom-0 bg-gradient-to-t from-background/95 to-transparent p-2">
+                      <p className="text-[10px] text-foreground line-clamp-3 leading-snug">
+                        {draft.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
