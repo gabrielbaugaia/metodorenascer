@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Upload, Save, Loader2, Sparkles, VolumeX } from "lucide-react";
+import { Upload, Save, Loader2, Sparkles, VolumeX, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -48,6 +48,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
   const [bulkAi, setBulkAi] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
+  const [bulkDesc, setBulkDesc] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
   const [bulkStrip, setBulkStrip] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
 
