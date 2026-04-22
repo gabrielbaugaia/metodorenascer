@@ -360,6 +360,56 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
 
       {drafts.length > 0 && (
         <>
+          {drafts.length >= 2 && (
+            <Card className="p-3 bg-muted/40">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <div className="text-xs text-muted-foreground flex-1">
+                  Ações em lote para os {drafts.length} vídeos:
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkSuggestTitles}
+                    disabled={bulkBusy || !hasQueue}
+                  >
+                    {bulkAi.running ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        Processando {bulkAi.current} de {bulkAi.total}…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                        Reescrever títulos com IA
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkStripAudio}
+                    disabled={bulkBusy || !canBulkStrip}
+                  >
+                    {bulkStrip.running ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        Removendo áudio {bulkStrip.current} de {bulkStrip.total}…
+                      </>
+                    ) : (
+                      <>
+                        <VolumeX className="h-3.5 w-3.5 mr-1.5" />
+                        Remover áudio de todos
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
@@ -368,7 +418,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
               </div>
               <Progress value={(totalDone / drafts.length) * 100} className="h-1.5" />
             </div>
-            <Button onClick={handleSaveAll} disabled={isSavingAll || drafts.every((d) => d.status === "done")}>
+            <Button onClick={handleSaveAll} disabled={bulkBusy || drafts.every((d) => d.status === "done")}>
               {isSavingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
               Enviar todos
             </Button>
