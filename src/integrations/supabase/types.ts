@@ -2250,6 +2250,63 @@ export type Database = {
         }
         Relationships: []
       }
+      reels_videos: {
+        Row: {
+          audio_removed: boolean
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_seconds: number | null
+          file_size_bytes: number | null
+          id: string
+          is_published: boolean
+          muscle_group: string | null
+          original_filename: string | null
+          show_description: boolean
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          audio_removed?: boolean
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          id?: string
+          is_published?: boolean
+          muscle_group?: string | null
+          original_filename?: string | null
+          show_description?: boolean
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          audio_removed?: boolean
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          id?: string
+          is_published?: boolean
+          muscle_group?: string | null
+          original_filename?: string | null
+          show_description?: boolean
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
       referral_campaigns: {
         Row: {
           active: boolean

@@ -69,6 +69,8 @@ const Cardio = lazy(() => import("./pages/Cardio"));
 const AnamneseExterna = lazy(() => import("./pages/AnamneseExterna"));
 const LandingV2 = lazy(() => import("./pages/LandingV2"));
 const AdminLeadsQuiz = lazy(() => import("./pages/admin/AdminLeadsQuiz"));
+const AdminReels = lazy(() => import("./pages/admin/AdminReels"));
+const ReelsPage = lazy(() => import("./pages/Reels"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -132,6 +134,7 @@ const App = () => (
             <Route path="/renascer" element={<SubscriptionGuard><Renascer /></SubscriptionGuard>} />
             <Route path="/nutricao-diario" element={<SubscriptionGuard><NutricaoTracking /></SubscriptionGuard>} />
             <Route path="/cardio" element={<SubscriptionGuard><Cardio /></SubscriptionGuard>} />
+            <Route path="/videos" element={<SubscriptionGuard><ReelsPage /></SubscriptionGuard>} />
 
             {/* ROTAS ADMIN (protegidas por AdminGuard) */}
             <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
@@ -144,6 +147,7 @@ const App = () => (
             <Route path="/admin/mensagens" element={<AdminGuard><AdminMensagens /></AdminGuard>} />
             <Route path="/admin/videos" element={<AdminGuard><AdminVideos /></AdminGuard>} />
             <Route path="/admin/gifs" element={<AdminGuard><AdminExerciseGifs /></AdminGuard>} />
+            <Route path="/admin/reels" element={<AdminGuard><AdminReels /></AdminGuard>} />
             <Route path="/admin/planos-venda" element={<AdminGuard><AdminPlanosVenda /></AdminGuard>} />
             <Route path="/admin/metricas" element={<AdminGuard><AdminMetricas /></AdminGuard>} />
             <Route path="/admin/convites" element={<AdminGuard><AdminConvites /></AdminGuard>} />
