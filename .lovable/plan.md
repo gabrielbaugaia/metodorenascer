@@ -1,33 +1,28 @@
-obs: 
 
-o aluno so vai ver o que foi adicionado, no admin que vamos adicionar, editar, subir para ia trasncrever e tudo no aluno e so visualizar 
 
-  
-  
-  
-Diagnóstico: "Reels" já está no menu admin, mas não aparece pra você
+## Ações em lote no upload de Reels
 
-Verifiquei o código do sidebar (`src/components/layout/ClientSidebar.tsx` linha 85) e o item **Reels** está corretamente cadastrado no grupo **CONTEÚDO**, entre "Biblioteca de GIFs" e "Blog", apontando para `/admin/reels`.
+Adiciona dois botões no topo da tela de upload em lote (`/admin/reels`) que aplicam a IA e a remoção de áudio em **todos os vídeos da fila de uma vez**, sem precisar clicar card por card.
 
-A screenshot que você mandou mostra a sidebar pulando direto de "Biblioteca de GIFs" para "Blog" — isso é cache do preview. O build da última correção (recharts/input-otp) provavelmente ainda não terminou de recarregar no seu navegador.
+### O que muda
 
-### O que fazer agora
+No componente `src/components/admin/ReelsBatchUpload.tsx`, acima da grid de cards, aparece uma nova barra de ações em lote (só visível quando há ≥2 vídeos na fila e nenhum upload em andamento):
 
-**Opção 1 — Recarregar (resolve em 90% dos casos):**
+- **✨ Reescrever todos os títulos com IA** — roda a sugestão de título sequencialmente em todos os cards (3 frames → Gemini → novo título). Mostra progresso "Processando 3 de 8…" e desabilita os outros botões enquanto roda. Se um card falhar, segue pro próximo e ao final mostra toast resumindo (ex: "7 títulos atualizados, 1 falhou").
+- **🔇 Remover áudio de todos** — aplica `stripAudio()` em paralelo (limite de 2 simultâneos pra não travar o navegador) em todos os vídeos que ainda não tiveram áudio removido. Marca o toggle "Remover áudio" como ativo em cada card processado e substitui o arquivo na fila pelo blob sem áudio. Barra de progresso global "5 de 8 processados".
 
-- Faz um hard refresh no preview: `Ctrl+Shift+R` (Windows) ou `Cmd+Shift+R` (Mac)
-- O item "Reels" com ícone ▶ deve aparecer entre GIFs e Blog
+Os botões individuais por card continuam existindo — esses novos só são um atalho pro lote inteiro.
 
-**Opção 2 — Acessar direto:**
+### Detalhes técnicos
 
-- Vai direto na URL: `/admin/reels`
-- A página de upload em lote já está funcional
+- Reuso direto das funções já existentes: `captureKeyFrames` + edge function `reels-suggest-title` pra IA, e `stripAudio` de `reelsVideoUtils.ts` pra áudio.
+- Estado novo no `ReelsBatchUpload`: `bulkAiRunning`, `bulkStripRunning`, contadores de progresso.
+- Concorrência: IA roda 1 por vez (a edge function já é pesada); áudio roda 2 por vez via `Promise.all` em chunks.
+- Os botões ficam desabilitados se: fila vazia, upload em andamento, ou outra ação em lote rodando.
+- Toasts de sucesso/falha agregados ao final, não um por card.
 
-### Se mesmo após o refresh não aparecer
+### Arquivos
+- **Editado**: `src/components/admin/ReelsBatchUpload.tsx` — adiciona barra de ações em lote + 2 handlers (`handleBulkRewriteTitles`, `handleBulkStripAudio`).
 
-Me avisa que eu investigo se tem algum erro de build silencioso impedindo o sidebar de re-renderizar, ou se o `useAdminCheck` está bloqueando a seção CONTEÚDO inteira por algum motivo. Nesse caso o próximo passo seria:
+Nenhuma migration, edge function nova ou alteração de banco — só frontend reaproveitando o que já existe.
 
-1. Abrir o console do navegador no preview e me mandar qualquer erro vermelho
-2. Confirmar que você consegue ver "Biblioteca de Vídeos" e "Biblioteca de GIFs" (que aparecem na screenshot, então o grupo CONTEÚDO está renderizando — só falta atualizar)
-
-**Não precisa nenhuma alteração de código nesse momento.** O Reels já está implementado e cadastrado no menu — é só refresh.
