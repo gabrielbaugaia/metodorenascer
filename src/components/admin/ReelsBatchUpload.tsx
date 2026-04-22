@@ -21,6 +21,28 @@ interface ReelsBatchUploadProps {
 
 const MAX_PARALLEL = 3;
 
+interface AiResponse {
+  title?: string;
+  description?: string;
+  muscle_groups?: string[];
+}
+
+function applyAiResult(prev: ReelDraft, data: AiResponse): Partial<ReelDraft> {
+  const patch: Partial<ReelDraft> = { status: "idle" };
+  if (data.title) patch.title = data.title;
+  if (Array.isArray(data.muscle_groups) && data.muscle_groups.length > 0) {
+    patch.muscleGroups = data.muscle_groups;
+  }
+  if (data.description) {
+    patch.description = data.description;
+    // Se o admin ainda não escreveu nada, ativa automaticamente o toggle
+    if (!prev.description) {
+      patch.showDescription = true;
+    }
+  }
+  return patch;
+}
+
 export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
   const [drafts, setDrafts] = useState<ReelDraft[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -29,8 +51,12 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
   const [bulkStrip, setBulkStrip] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const updateDraft = useCallback((id: string, patch: Partial<ReelDraft>) => {
-    setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+  const updateDraft = useCallback((id: string, patch: Partial<ReelDraft> | ((d: ReelDraft) => Partial<ReelDraft>)) => {
+    setDrafts((prev) => prev.map((d) => {
+      if (d.id !== id) return d;
+      const resolved = typeof patch === "function" ? patch(d) : patch;
+      return { ...d, ...resolved };
+    }));
   }, []);
 
   const handleFiles = useCallback(async (files: FileList | File[]) => {
@@ -53,7 +79,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     for (const file of valid) {
       try {
         const { meta, url } = await loadVideoElement(file);
-        URL.revokeObjectURL(url); // já temos o meta
+        URL.revokeObjectURL(url);
         const previewUrl = URL.createObjectURL(file);
         newDrafts.push({
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -63,7 +89,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
           description: "",
           showDescription: false,
           category: "execucao",
-          muscleGroup: "",
+          muscleGroups: [],
           audioRemoved: false,
           isVertical: meta.isVertical,
           duration: meta.duration,
@@ -88,19 +114,19 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     try {
       const { frames } = await captureKeyFrames(draft.file);
       const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
-        body: { frames, category: draft.category, muscleGroup: draft.muscleGroup || undefined },
+        body: {
+          frames,
+          category: draft.category,
+          muscleGroups: draft.muscleGroups.length ? draft.muscleGroups : undefined,
+        },
       });
       if (error) throw error;
-      const title = (data as { title?: string })?.title;
-      if (title) {
-        updateDraft(draft.id, { title, status: "idle" });
-        toast.success("Título sugerido pela IA");
-      } else {
-        updateDraft(draft.id, { status: "idle" });
-      }
+      const result = data as AiResponse;
+      updateDraft(draft.id, (prev) => applyAiResult(prev, result));
+      toast.success("Metadados gerados pela IA");
     } catch (err) {
       console.error(err);
-      const msg = err instanceof Error ? err.message : "Falha ao sugerir título";
+      const msg = err instanceof Error ? err.message : "Falha ao sugerir metadados";
       updateDraft(draft.id, { status: "idle", error: msg });
       toast.error(msg);
     }
@@ -119,7 +145,6 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
         type: blob.type,
       });
       const previewUrl = URL.createObjectURL(newFile);
-      // revoga preview anterior
       try { URL.revokeObjectURL(draft.previewUrl); } catch { /* noop */ }
       updateDraft(draft.id, {
         file: newFile,
@@ -149,7 +174,6 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
       const { data: pub } = supabase.storage.from("reels-videos").getPublicUrl(path);
       const videoUrl = pub.publicUrl;
 
-      // thumbnail
       let thumbnailUrl: string | null = null;
       try {
         const thumbBlob = await captureThumbnailBlob(draft.file);
@@ -167,10 +191,11 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
 
       const { error: insErr } = await supabase.from("reels_videos").insert({
         title: draft.title.trim() || draft.file.name,
-        description: draft.showDescription ? draft.description.trim() || null : null,
+        description: draft.showDescription ? draft.description.trim() || null : draft.description.trim() || null,
         show_description: draft.showDescription,
         category: draft.category,
-        muscle_group: draft.muscleGroup.trim() || null,
+        muscle_group: draft.muscleGroups[0] ?? null,
+        muscle_groups: draft.muscleGroups,
         video_url: videoUrl,
         thumbnail_url: thumbnailUrl,
         duration_seconds: draft.duration || null,
@@ -202,13 +227,11 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     }
     setIsSavingAll(true);
     try {
-      // semáforo simples
       const queue = [...pending];
       const workers = Array.from({ length: Math.min(MAX_PARALLEL, queue.length) }, async () => {
         while (queue.length) {
           const next = queue.shift();
           if (!next) break;
-          // pega versão atualizada
           const fresh = drafts.find((d) => d.id === next.id) ?? next;
           // eslint-disable-next-line no-await-in-loop
           await uploadDraft(fresh, userData.user!.id);
@@ -240,12 +263,16 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
         const { frames } = await captureKeyFrames(draft.file);
         // eslint-disable-next-line no-await-in-loop
         const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
-          body: { frames, category: draft.category, muscleGroup: draft.muscleGroup || undefined },
+          body: {
+            frames,
+            category: draft.category,
+            muscleGroups: draft.muscleGroups.length ? draft.muscleGroups : undefined,
+          },
         });
         if (error) throw error;
-        const title = (data as { title?: string })?.title;
-        if (title) {
-          updateDraft(draft.id, { title, status: "idle" });
+        const result = data as AiResponse;
+        if (result.title) {
+          updateDraft(draft.id, (prev) => applyAiResult(prev, result));
           ok++;
         } else {
           updateDraft(draft.id, { status: "idle" });
@@ -258,8 +285,8 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
       }
     }
     setBulkAi({ running: false, current: 0, total: 0 });
-    if (fail === 0) toast.success(`${ok} títulos atualizados`);
-    else toast.warning(`${ok} títulos atualizados, ${fail} falharam`);
+    if (fail === 0) toast.success(`${ok} vídeos atualizados pela IA`);
+    else toast.warning(`${ok} atualizados, ${fail} falharam`);
   };
 
   const handleBulkStripAudio = async () => {
@@ -382,7 +409,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
                     ) : (
                       <>
                         <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                        Reescrever títulos com IA
+                        Reescrever todos com IA
                       </>
                     )}
                   </Button>

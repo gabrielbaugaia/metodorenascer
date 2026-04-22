@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Volume2, VolumeX, Film } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface Reel {
   id: string;
@@ -15,6 +14,7 @@ interface Reel {
   show_description: boolean;
   category: string;
   muscle_group: string | null;
+  muscle_groups: string[] | null;
   video_url: string;
   thumbnail_url: string | null;
 }
@@ -24,6 +24,12 @@ const CATEGORY_LABEL: Record<string, string> = {
   dica: "Dica",
   explicativo: "Explicativo",
 };
+
+function getGroups(r: Reel): string[] {
+  if (r.muscle_groups && r.muscle_groups.length) return r.muscle_groups;
+  if (r.muscle_group) return [r.muscle_group];
+  return [];
+}
 
 export default function Reels() {
   const [reels, setReels] = useState<Reel[]>([]);
@@ -37,7 +43,7 @@ export default function Reels() {
       setLoading(true);
       const { data } = await supabase
         .from("reels_videos")
-        .select("id, title, description, show_description, category, muscle_group, video_url, thumbnail_url")
+        .select("id, title, description, show_description, category, muscle_group, muscle_groups, video_url, thumbnail_url")
         .eq("is_published", true)
         .order("created_at", { ascending: false });
       setReels((data ?? []) as Reel[]);
@@ -48,13 +54,13 @@ export default function Reels() {
 
   const muscleOptions = useMemo(() => {
     const set = new Set<string>();
-    reels.forEach((r) => r.muscle_group && set.add(r.muscle_group));
+    reels.forEach((r) => getGroups(r).forEach((g) => set.add(g)));
     return Array.from(set).sort();
   }, [reels]);
 
   const filtered = reels.filter((r) => {
     const c = filterCategory === "all" || r.category === filterCategory;
-    const m = filterMuscle === "all" || r.muscle_group === filterMuscle;
+    const m = filterMuscle === "all" || getGroups(r).includes(filterMuscle);
     return c && m;
   });
 
@@ -125,6 +131,7 @@ export default function Reels() {
 function ReelTile({ reel, muted }: { reel: Reel; muted: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const groups = getGroups(reel);
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = muted;
@@ -177,8 +184,10 @@ function ReelTile({ reel, muted }: { reel: Reel; muted: boolean }) {
       </div>
       <div className="p-2">
         <p className="text-sm font-medium line-clamp-2">{reel.title}</p>
-        {reel.muscle_group && (
-          <p className="text-[11px] text-muted-foreground mt-0.5">{reel.muscle_group}</p>
+        {groups.length > 0 && (
+          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+            {groups.join(" • ")}
+          </p>
         )}
       </div>
     </Card>

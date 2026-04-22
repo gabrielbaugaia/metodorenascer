@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ReelsBatchUpload } from "@/components/admin/ReelsBatchUpload";
+import { EditReelModal, EditableReel } from "@/components/admin/EditReelModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Trash2, Eye, EyeOff, Search, Plus, Film } from "lucide-react";
+import { Trash2, Eye, EyeOff, Search, Plus, Film, Pencil } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +29,7 @@ interface Reel {
   show_description: boolean;
   category: string;
   muscle_group: string | null;
+  muscle_groups: string[] | null;
   video_url: string;
   thumbnail_url: string | null;
   is_published: boolean;
@@ -48,7 +50,9 @@ export default function AdminReels() {
   const [showUpload, setShowUpload] = useState(false);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editingReel, setEditingReel] = useState<EditableReel | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -71,7 +75,11 @@ export default function AdminReels() {
   const filtered = reels.filter((r) => {
     const matchesSearch = !search || r.title.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = filterCategory === "all" || r.category === filterCategory;
-    return matchesSearch && matchesCategory;
+    const matchesStatus =
+      filterStatus === "all" ||
+      (filterStatus === "active" && r.is_published) ||
+      (filterStatus === "inactive" && !r.is_published);
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   const togglePublish = async (reel: Reel) => {
@@ -82,21 +90,55 @@ export default function AdminReels() {
     if (error) {
       toast.error("Erro ao atualizar");
     } else {
-      toast.success(reel.is_published ? "Despublicado" : "Publicado");
+      toast.success(reel.is_published ? "Vídeo desativado" : "Vídeo ativado");
       load();
     }
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
+    const target = reels.find((r) => r.id === deleteId);
+
+    // Try to remove storage object too (best-effort)
+    if (target?.video_url) {
+      try {
+        const url = new URL(target.video_url);
+        // Path inside the bucket comes after /reels-videos/
+        const marker = "/reels-videos/";
+        const idx = url.pathname.indexOf(marker);
+        if (idx >= 0) {
+          const path = decodeURIComponent(url.pathname.slice(idx + marker.length));
+          await supabase.storage.from("reels-videos").remove([path]);
+        }
+      } catch (err) {
+        console.warn("falha ao remover arquivo do storage", err);
+      }
+    }
+
     const { error } = await supabase.from("reels_videos").delete().eq("id", deleteId);
     if (error) {
       toast.error("Erro ao excluir");
     } else {
-      toast.success("Excluído");
+      toast.success("Vídeo excluído");
       setDeleteId(null);
       load();
     }
+  };
+
+  const openEdit = (reel: Reel) => {
+    setEditingReel({
+      id: reel.id,
+      title: reel.title,
+      description: reel.description,
+      show_description: reel.show_description,
+      category: reel.category,
+      muscle_groups:
+        reel.muscle_groups && reel.muscle_groups.length
+          ? reel.muscle_groups
+          : reel.muscle_group
+          ? [reel.muscle_group]
+          : [],
+    });
   };
 
   return (
@@ -140,6 +182,16 @@ export default function AdminReels() {
               <SelectItem value="explicativo">Explicativo</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-full sm:w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos status</SelectItem>
+              <SelectItem value="active">Ativos</SelectItem>
+              <SelectItem value="inactive">Desativados</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {loading ? (
@@ -153,61 +205,84 @@ export default function AdminReels() {
           </Card>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {filtered.map((reel) => (
-              <Card key={reel.id} className="overflow-hidden group">
-                <div className="relative aspect-[9/16] bg-muted">
-                  {reel.thumbnail_url ? (
-                    <img
-                      src={reel.thumbnail_url}
-                      alt={reel.title}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <video
-                      src={reel.video_url}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      muted
-                      playsInline
-                      preload="metadata"
-                    />
-                  )}
-                  <div className="absolute top-1 left-1 flex flex-col gap-1">
-                    <Badge variant="secondary" className="text-[10px]">
-                      {CATEGORY_LABEL[reel.category] ?? reel.category}
-                    </Badge>
-                    {!reel.is_published && (
-                      <Badge variant="outline" className="text-[10px]">Oculto</Badge>
+            {filtered.map((reel) => {
+              const groups =
+                reel.muscle_groups && reel.muscle_groups.length
+                  ? reel.muscle_groups
+                  : reel.muscle_group
+                  ? [reel.muscle_group]
+                  : [];
+              return (
+                <Card key={reel.id} className="overflow-hidden group">
+                  <div className="relative aspect-[9/16] bg-muted">
+                    {reel.thumbnail_url ? (
+                      <img
+                        src={reel.thumbnail_url}
+                        alt={reel.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <video
+                        src={reel.video_url}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                    )}
+                    <div className="absolute top-1 left-1 flex flex-col gap-1">
+                      <Badge variant="secondary" className="text-[10px]">
+                        {CATEGORY_LABEL[reel.category] ?? reel.category}
+                      </Badge>
+                      {!reel.is_published && (
+                        <Badge variant="outline" className="text-[10px] bg-background/80">Desativado</Badge>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 bg-background/90 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                      <Button size="sm" variant="outline" onClick={() => openEdit(reel)} className="w-full">
+                        <Pencil className="h-3 w-3 mr-1" /> Editar
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => togglePublish(reel)} className="w-full">
+                        {reel.is_published ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
+                        {reel.is_published ? "Desativar" : "Ativar"}
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => setDeleteId(reel.id)} className="w-full">
+                        <Trash2 className="h-3 w-3 mr-1" /> Excluir
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="p-2">
+                    <p className="text-xs font-medium line-clamp-2">{reel.title}</p>
+                    {groups.length > 0 && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
+                        {groups.join(" • ")}
+                      </p>
                     )}
                   </div>
-                  <div className="absolute inset-0 bg-background/90 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
-                    <Button size="sm" variant="outline" onClick={() => togglePublish(reel)} className="w-full">
-                      {reel.is_published ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
-                      {reel.is_published ? "Ocultar" : "Publicar"}
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => setDeleteId(reel.id)} className="w-full">
-                      <Trash2 className="h-3 w-3 mr-1" /> Excluir
-                    </Button>
-                  </div>
-                </div>
-                <div className="p-2">
-                  <p className="text-xs font-medium line-clamp-2">{reel.title}</p>
-                  {reel.muscle_group && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{reel.muscle_group}</p>
-                  )}
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
+
+      <EditReelModal
+        reel={editingReel}
+        open={!!editingReel}
+        onOpenChange={(open) => !open && setEditingReel(null)}
+        onSaved={() => {
+          setEditingReel(null);
+          load();
+        }}
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir reel?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. O vídeo será removido para os alunos.
+              Esta ação não pode ser desfeita. O vídeo e o arquivo serão removidos permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
