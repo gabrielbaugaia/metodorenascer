@@ -222,8 +222,106 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     }
   };
 
+  const handleBulkSuggestTitles = async () => {
+    const targets = drafts.filter((d) => d.status === "idle" || d.status === "error");
+    if (!targets.length) {
+      toast.info("Nenhum vídeo na fila");
+      return;
+    }
+    setBulkAi({ running: true, current: 0, total: targets.length });
+    let ok = 0;
+    let fail = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const draft = targets[i];
+      setBulkAi({ running: true, current: i + 1, total: targets.length });
+      try {
+        updateDraft(draft.id, { status: "suggesting", error: undefined });
+        // eslint-disable-next-line no-await-in-loop
+        const { frames } = await captureKeyFrames(draft.file);
+        // eslint-disable-next-line no-await-in-loop
+        const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+          body: { frames, category: draft.category, muscleGroup: draft.muscleGroup || undefined },
+        });
+        if (error) throw error;
+        const title = (data as { title?: string })?.title;
+        if (title) {
+          updateDraft(draft.id, { title, status: "idle" });
+          ok++;
+        } else {
+          updateDraft(draft.id, { status: "idle" });
+          fail++;
+        }
+      } catch (err) {
+        console.error("bulk title err", err);
+        updateDraft(draft.id, { status: "idle", error: "IA falhou" });
+        fail++;
+      }
+    }
+    setBulkAi({ running: false, current: 0, total: 0 });
+    if (fail === 0) toast.success(`${ok} títulos atualizados`);
+    else toast.warning(`${ok} títulos atualizados, ${fail} falharam`);
+  };
+
+  const handleBulkStripAudio = async () => {
+    const targets = drafts.filter((d) => !d.audioRemoved && (d.status === "idle" || d.status === "error"));
+    if (!targets.length) {
+      toast.info("Todos os vídeos já estão sem áudio");
+      return;
+    }
+    setBulkStrip({ running: true, current: 0, total: targets.length });
+    let done = 0;
+    let fail = 0;
+    const STRIP_PARALLEL = 2;
+    const queue = [...targets];
+
+    const worker = async () => {
+      while (queue.length) {
+        const draft = queue.shift();
+        if (!draft) break;
+        try {
+          updateDraft(draft.id, { status: "stripping", error: undefined });
+          // eslint-disable-next-line no-await-in-loop
+          const blob = await stripAudio(draft.file);
+          if (!blob) {
+            updateDraft(draft.id, { status: "idle", error: "Sem suporte" });
+            fail++;
+          } else {
+            const newFile = new File(
+              [blob],
+              draft.file.name.replace(/\.[^.]+$/, "") + "-muted.webm",
+              { type: blob.type }
+            );
+            const previewUrl = URL.createObjectURL(newFile);
+            try { URL.revokeObjectURL(draft.previewUrl); } catch { /* noop */ }
+            updateDraft(draft.id, {
+              file: newFile,
+              previewUrl,
+              audioRemoved: true,
+              status: "idle",
+            });
+            done++;
+          }
+        } catch (err) {
+          console.error("bulk strip err", err);
+          updateDraft(draft.id, { status: "idle", error: "Falha ao remover áudio" });
+          fail++;
+        }
+        setBulkStrip((prev) => ({ ...prev, current: done + fail }));
+      }
+    };
+
+    const workers = Array.from({ length: Math.min(STRIP_PARALLEL, queue.length) }, worker);
+    await Promise.all(workers);
+    setBulkStrip({ running: false, current: 0, total: 0 });
+    if (fail === 0) toast.success(`Áudio removido de ${done} vídeos`);
+    else toast.warning(`${done} processados, ${fail} falharam`);
+  };
+
   const totalDone = drafts.filter((d) => d.status === "done").length;
   const totalUploading = drafts.filter((d) => d.status === "uploading").length;
+  const bulkBusy = bulkAi.running || bulkStrip.running || isSavingAll;
+  const hasQueue = drafts.some((d) => d.status === "idle" || d.status === "error");
+  const canBulkStrip = drafts.some((d) => !d.audioRemoved && (d.status === "idle" || d.status === "error"));
 
   return (
     <div className="space-y-4">
