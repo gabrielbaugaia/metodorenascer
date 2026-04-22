@@ -1,10 +1,10 @@
 // App version - update this when deploying new builds
-export const APP_VERSION = "1.1.0";
-export const BUILD_DATE = "2026-02-15";
+export const APP_VERSION = "1.2.0";
+export const BUILD_DATE = "2026-04-22";
 
 // Get Service Worker cache version
 export const getSWVersion = (): string => {
-  return "v5"; // Should match CACHE_NAME in sw.js
+  return "v6"; // Should match CACHE_NAME in sw.js
 };
 
 // Force update function - clears SW cache and reloads
