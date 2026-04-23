@@ -993,27 +993,57 @@ export default function AdminReels() {
                       </Button>
                     </div>
                   </div>
-                  <div className="p-2">
-                    <p className="text-xs font-medium line-clamp-2">{reel.title}</p>
-                    {groups.length > 0 && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
-                        {groups.join(" • ")}
-                      </p>
-                    )}
-                  </div>
                 </Card>
               );
             })}
           </div>
         )}
+
+        {/* Carregar mais / Carregar todos */}
+        {!loading && reels.length > 0 && reels.length < total && (
+          <div className="flex flex-wrap items-center justify-center gap-3 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={loadMore}
+              disabled={loadingMore}
+            >
+              {loadingMore ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              Carregar mais {Math.min(PAGE_SIZE, total - reels.length)}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={loadAll}
+              disabled={loadingMore}
+              className="text-xs"
+            >
+              Carregar todos os restantes ({total - reels.length})
+            </Button>
+          </div>
+        )}
+        {!loading && reels.length > 0 && reels.length >= total && total > PAGE_SIZE && (
+          <p className="text-center text-xs text-muted-foreground py-3">
+            Todos os {total} vídeos carregados
+          </p>
+        )}
       </div>
 
       <EditReelModal
         reel={editingReel}
+        videoUrl={editingReelUrl ?? undefined}
         open={!!editingReel}
-        onOpenChange={(open) => !open && setEditingReel(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingReel(null);
+            setEditingReelUrl(null);
+          }
+        }}
         onSaved={() => {
           setEditingReel(null);
+          setEditingReelUrl(null);
           load();
         }}
       />
