@@ -6,11 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Sparkles, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { MUSCLE_GROUPS } from "@/lib/muscleGroups";
 import { MuscleGroupMultiSelect } from "./MuscleGroupMultiSelect";
+import { captureKeyFrames } from "@/lib/reelsVideoUtils";
 
 export interface EditableReel {
   id: string;
@@ -23,18 +24,34 @@ export interface EditableReel {
 
 interface EditReelModalProps {
   reel: EditableReel | null;
+  videoUrl?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved?: () => void;
 }
 
-export function EditReelModal({ reel, open, onOpenChange, onSaved }: EditReelModalProps) {
+interface AiResponse {
+  title?: string;
+  description?: string;
+  muscle_groups?: string[];
+}
+
+async function fetchVideoAsFile(url: string, fallbackName = "reel.mp4"): Promise<File> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+  const name = url.split("/").pop()?.split("?")[0] || fallbackName;
+  return new File([blob], name, { type: blob.type || "video/mp4" });
+}
+
+export function EditReelModal({ reel, videoUrl, open, onOpenChange, onSaved }: EditReelModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [showDescription, setShowDescription] = useState(false);
   const [category, setCategory] = useState("execucao");
   const [groups, setGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [aiBusy, setAiBusy] = useState<null | "full" | "desc">(null);
 
   useEffect(() => {
     if (reel) {
@@ -45,6 +62,60 @@ export function EditReelModal({ reel, open, onOpenChange, onSaved }: EditReelMod
       setGroups(reel.muscle_groups || []);
     }
   }, [reel]);
+
+  const runAi = async (mode: "full" | "desc") => {
+    if (!reel || !videoUrl) {
+      toast.error("Vídeo indisponível para IA");
+      return;
+    }
+    setAiBusy(mode);
+    try {
+      const file = await fetchVideoAsFile(videoUrl);
+      const { frames } = await captureKeyFrames(file);
+      const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+        body: {
+          frames,
+          mode: mode === "desc" ? "description_only" : undefined,
+          category,
+          muscleGroups: groups.length ? groups : undefined,
+          currentTitle: mode === "desc" ? (title || undefined) : undefined,
+        },
+      });
+      if (error) throw error;
+      const result = data as AiResponse;
+      if (mode === "desc") {
+        if (result.description) {
+          setDescription(result.description.slice(0, 200));
+          setShowDescription(true);
+          toast.success("Descrição gerada — revise e salve");
+        } else {
+          toast.warning("IA não retornou descrição");
+        }
+      } else {
+        let any = false;
+        if (result.title) {
+          setTitle(result.title.slice(0, 60));
+          any = true;
+        }
+        if (result.description) {
+          setDescription(result.description.slice(0, 200));
+          setShowDescription(true);
+          any = true;
+        }
+        if (Array.isArray(result.muscle_groups) && result.muscle_groups.length) {
+          setGroups(result.muscle_groups);
+          any = true;
+        }
+        if (any) toast.success("Campos preenchidos pela IA — revise e salve");
+        else toast.warning("IA não retornou conteúdo");
+      }
+    } catch (err) {
+      console.error("ai err", err);
+      toast.error("Falha ao processar com IA");
+    } finally {
+      setAiBusy(null);
+    }
+  };
 
   const handleSave = async () => {
     if (!reel) return;
@@ -82,6 +153,41 @@ export function EditReelModal({ reel, open, onOpenChange, onSaved }: EditReelMod
         </DialogHeader>
 
         <div className="space-y-4">
+          {videoUrl && (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => runAi("full")}
+                disabled={!!aiBusy || saving}
+                className="h-8 text-xs"
+              >
+                {aiBusy === "full" ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3 w-3 mr-1" />
+                )}
+                Reescrever tudo com IA
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => runAi("desc")}
+                disabled={!!aiBusy || saving}
+                className="h-8 text-xs"
+              >
+                {aiBusy === "desc" ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <FileText className="h-3 w-3 mr-1" />
+                )}
+                Gerar só descrição
+              </Button>
+            </div>
+          )}
+
           <div>
             <Label className="text-xs">Título</Label>
             <Input
@@ -146,7 +252,7 @@ export function EditReelModal({ reel, open, onOpenChange, onSaved }: EditReelMod
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving || !!aiBusy}>
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (

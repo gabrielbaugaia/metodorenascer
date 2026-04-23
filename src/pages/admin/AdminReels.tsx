@@ -73,7 +73,8 @@ const SORT_LABEL: Record<SortKey, string> = {
 };
 
 const SORT_STORAGE_KEY = "reels-admin-sort";
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 48;
+const MAX_LOAD_ALL = 1000;
 
 function readStoredSort(): SortKey {
   try {
@@ -101,6 +102,7 @@ async function fetchVideoAsFile(url: string, fallbackName = "reel.mp4"): Promise
 export default function AdminReels() {
   const [reels, setReels] = useState<Reel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [search, setSearch] = useState("");
@@ -109,10 +111,13 @@ export default function AdminReels() {
   const [sortKey, setSortKey] = useState<SortKey>(readStoredSort);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingReel, setEditingReel] = useState<EditableReel | null>(null);
+  const [editingReelUrl, setEditingReelUrl] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [singleAiId, setSingleAiId] = useState<string | null>(null);
 
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkBusy, setBulkBusy] = useState<null | "ai" | "desc" | "muscles" | "publish" | "unpublish" | "delete">(null);
+  const [bulkBusy, setBulkBusy] = useState<null | "ai" | "desc" | "muscles" | "publish" | "unpublish" | "delete" | "selectAll">(null);
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [bulkMuscles, setBulkMuscles] = useState<string[]>([]);
@@ -124,57 +129,98 @@ export default function AdminReels() {
     try { localStorage.setItem(SORT_STORAGE_KEY, sortKey); } catch { /* noop */ }
   }, [sortKey]);
 
+  const buildBaseQuery = () => {
+    let query = supabase
+      .from("reels_videos")
+      .select(
+        "id, title, description, show_description, category, muscle_group, muscle_groups, video_url, thumbnail_url, is_published, created_at, duration_seconds, audio_removed",
+        { count: "exact" }
+      );
+
+    if (search.trim()) {
+      const safe = search.trim().replace(/[%_]/g, (c) => `\\${c}`);
+      query = query.ilike("title", `%${safe}%`);
+    }
+    if (filterCategory !== "all") {
+      query = query.eq("category", filterCategory);
+    }
+    if (filterStatus !== "all") {
+      query = query.eq("is_published", filterStatus === "active");
+    }
+    switch (sortKey) {
+      case "created_asc":
+        query = query.order("created_at", { ascending: true });
+        break;
+      case "title_asc":
+        query = query.order("title", { ascending: true });
+        break;
+      case "title_desc":
+        query = query.order("title", { ascending: false });
+        break;
+      case "created_desc":
+      default:
+        query = query.order("created_at", { ascending: false });
+    }
+    return query;
+  };
+
   const load = async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      let query = supabase
-        .from("reels_videos")
-        .select(
-          "id, title, description, show_description, category, muscle_group, muscle_groups, video_url, thumbnail_url, is_published, created_at, duration_seconds, audio_removed"
-        );
-
-      if (search.trim()) {
-        const safe = search.trim().replace(/[%_]/g, (c) => `\\${c}`);
-        query = query.ilike("title", `%${safe}%`);
-      }
-      if (filterCategory !== "all") {
-        query = query.eq("category", filterCategory);
-      }
-      if (filterStatus !== "all") {
-        query = query.eq("is_published", filterStatus === "active");
-      }
-
-      switch (sortKey) {
-        case "created_asc":
-          query = query.order("created_at", { ascending: true });
-          break;
-        case "title_asc":
-          query = query.order("title", { ascending: true });
-          break;
-        case "title_desc":
-          query = query.order("title", { ascending: false });
-          break;
-        case "created_desc":
-        default:
-          query = query.order("created_at", { ascending: false });
-      }
-
-      const { data, error } = await query.range(0, PAGE_SIZE - 1);
+      const { data, error, count } = await buildBaseQuery().range(0, PAGE_SIZE - 1);
       if (error) {
         const isPermission = /permission|rls|denied|policy/i.test(error.message);
         setLoadError(isPermission ? "Sem permissão para listar reels." : "Erro ao carregar reels");
         if (!isPermission) toast.error("Erro ao carregar reels");
         setReels([]);
+        setTotal(0);
       } else {
         setReels((data ?? []) as Reel[]);
+        setTotal(count ?? (data?.length ?? 0));
       }
     } catch (err) {
       console.error("load reels err", err);
       setLoadError("Erro inesperado ao carregar reels");
       setReels([]);
+      setTotal(0);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMore = async () => {
+    if (loadingMore || loading) return;
+    setLoadingMore(true);
+    try {
+      const from = reels.length;
+      const to = from + PAGE_SIZE - 1;
+      const { data, error } = await buildBaseQuery().range(from, to);
+      if (error) {
+        toast.error("Erro ao carregar mais");
+      } else {
+        setReels((prev) => [...prev, ...((data ?? []) as Reel[])]);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const loadAll = async () => {
+    if (loadingMore || loading) return;
+    setLoadingMore(true);
+    try {
+      const from = reels.length;
+      const to = Math.min(from + MAX_LOAD_ALL - 1, (total || from + MAX_LOAD_ALL) - 1);
+      const { data, error } = await buildBaseQuery().range(from, to);
+      if (error) {
+        toast.error("Erro ao carregar todos");
+      } else {
+        setReels((prev) => [...prev, ...((data ?? []) as Reel[])]);
+        toast.success(`${(data ?? []).length} vídeo(s) adicionados`);
+      }
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -213,6 +259,29 @@ export default function AdminReels() {
   const toggleSelectAll = () => {
     if (allSelected) setSelectedIds(new Set());
     else setSelectedIds(new Set(filtered.map((r) => r.id)));
+  };
+
+  const selectAllGlobal = async () => {
+    setBulkBusy("selectAll");
+    try {
+      let query = supabase.from("reels_videos").select("id");
+      if (search.trim()) {
+        const safe = search.trim().replace(/[%_]/g, (c) => `\\${c}`);
+        query = query.ilike("title", `%${safe}%`);
+      }
+      if (filterCategory !== "all") query = query.eq("category", filterCategory);
+      if (filterStatus !== "all") query = query.eq("is_published", filterStatus === "active");
+      const { data, error } = await query.range(0, MAX_LOAD_ALL - 1);
+      if (error) {
+        toast.error("Falha ao selecionar todos");
+        return;
+      }
+      const ids = (data ?? []).map((r) => r.id as string);
+      setSelectedIds(new Set(ids));
+      toast.success(`${ids.length} vídeo(s) selecionados`);
+    } finally {
+      setBulkBusy(null);
+    }
   };
 
   const clearSelection = () => setSelectedIds(new Set());
@@ -272,6 +341,52 @@ export default function AdminReels() {
           ? [reel.muscle_group]
           : [],
     });
+    setEditingReelUrl(reel.video_url);
+  };
+
+  const handleSingleAi = async (reel: Reel) => {
+    setSingleAiId(reel.id);
+    try {
+      const file = await fetchVideoAsFile(reel.video_url);
+      const { frames } = await captureKeyFrames(file);
+      const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+        body: {
+          frames,
+          category: reel.category,
+          muscleGroups:
+            reel.muscle_groups && reel.muscle_groups.length
+              ? reel.muscle_groups
+              : reel.muscle_group
+              ? [reel.muscle_group]
+              : undefined,
+        },
+      });
+      if (error) throw error;
+      const result = data as AiResponse;
+      const update: Record<string, unknown> = {};
+      if (result.title) update.title = result.title;
+      if (result.description) {
+        update.description = result.description;
+        update.show_description = true;
+      }
+      if (Array.isArray(result.muscle_groups) && result.muscle_groups.length > 0) {
+        update.muscle_groups = result.muscle_groups;
+        update.muscle_group = result.muscle_groups[0];
+      }
+      if (Object.keys(update).length === 0) {
+        toast.warning("IA não retornou conteúdo");
+        return;
+      }
+      const { error: upErr } = await supabase.from("reels_videos").update(update).eq("id", reel.id);
+      if (upErr) throw upErr;
+      toast.success("Atualizado pela IA");
+      load();
+    } catch (err) {
+      console.error("single ai err", err);
+      toast.error("Falha ao processar com IA");
+    } finally {
+      setSingleAiId(null);
+    }
   };
 
   // ==================== AÇÕES EM LOTE ====================
@@ -560,18 +675,45 @@ export default function AdminReels() {
             </SelectContent>
           </Select>
           {filtered.length > 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              onClick={toggleSelectAll}
-              className="shrink-0"
-            >
-              <CheckSquare className="h-4 w-4 mr-2" />
-              {allSelected ? "Desmarcar todos" : "Selecionar todos"}
-            </Button>
+            <div className="flex gap-2 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="default"
+                onClick={toggleSelectAll}
+                title="Seleciona apenas o que está visível abaixo"
+              >
+                <CheckSquare className="h-4 w-4 mr-2" />
+                {allSelected ? "Desmarcar página" : "Selecionar página"}
+              </Button>
+              {total > filtered.length && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  onClick={selectAllGlobal}
+                  disabled={bulkBusy === "selectAll"}
+                  title="Seleciona todos os vídeos que correspondem aos filtros atuais"
+                >
+                  {bulkBusy === "selectAll" ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckSquare className="h-4 w-4 mr-2" />
+                  )}
+                  Selecionar todos os {total}
+                </Button>
+              )}
+            </div>
           )}
         </div>
+
+        {/* Contador */}
+        {!loading && total > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Mostrando <span className="font-medium text-foreground">{reels.length}</span> de{" "}
+            <span className="font-medium text-foreground">{total}</span> vídeo(s)
+          </p>
+        )}
 
         {/* Barra de ações em lote */}
         {someSelected && (
@@ -794,40 +936,114 @@ export default function AdminReels() {
                         <Badge variant="outline" className="text-[10px] bg-background/80">Desativado</Badge>
                       )}
                     </div>
-                    <div className="absolute inset-0 bg-background/90 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
-                      <Button size="sm" variant="outline" onClick={() => openEdit(reel)} className="w-full">
-                        <Pencil className="h-3 w-3 mr-1" /> Editar
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => togglePublish(reel)} className="w-full">
-                        {reel.is_published ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
-                        {reel.is_published ? "Desativar" : "Ativar"}
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => setDeleteId(reel.id)} className="w-full">
-                        <Trash2 className="h-3 w-3 mr-1" /> Excluir
-                      </Button>
-                    </div>
                   </div>
-                  <div className="p-2">
+                  <div className="p-2 space-y-1.5">
                     <p className="text-xs font-medium line-clamp-2">{reel.title}</p>
                     {groups.length > 0 && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
+                      <p className="text-[10px] text-muted-foreground line-clamp-1">
                         {groups.join(" • ")}
                       </p>
                     )}
+                    {/* Toolbar sempre visível — mobile e desktop */}
+                    <div className="grid grid-cols-4 gap-1 pt-1">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => openEdit(reel)}
+                        className="h-7 w-full"
+                        title="Editar"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => handleSingleAi(reel)}
+                        disabled={singleAiId === reel.id}
+                        className="h-7 w-full"
+                        title="Reescrever com IA"
+                      >
+                        {singleAiId === reel.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => togglePublish(reel)}
+                        className="h-7 w-full"
+                        title={reel.is_published ? "Desativar" : "Ativar"}
+                      >
+                        {reel.is_published ? (
+                          <EyeOff className="h-3.5 w-3.5" />
+                        ) : (
+                          <Eye className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => setDeleteId(reel.id)}
+                        className="h-7 w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Excluir"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               );
             })}
           </div>
         )}
+
+        {/* Carregar mais / Carregar todos */}
+        {!loading && reels.length > 0 && reels.length < total && (
+          <div className="flex flex-wrap items-center justify-center gap-3 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={loadMore}
+              disabled={loadingMore}
+            >
+              {loadingMore ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              Carregar mais {Math.min(PAGE_SIZE, total - reels.length)}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={loadAll}
+              disabled={loadingMore}
+              className="text-xs"
+            >
+              Carregar todos os restantes ({total - reels.length})
+            </Button>
+          </div>
+        )}
+        {!loading && reels.length > 0 && reels.length >= total && total > PAGE_SIZE && (
+          <p className="text-center text-xs text-muted-foreground py-3">
+            Todos os {total} vídeos carregados
+          </p>
+        )}
       </div>
 
       <EditReelModal
         reel={editingReel}
+        videoUrl={editingReelUrl ?? undefined}
         open={!!editingReel}
-        onOpenChange={(open) => !open && setEditingReel(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingReel(null);
+            setEditingReelUrl(null);
+          }
+        }}
         onSaved={() => {
           setEditingReel(null);
+          setEditingReelUrl(null);
           load();
         }}
       />
