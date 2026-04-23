@@ -1,50 +1,80 @@
 
 
-## Reels Admin v7 — Forçar atualização do PWA no celular
+## Vídeos do aluno + Preview no admin — v8
 
-### Diagnóstico
+Dois ajustes pra completar o ciclo: (1) ver no admin como o vídeo vai aparecer pro aluno antes de salvar, (2) melhorar a página `/reels` do aluno.
 
-O código de `/admin/reels` **já tem todas as melhorias pedidas**: toolbar de 4 ícones (Editar/IA/Ativar/Excluir) sempre visível em cada card, seleção em lote, infinite scroll com paginação real, IA individual e em lote, modal de edição com IA. Verifiquei linha por linha em `src/pages/admin/AdminReels.tsx` (linhas 908-1023) e tudo está implementado.
+### 1. Preview "Como o aluno vê" dentro do EditReelModal
 
-**O problema é cache do PWA no celular.** As screenshots mostram uma versão antiga: overlay enorme "Ocultar / Excluir" sobreposto ao card (esse overlay nem existe mais no código atual). O Service Worker `public/sw.js` está em `v6` e o iPhone do usuário está servindo o JS/HTML antigo do cache, ignorando o build novo.
+Hoje o admin edita título/legenda/grupos no modal mas só descobre como ficou abrindo `/reels` em outra aba. Solução: painel de preview **lado a lado** com os campos.
 
-### Correções
+- Layout do `DialogContent`: passa de `max-w-lg` (uma coluna) pra `max-w-3xl` com grid `lg:grid-cols-[1fr_240px]` — formulário à esquerda, preview à direita
+- No mobile (<lg): preview vira accordion no topo "👁 Pré-visualizar como aluno" (recolhido por padrão pra não atrapalhar)
+- Componente novo `<ReelPreviewCard>` reusa exatamente a estrutura visual do `ReelTile` da página `/reels`:
+  - Card 9:16, vídeo com poster, badge categoria canto superior, overlay de descrição embaixo (só se `show_description=true`), título + grupos abaixo do vídeo
+  - Recebe os valores **dos states do form** (não do banco) → atualiza em tempo real conforme admin digita
+  - Vídeo silenciado, com botão play/pause centralizado igual ao do aluno
+- Benefício: admin vê instantaneamente se a descrição cobre demais o vídeo, se o título corta, se os grupos estão coerentes
 
-**1. Bump do Service Worker (`public/sw.js`)**
-- Trocar `CACHE_NAME` de `'renascer-cache-v6'` para `'renascer-cache-v7'`
-- Atualizar comentários e o `postMessage` `version: 'v7'`
-- Isso dispara o ciclo `install → activate → clients.claim → SW_UPDATED` que força reload em todos os dispositivos com o app aberto
+### 2. Página `/reels` do aluno — usabilidade
 
-**2. Banner "Atualização disponível" (App.tsx ou ClientLayout)**
-- Listener para `navigator.serviceWorker.addEventListener('message', ...)` capturando `type: 'SW_UPDATED'`
-- Quando recebido, mostrar um toast persistente com botão **"Atualizar agora"** que faz `window.location.reload()`
-- Garante que mesmo quem não fechar o app pega a versão nova
+Problemas atuais:
+- **Sem busca**: 197 vídeos, único filtro é categoria + grupo (combo cheio demais)
+- **Som global mas confuso**: botão fica isolado no topo, fácil esquecer
+- **Tap em vídeo dá play, mas sem indicador de tempo/progresso**: usuário não sabe se carregou
+- **Descrição overlay tampa metade do vídeo** quando `show_description=true` — atrapalha execução
+- **Sem fullscreen**: vídeo fica pequeno em desktop, e no mobile não dá pra expandir
+- **Carrega tudo de uma vez**: 197 vídeos = 197 `<video>` elements simultâneos = lentidão
 
-**3. Botão manual "Forçar atualização" no header admin (`AdminReels.tsx`)**
-- Pequeno botão "↻ Atualizar app" ao lado do título da página
-- Handler que: (a) `caches.keys()` + `caches.delete()` para todos os caches, (b) chama `registration.unregister()` no SW, (c) `window.location.reload(true)`
-- Solução de emergência se o ciclo automático falhar (acontece em iOS com PWA salvo na home)
+Mudanças concretas:
 
-**4. Verificação visual após o reload**
-- Depois do bump, o usuário verá em `/admin/reels` no celular:
-  - Cards com 4 ícones embaixo (Editar, ✨ IA, 👁/🚫, 🗑) sempre visíveis
-  - Checkbox no canto superior direito de cada card
-  - Barra de seleção em lote ao marcar 1+ vídeos
-  - Infinite scroll dos 197 vídeos
-  - Modal de edição com botões IA dentro
+**a. Busca por texto** (campo `<Input>` no topo, ícone 🔍):
+- Filtra `title` + `description` + `muscle_groups` localmente (case-insensitive)
+- Combina com filtros de categoria/grupo já existentes
+- Contador "X vídeos" ao lado dos filtros
 
-### Arquivos editados
+**b. Lazy loading de vídeo via IntersectionObserver**:
+- Trocar `<video src=...>` por carregamento sob demanda: enquanto fora do viewport, mostra só `<img src={poster}>`
+- Quando entra no viewport (`rootMargin: 200px`), monta o `<video>` real
+- Reduz drasticamente o consumo de memória/rede em listas grandes
 
-- `public/sw.js` — bump v6 → v7
-- `src/App.tsx` — listener de `SW_UPDATED` com toast "Atualizar agora"
-- `src/pages/admin/AdminReels.tsx` — botão "Forçar atualização" no header
+**c. Modal fullscreen ao tocar no vídeo**:
+- Substituir o play inline por abertura de modal `Dialog` em tela cheia (`max-w-2xl`, fundo preto)
+- Modal mostra: vídeo grande 9:16 com controles nativos (`controls`), título, descrição completa (sem truncate), grupos como badges
+- Botão "Próximo" / "Anterior" pra navegar entre vídeos filtrados sem fechar o modal (estilo TikTok lite)
+- Tap no card abre modal; play inline fica como "preview" silencioso ao passar o mouse (desktop) ou desabilitado no mobile
 
-**Sem mudanças em:** lógica de admin (já está completa), banco, RLS, edge functions, página do aluno (`/videos`).
+**d. Descrição: trocar overlay por toggle "ⓘ"**:
+- Em vez do overlay fixo cobrindo o vídeo, mostrar ícone "ⓘ" pequeno no canto superior direito do card quando há descrição
+- Tap no ícone abre o modal já na seção de descrição (ou simplesmente expande um bottom sheet curto)
+- Mantém a thumb do vídeo limpa, descrição vira opt-in
 
-### O que o usuário precisa fazer depois do deploy
+**e. Filtro de grupo como chips horizontais (mobile-friendly)**:
+- Trocar o `<Select>` de grupos por uma row scroll-x de `<Badge variant="outline">` clicáveis
+- Toque no chip ativa filtro; chip ativo fica filled. Mais rápido que abrir dropdown
 
-1. No celular, fechar o app completamente (swipe up no app)
-2. Reabrir — o novo SW vai instalar e mostrar toast "Atualizar agora"
-3. Tocar em "Atualizar agora" OU fechar e reabrir mais uma vez
-4. Se ainda assim ver a tela antiga, ir em `/admin/reels` e tocar no botão "↻ Atualizar app" no header
+**f. Header sticky com filtros**:
+- O bloco filtros vira `sticky top-12 z-30` com `bg-background/95 backdrop-blur` pra ficar acessível durante o scroll
+
+**g. Empty state melhor**:
+- Quando filtro retorna 0, mostrar botão "Limpar filtros" que reseta tudo
+
+### Detalhes técnicos
+
+**Arquivos editados:**
+- `src/components/admin/EditReelModal.tsx`:
+  - Mudar `DialogContent` para `max-w-3xl` + grid responsivo
+  - Adicionar `<ReelPreviewCard>` (componente local no mesmo arquivo) que recebe `{title, description, showDescription, category, groups, videoUrl, posterUrl}` e renderiza idêntico ao tile do aluno
+  - No mobile, envolver preview em `<Collapsible>` recolhível
+
+- `src/pages/Reels.tsx`:
+  - Adicionar `searchQuery` state + `<Input>` com ícone Search
+  - Refatorar `ReelTile` para usar IntersectionObserver e renderizar `<img poster>` até entrar em view
+  - Adicionar `selectedReel` state + `<Dialog>` fullscreen com navegação prev/next (botões + swipe se possível via touch events)
+  - Trocar overlay de descrição por ícone Info clicável no canto
+  - Substituir `<Select>` de grupos por `<ScrollArea>` horizontal com chips
+  - Adicionar `sticky` + backdrop no header de filtros
+  - Empty state com botão de reset
+
+**Sem mudanças em:** banco, RLS, edge functions, painel admin (fora do EditReelModal), upload, categorias.
 
