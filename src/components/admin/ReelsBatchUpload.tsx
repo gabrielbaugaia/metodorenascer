@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Upload, Save, Loader2, Sparkles, VolumeX } from "lucide-react";
+import { Upload, Save, Loader2, Sparkles, VolumeX, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -48,6 +48,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
   const [bulkAi, setBulkAi] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
+  const [bulkDesc, setBulkDesc] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
   const [bulkStrip, setBulkStrip] = useState<{ running: boolean; current: number; total: number }>({ running: false, current: 0, total: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -127,6 +128,40 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     } catch (err) {
       console.error(err);
       const msg = err instanceof Error ? err.message : "Falha ao sugerir metadados";
+      updateDraft(draft.id, { status: "idle", error: msg });
+      toast.error(msg);
+    }
+  };
+
+  const handleGenerateDescription = async (draft: ReelDraft) => {
+    updateDraft(draft.id, { status: "describing", error: undefined });
+    try {
+      const { frames } = await captureKeyFrames(draft.file);
+      const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+        body: {
+          frames,
+          mode: "description_only",
+          category: draft.category,
+          muscleGroups: draft.muscleGroups.length ? draft.muscleGroups : undefined,
+          currentTitle: draft.title || undefined,
+        },
+      });
+      if (error) throw error;
+      const result = data as AiResponse;
+      if (result.description) {
+        updateDraft(draft.id, (prev) => ({
+          status: "idle",
+          description: result.description!,
+          showDescription: prev.showDescription || true,
+        }));
+        toast.success("Descrição gerada");
+      } else {
+        updateDraft(draft.id, { status: "idle" });
+        toast.warning("IA não retornou descrição");
+      }
+    } catch (err) {
+      console.error(err);
+      const msg = err instanceof Error ? err.message : "Falha ao gerar descrição";
       updateDraft(draft.id, { status: "idle", error: msg });
       toast.error(msg);
     }
@@ -289,6 +324,56 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     else toast.warning(`${ok} atualizados, ${fail} falharam`);
   };
 
+  const handleBulkGenerateDescription = async () => {
+    const targets = drafts.filter((d) => d.status === "idle" || d.status === "error");
+    if (!targets.length) {
+      toast.info("Nenhum vídeo na fila");
+      return;
+    }
+    setBulkDesc({ running: true, current: 0, total: targets.length });
+    let ok = 0;
+    let fail = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const draft = targets[i];
+      setBulkDesc({ running: true, current: i + 1, total: targets.length });
+      try {
+        updateDraft(draft.id, { status: "describing", error: undefined });
+        // eslint-disable-next-line no-await-in-loop
+        const { frames } = await captureKeyFrames(draft.file);
+        // eslint-disable-next-line no-await-in-loop
+        const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+          body: {
+            frames,
+            mode: "description_only",
+            category: draft.category,
+            muscleGroups: draft.muscleGroups.length ? draft.muscleGroups : undefined,
+            currentTitle: draft.title || undefined,
+          },
+        });
+        if (error) throw error;
+        const result = data as AiResponse;
+        if (result.description) {
+          updateDraft(draft.id, (prev) => ({
+            status: "idle",
+            description: result.description!,
+            showDescription: prev.showDescription || true,
+          }));
+          ok++;
+        } else {
+          updateDraft(draft.id, { status: "idle" });
+          fail++;
+        }
+      } catch (err) {
+        console.error("bulk description err", err);
+        updateDraft(draft.id, { status: "idle", error: "IA falhou" });
+        fail++;
+      }
+    }
+    setBulkDesc({ running: false, current: 0, total: 0 });
+    if (fail === 0) toast.success(`Descrição gerada para ${ok} vídeos`);
+    else toast.warning(`${ok} atualizados, ${fail} falharam`);
+  };
+
   const handleBulkStripAudio = async () => {
     const targets = drafts.filter((d) => !d.audioRemoved && (d.status === "idle" || d.status === "error"));
     if (!targets.length) {
@@ -346,7 +431,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
 
   const totalDone = drafts.filter((d) => d.status === "done").length;
   const totalUploading = drafts.filter((d) => d.status === "uploading").length;
-  const bulkBusy = bulkAi.running || bulkStrip.running || isSavingAll;
+  const bulkBusy = bulkAi.running || bulkDesc.running || bulkStrip.running || isSavingAll;
   const hasQueue = drafts.some((d) => d.status === "idle" || d.status === "error");
   const canBulkStrip = drafts.some((d) => !d.audioRemoved && (d.status === "idle" || d.status === "error"));
 
@@ -417,6 +502,25 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
                     type="button"
                     variant="outline"
                     size="sm"
+                    onClick={handleBulkGenerateDescription}
+                    disabled={bulkBusy || !hasQueue}
+                  >
+                    {bulkDesc.running ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        Descrição {bulkDesc.current} de {bulkDesc.total}…
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-3.5 w-3.5 mr-1.5" />
+                        Gerar descrição em todos
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={handleBulkStripAudio}
                     disabled={bulkBusy || !canBulkStrip}
                   >
@@ -462,6 +566,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
                   setDrafts((prev) => prev.filter((d) => d.id !== draft.id));
                 }}
                 onSuggestTitle={() => handleSuggestTitle(draft)}
+                onGenerateDescription={() => handleGenerateDescription(draft)}
                 onStripAudio={() => handleStripAudio(draft)}
               />
             ))}

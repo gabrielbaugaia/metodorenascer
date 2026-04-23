@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Trash2, Loader2, Volume2, VolumeX, AlertCircle } from "lucide-react";
+import { Sparkles, Trash2, Loader2, Volume2, VolumeX, AlertCircle, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MUSCLE_GROUPS } from "@/lib/muscleGroups";
 import { MuscleGroupMultiSelect } from "./MuscleGroupMultiSelect";
@@ -25,7 +25,7 @@ export interface ReelDraft {
   audioRemoved: boolean;
   isVertical: boolean;
   duration: number;
-  status: "idle" | "suggesting" | "stripping" | "uploading" | "done" | "error";
+  status: "idle" | "suggesting" | "describing" | "stripping" | "uploading" | "done" | "error";
   progress?: number;
   error?: string;
 }
@@ -35,6 +35,7 @@ interface ReelCardProps {
   onChange: (patch: Partial<ReelDraft>) => void;
   onRemove: () => void;
   onSuggestTitle: () => void;
+  onGenerateDescription: () => void;
   onStripAudio: () => void;
 }
 
@@ -44,8 +45,8 @@ const CATEGORY_LABEL: Record<ReelCategory, string> = {
   explicativo: "Explicativo",
 };
 
-export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onStripAudio }: ReelCardProps) {
-  const isBusy = ["suggesting", "stripping", "uploading"].includes(draft.status);
+export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onGenerateDescription, onStripAudio }: ReelCardProps) {
+  const isBusy = ["suggesting", "describing", "stripping", "uploading"].includes(draft.status);
   return (
     <Card className="overflow-hidden border-border bg-card">
       <div className="flex flex-col md:flex-row gap-4 p-4">
@@ -170,7 +171,24 @@ export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onStripAud
 
           {draft.showDescription && (
             <div>
-              <Label className="text-xs">Descrição (até 200 caracteres)</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label className="text-xs">Descrição (até 200 caracteres)</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={onGenerateDescription}
+                  disabled={isBusy}
+                  className="h-7 text-xs"
+                >
+                  {draft.status === "describing" ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <FileText className="h-3 w-3 mr-1" />
+                  )}
+                  Gerar descrição
+                </Button>
+              </div>
               <Textarea
                 value={draft.description}
                 onChange={(e) => onChange({ description: e.target.value.slice(0, 200) })}
@@ -180,6 +198,25 @@ export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onStripAud
                 disabled={isBusy}
               />
               <p className="text-[10px] text-muted-foreground text-right mt-1">{draft.description.length}/200</p>
+
+              {draft.description.trim() && (
+                <div className="mt-2">
+                  <p className="text-[10px] text-muted-foreground mb-1">Preview de como o aluno verá:</p>
+                  <div className="relative aspect-[9/16] max-w-[140px] rounded-md overflow-hidden bg-muted/60 border border-border">
+                    <video
+                      src={draft.previewUrl}
+                      className="absolute inset-0 w-full h-full object-cover opacity-70"
+                      muted
+                      playsInline
+                    />
+                    <div className="absolute left-0 right-0 bottom-0 bg-gradient-to-t from-background/95 to-transparent p-2">
+                      <p className="text-[10px] text-foreground line-clamp-3 leading-snug">
+                        {draft.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

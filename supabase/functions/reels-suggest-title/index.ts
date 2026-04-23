@@ -7,6 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+type Mode = "full" | "description_only";
+
 interface Body {
   // base64 frames (without data: prefix), 1-3 frames recommended
   frames: string[];
@@ -14,6 +16,10 @@ interface Body {
   category?: string;
   muscleGroup?: string;
   muscleGroups?: string[];
+  // controla se a IA gera tudo ou só a descrição
+  mode?: Mode;
+  // contexto opcional pro modo description_only
+  currentTitle?: string;
 }
 
 serve(async (req) => {
@@ -25,8 +31,9 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const { frames, category, muscleGroup, muscleGroups } =
+    const { frames, category, muscleGroup, muscleGroups, mode, currentTitle } =
       (await req.json()) as Body;
+    const resolvedMode: Mode = mode === "description_only" ? "description_only" : "full";
 
     if (!Array.isArray(frames) || frames.length === 0) {
       return new Response(
@@ -57,7 +64,7 @@ serve(async (req) => {
 
     const muscleList = MUSCLE_GROUPS.join(", ");
 
-    const systemPrompt = `Você é um especialista em fitness e copywriter de redes sociais.
+    const fullPrompt = `Você é um especialista em fitness e copywriter de redes sociais.
 Recebe frames de um vídeo curto vertical (estilo Reels) sobre exercícios/dicas/explicações de academia.
 
 Sua tarefa: gerar METADADOS COMPLETOS para o vídeo, em PORTUGUÊS BRASILEIRO:
@@ -77,13 +84,28 @@ Sua tarefa: gerar METADADOS COMPLETOS para o vídeo, em PORTUGUÊS BRASILEIRO:
 
 Use os 3 campos juntos via a ferramenta set_video_metadata.`;
 
+    const descOnlyPrompt = `Você é um especialista em fitness e copywriter de redes sociais.
+Recebe frames de um vídeo curto vertical (estilo Reels) sobre exercícios/dicas/explicações de academia.
+
+Sua tarefa: gerar APENAS a DESCRIÇÃO CURTA (até 200 caracteres) em PORTUGUÊS BRASILEIRO,
+explicando como executar o exercício ou a dica/conceito demonstrado. Linguagem clara e prática,
+voltada ao aluno. Sem emojis. Sem aspas. Termine com ponto final.
+
+${currentTitle ? `O vídeo já tem o título: "${currentTitle}". Use-o como contexto, mas não o repita literalmente na descrição.` : ""}
+
+Retorne via a ferramenta set_video_metadata preenchendo SOMENTE o campo description.`;
+
+    const systemPrompt = resolvedMode === "description_only" ? descOnlyPrompt : fullPrompt;
+
     const userMessage = {
       role: "user",
       content: [
         ...imageContents,
         {
           type: "text",
-          text: `Analise os frames e gere os metadados conforme as instruções.${hint}`,
+          text: resolvedMode === "description_only"
+            ? `Analise os frames e gere apenas a descrição conforme as instruções.${hint}`
+            : `Analise os frames e gere os metadados conforme as instruções.${hint}`,
         },
       ],
     };
@@ -108,7 +130,9 @@ Use os 3 campos juntos via a ferramenta set_video_metadata.`;
               function: {
                 name: "set_video_metadata",
                 description:
-                  "Define título, descrição e grupos musculares do vídeo",
+                  resolvedMode === "description_only"
+                    ? "Define apenas a descrição do vídeo"
+                    : "Define título, descrição e grupos musculares do vídeo",
                 parameters: {
                   type: "object",
                   properties: {
@@ -134,7 +158,10 @@ Use os 3 campos juntos via a ferramenta set_video_metadata.`;
                         "Lista de 1 a 3 grupos musculares da lista fixa",
                     },
                   },
-                  required: ["title", "description", "muscle_groups"],
+                  required:
+                    resolvedMode === "description_only"
+                      ? ["description"]
+                      : ["title", "description", "muscle_groups"],
                   additionalProperties: false,
                 },
               },
@@ -201,12 +228,13 @@ Use os 3 campos juntos via a ferramenta set_video_metadata.`;
       }
     }
 
+    const payload =
+      resolvedMode === "description_only"
+        ? { description }
+        : { title, description, muscle_groups: groups };
+
     return new Response(
-      JSON.stringify({
-        title,
-        description,
-        muscle_groups: groups,
-      }),
+      JSON.stringify(payload),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
