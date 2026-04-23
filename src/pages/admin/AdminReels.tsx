@@ -191,6 +191,7 @@ export default function AdminReels() {
 
   const loadMore = async () => {
     if (loadingMore || loading) return;
+    if (total > 0 && reels.length >= total) return;
     setLoadingMore(true);
     try {
       const from = reels.length;
