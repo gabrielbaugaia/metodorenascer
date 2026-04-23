@@ -113,6 +113,7 @@ export default function AdminReels() {
   const [editingReel, setEditingReel] = useState<EditableReel | null>(null);
   const [editingReelUrl, setEditingReelUrl] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [singleAiId, setSingleAiId] = useState<string | null>(null);
 
   // Bulk selection
