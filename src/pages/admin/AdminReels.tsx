@@ -642,7 +642,14 @@ export default function AdminReels() {
     <ClientLayout>
       <div className="space-y-6">
         <PageHeader
-          title="Reels"
+          title={
+            <div className="flex items-center gap-2">
+              <span>Reels</span>
+              <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 h-4 border-muted-foreground/30 text-muted-foreground">
+                v{APP_VERSION} • {getSWVersion()}
+              </Badge>
+            </div>
+          }
           subtitle="Vídeos curtos verticais para os alunos (execuções, dicas, explicativos)"
           actions={
             <div className="flex gap-2">
