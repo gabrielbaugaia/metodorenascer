@@ -44,43 +44,108 @@ const CATEGORY_LABEL: Record<string, string> = {
   explicativo: "Explicativo",
 };
 
+type SortKey = "created_desc" | "created_asc" | "title_asc" | "title_desc";
+
+const SORT_LABEL: Record<SortKey, string> = {
+  created_desc: "Mais recentes",
+  created_asc: "Mais antigos",
+  title_asc: "Título A-Z",
+  title_desc: "Título Z-A",
+};
+
+const SORT_STORAGE_KEY = "reels-admin-sort";
+const PAGE_SIZE = 50;
+
+function readStoredSort(): SortKey {
+  try {
+    const raw = localStorage.getItem(SORT_STORAGE_KEY);
+    if (raw && raw in SORT_LABEL) return raw as SortKey;
+  } catch { /* noop */ }
+  return "created_desc";
+}
+
 export default function AdminReels() {
   const [reels, setReels] = useState<Reel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [sortKey, setSortKey] = useState<SortKey>(readStoredSort);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingReel, setEditingReel] = useState<EditableReel | null>(null);
 
+  // Persiste critério de ordenação independente dos filtros
+  useEffect(() => {
+    try { localStorage.setItem(SORT_STORAGE_KEY, sortKey); } catch { /* noop */ }
+  }, [sortKey]);
+
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("reels_videos")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      toast.error("Erro ao carregar reels");
-    } else {
-      setReels((data ?? []) as Reel[]);
+    setLoadError(null);
+    try {
+      let query = supabase
+        .from("reels_videos")
+        .select(
+          "id, title, description, show_description, category, muscle_group, muscle_groups, video_url, thumbnail_url, is_published, created_at, duration_seconds, audio_removed"
+        );
+
+      // Filtros server-side
+      if (search.trim()) {
+        // ilike escape: % e _ tratados como literais
+        const safe = search.trim().replace(/[%_]/g, (c) => `\\${c}`);
+        query = query.ilike("title", `%${safe}%`);
+      }
+      if (filterCategory !== "all") {
+        query = query.eq("category", filterCategory);
+      }
+      if (filterStatus !== "all") {
+        query = query.eq("is_published", filterStatus === "active");
+      }
+
+      // Ordenação
+      switch (sortKey) {
+        case "created_asc":
+          query = query.order("created_at", { ascending: true });
+          break;
+        case "title_asc":
+          query = query.order("title", { ascending: true });
+          break;
+        case "title_desc":
+          query = query.order("title", { ascending: false });
+          break;
+        case "created_desc":
+        default:
+          query = query.order("created_at", { ascending: false });
+      }
+
+      const { data, error } = await query.range(0, PAGE_SIZE - 1);
+      if (error) {
+        // RLS / permissão -> mensagem clara
+        const isPermission = /permission|rls|denied|policy/i.test(error.message);
+        setLoadError(isPermission ? "Sem permissão para listar reels." : "Erro ao carregar reels");
+        if (!isPermission) toast.error("Erro ao carregar reels");
+        setReels([]);
+      } else {
+        setReels((data ?? []) as Reel[]);
+      }
+    } catch (err) {
+      console.error("load reels err", err);
+      setLoadError("Erro inesperado ao carregar reels");
+      setReels([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     load();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, filterCategory, filterStatus, sortKey]);
 
-  const filtered = reels.filter((r) => {
-    const matchesSearch = !search || r.title.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = filterCategory === "all" || r.category === filterCategory;
-    const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "active" && r.is_published) ||
-      (filterStatus === "inactive" && !r.is_published);
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  // filtros já aplicados na query — usamos resultado direto
+  const filtered = reels;
 
   const togglePublish = async (reel: Reel) => {
     const { error } = await supabase
