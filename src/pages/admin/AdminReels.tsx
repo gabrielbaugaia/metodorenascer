@@ -102,6 +102,7 @@ async function fetchVideoAsFile(url: string, fallbackName = "reel.mp4"): Promise
 export default function AdminReels() {
   const [reels, setReels] = useState<Reel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [search, setSearch] = useState("");
@@ -110,10 +111,13 @@ export default function AdminReels() {
   const [sortKey, setSortKey] = useState<SortKey>(readStoredSort);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingReel, setEditingReel] = useState<EditableReel | null>(null);
+  const [editingReelUrl, setEditingReelUrl] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [singleAiId, setSingleAiId] = useState<string | null>(null);
 
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkBusy, setBulkBusy] = useState<null | "ai" | "desc" | "muscles" | "publish" | "unpublish" | "delete">(null);
+  const [bulkBusy, setBulkBusy] = useState<null | "ai" | "desc" | "muscles" | "publish" | "unpublish" | "delete" | "selectAll">(null);
   const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [bulkMuscles, setBulkMuscles] = useState<string[]>([]);
