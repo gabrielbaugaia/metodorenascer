@@ -231,6 +231,28 @@ export default function AdminReels() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, filterCategory, filterStatus, sortKey]);
 
+  // Infinite scroll: observe sentinel and trigger loadMore when near bottom
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    if (loading) return;
+    if (total === 0) return;
+    if (reels.length >= total) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting && !loadingMore && !loading && reels.length < total) {
+          loadMore();
+        }
+      },
+      { rootMargin: "400px", threshold: 0 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingMore, loading, reels.length, total]);
+
   // Limpa seleções que não estão mais visíveis (após filtro/recarga)
   useEffect(() => {
     setSelectedIds((prev) => {
