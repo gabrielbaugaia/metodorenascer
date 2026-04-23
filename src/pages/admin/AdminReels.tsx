@@ -73,7 +73,8 @@ const SORT_LABEL: Record<SortKey, string> = {
 };
 
 const SORT_STORAGE_KEY = "reels-admin-sort";
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 48;
+const MAX_LOAD_ALL = 1000;
 
 function readStoredSort(): SortKey {
   try {
