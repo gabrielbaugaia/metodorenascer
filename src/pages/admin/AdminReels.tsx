@@ -341,6 +341,52 @@ export default function AdminReels() {
           ? [reel.muscle_group]
           : [],
     });
+    setEditingReelUrl(reel.video_url);
+  };
+
+  const handleSingleAi = async (reel: Reel) => {
+    setSingleAiId(reel.id);
+    try {
+      const file = await fetchVideoAsFile(reel.video_url);
+      const { frames } = await captureKeyFrames(file);
+      const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+        body: {
+          frames,
+          category: reel.category,
+          muscleGroups:
+            reel.muscle_groups && reel.muscle_groups.length
+              ? reel.muscle_groups
+              : reel.muscle_group
+              ? [reel.muscle_group]
+              : undefined,
+        },
+      });
+      if (error) throw error;
+      const result = data as AiResponse;
+      const update: Record<string, unknown> = {};
+      if (result.title) update.title = result.title;
+      if (result.description) {
+        update.description = result.description;
+        update.show_description = true;
+      }
+      if (Array.isArray(result.muscle_groups) && result.muscle_groups.length > 0) {
+        update.muscle_groups = result.muscle_groups;
+        update.muscle_group = result.muscle_groups[0];
+      }
+      if (Object.keys(update).length === 0) {
+        toast.warning("IA não retornou conteúdo");
+        return;
+      }
+      const { error: upErr } = await supabase.from("reels_videos").update(update).eq("id", reel.id);
+      if (upErr) throw upErr;
+      toast.success("Atualizado pela IA");
+      load();
+    } catch (err) {
+      console.error("single ai err", err);
+      toast.error("Falha ao processar com IA");
+    } finally {
+      setSingleAiId(null);
+    }
   };
 
   // ==================== AÇÕES EM LOTE ====================
