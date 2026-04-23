@@ -644,10 +644,35 @@ export default function AdminReels() {
           title="Reels"
           subtitle="Vídeos curtos verticais para os alunos (execuções, dicas, explicativos)"
           actions={
-            <Button onClick={() => setShowUpload((v) => !v)}>
-              <Plus className="h-4 w-4 mr-2" />
-              {showUpload ? "Fechar upload" : "Adicionar em lote"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    if ('caches' in window) {
+                      const names = await caches.keys();
+                      await Promise.all(names.map((n) => caches.delete(n)));
+                    }
+                    if ('serviceWorker' in navigator) {
+                      const regs = await navigator.serviceWorker.getRegistrations();
+                      await Promise.all(regs.map((r) => r.unregister()));
+                    }
+                  } catch (e) {
+                    console.error('[ForceUpdate] Error:', e);
+                  } finally {
+                    window.location.reload();
+                  }
+                }}
+                title="Limpa cache do app e recarrega"
+              >
+                ↻ Atualizar app
+              </Button>
+              <Button onClick={() => setShowUpload((v) => !v)}>
+                <Plus className="h-4 w-4 mr-2" />
+                {showUpload ? "Fechar upload" : "Adicionar em lote"}
+              </Button>
+            </div>
           }
         />
 

@@ -1,6 +1,6 @@
 // Service Worker para Push Notifications e Cache
-// v6: força refresh para exibir novo item Reels no menu admin
-const CACHE_NAME = 'renascer-cache-v6';
+// v7: força refresh para nova UI do admin Reels (toolbar 4 ícones, IA individual, infinite scroll)
+const CACHE_NAME = 'renascer-cache-v7';
 const STATIC_ASSETS = [
   '/',
   '/favicon.ico'
@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
 
 // Cache static assets on install
 self.addEventListener('install', function(event) {
-  console.log('[SW] Instalando v6');
+  console.log('[SW] Instalando v7');
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(STATIC_ASSETS);
@@ -19,7 +19,7 @@ self.addEventListener('install', function(event) {
 });
 
 self.addEventListener('activate', function(event) {
-  console.log('[SW] Ativando v6 - limpando caches antigos');
+  console.log('[SW] Ativando v7 - limpando caches antigos');
   event.waitUntil(
     caches.keys().then(function(cacheNames) {
       return Promise.all(
@@ -38,7 +38,7 @@ self.addEventListener('activate', function(event) {
       // Notify all clients to reload
       return clients.matchAll({ type: 'window' }).then(function(windowClients) {
         windowClients.forEach(function(client) {
-          client.postMessage({ type: 'SW_UPDATED', version: 'v5' });
+          client.postMessage({ type: 'SW_UPDATED', version: 'v7' });
         });
       });
     })
