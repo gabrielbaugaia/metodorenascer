@@ -257,7 +257,23 @@ export default function AdminReels() {
               <SelectItem value="inactive">Desativados</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(SORT_LABEL) as SortKey[]).map((k) => (
+                <SelectItem key={k} value={k}>{SORT_LABEL[k]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
+        {loadError && (
+          <Card className="p-4 border-destructive/50 bg-destructive/5">
+            <p className="text-sm text-destructive">{loadError}</p>
+          </Card>
+        )}
 
         {loading ? (
           <p className="text-center text-muted-foreground py-8">Carregando…</p>
