@@ -129,57 +129,98 @@ export default function AdminReels() {
     try { localStorage.setItem(SORT_STORAGE_KEY, sortKey); } catch { /* noop */ }
   }, [sortKey]);
 
+  const buildBaseQuery = () => {
+    let query = supabase
+      .from("reels_videos")
+      .select(
+        "id, title, description, show_description, category, muscle_group, muscle_groups, video_url, thumbnail_url, is_published, created_at, duration_seconds, audio_removed",
+        { count: "exact" }
+      );
+
+    if (search.trim()) {
+      const safe = search.trim().replace(/[%_]/g, (c) => `\\${c}`);
+      query = query.ilike("title", `%${safe}%`);
+    }
+    if (filterCategory !== "all") {
+      query = query.eq("category", filterCategory);
+    }
+    if (filterStatus !== "all") {
+      query = query.eq("is_published", filterStatus === "active");
+    }
+    switch (sortKey) {
+      case "created_asc":
+        query = query.order("created_at", { ascending: true });
+        break;
+      case "title_asc":
+        query = query.order("title", { ascending: true });
+        break;
+      case "title_desc":
+        query = query.order("title", { ascending: false });
+        break;
+      case "created_desc":
+      default:
+        query = query.order("created_at", { ascending: false });
+    }
+    return query;
+  };
+
   const load = async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      let query = supabase
-        .from("reels_videos")
-        .select(
-          "id, title, description, show_description, category, muscle_group, muscle_groups, video_url, thumbnail_url, is_published, created_at, duration_seconds, audio_removed"
-        );
-
-      if (search.trim()) {
-        const safe = search.trim().replace(/[%_]/g, (c) => `\\${c}`);
-        query = query.ilike("title", `%${safe}%`);
-      }
-      if (filterCategory !== "all") {
-        query = query.eq("category", filterCategory);
-      }
-      if (filterStatus !== "all") {
-        query = query.eq("is_published", filterStatus === "active");
-      }
-
-      switch (sortKey) {
-        case "created_asc":
-          query = query.order("created_at", { ascending: true });
-          break;
-        case "title_asc":
-          query = query.order("title", { ascending: true });
-          break;
-        case "title_desc":
-          query = query.order("title", { ascending: false });
-          break;
-        case "created_desc":
-        default:
-          query = query.order("created_at", { ascending: false });
-      }
-
-      const { data, error } = await query.range(0, PAGE_SIZE - 1);
+      const { data, error, count } = await buildBaseQuery().range(0, PAGE_SIZE - 1);
       if (error) {
         const isPermission = /permission|rls|denied|policy/i.test(error.message);
         setLoadError(isPermission ? "Sem permissão para listar reels." : "Erro ao carregar reels");
         if (!isPermission) toast.error("Erro ao carregar reels");
         setReels([]);
+        setTotal(0);
       } else {
         setReels((data ?? []) as Reel[]);
+        setTotal(count ?? (data?.length ?? 0));
       }
     } catch (err) {
       console.error("load reels err", err);
       setLoadError("Erro inesperado ao carregar reels");
       setReels([]);
+      setTotal(0);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMore = async () => {
+    if (loadingMore || loading) return;
+    setLoadingMore(true);
+    try {
+      const from = reels.length;
+      const to = from + PAGE_SIZE - 1;
+      const { data, error } = await buildBaseQuery().range(from, to);
+      if (error) {
+        toast.error("Erro ao carregar mais");
+      } else {
+        setReels((prev) => [...prev, ...((data ?? []) as Reel[])]);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const loadAll = async () => {
+    if (loadingMore || loading) return;
+    setLoadingMore(true);
+    try {
+      const from = reels.length;
+      const to = Math.min(from + MAX_LOAD_ALL - 1, (total || from + MAX_LOAD_ALL) - 1);
+      const { data, error } = await buildBaseQuery().range(from, to);
+      if (error) {
+        toast.error("Erro ao carregar todos");
+      } else {
+        setReels((prev) => [...prev, ...((data ?? []) as Reel[])]);
+        toast.success(`${(data ?? []).length} vídeo(s) adicionados`);
+      }
+    } finally {
+      setLoadingMore(false);
     }
   };
 
