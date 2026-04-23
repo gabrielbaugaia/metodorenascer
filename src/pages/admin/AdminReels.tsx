@@ -261,6 +261,29 @@ export default function AdminReels() {
     else setSelectedIds(new Set(filtered.map((r) => r.id)));
   };
 
+  const selectAllGlobal = async () => {
+    setBulkBusy("selectAll");
+    try {
+      let query = supabase.from("reels_videos").select("id");
+      if (search.trim()) {
+        const safe = search.trim().replace(/[%_]/g, (c) => `\\${c}`);
+        query = query.ilike("title", `%${safe}%`);
+      }
+      if (filterCategory !== "all") query = query.eq("category", filterCategory);
+      if (filterStatus !== "all") query = query.eq("is_published", filterStatus === "active");
+      const { data, error } = await query.range(0, MAX_LOAD_ALL - 1);
+      if (error) {
+        toast.error("Falha ao selecionar todos");
+        return;
+      }
+      const ids = (data ?? []).map((r) => r.id as string);
+      setSelectedIds(new Set(ids));
+      toast.success(`${ids.length} vídeo(s) selecionados`);
+    } finally {
+      setBulkBusy(null);
+    }
+  };
+
   const clearSelection = () => setSelectedIds(new Set());
 
   const togglePublish = async (reel: Reel) => {
