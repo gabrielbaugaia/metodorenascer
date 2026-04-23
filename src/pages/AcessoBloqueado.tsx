@@ -1,8 +1,11 @@
-import { Lock, MessageCircle, CreditCard, LogOut } from "lucide-react";
+import { useEffect } from "react";
+import { Lock, MessageCircle, CreditCard, LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const STRIPE_DIRECT_LINK = 'https://buy.stripe.com/fZu3cudIS3nqaYVf902B205';
 
@@ -11,6 +14,25 @@ export default function AcessoBloqueado() {
   const [searchParams] = useSearchParams();
   const reason = searchParams.get("reason");
   const isFreeExpired = reason === "free_expired_30d";
+
+  const { loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
+
+  // Admin nunca deve ver essa tela — redireciona pra /admin
+  useEffect(() => {
+    if (!authLoading && !adminLoading && isAdmin) {
+      navigate("/admin", { replace: true });
+    }
+  }, [isAdmin, authLoading, adminLoading, navigate]);
+
+  // Enquanto checa auth/admin, mostra loader (evita flash da tela vermelha)
+  if (authLoading || adminLoading || isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
