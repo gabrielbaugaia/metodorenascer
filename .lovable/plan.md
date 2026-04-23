@@ -1,51 +1,50 @@
 
 
-## Reels Admin v6 — Infinite scroll com sentinela IntersectionObserver
+## Reels Admin v7 — Forçar atualização do PWA no celular
 
-Substituir o botão "Carregar mais 48" por carregamento automático ao rolar, mantendo o botão "Carregar todos os restantes" como atalho opcional e a contagem real "X de 197".
+### Diagnóstico
 
-### Comportamento
+O código de `/admin/reels` **já tem todas as melhorias pedidas**: toolbar de 4 ícones (Editar/IA/Ativar/Excluir) sempre visível em cada card, seleção em lote, infinite scroll com paginação real, IA individual e em lote, modal de edição com IA. Verifiquei linha por linha em `src/pages/admin/AdminReels.tsx` (linhas 908-1023) e tudo está implementado.
 
-- Ao chegar a ~400px do fim da grid, dispara `loadMore()` automaticamente sem clique
-- Indicador visual no rodapé enquanto carrega: spinner + "Carregando mais 48…"
-- Mensagem final permanece: "Todos os 197 vídeos carregados"
-- Botão **"Carregar todos os restantes"** continua disponível ao lado do indicador (útil para preparar seleção global em poucos cliques sem rolar 197)
-- Contador "Mostrando N de 197" persiste no header da seção (já existe)
+**O problema é cache do PWA no celular.** As screenshots mostram uma versão antiga: overlay enorme "Ocultar / Excluir" sobreposto ao card (esse overlay nem existe mais no código atual). O Service Worker `public/sw.js` está em `v6` e o iPhone do usuário está servindo o JS/HTML antigo do cache, ignorando o build novo.
 
-### Implementação técnica
+### Correções
 
-Em `src/pages/admin/AdminReels.tsx`:
+**1. Bump do Service Worker (`public/sw.js`)**
+- Trocar `CACHE_NAME` de `'renascer-cache-v6'` para `'renascer-cache-v7'`
+- Atualizar comentários e o `postMessage` `version: 'v7'`
+- Isso dispara o ciclo `install → activate → clients.claim → SW_UPDATED` que força reload em todos os dispositivos com o app aberto
 
-1. **Sentinela DOM**: criar `<div ref={sentinelRef} />` logo abaixo da grid de cards publicados, antes do bloco de rodapé.
+**2. Banner "Atualização disponível" (App.tsx ou ClientLayout)**
+- Listener para `navigator.serviceWorker.addEventListener('message', ...)` capturando `type: 'SW_UPDATED'`
+- Quando recebido, mostrar um toast persistente com botão **"Atualizar agora"** que faz `window.location.reload()`
+- Garante que mesmo quem não fechar o app pega a versão nova
 
-2. **Hook IntersectionObserver** dentro de `useEffect`:
-   - Observa `sentinelRef.current` com `rootMargin: "400px"` e `threshold: 0`
-   - Quando `entry.isIntersecting === true` E `!loadingMore` E `!loading` E `reels.length < total`, chama `loadMore()`
-   - Cleanup: `observer.disconnect()` no return do effect
-   - Dependências: `[loadingMore, loading, reels.length, total]`
+**3. Botão manual "Forçar atualização" no header admin (`AdminReels.tsx`)**
+- Pequeno botão "↻ Atualizar app" ao lado do título da página
+- Handler que: (a) `caches.keys()` + `caches.delete()` para todos os caches, (b) chama `registration.unregister()` no SW, (c) `window.location.reload(true)`
+- Solução de emergência se o ciclo automático falhar (acontece em iOS com PWA salvo na home)
 
-3. **Guards adicionais em `loadMore`**:
-   - Já tem `if (loadingMore || loading) return` 
-   - Adicionar `if (reels.length >= total) return` pra evitar disparo duplicado quando o observer reage antes do estado atualizar
-
-4. **Substituir o bloco JSX atual** (linhas 1002-1026):
-   - Remover o `<Button>` "Carregar mais N"
-   - Manter sentinela + indicador de loading inline (spinner + texto) quando `loadingMore`
-   - Manter o `<Button variant="ghost">` "Carregar todos os restantes" como secundário
-   - Mensagem "Todos carregados" permanece igual
-
-5. **Reset do observer ao trocar filtros**: já é automático, pois `load()` é chamado com `append=false` quando filtros mudam, o que reseta `reels` e o observer dispara naturalmente se a nova lista couber e ainda houver mais.
-
-### Edge cases tratados
-
-- **Filtros que retornam <48 resultados**: `reels.length >= total` impede disparo
-- **Tela grande sem scroll**: `rootMargin: 400px` faz a sentinela aparecer no viewport inicial → dispara `loadMore` automaticamente até preencher (comportamento desejado)
-- **Carregar todos**: ao clicar, `reels.length >= total` vira true e o observer para de disparar
-- **Performance**: observer é único, criado uma vez por mudança de dependências; sem listeners de scroll manuais
+**4. Verificação visual após o reload**
+- Depois do bump, o usuário verá em `/admin/reels` no celular:
+  - Cards com 4 ícones embaixo (Editar, ✨ IA, 👁/🚫, 🗑) sempre visíveis
+  - Checkbox no canto superior direito de cada card
+  - Barra de seleção em lote ao marcar 1+ vídeos
+  - Infinite scroll dos 197 vídeos
+  - Modal de edição com botões IA dentro
 
 ### Arquivos editados
 
-- `src/pages/admin/AdminReels.tsx` — adicionar `sentinelRef`, `useEffect` do IntersectionObserver, refatorar JSX do rodapé da grid
+- `public/sw.js` — bump v6 → v7
+- `src/App.tsx` — listener de `SW_UPDATED` com toast "Atualizar agora"
+- `src/pages/admin/AdminReels.tsx` — botão "Forçar atualização" no header
 
-**Sem mudanças em:** banco, RLS, edge functions, paginação backend (continua `range` de 48), `EditReelModal`, `ReelCard`, `ReelsBatchUpload`, página do aluno.
+**Sem mudanças em:** lógica de admin (já está completa), banco, RLS, edge functions, página do aluno (`/videos`).
+
+### O que o usuário precisa fazer depois do deploy
+
+1. No celular, fechar o app completamente (swipe up no app)
+2. Reabrir — o novo SW vai instalar e mostrar toast "Atualizar agora"
+3. Tocar em "Atualizar agora" OU fechar e reabrir mais uma vez
+4. Se ainda assim ver a tela antiga, ir em `/admin/reels` e tocar no botão "↻ Atualizar app" no header
 
