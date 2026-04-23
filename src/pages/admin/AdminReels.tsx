@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -113,6 +113,7 @@ export default function AdminReels() {
   const [editingReel, setEditingReel] = useState<EditableReel | null>(null);
   const [editingReelUrl, setEditingReelUrl] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [singleAiId, setSingleAiId] = useState<string | null>(null);
 
   // Bulk selection
@@ -191,6 +192,7 @@ export default function AdminReels() {
 
   const loadMore = async () => {
     if (loadingMore || loading) return;
+    if (total > 0 && reels.length >= total) return;
     setLoadingMore(true);
     try {
       const from = reels.length;
@@ -228,6 +230,28 @@ export default function AdminReels() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, filterCategory, filterStatus, sortKey]);
+
+  // Infinite scroll: observe sentinel and trigger loadMore when near bottom
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    if (loading) return;
+    if (total === 0) return;
+    if (reels.length >= total) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting && !loadingMore && !loading && reels.length < total) {
+          loadMore();
+        }
+      },
+      { rootMargin: "400px", threshold: 0 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingMore, loading, reels.length, total]);
 
   // Limpa seleções que não estão mais visíveis (após filtro/recarga)
   useEffect(() => {
@@ -999,30 +1023,32 @@ export default function AdminReels() {
           </div>
         )}
 
-        {/* Carregar mais / Carregar todos */}
+        {/* Infinite scroll sentinel + load all shortcut */}
         {!loading && reels.length > 0 && reels.length < total && (
-          <div className="flex flex-wrap items-center justify-center gap-3 py-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={loadMore}
-              disabled={loadingMore}
-            >
-              {loadingMore ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : null}
-              Carregar mais {Math.min(PAGE_SIZE, total - reels.length)}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={loadAll}
-              disabled={loadingMore}
-              className="text-xs"
-            >
-              Carregar todos os restantes ({total - reels.length})
-            </Button>
-          </div>
+          <>
+            <div ref={sentinelRef} aria-hidden="true" className="h-1 w-full" />
+            <div className="flex flex-wrap items-center justify-center gap-3 py-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                {loadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Carregando mais {Math.min(PAGE_SIZE, total - reels.length)}…</span>
+                  </>
+                ) : (
+                  <span>Role para carregar mais ({total - reels.length} restantes)</span>
+                )}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={loadAll}
+                disabled={loadingMore}
+                className="text-xs"
+              >
+                Carregar todos os restantes ({total - reels.length})
+              </Button>
+            </div>
+          </>
         )}
         {!loading && reels.length > 0 && reels.length >= total && total > PAGE_SIZE && (
           <p className="text-center text-xs text-muted-foreground py-3">
