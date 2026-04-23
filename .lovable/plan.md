@@ -1,60 +1,64 @@
 
 
-## Reels Admin v4 — preview fiel, botão de descrição sempre visível, edição em lote dos publicados
+## Reels Admin v5 — paginação real, "carregar mais" e edição rápida individual
 
-Três ajustes complementando o que já está em produção:
+Três problemas resolvidos: (1) só aparecem 50 vídeos dos 197 que existem, (2) selecionar/editar individualmente está confuso (ações escondidas no hover), (3) edição rápida com IA por vídeo único só existia via "reescrever em lote de 1".
 
-### 1. Preview da descrição idêntico ao do aluno
+### 1. Paginação real — ver e gerenciar todos os 197 vídeos
 
-No `ReelCard.tsx`, o preview hoje está num mini-quadro 9:16 separado, com fundo escuro e texto `text-[10px]`. A página `/reels` do aluno usa overlay `bg-gradient-to-t from-background/95 to-transparent p-3` com texto `text-xs line-clamp-3` **diretamente sobre o player do próprio card**, sem quadro extra.
+Hoje a query trava em `range(0, 49)`. Mudanças:
 
-Refatoração:
-- Remover o mini-preview separado
-- Aplicar o mesmo overlay (gradient + `p-3` + `text-xs line-clamp-3`) **sobre o vídeo de preview principal** que já fica à esquerda do card (área 180px / aspect 9:16)
-- O overlay aparece quando `showDescription = true` e `description` tem texto, replicando exatamente o JSX do `ReelTile` em `Reels.tsx` (mesmas classes Tailwind)
-- Garante 1:1 visual com o que o aluno vê
+- Trocar `PAGE_SIZE` para **48** por página (múltiplo da grid 2/3/4/6 colunas) e adicionar suporte a paginação cumulativa
+- Buscar `count: 'exact'` na query pra mostrar contador real ("Mostrando 48 de 197")
+- Botão **"Carregar mais 48"** abaixo da grid que faz append do próximo lote (não substitui)
+- Quando todos foram carregados, botão some e mostra "Todos os 197 vídeos carregados"
+- Botão extra **"Carregar todos"** ao lado, que puxa o restante de uma vez (até 1000) — útil pra ações em lote globais
+- Filtros (busca/categoria/status/ordenação) resetam pra página 0 automaticamente
 
-### 2. Botão "Gerar descrição" sempre visível no card
+### 2. "Selecionar todos" agora cobre a base inteira, não só a tela
 
-Hoje o botão "Gerar descrição" está dentro do bloco condicional `{draft.showDescription && (...)}` (linha 172 do `ReelCard.tsx`). Resultado: pra reexecutar a descrição o admin precisa primeiro ligar o toggle.
+Hoje `toggleSelectAll` só seleciona o que está visível na tela. Adicionar:
 
-Mover o botão pra fora do bloco condicional, ao lado do botão "Reescrever com IA" (no header do título). Assim:
-- Sempre visível (linha de ações no topo do form: `[Reescrever com IA] [Gerar descrição]`)
-- Ao clicar com toggle desligado, gera a descrição E ativa automaticamente o `showDescription` (handler já faz isso)
-- O textarea + preview continuam aparecendo só quando o toggle está ligado
+- Botão **"Selecionar todos os 197"** ao lado do "Selecionar todos da página"
+- Ele faz uma query separada só com IDs (`select id`) usando os mesmos filtros aplicados, sem `range`
+- Mostra toast "197 vídeos selecionados" e marca todos no `selectedIds`
+- Mesma barra de ações em lote já existente passa a operar sobre todos
 
-### 3. Edição em lote dos vídeos publicados
+### 3. Ações individuais sempre visíveis (não só no hover)
 
-Esta é a parte nova e maior. Na grid "Vídeos publicados" do `AdminReels.tsx`, adicionar seleção múltipla + barra de ações em lote.
+Hoje os botões "Editar / Ativar / Excluir" só aparecem ao passar o mouse. No mobile (430px viewport, sem hover) isso fica inacessível. Mudanças no card:
 
-**UI:**
-- Cada card ganha um `Checkbox` no canto superior direito (sempre visível, não só no hover)
-- Quando 1+ vídeos estão selecionados, aparece uma barra fixa no topo da grid com: contador "N selecionados", botão "Limpar seleção", e os botões de ação em lote
-- Botão "Selecionar todos" / "Desmarcar todos" ao lado dos filtros
+- Remover o overlay `opacity-0 group-hover:opacity-100`
+- Adicionar embaixo da thumb uma **mini-toolbar sempre visível** com 4 ícone-botões compactos:
+  - ✏️ **Editar** (abre `EditReelModal` — já tem todos os campos: título, descrição, grupos, categoria, toggle mostrar)
+  - ✨ **IA** (botão novo) — baixa o vídeo, captura frames, chama `reels-suggest-title` (full mode), atualiza o registro. Mostra spinner no botão durante o processo. Toast "Atualizado pela IA"
+  - 👁/🚫 **Ativar/Desativar** (toggle visual rápido)
+  - 🗑 **Excluir** (com confirmação)
+- Ícones com `h-3.5 w-3.5`, padding mínimo, tooltip no hover, layout `flex justify-between` ou grid de 4 colunas
 
-**Ações em lote disponíveis:**
-- **🪄 Reescrever com IA (todos)** — para cada vídeo selecionado: baixa o arquivo do storage, captura 3 frames, chama `reels-suggest-title` (modo full), e atualiza `title`, `description`, `muscle_groups` no banco. Mostra progresso "3 de 8…"
-- **📝 Gerar descrição (todos)** — igual acima mas com `mode: "description_only"`, atualiza só `description` e ativa `show_description`
-- **💪 Definir grupos musculares** — abre popover com `MuscleGroupMultiSelect` + 2 opções: "Substituir" (sobrescreve) ou "Adicionar" (merge sem duplicar). Aplica a todos os selecionados via `update`
-- **👁 Ativar / 🚫 Desativar** — toggle `is_published` em massa
-- **🗑 Excluir** — confirmação dupla, remove registros + arquivos do storage em paralelo (limite 3 simultâneos)
+### 4. Modal de edição: adicionar botões de IA dentro
 
-**Detalhe técnico do "IA em lote nos publicados":**
-Diferente do upload (onde o `File` está em memória), aqui os vídeos já estão no storage. Pra capturar frames preciso baixar primeiro:
-- Função helper `fetchVideoAsFile(url)` faz `fetch` + `blob()` + `new File()` 
-- Usa esse File com `captureKeyFrames` que já existe em `reelsVideoUtils.ts`
-- Roda sequencial (1 por vez) pra não estourar memória nem rate limit da IA
-- Toast agregado no fim ("7 atualizados, 1 falhou")
-- Cada update vai direto ao Supabase via `.update().eq('id', ...)` — não precisa edge function nova
+No `EditReelModal.tsx`, adicionar acima do título 2 botões:
+- **"Reescrever tudo com IA"** — preenche título + descrição + grupos automaticamente nos campos do form (admin ainda confirma com Salvar)
+- **"Gerar só descrição"** — preenche só o textarea de descrição
+
+Assim o admin abre o modal de qualquer vídeo, pode rodar IA, ajustar manualmente o que quiser, e salvar. Fluxo de edição individual completo num único lugar.
 
 ### Detalhes técnicos
 
 **Arquivos editados:**
-- `src/components/admin/ReelCard.tsx` — mover botão "Gerar descrição" pra fora do toggle, refatorar preview pra usar overlay no player principal (mesmas classes do `ReelTile`)
-- `src/pages/admin/AdminReels.tsx` — adicionar `selectedIds: Set<string>`, checkbox em cada card, barra de ações em lote, handlers (`handleBulkDelete`, `handleBulkTogglePublish`, `handleBulkSetMuscles`, `handleBulkRewriteAi`, `handleBulkGenerateDescAi`)
+- `src/pages/admin/AdminReels.tsx`:
+  - Estado `page: number`, `total: number`, `loadingMore: boolean`
+  - `load()` aceita `append: boolean` e usa `.range(page * PAGE_SIZE, (page+1)*PAGE_SIZE - 1)` + `select(..., { count: 'exact' })`
+  - `loadMore()` incrementa `page` e faz append
+  - `loadAll()` busca o restante até total
+  - `selectAllGlobal()` faz query separada de IDs
+  - Card refatorado: remover overlay, adicionar toolbar inline, novo handler `handleSingleAi(reel)` reusando lógica do bulk
 
-**Arquivo novo:**
-- Nenhum — a barra de ações em lote vai inline no `AdminReels.tsx` (umas 80 linhas a mais). Se ficar muito grande, posso extrair pra `BulkReelsActionsBar.tsx` numa próxima iteração.
+- `src/components/admin/EditReelModal.tsx`:
+  - Adicionar prop opcional `videoUrl?: string` (pra IA poder baixar e processar)
+  - Estado `aiBusy: 'full' | 'desc' | null`
+  - 2 botões no topo do modal + handlers `handleAiFull` e `handleAiDesc` que preenchem os campos do form (não salvam direto)
 
-**Sem mudanças em:** banco, edge function, RLS, página do aluno, `EditReelModal`, `MuscleGroupMultiSelect`, `ReelsBatchUpload`.
+**Sem mudanças em:** banco, RLS (já permite admin ler tudo), edge function, página do aluno, `ReelsBatchUpload`, `ReelCard` (esse é só do upload).
 
