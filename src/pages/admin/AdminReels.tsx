@@ -14,6 +14,7 @@ import { MuscleGroupMultiSelect } from "@/components/admin/MuscleGroupMultiSelec
 import { MUSCLE_GROUPS } from "@/lib/muscleGroups";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getSWVersion, APP_VERSION } from "@/lib/appVersion";
 import {
   Trash2,
   Eye,
@@ -641,7 +642,14 @@ export default function AdminReels() {
     <ClientLayout>
       <div className="space-y-6">
         <PageHeader
-          title="Reels"
+          title={
+            <>
+              <span>Reels</span>
+              <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 h-4 border-muted-foreground/30 text-muted-foreground">
+                v{APP_VERSION} • {getSWVersion()}
+              </Badge>
+            </>
+          }
           subtitle="Vídeos curtos verticais para os alunos (execuções, dicas, explicativos)"
           actions={
             <div className="flex gap-2">
