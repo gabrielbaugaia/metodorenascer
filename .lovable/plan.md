@@ -1,53 +1,60 @@
 
 
-## Reels Admin v3 — ordenação, preview, RLS e geração granular
+## Reels Admin v4 — preview fiel, botão de descrição sempre visível, edição em lote dos publicados
 
-Quatro melhorias sobre a tela `/admin/reels`: ordenação persistente da lista de publicados, preview da descrição no card de upload, hardening da query/RLS, e botão dedicado pra reexecutar só a descrição via IA.
+Três ajustes complementando o que já está em produção:
 
-### 1. Ordenação persistente em "Vídeos publicados"
+### 1. Preview da descrição idêntico ao do aluno
 
-No componente da listagem (dentro de `AdminReels.tsx` ou `PublishedReelsList.tsx`), adiciono ao lado dos filtros existentes um `<Select>` "Ordenar por" com 4 opções:
-- Mais recentes (created_at desc) — padrão
-- Mais antigos (created_at asc)
-- Título A-Z (title asc)
-- Título Z-A (title desc)
+No `ReelCard.tsx`, o preview hoje está num mini-quadro 9:16 separado, com fundo escuro e texto `text-[10px]`. A página `/reels` do aluno usa overlay `bg-gradient-to-t from-background/95 to-transparent p-3` com texto `text-xs line-clamp-3` **diretamente sobre o player do próprio card**, sem quadro extra.
 
-O critério é persistido em `localStorage` sob a chave `reels-admin-sort` e reaplicado quando o admin troca qualquer filtro (busca, categoria, status). A query `.order(...)` no Supabase usa o critério escolhido. Trocar filtro NÃO reseta a ordenação.
+Refatoração:
+- Remover o mini-preview separado
+- Aplicar o mesmo overlay (gradient + `p-3` + `text-xs line-clamp-3`) **sobre o vídeo de preview principal** que já fica à esquerda do card (área 180px / aspect 9:16)
+- O overlay aparece quando `showDescription = true` e `description` tem texto, replicando exatamente o JSX do `ReelTile` em `Reels.tsx` (mesmas classes Tailwind)
+- Garante 1:1 visual com o que o aluno vê
 
-### 2. Preview da descrição no card de upload
+### 2. Botão "Gerar descrição" sempre visível no card
 
-No `ReelCard.tsx`, quando o toggle "Mostrar descrição" está ligado E há texto na descrição, aparece embaixo do textarea um bloco de preview que simula como o aluno vai ver: fundo escuro semi-transparente, texto branco, mesma tipografia/tamanho usados na página `/reels` do aluno (linha de até 2 linhas truncadas, padding 12px, posicionado como overlay no rodapé do vídeo).
+Hoje o botão "Gerar descrição" está dentro do bloco condicional `{draft.showDescription && (...)}` (linha 172 do `ReelCard.tsx`). Resultado: pra reexecutar a descrição o admin precisa primeiro ligar o toggle.
 
-O preview é puramente visual (não afeta o upload) e some quando o toggle é desligado. Replica os mesmos estilos do componente atual de exibição em `Reels.tsx` pra ser fiel.
+Mover o botão pra fora do bloco condicional, ao lado do botão "Reescrever com IA" (no header do título). Assim:
+- Sempre visível (linha de ações no topo do form: `[Reescrever com IA] [Gerar descrição]`)
+- Ao clicar com toggle desligado, gera a descrição E ativa automaticamente o `showDescription` (handler já faz isso)
+- O textarea + preview continuam aparecendo só quando o toggle está ligado
 
-### 3. RLS e hardening da query de listagem
+### 3. Edição em lote dos vídeos publicados
 
-Auditoria + ajuste da query `select` na lista de publicados:
+Esta é a parte nova e maior. Na grid "Vídeos publicados" do `AdminReels.tsx`, adicionar seleção múltipla + barra de ações em lote.
 
-- **RLS**: confirmar que a tabela `reels_videos` tem policy `SELECT` restrita a `has_role(auth.uid(), 'admin')` pra esta listagem (admin vê todos, inclusive `is_published = false`). Se faltar policy explícita de admin SELECT, criar via migration.
-- **Query**: usar `.select('id, title, description, video_url, thumbnail_url, category, muscle_groups, is_published, created_at, duration_seconds')` (campos explícitos, não `*`), com filtros aplicados server-side via `.ilike('title', ...)`, `.eq('category', ...)`, `.eq('is_published', ...)`, e `.order(...)` conforme escolha. Paginação com `.range(0, 49)` (50 por página) pra não estourar.
-- **Defesa em profundidade**: o componente envolve a query num `try/catch` e mostra estado de erro distinto se RLS bloquear (mensagem clara "Sem permissão" em vez de lista vazia silenciosa).
+**UI:**
+- Cada card ganha um `Checkbox` no canto superior direito (sempre visível, não só no hover)
+- Quando 1+ vídeos estão selecionados, aparece uma barra fixa no topo da grid com: contador "N selecionados", botão "Limpar seleção", e os botões de ação em lote
+- Botão "Selecionar todos" / "Desmarcar todos" ao lado dos filtros
 
-### 4. Botão "Gerar descrição" separado
+**Ações em lote disponíveis:**
+- **🪄 Reescrever com IA (todos)** — para cada vídeo selecionado: baixa o arquivo do storage, captura 3 frames, chama `reels-suggest-title` (modo full), e atualiza `title`, `description`, `muscle_groups` no banco. Mostra progresso "3 de 8…"
+- **📝 Gerar descrição (todos)** — igual acima mas com `mode: "description_only"`, atualiza só `description` e ativa `show_description`
+- **💪 Definir grupos musculares** — abre popover com `MuscleGroupMultiSelect` + 2 opções: "Substituir" (sobrescreve) ou "Adicionar" (merge sem duplicar). Aplica a todos os selecionados via `update`
+- **👁 Ativar / 🚫 Desativar** — toggle `is_published` em massa
+- **🗑 Excluir** — confirmação dupla, remove registros + arquivos do storage em paralelo (limite 3 simultâneos)
 
-Hoje o botão "Reescrever com IA" sobrescreve título + descrição + grupos musculares. Adicionar um segundo botão **"Gerar descrição"** (ícone `FileText`) tanto no `ReelCard` (ao lado do botão atual) quanto na barra de ações em lote no `ReelsBatchUpload`.
-
-Comportamento:
-- Reusa a mesma edge function `reels-suggest-title`, mas com novo parâmetro `mode: 'description_only'` no body
-- Edge function condicionalmente atualiza o system prompt pra retornar apenas o campo `description` na tool call (título e grupos viram opcionais e são ignorados quando `mode = 'description_only'`)
-- No frontend, o handler `handleGenerateDescription` aplica só `description` no draft, preservando título e `muscle_groups` atuais
-- Versão em lote roda sequencial igual ao botão atual, com toast agregado
+**Detalhe técnico do "IA em lote nos publicados":**
+Diferente do upload (onde o `File` está em memória), aqui os vídeos já estão no storage. Pra capturar frames preciso baixar primeiro:
+- Função helper `fetchVideoAsFile(url)` faz `fetch` + `blob()` + `new File()` 
+- Usa esse File com `captureKeyFrames` que já existe em `reelsVideoUtils.ts`
+- Roda sequencial (1 por vez) pra não estourar memória nem rate limit da IA
+- Toast agregado no fim ("7 atualizados, 1 falhou")
+- Cada update vai direto ao Supabase via `.update().eq('id', ...)` — não precisa edge function nova
 
 ### Detalhes técnicos
 
-**Arquivos editados**
-- `src/pages/admin/AdminReels.tsx` ou `PublishedReelsList.tsx` — Select de ordenação + persistência localStorage + query refinada
-- `src/components/admin/ReelCard.tsx` — bloco de preview da descrição + segundo botão "Gerar descrição"
-- `src/components/admin/ReelsBatchUpload.tsx` — botão "Gerar descrição em lote" + handler `handleBulkGenerateDescription`
-- `supabase/functions/reels-suggest-title/index.ts` — aceitar `mode: 'description_only' | 'full'` (default `full`), ajustar system prompt e tool schema condicionalmente
+**Arquivos editados:**
+- `src/components/admin/ReelCard.tsx` — mover botão "Gerar descrição" pra fora do toggle, refatorar preview pra usar overlay no player principal (mesmas classes do `ReelTile`)
+- `src/pages/admin/AdminReels.tsx` — adicionar `selectedIds: Set<string>`, checkbox em cada card, barra de ações em lote, handlers (`handleBulkDelete`, `handleBulkTogglePublish`, `handleBulkSetMuscles`, `handleBulkRewriteAi`, `handleBulkGenerateDescAi`)
 
-**Migration (condicional)**
-- Só se a auditoria mostrar que falta policy SELECT explícita pra admin em `reels_videos`. Caso contrário, sem migration.
+**Arquivo novo:**
+- Nenhum — a barra de ações em lote vai inline no `AdminReels.tsx` (umas 80 linhas a mais). Se ficar muito grande, posso extrair pra `BulkReelsActionsBar.tsx` numa próxima iteração.
 
-**Sem mudanças** em: schema do banco, lista de grupos musculares, tipos do `ReelDraft` (a não ser ajuste mínimo), página do aluno `Reels.tsx`.
+**Sem mudanças em:** banco, edge function, RLS, página do aluno, `EditReelModal`, `MuscleGroupMultiSelect`, `ReelsBatchUpload`.
 
