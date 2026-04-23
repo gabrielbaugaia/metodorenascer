@@ -936,16 +936,60 @@ export default function AdminReels() {
                         <Badge variant="outline" className="text-[10px] bg-background/80">Desativado</Badge>
                       )}
                     </div>
-                    <div className="absolute inset-0 bg-background/90 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
-                      <Button size="sm" variant="outline" onClick={() => openEdit(reel)} className="w-full">
-                        <Pencil className="h-3 w-3 mr-1" /> Editar
+                  </div>
+                  <div className="p-2 space-y-1.5">
+                    <p className="text-xs font-medium line-clamp-2">{reel.title}</p>
+                    {groups.length > 0 && (
+                      <p className="text-[10px] text-muted-foreground line-clamp-1">
+                        {groups.join(" • ")}
+                      </p>
+                    )}
+                    {/* Toolbar sempre visível — mobile e desktop */}
+                    <div className="grid grid-cols-4 gap-1 pt-1">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => openEdit(reel)}
+                        className="h-7 w-full"
+                        title="Editar"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => togglePublish(reel)} className="w-full">
-                        {reel.is_published ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
-                        {reel.is_published ? "Desativar" : "Ativar"}
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => handleSingleAi(reel)}
+                        disabled={singleAiId === reel.id}
+                        className="h-7 w-full"
+                        title="Reescrever com IA"
+                      >
+                        {singleAiId === reel.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5" />
+                        )}
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => setDeleteId(reel.id)} className="w-full">
-                        <Trash2 className="h-3 w-3 mr-1" /> Excluir
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => togglePublish(reel)}
+                        className="h-7 w-full"
+                        title={reel.is_published ? "Desativar" : "Ativar"}
+                      >
+                        {reel.is_published ? (
+                          <EyeOff className="h-3.5 w-3.5" />
+                        ) : (
+                          <Eye className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => setDeleteId(reel.id)}
+                        className="h-7 w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Excluir"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
