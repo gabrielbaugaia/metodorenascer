@@ -1,64 +1,51 @@
 
 
-## Reels Admin v5 — paginação real, "carregar mais" e edição rápida individual
+## Reels Admin v6 — Infinite scroll com sentinela IntersectionObserver
 
-Três problemas resolvidos: (1) só aparecem 50 vídeos dos 197 que existem, (2) selecionar/editar individualmente está confuso (ações escondidas no hover), (3) edição rápida com IA por vídeo único só existia via "reescrever em lote de 1".
+Substituir o botão "Carregar mais 48" por carregamento automático ao rolar, mantendo o botão "Carregar todos os restantes" como atalho opcional e a contagem real "X de 197".
 
-### 1. Paginação real — ver e gerenciar todos os 197 vídeos
+### Comportamento
 
-Hoje a query trava em `range(0, 49)`. Mudanças:
+- Ao chegar a ~400px do fim da grid, dispara `loadMore()` automaticamente sem clique
+- Indicador visual no rodapé enquanto carrega: spinner + "Carregando mais 48…"
+- Mensagem final permanece: "Todos os 197 vídeos carregados"
+- Botão **"Carregar todos os restantes"** continua disponível ao lado do indicador (útil para preparar seleção global em poucos cliques sem rolar 197)
+- Contador "Mostrando N de 197" persiste no header da seção (já existe)
 
-- Trocar `PAGE_SIZE` para **48** por página (múltiplo da grid 2/3/4/6 colunas) e adicionar suporte a paginação cumulativa
-- Buscar `count: 'exact'` na query pra mostrar contador real ("Mostrando 48 de 197")
-- Botão **"Carregar mais 48"** abaixo da grid que faz append do próximo lote (não substitui)
-- Quando todos foram carregados, botão some e mostra "Todos os 197 vídeos carregados"
-- Botão extra **"Carregar todos"** ao lado, que puxa o restante de uma vez (até 1000) — útil pra ações em lote globais
-- Filtros (busca/categoria/status/ordenação) resetam pra página 0 automaticamente
+### Implementação técnica
 
-### 2. "Selecionar todos" agora cobre a base inteira, não só a tela
+Em `src/pages/admin/AdminReels.tsx`:
 
-Hoje `toggleSelectAll` só seleciona o que está visível na tela. Adicionar:
+1. **Sentinela DOM**: criar `<div ref={sentinelRef} />` logo abaixo da grid de cards publicados, antes do bloco de rodapé.
 
-- Botão **"Selecionar todos os 197"** ao lado do "Selecionar todos da página"
-- Ele faz uma query separada só com IDs (`select id`) usando os mesmos filtros aplicados, sem `range`
-- Mostra toast "197 vídeos selecionados" e marca todos no `selectedIds`
-- Mesma barra de ações em lote já existente passa a operar sobre todos
+2. **Hook IntersectionObserver** dentro de `useEffect`:
+   - Observa `sentinelRef.current` com `rootMargin: "400px"` e `threshold: 0`
+   - Quando `entry.isIntersecting === true` E `!loadingMore` E `!loading` E `reels.length < total`, chama `loadMore()`
+   - Cleanup: `observer.disconnect()` no return do effect
+   - Dependências: `[loadingMore, loading, reels.length, total]`
 
-### 3. Ações individuais sempre visíveis (não só no hover)
+3. **Guards adicionais em `loadMore`**:
+   - Já tem `if (loadingMore || loading) return` 
+   - Adicionar `if (reels.length >= total) return` pra evitar disparo duplicado quando o observer reage antes do estado atualizar
 
-Hoje os botões "Editar / Ativar / Excluir" só aparecem ao passar o mouse. No mobile (430px viewport, sem hover) isso fica inacessível. Mudanças no card:
+4. **Substituir o bloco JSX atual** (linhas 1002-1026):
+   - Remover o `<Button>` "Carregar mais N"
+   - Manter sentinela + indicador de loading inline (spinner + texto) quando `loadingMore`
+   - Manter o `<Button variant="ghost">` "Carregar todos os restantes" como secundário
+   - Mensagem "Todos carregados" permanece igual
 
-- Remover o overlay `opacity-0 group-hover:opacity-100`
-- Adicionar embaixo da thumb uma **mini-toolbar sempre visível** com 4 ícone-botões compactos:
-  - ✏️ **Editar** (abre `EditReelModal` — já tem todos os campos: título, descrição, grupos, categoria, toggle mostrar)
-  - ✨ **IA** (botão novo) — baixa o vídeo, captura frames, chama `reels-suggest-title` (full mode), atualiza o registro. Mostra spinner no botão durante o processo. Toast "Atualizado pela IA"
-  - 👁/🚫 **Ativar/Desativar** (toggle visual rápido)
-  - 🗑 **Excluir** (com confirmação)
-- Ícones com `h-3.5 w-3.5`, padding mínimo, tooltip no hover, layout `flex justify-between` ou grid de 4 colunas
+5. **Reset do observer ao trocar filtros**: já é automático, pois `load()` é chamado com `append=false` quando filtros mudam, o que reseta `reels` e o observer dispara naturalmente se a nova lista couber e ainda houver mais.
 
-### 4. Modal de edição: adicionar botões de IA dentro
+### Edge cases tratados
 
-No `EditReelModal.tsx`, adicionar acima do título 2 botões:
-- **"Reescrever tudo com IA"** — preenche título + descrição + grupos automaticamente nos campos do form (admin ainda confirma com Salvar)
-- **"Gerar só descrição"** — preenche só o textarea de descrição
+- **Filtros que retornam <48 resultados**: `reels.length >= total` impede disparo
+- **Tela grande sem scroll**: `rootMargin: 400px` faz a sentinela aparecer no viewport inicial → dispara `loadMore` automaticamente até preencher (comportamento desejado)
+- **Carregar todos**: ao clicar, `reels.length >= total` vira true e o observer para de disparar
+- **Performance**: observer é único, criado uma vez por mudança de dependências; sem listeners de scroll manuais
 
-Assim o admin abre o modal de qualquer vídeo, pode rodar IA, ajustar manualmente o que quiser, e salvar. Fluxo de edição individual completo num único lugar.
+### Arquivos editados
 
-### Detalhes técnicos
+- `src/pages/admin/AdminReels.tsx` — adicionar `sentinelRef`, `useEffect` do IntersectionObserver, refatorar JSX do rodapé da grid
 
-**Arquivos editados:**
-- `src/pages/admin/AdminReels.tsx`:
-  - Estado `page: number`, `total: number`, `loadingMore: boolean`
-  - `load()` aceita `append: boolean` e usa `.range(page * PAGE_SIZE, (page+1)*PAGE_SIZE - 1)` + `select(..., { count: 'exact' })`
-  - `loadMore()` incrementa `page` e faz append
-  - `loadAll()` busca o restante até total
-  - `selectAllGlobal()` faz query separada de IDs
-  - Card refatorado: remover overlay, adicionar toolbar inline, novo handler `handleSingleAi(reel)` reusando lógica do bulk
-
-- `src/components/admin/EditReelModal.tsx`:
-  - Adicionar prop opcional `videoUrl?: string` (pra IA poder baixar e processar)
-  - Estado `aiBusy: 'full' | 'desc' | null`
-  - 2 botões no topo do modal + handlers `handleAiFull` e `handleAiDesc` que preenchem os campos do form (não salvam direto)
-
-**Sem mudanças em:** banco, RLS (já permite admin ler tudo), edge function, página do aluno, `ReelsBatchUpload`, `ReelCard` (esse é só do upload).
+**Sem mudanças em:** banco, RLS, edge functions, paginação backend (continua `range` de 48), `EditReelModal`, `ReelCard`, `ReelsBatchUpload`, página do aluno.
 
