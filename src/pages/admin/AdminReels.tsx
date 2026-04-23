@@ -14,6 +14,7 @@ import { MuscleGroupMultiSelect } from "@/components/admin/MuscleGroupMultiSelec
 import { MUSCLE_GROUPS } from "@/lib/muscleGroups";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getSWVersion, APP_VERSION } from "@/lib/appVersion";
 import {
   Trash2,
   Eye,
