@@ -675,18 +675,45 @@ export default function AdminReels() {
             </SelectContent>
           </Select>
           {filtered.length > 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              onClick={toggleSelectAll}
-              className="shrink-0"
-            >
-              <CheckSquare className="h-4 w-4 mr-2" />
-              {allSelected ? "Desmarcar todos" : "Selecionar todos"}
-            </Button>
+            <div className="flex gap-2 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="default"
+                onClick={toggleSelectAll}
+                title="Seleciona apenas o que está visível abaixo"
+              >
+                <CheckSquare className="h-4 w-4 mr-2" />
+                {allSelected ? "Desmarcar página" : "Selecionar página"}
+              </Button>
+              {total > filtered.length && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  onClick={selectAllGlobal}
+                  disabled={bulkBusy === "selectAll"}
+                  title="Seleciona todos os vídeos que correspondem aos filtros atuais"
+                >
+                  {bulkBusy === "selectAll" ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckSquare className="h-4 w-4 mr-2" />
+                  )}
+                  Selecionar todos os {total}
+                </Button>
+              )}
+            </div>
           )}
         </div>
+
+        {/* Contador */}
+        {!loading && total > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Mostrando <span className="font-medium text-foreground">{reels.length}</span> de{" "}
+            <span className="font-medium text-foreground">{total}</span> vídeo(s)
+          </p>
+        )}
 
         {/* Barra de ações em lote */}
         {someSelected && (
