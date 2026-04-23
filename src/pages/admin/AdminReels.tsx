@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -6,11 +6,30 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ReelsBatchUpload } from "@/components/admin/ReelsBatchUpload";
 import { EditReelModal, EditableReel } from "@/components/admin/EditReelModal";
+import { MuscleGroupMultiSelect } from "@/components/admin/MuscleGroupMultiSelect";
+import { MUSCLE_GROUPS } from "@/lib/muscleGroups";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Trash2, Eye, EyeOff, Search, Plus, Film, Pencil } from "lucide-react";
+import {
+  Trash2,
+  Eye,
+  EyeOff,
+  Search,
+  Plus,
+  Film,
+  Pencil,
+  Sparkles,
+  FileText,
+  Dumbbell,
+  Loader2,
+  X,
+  CheckSquare,
+} from "lucide-react";
+import { captureKeyFrames } from "@/lib/reelsVideoUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +83,21 @@ function readStoredSort(): SortKey {
   return "created_desc";
 }
 
+interface AiResponse {
+  title?: string;
+  description?: string;
+  muscle_groups?: string[];
+}
+
+/** Baixa um vídeo público do storage e retorna como File para reuso em captureKeyFrames */
+async function fetchVideoAsFile(url: string, fallbackName = "reel.mp4"): Promise<File> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+  const name = url.split("/").pop()?.split("?")[0] || fallbackName;
+  return new File([blob], name, { type: blob.type || "video/mp4" });
+}
+
 export default function AdminReels() {
   const [reels, setReels] = useState<Reel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +109,15 @@ export default function AdminReels() {
   const [sortKey, setSortKey] = useState<SortKey>(readStoredSort);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingReel, setEditingReel] = useState<EditableReel | null>(null);
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState<null | "ai" | "desc" | "muscles" | "publish" | "unpublish" | "delete">(null);
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [bulkMuscles, setBulkMuscles] = useState<string[]>([]);
+  const [bulkMusclesMode, setBulkMusclesMode] = useState<"replace" | "append">("append");
+  const [musclesPopoverOpen, setMusclesPopoverOpen] = useState(false);
 
   // Persiste critério de ordenação independente dos filtros
   useEffect(() => {
@@ -91,9 +134,7 @@ export default function AdminReels() {
           "id, title, description, show_description, category, muscle_group, muscle_groups, video_url, thumbnail_url, is_published, created_at, duration_seconds, audio_removed"
         );
 
-      // Filtros server-side
       if (search.trim()) {
-        // ilike escape: % e _ tratados como literais
         const safe = search.trim().replace(/[%_]/g, (c) => `\\${c}`);
         query = query.ilike("title", `%${safe}%`);
       }
@@ -104,7 +145,6 @@ export default function AdminReels() {
         query = query.eq("is_published", filterStatus === "active");
       }
 
-      // Ordenação
       switch (sortKey) {
         case "created_asc":
           query = query.order("created_at", { ascending: true });
@@ -122,7 +162,6 @@ export default function AdminReels() {
 
       const { data, error } = await query.range(0, PAGE_SIZE - 1);
       if (error) {
-        // RLS / permissão -> mensagem clara
         const isPermission = /permission|rls|denied|policy/i.test(error.message);
         setLoadError(isPermission ? "Sem permissão para listar reels." : "Erro ao carregar reels");
         if (!isPermission) toast.error("Erro ao carregar reels");
@@ -144,8 +183,39 @@ export default function AdminReels() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, filterCategory, filterStatus, sortKey]);
 
-  // filtros já aplicados na query — usamos resultado direto
+  // Limpa seleções que não estão mais visíveis (após filtro/recarga)
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const visible = new Set(reels.map((r) => r.id));
+      let changed = false;
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (visible.has(id)) next.add(id);
+        else changed = true;
+      });
+      return changed ? next : prev;
+    });
+  }, [reels]);
+
   const filtered = reels;
+  const allSelected = filtered.length > 0 && filtered.every((r) => selectedIds.has(r.id));
+  const someSelected = selectedIds.size > 0;
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filtered.map((r) => r.id)));
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
 
   const togglePublish = async (reel: Reel) => {
     const { error } = await supabase
@@ -164,11 +234,9 @@ export default function AdminReels() {
     if (!deleteId) return;
     const target = reels.find((r) => r.id === deleteId);
 
-    // Try to remove storage object too (best-effort)
     if (target?.video_url) {
       try {
         const url = new URL(target.video_url);
-        // Path inside the bucket comes after /reels-videos/
         const marker = "/reels-videos/";
         const idx = url.pathname.indexOf(marker);
         if (idx >= 0) {
@@ -204,6 +272,230 @@ export default function AdminReels() {
           ? [reel.muscle_group]
           : [],
     });
+  };
+
+  // ==================== AÇÕES EM LOTE ====================
+
+  const selectedReels = useMemo(
+    () => reels.filter((r) => selectedIds.has(r.id)),
+    [reels, selectedIds]
+  );
+
+  const handleBulkRewriteAi = async () => {
+    if (!selectedReels.length) return;
+    setBulkBusy("ai");
+    setBulkProgress({ current: 0, total: selectedReels.length });
+    let ok = 0;
+    let fail = 0;
+    for (let i = 0; i < selectedReels.length; i++) {
+      const reel = selectedReels[i];
+      setBulkProgress({ current: i + 1, total: selectedReels.length });
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const file = await fetchVideoAsFile(reel.video_url);
+        // eslint-disable-next-line no-await-in-loop
+        const { frames } = await captureKeyFrames(file);
+        // eslint-disable-next-line no-await-in-loop
+        const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+          body: {
+            frames,
+            category: reel.category,
+            muscleGroups:
+              reel.muscle_groups && reel.muscle_groups.length
+                ? reel.muscle_groups
+                : reel.muscle_group
+                ? [reel.muscle_group]
+                : undefined,
+          },
+        });
+        if (error) throw error;
+        const result = data as AiResponse;
+        const update: Record<string, unknown> = {};
+        if (result.title) update.title = result.title;
+        if (result.description) {
+          update.description = result.description;
+          update.show_description = true;
+        }
+        if (Array.isArray(result.muscle_groups) && result.muscle_groups.length > 0) {
+          update.muscle_groups = result.muscle_groups;
+          update.muscle_group = result.muscle_groups[0];
+        }
+        if (Object.keys(update).length === 0) {
+          fail++;
+          continue;
+        }
+        // eslint-disable-next-line no-await-in-loop
+        const { error: upErr } = await supabase.from("reels_videos").update(update).eq("id", reel.id);
+        if (upErr) throw upErr;
+        ok++;
+      } catch (err) {
+        console.error("bulk ai err", reel.id, err);
+        fail++;
+      }
+    }
+    setBulkBusy(null);
+    setBulkProgress({ current: 0, total: 0 });
+    if (fail === 0) toast.success(`${ok} vídeo(s) atualizados pela IA`);
+    else toast.warning(`${ok} atualizados, ${fail} falharam`);
+    load();
+  };
+
+  const handleBulkGenerateDescAi = async () => {
+    if (!selectedReels.length) return;
+    setBulkBusy("desc");
+    setBulkProgress({ current: 0, total: selectedReels.length });
+    let ok = 0;
+    let fail = 0;
+    for (let i = 0; i < selectedReels.length; i++) {
+      const reel = selectedReels[i];
+      setBulkProgress({ current: i + 1, total: selectedReels.length });
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const file = await fetchVideoAsFile(reel.video_url);
+        // eslint-disable-next-line no-await-in-loop
+        const { frames } = await captureKeyFrames(file);
+        // eslint-disable-next-line no-await-in-loop
+        const { data, error } = await supabase.functions.invoke("reels-suggest-title", {
+          body: {
+            frames,
+            mode: "description_only",
+            category: reel.category,
+            muscleGroups:
+              reel.muscle_groups && reel.muscle_groups.length
+                ? reel.muscle_groups
+                : reel.muscle_group
+                ? [reel.muscle_group]
+                : undefined,
+            currentTitle: reel.title || undefined,
+          },
+        });
+        if (error) throw error;
+        const result = data as AiResponse;
+        if (!result.description) {
+          fail++;
+          continue;
+        }
+        // eslint-disable-next-line no-await-in-loop
+        const { error: upErr } = await supabase
+          .from("reels_videos")
+          .update({ description: result.description, show_description: true })
+          .eq("id", reel.id);
+        if (upErr) throw upErr;
+        ok++;
+      } catch (err) {
+        console.error("bulk desc err", reel.id, err);
+        fail++;
+      }
+    }
+    setBulkBusy(null);
+    setBulkProgress({ current: 0, total: 0 });
+    if (fail === 0) toast.success(`Descrição gerada para ${ok} vídeo(s)`);
+    else toast.warning(`${ok} atualizados, ${fail} falharam`);
+    load();
+  };
+
+  const handleBulkSetMuscles = async () => {
+    if (!selectedReels.length) return;
+    if (!bulkMuscles.length && bulkMusclesMode === "replace") {
+      toast.warning("Selecione pelo menos 1 grupo (ou use modo Adicionar)");
+      return;
+    }
+    setBulkBusy("muscles");
+    setBulkProgress({ current: 0, total: selectedReels.length });
+    let ok = 0;
+    let fail = 0;
+    for (let i = 0; i < selectedReels.length; i++) {
+      const reel = selectedReels[i];
+      setBulkProgress({ current: i + 1, total: selectedReels.length });
+      try {
+        let nextGroups: string[];
+        if (bulkMusclesMode === "replace") {
+          nextGroups = [...bulkMuscles];
+        } else {
+          const current =
+            reel.muscle_groups && reel.muscle_groups.length
+              ? reel.muscle_groups
+              : reel.muscle_group
+              ? [reel.muscle_group]
+              : [];
+          const merged = new Set([...current, ...bulkMuscles]);
+          nextGroups = Array.from(merged);
+        }
+        // eslint-disable-next-line no-await-in-loop
+        const { error: upErr } = await supabase
+          .from("reels_videos")
+          .update({ muscle_groups: nextGroups, muscle_group: nextGroups[0] ?? null })
+          .eq("id", reel.id);
+        if (upErr) throw upErr;
+        ok++;
+      } catch (err) {
+        console.error("bulk muscles err", reel.id, err);
+        fail++;
+      }
+    }
+    setBulkBusy(null);
+    setBulkProgress({ current: 0, total: 0 });
+    setMusclesPopoverOpen(false);
+    setBulkMuscles([]);
+    if (fail === 0) toast.success(`Grupos atualizados em ${ok} vídeo(s)`);
+    else toast.warning(`${ok} atualizados, ${fail} falharam`);
+    load();
+  };
+
+  const handleBulkTogglePublish = async (publish: boolean) => {
+    if (!selectedReels.length) return;
+    setBulkBusy(publish ? "publish" : "unpublish");
+    const ids = selectedReels.map((r) => r.id);
+    const { error } = await supabase
+      .from("reels_videos")
+      .update({ is_published: publish })
+      .in("id", ids);
+    setBulkBusy(null);
+    if (error) {
+      toast.error("Falha ao atualizar status");
+    } else {
+      toast.success(`${ids.length} vídeo(s) ${publish ? "ativados" : "desativados"}`);
+      load();
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedReels.length) return;
+    setBulkBusy("delete");
+    setBulkProgress({ current: 0, total: selectedReels.length });
+
+    // Remove storage files (best-effort, em paralelo limitado a 3)
+    const storagePaths: string[] = [];
+    for (const reel of selectedReels) {
+      try {
+        const url = new URL(reel.video_url);
+        const marker = "/reels-videos/";
+        const idx = url.pathname.indexOf(marker);
+        if (idx >= 0) {
+          storagePaths.push(decodeURIComponent(url.pathname.slice(idx + marker.length)));
+        }
+      } catch { /* noop */ }
+    }
+    if (storagePaths.length) {
+      try {
+        await supabase.storage.from("reels-videos").remove(storagePaths);
+      } catch (err) {
+        console.warn("falha ao remover arquivos do storage em lote", err);
+      }
+    }
+
+    const ids = selectedReels.map((r) => r.id);
+    const { error } = await supabase.from("reels_videos").delete().in("id", ids);
+    setBulkBusy(null);
+    setBulkProgress({ current: 0, total: 0 });
+    setConfirmBulkDelete(false);
+    if (error) {
+      toast.error("Falha ao excluir em lote");
+    } else {
+      toast.success(`${ids.length} vídeo(s) excluídos`);
+      clearSelection();
+      load();
+    }
   };
 
   return (
@@ -267,7 +559,169 @@ export default function AdminReels() {
               ))}
             </SelectContent>
           </Select>
+          {filtered.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="default"
+              onClick={toggleSelectAll}
+              className="shrink-0"
+            >
+              <CheckSquare className="h-4 w-4 mr-2" />
+              {allSelected ? "Desmarcar todos" : "Selecionar todos"}
+            </Button>
+          )}
         </div>
+
+        {/* Barra de ações em lote */}
+        {someSelected && (
+          <Card className="p-3 border-primary/40 bg-primary/5 sticky top-2 z-20">
+            <div className="flex flex-wrap items-center gap-2 justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="default">{selectedIds.size} selecionado(s)</Badge>
+                <Button variant="ghost" size="sm" onClick={clearSelection} className="h-7 text-xs">
+                  <X className="h-3 w-3 mr-1" /> Limpar
+                </Button>
+                {bulkBusy && bulkProgress.total > 0 && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {bulkProgress.current} de {bulkProgress.total}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!!bulkBusy}
+                  onClick={handleBulkRewriteAi}
+                  className="h-8 text-xs"
+                >
+                  {bulkBusy === "ai" ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3 mr-1" />
+                  )}
+                  Reescrever com IA
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!!bulkBusy}
+                  onClick={handleBulkGenerateDescAi}
+                  className="h-8 text-xs"
+                >
+                  {bulkBusy === "desc" ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <FileText className="h-3 w-3 mr-1" />
+                  )}
+                  Gerar descrição
+                </Button>
+                <Popover open={musclesPopoverOpen} onOpenChange={setMusclesPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button size="sm" variant="outline" disabled={!!bulkBusy} className="h-8 text-xs">
+                      {bulkBusy === "muscles" ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Dumbbell className="h-3 w-3 mr-1" />
+                      )}
+                      Grupos musculares
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] space-y-3" align="end">
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium">Modo</p>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={bulkMusclesMode === "append" ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 text-xs flex-1"
+                          onClick={() => setBulkMusclesMode("append")}
+                        >
+                          Adicionar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={bulkMusclesMode === "replace" ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 text-xs flex-1"
+                          onClick={() => setBulkMusclesMode("replace")}
+                        >
+                          Substituir
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        {bulkMusclesMode === "append"
+                          ? "Adiciona aos grupos já existentes (sem duplicar)"
+                          : "Sobrescreve os grupos atuais"}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium">Grupos</p>
+                      <MuscleGroupMultiSelect
+                        value={bulkMuscles}
+                        onChange={setBulkMuscles}
+                        muscleGroups={[...MUSCLE_GROUPS]}
+                        placeholder="Selecione..."
+                        className="w-full"
+                        compact
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="w-full h-8 text-xs"
+                      onClick={handleBulkSetMuscles}
+                      disabled={!!bulkBusy || (bulkMusclesMode === "append" && !bulkMuscles.length)}
+                    >
+                      Aplicar a {selectedIds.size} vídeo(s)
+                    </Button>
+                  </PopoverContent>
+                </Popover>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!!bulkBusy}
+                  onClick={() => handleBulkTogglePublish(true)}
+                  className="h-8 text-xs"
+                >
+                  {bulkBusy === "publish" ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Eye className="h-3 w-3 mr-1" />
+                  )}
+                  Ativar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!!bulkBusy}
+                  onClick={() => handleBulkTogglePublish(false)}
+                  className="h-8 text-xs"
+                >
+                  {bulkBusy === "unpublish" ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <EyeOff className="h-3 w-3 mr-1" />
+                  )}
+                  Desativar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={!!bulkBusy}
+                  onClick={() => setConfirmBulkDelete(true)}
+                  className="h-8 text-xs"
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Excluir
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {loadError && (
           <Card className="p-4 border-destructive/50 bg-destructive/5">
@@ -293,8 +747,12 @@ export default function AdminReels() {
                   : reel.muscle_group
                   ? [reel.muscle_group]
                   : [];
+              const isSelected = selectedIds.has(reel.id);
               return (
-                <Card key={reel.id} className="overflow-hidden group">
+                <Card
+                  key={reel.id}
+                  className={`overflow-hidden group ${isSelected ? "ring-2 ring-primary" : ""}`}
+                >
                   <div className="relative aspect-[9/16] bg-muted">
                     {reel.thumbnail_url ? (
                       <img
@@ -312,6 +770,22 @@ export default function AdminReels() {
                         preload="metadata"
                       />
                     )}
+
+                    {/* Checkbox de seleção — sempre visível */}
+                    <div
+                      className="absolute top-1 right-1 z-10 bg-background/85 backdrop-blur-sm rounded-md p-1 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(reel.id);
+                      }}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelect(reel.id)}
+                        aria-label="Selecionar vídeo"
+                      />
+                    </div>
+
                     <div className="absolute top-1 left-1 flex flex-col gap-1">
                       <Badge variant="secondary" className="text-[10px]">
                         {CATEGORY_LABEL[reel.category] ?? reel.category}
@@ -369,6 +843,27 @@ export default function AdminReels() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selectedIds.size} vídeo(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Todos os vídeos selecionados e seus arquivos
+              serão removidos permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir tudo
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
