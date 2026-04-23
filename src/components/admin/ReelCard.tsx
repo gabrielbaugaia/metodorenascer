@@ -47,10 +47,12 @@ const CATEGORY_LABEL: Record<ReelCategory, string> = {
 
 export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onGenerateDescription, onStripAudio }: ReelCardProps) {
   const isBusy = ["suggesting", "describing", "stripping", "uploading"].includes(draft.status);
+  const showOverlay = draft.showDescription && draft.description.trim().length > 0;
+
   return (
     <Card className="overflow-hidden border-border bg-card">
       <div className="flex flex-col md:flex-row gap-4 p-4">
-        {/* Preview vertical 9:16 */}
+        {/* Preview vertical 9:16 — overlay idêntico ao da página /reels do aluno */}
         <div className="relative w-full md:w-[180px] shrink-0">
           <div className="relative aspect-[9/16] rounded-md overflow-hidden bg-muted">
             <video
@@ -66,6 +68,12 @@ export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onGenerate
               <div className="absolute top-1 left-1 right-1 flex items-center gap-1 bg-destructive/90 text-destructive-foreground text-[10px] px-1.5 py-0.5 rounded">
                 <AlertCircle className="h-3 w-3" />
                 Não vertical
+              </div>
+            )}
+            {/* Overlay de descrição — mesmas classes do ReelTile em src/pages/Reels.tsx */}
+            {showOverlay && (
+              <div className="absolute left-0 right-0 bottom-0 bg-gradient-to-t from-background/95 to-transparent p-3">
+                <p className="text-xs text-foreground line-clamp-3">{draft.description}</p>
               </div>
             )}
             {draft.status === "uploading" && (
@@ -85,23 +93,40 @@ export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onGenerate
         {/* Form */}
         <div className="flex-1 min-w-0 space-y-3">
           <div>
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
               <Label className="text-xs">Título</Label>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={onSuggestTitle}
-                disabled={isBusy}
-                className="h-7 text-xs"
-              >
-                {draft.status === "suggesting" ? (
-                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                ) : (
-                  <Sparkles className="h-3 w-3 mr-1" />
-                )}
-                Reescrever com IA
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={onSuggestTitle}
+                  disabled={isBusy}
+                  className="h-7 text-xs"
+                >
+                  {draft.status === "suggesting" ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3 mr-1" />
+                  )}
+                  Reescrever com IA
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={onGenerateDescription}
+                  disabled={isBusy}
+                  className="h-7 text-xs"
+                >
+                  {draft.status === "describing" ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <FileText className="h-3 w-3 mr-1" />
+                  )}
+                  Gerar descrição
+                </Button>
+              </div>
             </div>
             <Input
               value={draft.title}
@@ -171,24 +196,7 @@ export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onGenerate
 
           {draft.showDescription && (
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <Label className="text-xs">Descrição (até 200 caracteres)</Label>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={onGenerateDescription}
-                  disabled={isBusy}
-                  className="h-7 text-xs"
-                >
-                  {draft.status === "describing" ? (
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                  ) : (
-                    <FileText className="h-3 w-3 mr-1" />
-                  )}
-                  Gerar descrição
-                </Button>
-              </div>
+              <Label className="text-xs mb-1 block">Descrição (até 200 caracteres)</Label>
               <Textarea
                 value={draft.description}
                 onChange={(e) => onChange({ description: e.target.value.slice(0, 200) })}
@@ -198,25 +206,6 @@ export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onGenerate
                 disabled={isBusy}
               />
               <p className="text-[10px] text-muted-foreground text-right mt-1">{draft.description.length}/200</p>
-
-              {draft.description.trim() && (
-                <div className="mt-2">
-                  <p className="text-[10px] text-muted-foreground mb-1">Preview de como o aluno verá:</p>
-                  <div className="relative aspect-[9/16] max-w-[140px] rounded-md overflow-hidden bg-muted/60 border border-border">
-                    <video
-                      src={draft.previewUrl}
-                      className="absolute inset-0 w-full h-full object-cover opacity-70"
-                      muted
-                      playsInline
-                    />
-                    <div className="absolute left-0 right-0 bottom-0 bg-gradient-to-t from-background/95 to-transparent p-2">
-                      <p className="text-[10px] text-foreground line-clamp-3 leading-snug">
-                        {draft.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
