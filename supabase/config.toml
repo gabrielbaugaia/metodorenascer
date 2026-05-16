@@ -141,3 +141,7 @@ verify_jwt = true
 
 [functions.send-welcome-credentials]
 verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
