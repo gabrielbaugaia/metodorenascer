@@ -3121,6 +3121,137 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_contacts: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          opt_in_at: string | null
+          opt_out_at: string | null
+          phone_e164: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          wa_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          opt_in_at?: string | null
+          opt_out_at?: string | null
+          phone_e164: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          wa_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          opt_in_at?: string | null
+          opt_out_at?: string | null
+          phone_e164?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          wa_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_messages: {
+        Row: {
+          body: string | null
+          conversa_id: string | null
+          created_at: string
+          direction: string
+          from_phone: string | null
+          id: string
+          message_type: string
+          payload_json: Json
+          status: string | null
+          to_phone: string | null
+          user_id: string | null
+          wa_message_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          conversa_id?: string | null
+          created_at?: string
+          direction: string
+          from_phone?: string | null
+          id?: string
+          message_type?: string
+          payload_json?: Json
+          status?: string | null
+          to_phone?: string | null
+          user_id?: string | null
+          wa_message_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          conversa_id?: string | null
+          created_at?: string
+          direction?: string
+          from_phone?: string | null
+          id?: string
+          message_type?: string
+          payload_json?: Json
+          status?: string | null
+          to_phone?: string | null
+          user_id?: string | null
+          wa_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_conversa_id_fkey"
+            columns: ["conversa_id"]
+            isOneToOne: false
+            referencedRelation: "conversas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_webhook_events: {
+        Row: {
+          created_at: string
+          event_hash: string | null
+          id: string
+          payload_json: Json
+          processed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_hash?: string | null
+          id?: string
+          payload_json: Json
+          processed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_hash?: string | null
+          id?: string
+          payload_json?: Json
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
       workout_completions: {
         Row: {
           calories_burned: number | null

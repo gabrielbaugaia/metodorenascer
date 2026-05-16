@@ -1,33 +1,85 @@
+## ETAPA 1 — Banco de dados WhatsApp
 
+Criar apenas a fundação no banco. Sem frontend, sem Edge Functions, sem token. Migrations Supabase com RLS, índices e triggers.
 
-## Tirar admin da tela "Acesso Expirado"
+### Escopo
 
-### Diagnóstico
+Criar 3 tabelas novas em `public`, todas com RLS habilitada e policies coerentes com o padrão do projeto (admin via `has_role(auth.uid(), 'admin'::app_role)`; usuário enxerga apenas o que está vinculado ao próprio `user_id`).
 
-Confirmei no banco: `baugabriel@icloud.com` é **admin** (`user_roles.role = 'admin'`), assinatura `active`, sem bloqueio. Mas a página `/acesso-bloqueado` é **pública e não tem guard** — qualquer um que cair lá (cache, link antigo, redirect residual de outra sessão) vê a tela de bloqueio, mesmo sendo admin.
+**Importante:** o projeto liga FKs em `public.profiles(id)` (regra de arquitetura), não em `auth.users`. Vou seguir essa convenção, igual ao restante do schema.
 
-Ao recarregar o navegador no celular, o último estado de URL fica em `/acesso-bloqueado` e a tela aparece de novo, porque nada redireciona o admin pra fora.
+### Tabelas
 
-### Correção (`src/pages/AcessoBloqueado.tsx`)
+**1. `whatsapp_contacts`**
+- `id uuid pk default gen_random_uuid()`
+- `user_id uuid null references profiles(id) on delete set null`
+- `phone_e164 text not null unique`
+- `wa_id text null`
+- `display_name text null`
+- `opt_in_at timestamptz null`
+- `opt_out_at timestamptz null`
+- `status text not null default 'active'`
+- `created_at`, `updated_at` (com trigger `update_updated_at_column`)
 
-Adicionar uma verificação no topo do componente:
+**2. `whatsapp_messages`**
+- `id uuid pk default gen_random_uuid()`
+- `user_id uuid null references profiles(id) on delete set null`
+- `conversa_id uuid null references conversas(id) on delete set null`
+- `wa_message_id text unique null`
+- `direction text not null check (direction in ('inbound','outbound'))`
+- `from_phone text null`
+- `to_phone text null`
+- `message_type text not null default 'text'`
+- `body text null`
+- `payload_json jsonb not null default '{}'::jsonb`
+- `status text null`
+- `created_at timestamptz not null default now()`
 
-1. Importar `useEffect`, `useAdminCheck`, `useAuth`.
-2. No `useEffect`, assim que `isAdmin === true` → `navigate("/admin", { replace: true })`.
-3. Enquanto `authLoading || adminLoading`, mostrar um loader leve em vez do card de bloqueio (evita o "flash" da tela vermelha).
-4. Se não-admin e não-logado, comportamento atual permanece igual.
+**3. `whatsapp_webhook_events`**
+- `id uuid pk default gen_random_uuid()`
+- `event_hash text unique`
+- `payload_json jsonb not null`
+- `processed_at timestamptz null`
+- `created_at timestamptz not null default now()`
 
-Isso garante que:
-- Admin que cair em `/acesso-bloqueado` por qualquer motivo (link antigo, cache, refresh) é mandado pra `/admin` instantaneamente.
-- Aluno legítimo bloqueado continua vendo a tela como antes.
+### Índices
 
-### Bônus opcional (mesmo arquivo)
+- `whatsapp_contacts(user_id)`, `whatsapp_contacts(phone_e164)` (já único)
+- `whatsapp_messages(user_id)`, `(conversa_id)`, `(wa_message_id)`, `(created_at desc)`
+- `whatsapp_webhook_events(created_at desc)`, `(processed_at)`
 
-Como o admin sempre será redirecionado, o `replace: true` no `navigate` evita que o botão "voltar" do navegador traga ele pra essa tela de novo.
+### RLS
 
-### Arquivos editados
+- **whatsapp_contacts**
+  - Admin: ALL via `has_role(auth.uid(),'admin')`
+  - User SELECT: `auth.uid() = user_id`
+- **whatsapp_messages**
+  - Admin: ALL
+  - User SELECT: `auth.uid() = user_id`
+- **whatsapp_webhook_events**
+  - Admin: ALL
+  - Sem acesso para usuários comuns (dados brutos do webhook)
 
-- `src/pages/AcessoBloqueado.tsx` — adicionar guard de admin no topo
+Inserts/updates ficam por conta de service role (Edge Functions nas próximas etapas) — RLS bloqueia anon/authenticated por padrão.
 
-**Sem mudanças em:** roteador, `SubscriptionGuard`, `AdminGuard`, banco, RLS. Nenhum risco de afetar o fluxo de bloqueio dos alunos reais.
+### Triggers
 
+- `update_updated_at_column` em `whatsapp_contacts` (BEFORE UPDATE).
+- Tabelas `whatsapp_messages` e `whatsapp_webhook_events` não têm `updated_at` (imutáveis após gravação).
+
+### Fora do escopo desta etapa
+
+- Não criar Edge Functions.
+- Não tocar em `conversas` (a inclusão de `tipo='whatsapp'` no CHECK fica para Etapa 2, quando o webhook realmente precisar gravar lá).
+- Não mexer em frontend, secrets ou `profiles`.
+
+### Como validar após aplicar
+
+1. Em `Connectors → Lovable Cloud → View Backend`, conferir que existem as 3 tabelas com RLS habilitada.
+2. `select * from whatsapp_contacts limit 1;` retorna vazio sem erro.
+3. Tentar inserir como usuário autenticado comum deve falhar (RLS); admin consegue.
+4. `\d whatsapp_messages` mostra a FK para `conversas(id)` e o check de `direction`.
+
+### Arquivos
+
+- 1 migration nova criada via tool de migration (sem edição de código frontend).
