@@ -41,6 +41,7 @@ const AdminSuporteChats = lazy(() => import("./pages/admin/AdminSuporteChats"));
 const AdminMensagens = lazy(() => import("./pages/admin/AdminMensagens"));
 const AdminVideos = lazy(() => import("./pages/admin/AdminVideos"));
 const AdminExerciseGifs = lazy(() => import("./pages/admin/AdminExerciseGifs"));
+const AdminWhatsApp = lazy(() => import("./pages/admin/AdminWhatsApp"));
 const MeuPerfil = lazy(() => import("./pages/MeuPerfil"));
 const Indicacoes = lazy(() => import("./pages/Indicacoes"));
 const RedefinirSenha = lazy(() => import("./pages/RedefinirSenha"));
