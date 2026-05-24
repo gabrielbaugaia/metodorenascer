@@ -281,6 +281,7 @@ export default function AdminDashboard() {
     { title: "Planos Comerciais", icon: DollarSign, url: "/admin/commercial-plans" },
     { title: "Campanhas Trial", icon: Zap, url: "/admin/trial-campaigns" },
     { title: "Connector Docs", icon: FileText, url: "/admin/docs/conector-mobile" },
+    { title: "WhatsApp", icon: MessageCircle, url: "/admin/whatsapp" },
   ];
 
   return (
