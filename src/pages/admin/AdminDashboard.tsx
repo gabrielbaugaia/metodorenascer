@@ -27,7 +27,8 @@ import {
   Clock,
   Mail,
   Wallet,
-  Zap
+  Zap,
+  MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
