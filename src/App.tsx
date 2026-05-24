@@ -166,6 +166,7 @@ const App = () => {
             <Route path="/admin/suporte" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
             <Route path="/admin/suporte-chats" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
             <Route path="/admin/mensagens" element={<AdminGuard><AdminMensagens /></AdminGuard>} />
+            <Route path="/admin/whatsapp" element={<AdminGuard><AdminWhatsApp /></AdminGuard>} />
             <Route path="/admin/videos" element={<AdminGuard><AdminVideos /></AdminGuard>} />
             <Route path="/admin/gifs" element={<AdminGuard><AdminExerciseGifs /></AdminGuard>} />
             <Route path="/admin/reels" element={<AdminGuard><AdminReels /></AdminGuard>} />
