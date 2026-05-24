@@ -1,78 +1,133 @@
-## ETAPA 3 — `whatsapp-send` (envio via Cloud API da Meta)
+## ETAPA 4 — Painel admin de WhatsApp
 
-Criar a Edge Function que envia mensagens pelo WhatsApp Cloud API usando secrets do Supabase. Sem frontend nesta etapa — só o endpoint + persistência outbound.
+Criar UI para o admin (você) ver conversas recebidas pelo WhatsApp e responder direto pelo painel, usando a função `whatsapp-send` da Etapa 3.
 
 ### Escopo
 
-1 Edge Function nova: `supabase/functions/whatsapp-send/index.ts`
-+ 1 entrada em `supabase/config.toml`
-+ 2 secrets novos (via tool de secrets, com aprovação do user)
+Página nova `/admin/whatsapp` com layout de duas colunas (padrão chat):
+- **Coluna esquerda** — lista de contatos/conversas (mais recente primeiro)
+- **Coluna direita** — timeline da conversa selecionada + campo de resposta
 
-### Secrets necessários
+Sem mudanças no banco, sem novas Edge Functions. Apenas frontend consumindo:
+- `whatsapp_contacts` + `whatsapp_messages` (leitura via RLS admin)
+- `whatsapp-send` (envio)
+- Realtime em `whatsapp_messages` para mensagens novas chegarem ao vivo
 
-- `WHATSAPP_ACCESS_TOKEN` — token permanente do app da Meta (System User token)
-- `WHATSAPP_PHONE_NUMBER_ID` — ID do número WhatsApp Business (encontrado no painel da Meta)
+### Componentes/arquivos
 
-Token NUNCA vai pro frontend. Fica só no server.
+- `src/pages/admin/AdminWhatsApp.tsx` — página principal
+- Registro em `src/App.tsx`:
+  ```tsx
+  const AdminWhatsApp = lazy(() => import("./pages/admin/AdminWhatsApp"));
+  <Route path="/admin/whatsapp" element={<AdminGuard><AdminWhatsApp /></AdminGuard>} />
+  ```
+- Link no menu admin (procurar `ClientSidebar`/`Admin.tsx` e adicionar item "WhatsApp" com ícone `MessageCircle` apontando pra `/admin/whatsapp`)
 
-### Autenticação da função
+### Layout
 
-`verify_jwt = true`. Apenas chamadores autenticados podem disparar envio. Dentro da função, valido também que o user é **admin** via `has_role` (reaproveitando o padrão `requireAdminOrService` do `_shared/auth.ts`). Aluno não envia mensagem em nome do número oficial.
-
-### Contrato da requisição
-
-`POST /functions/v1/whatsapp-send`
-```json
-{
-  "to": "+5511999999999",        // obrigatório, E.164
-  "user_id": "uuid-opcional",    // se omitido, tenta resolver pelo telefone
-  "conversa_id": "uuid-opcional",
-  "type": "text",                // por enquanto só "text"
-  "body": "Olá, tudo bem?"       // obrigatório quando type=text
-}
+```text
+┌─────────────────────────────────────────────────────────┐
+│ WhatsApp                                                │
+├──────────────┬──────────────────────────────────────────┤
+│ [busca]      │  Nome / +55 11 9...                      │
+│              │  vinculado a: aluno X (se houver)        │
+│ ▸ Contato A  ├──────────────────────────────────────────┤
+│   última msg │                                          │
+│   há 2 min   │   [bolha inbound]                        │
+│ ▸ Contato B  │           [bolha outbound]               │
+│   ...        │                                          │
+│              │                                          │
+│              ├──────────────────────────────────────────┤
+│              │  [textarea]                  [Enviar]    │
+└──────────────┴──────────────────────────────────────────┘
 ```
 
-Validação com Zod (mesmo padrão das outras functions). Erros → 400 com mensagem clara.
+Mobile: lista vira tela cheia, ao tocar abre a conversa em rota empilhada (mesma página com estado).
 
-### Fluxo
+### Dados — coluna esquerda
 
-1. Validar JWT + admin (`requireAdminOrService`).
-2. Validar body (Zod).
-3. Chamar Cloud API:
-   ```
-   POST https://graph.facebook.com/v21.0/{PHONE_NUMBER_ID}/messages
-   Authorization: Bearer {WHATSAPP_ACCESS_TOKEN}
-   { messaging_product: "whatsapp", to, type: "text", text: { body } }
-   ```
-4. Capturar `messages[0].id` da resposta (= `wa_message_id`).
-5. Resolver `user_id` se não veio (busca em `profiles.whatsapp`/`telefone`, mesma lógica do webhook).
-6. Resolver `conversa_id` se não veio (`ensureConversa` tipo `whatsapp`).
-7. Inserir em `whatsapp_messages`:
-   - `direction='outbound'`, `from_phone` = display do número, `to_phone`, `body`, `payload_json` = resposta da API, `status='sent'` (ou `failed` em erro), `wa_message_id`.
-8. `appendConversaMessage` com `role:'assistant', channel:'whatsapp'` para refletir no painel de conversas.
-9. Retornar `{ ok: true, wa_message_id, conversa_id }`.
+Query inicial: agrupar `whatsapp_messages` por `from_phone`/`to_phone` para listar contatos com última mensagem:
 
-Erros da Meta (token inválido, número fora da janela de 24h, etc.) → gravar registro `status='failed'` + `payload_json` com o erro, e retornar 502 com `{ ok:false, error }`.
+```sql
+-- pseudo, feito no client em 2 selects:
+select * from whatsapp_contacts order by updated_at desc nulls last limit 100;
+-- para cada contato, pegar última msg via:
+select body, created_at, direction
+from whatsapp_messages
+where from_phone = ? or to_phone = ?
+order by created_at desc limit 1;
+```
 
-### Fora do escopo desta etapa
+Quando o volume crescer, criar uma view. Por ora, 2 queries simples.
 
-- Nenhuma UI nova (painel admin é Etapa 4).
-- Sem templates/HSM ainda — apenas mensagem livre dentro da janela de 24h.
-- Sem mídia (imagem/áudio/documento) — só `text`.
-- Sem IA/auto-resposta — quem dispara é admin manualmente (ou outra função no futuro).
+Mostrar:
+- `display_name` (fallback `phone_e164`)
+- preview da última mensagem (60 chars)
+- horário relativo (`formatDistanceToNow` pt-BR)
+- badge de "não lido" se houver inbound `created_at` > `last_read_at` local (armazenar `last_read_at` por conversa em `localStorage` por ora — sem alterar banco nesta etapa)
 
-### Validação após deploy
+### Dados — coluna direita
 
-1. Curl autenticado como admin com `to` válido → 200, mensagem chega no WhatsApp real, linha em `whatsapp_messages` com `direction='outbound'`.
-2. Curl sem auth → 401.
-3. Curl autenticado como user comum → 403.
-4. `to` inválido (sem +) → 400.
-5. Token Meta errado (forçando) → 502 + registro `failed` no banco.
+Ao selecionar um contato, buscar:
+```sql
+select * from whatsapp_messages
+where from_phone = '+55...' or to_phone = '+55...'
+order by created_at asc
+limit 200;
+```
 
-### Arquivos
+Renderizar bolhas:
+- `direction='inbound'` → bolha cinza à esquerda
+- `direction='outbound'` → bolha laranja (#FF6A3D) à direita, com ícone `status` (sent/failed)
 
-- `supabase/functions/whatsapp-send/index.ts` (novo)
-- `supabase/config.toml` (adicionar bloco `[functions.whatsapp-send]` com `verify_jwt = true`)
-- Secrets: `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` (pedidos via `add_secret` quando você aprovar o plano)
+### Envio
 
-Após aprovação, executo na ordem: pedir secrets → criar função → atualizar config → deploy → smoke test via curl.
+Campo `Textarea` + botão "Enviar":
+1. Validar 1–4096 chars.
+2. `supabase.functions.invoke('whatsapp-send', { body: { to, body } })`.
+3. Em sucesso, otimistic-append já é dispensável porque o realtime traz o INSERT da própria `whatsapp_messages` outbound.
+4. Em erro, toast com `meta_status` + mensagem da API.
+
+### Realtime
+
+```ts
+supabase.channel('wa-admin')
+  .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'whatsapp_messages' },
+      payload => { /* atualizar lista + conversa aberta se bater */ })
+  .subscribe();
+```
+
+Migration mínima necessária:
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.whatsapp_messages;
+ALTER TABLE public.whatsapp_messages REPLICA IDENTITY FULL;
+```
+(Única alteração de banco desta etapa — sem novas tabelas, sem novas policies.)
+
+### Acesso
+
+Página protegida por `AdminGuard` (igual `AdminSuporteChats`). RLS já garante que só admin lê `whatsapp_messages`/`whatsapp_contacts`.
+
+### Fora do escopo
+
+- Sem busca de mensagens por texto (só por contato).
+- Sem envio de mídia (imagem/áudio/documento) — Etapa 5 quando precisar.
+- Sem templates aprovados (HSM) — só mensagem livre dentro da janela 24h.
+- Sem IA respondendo automático — Etapa 6.
+- Sem marcar "lido" persistente no banco — usa `localStorage` por ora.
+
+### Como validar
+
+1. Você envia mensagem do seu WhatsApp pessoal pro número Business.
+2. Em até 2s, a conversa aparece no `/admin/whatsapp` com sua mensagem.
+3. Você responde pelo painel → chega no seu WhatsApp.
+4. A bolha outbound aparece na timeline com status `sent`.
+5. `whatsapp_messages` no banco tem as 2 linhas (`inbound` + `outbound`) ligadas ao mesmo telefone.
+
+### Arquivos editados
+
+- 1 migration curta (realtime publication).
+- `src/pages/admin/AdminWhatsApp.tsx` (novo, ~300 linhas).
+- `src/App.tsx` (rota + lazy import).
+- 1 sidebar/menu admin (1 linha).
