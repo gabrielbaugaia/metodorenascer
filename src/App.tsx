@@ -41,6 +41,7 @@ const AdminSuporteChats = lazy(() => import("./pages/admin/AdminSuporteChats"));
 const AdminMensagens = lazy(() => import("./pages/admin/AdminMensagens"));
 const AdminVideos = lazy(() => import("./pages/admin/AdminVideos"));
 const AdminExerciseGifs = lazy(() => import("./pages/admin/AdminExerciseGifs"));
+const AdminWhatsApp = lazy(() => import("./pages/admin/AdminWhatsApp"));
 const MeuPerfil = lazy(() => import("./pages/MeuPerfil"));
 const Indicacoes = lazy(() => import("./pages/Indicacoes"));
 const RedefinirSenha = lazy(() => import("./pages/RedefinirSenha"));
@@ -165,6 +166,7 @@ const App = () => {
             <Route path="/admin/suporte" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
             <Route path="/admin/suporte-chats" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
             <Route path="/admin/mensagens" element={<AdminGuard><AdminMensagens /></AdminGuard>} />
+            <Route path="/admin/whatsapp" element={<AdminGuard><AdminWhatsApp /></AdminGuard>} />
             <Route path="/admin/videos" element={<AdminGuard><AdminVideos /></AdminGuard>} />
             <Route path="/admin/gifs" element={<AdminGuard><AdminExerciseGifs /></AdminGuard>} />
             <Route path="/admin/reels" element={<AdminGuard><AdminReels /></AdminGuard>} />

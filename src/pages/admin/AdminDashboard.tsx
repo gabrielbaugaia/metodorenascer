@@ -27,7 +27,8 @@ import {
   Clock,
   Mail,
   Wallet,
-  Zap
+  Zap,
+  MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
@@ -280,6 +281,7 @@ export default function AdminDashboard() {
     { title: "Planos Comerciais", icon: DollarSign, url: "/admin/commercial-plans" },
     { title: "Campanhas Trial", icon: Zap, url: "/admin/trial-campaigns" },
     { title: "Connector Docs", icon: FileText, url: "/admin/docs/conector-mobile" },
+    { title: "WhatsApp", icon: MessageCircle, url: "/admin/whatsapp" },
   ];
 
   return (
