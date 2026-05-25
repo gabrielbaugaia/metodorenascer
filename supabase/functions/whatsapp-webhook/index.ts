@@ -5,6 +5,7 @@
 // Nesta etapa NÃO envia resposta nem chama IA.
 
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { runBot } from "../_shared/whatsappBot.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
