@@ -314,6 +314,42 @@ Deno.serve(async (req) => {
           }
 
           log("message_saved", { waMessageId, userId, conversaId, hasBody: !!body });
+
+          // ---------- BOT (Etapa 5) ----------
+          // Só roda se o user está vinculado e a mensagem é texto.
+          if (userId && body) {
+            try {
+              const reply = await runBot(supabase, userId, body);
+              if (reply) {
+                const toPhone = fromPhone; // responder pra quem enviou
+                const sendOk = await sendBotReply(toPhone, reply);
+                await supabase.from("whatsapp_messages").insert({
+                  user_id: userId,
+                  conversa_id: conversaId,
+                  wa_message_id: sendOk.waMessageId ?? null,
+                  direction: "outbound",
+                  from_phone: null,
+                  to_phone: toPhone,
+                  message_type: "text",
+                  body: reply,
+                  payload_json: sendOk.metaResponse ?? {},
+                  status: sendOk.ok ? "sent" : "failed",
+                  bot_generated: true,
+                });
+                if (conversaId && sendOk.ok) {
+                  await appendConversaMessage(supabase, conversaId, {
+                    role: "assistant",
+                    content: reply,
+                    channel: "whatsapp",
+                    timestamp: new Date().toISOString(),
+                  });
+                }
+                log("bot_replied", { userId, ok: sendOk.ok });
+              }
+            } catch (e) {
+              log("bot_error", { error: (e as Error).message });
+            }
+          }
         }
       }
     }
