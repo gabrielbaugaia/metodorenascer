@@ -18,6 +18,7 @@ import {
   Brain,
   ChefHat,
   MessageCircle,
+  MessageSquare,
   User,
   CreditCard,
   LogOut,
@@ -104,6 +105,7 @@ const adminSections: AdminSection[] = [
     label: "SUPORTE",
     items: [
       { title: "Chats", url: "/admin/suporte", icon: MessageCircle },
+      { title: "WhatsApp", url: "/admin/whatsapp", icon: MessageSquare },
       { title: "Documentação", url: "/admin/docs/conector-mobile", icon: BookOpen },
     ],
   },

@@ -27,6 +27,7 @@ interface WAMessage {
   to_phone: string | null;
   body: string | null;
   status: string | null;
+  bot_generated?: boolean | null;
   message_type: string | null;
   created_at: string;
   payload_json: any;
@@ -333,6 +334,7 @@ export default function AdminWhatsApp() {
                               >
                                 <p className="whitespace-pre-wrap">{m.body || `[${m.message_type || "sem texto"}]`}</p>
                                 <div className={`flex items-center gap-1 mt-1 text-[10px] opacity-70 ${isOut ? "justify-end" : ""}`}>
+                                  {m.bot_generated && isOut && <span title="Resposta automática do bot">🤖</span>}
                                   {format(new Date(m.created_at), "HH:mm", { locale: ptBR })}
                                   {isOut && (failed
                                     ? <AlertCircle className="w-3 h-3" />

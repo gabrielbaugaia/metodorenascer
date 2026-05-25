@@ -5,6 +5,7 @@
 // Nesta etapa NÃO envia resposta nem chama IA.
 
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { runBot } from "../_shared/whatsappBot.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +20,49 @@ const log = (step: string, details?: unknown) => {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const WA_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+const WA_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+const GRAPH_VERSION = "v21.0";
+
+// Envia resposta do bot direto pra Cloud API da Meta.
+// Retorna o id da mensagem e o JSON bruto pra persistência.
+async function sendBotReply(
+  toPhoneE164: string,
+  body: string,
+): Promise<{ ok: boolean; waMessageId: string | null; metaResponse: unknown }> {
+  if (!WA_TOKEN || !WA_PHONE_ID) {
+    log("bot_send_missing_secrets");
+    return { ok: false, waMessageId: null, metaResponse: { error: "missing_secrets" } };
+  }
+  const toDigits = toPhoneE164.replace(/\D/g, "");
+  const url = `https://graph.facebook.com/${GRAPH_VERSION}/${WA_PHONE_ID}/messages`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${WA_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: toDigits,
+        type: "text",
+        text: { preview_url: false, body },
+      }),
+    });
+    const json = await res.json().catch(() => ({}));
+    const ok = res.status >= 200 && res.status < 300;
+    return {
+      ok,
+      waMessageId: ok ? (json?.messages?.[0]?.id ?? null) : null,
+      metaResponse: json,
+    };
+  } catch (e) {
+    log("bot_send_fetch_error", { error: (e as Error).message });
+    return { ok: false, waMessageId: null, metaResponse: { error: (e as Error).message } };
+  }
+}
 
 // Normaliza telefone: remove tudo que não é dígito.
 function normalizePhone(raw: string | null | undefined): string {
@@ -313,6 +357,42 @@ Deno.serve(async (req) => {
           }
 
           log("message_saved", { waMessageId, userId, conversaId, hasBody: !!body });
+
+          // ---------- BOT (Etapa 5) ----------
+          // Só roda se o user está vinculado e a mensagem é texto.
+          if (userId && body) {
+            try {
+              const reply = await runBot(supabase, userId, body);
+              if (reply) {
+                const toPhone = fromPhone; // responder pra quem enviou
+                const sendOk = await sendBotReply(toPhone, reply);
+                await supabase.from("whatsapp_messages").insert({
+                  user_id: userId,
+                  conversa_id: conversaId,
+                  wa_message_id: sendOk.waMessageId ?? null,
+                  direction: "outbound",
+                  from_phone: null,
+                  to_phone: toPhone,
+                  message_type: "text",
+                  body: reply,
+                  payload_json: sendOk.metaResponse ?? {},
+                  status: sendOk.ok ? "sent" : "failed",
+                  bot_generated: true,
+                });
+                if (conversaId && sendOk.ok) {
+                  await appendConversaMessage(supabase, conversaId, {
+                    role: "assistant",
+                    content: reply,
+                    channel: "whatsapp",
+                    timestamp: new Date().toISOString(),
+                  });
+                }
+                log("bot_replied", { userId, ok: sendOk.ok });
+              }
+            } catch (e) {
+              log("bot_error", { error: (e as Error).message });
+            }
+          }
         }
       }
     }

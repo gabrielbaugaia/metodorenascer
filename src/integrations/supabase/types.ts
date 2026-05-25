@@ -3121,6 +3121,41 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_bot_sessions: {
+        Row: {
+          data: Json
+          expires_at: string
+          flow: string
+          step: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data?: Json
+          expires_at?: string
+          flow: string
+          step?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          expires_at?: string
+          flow?: string
+          step?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_bot_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_contacts: {
         Row: {
           created_at: string
@@ -3171,6 +3206,7 @@ export type Database = {
       whatsapp_messages: {
         Row: {
           body: string | null
+          bot_generated: boolean
           conversa_id: string | null
           created_at: string
           direction: string
@@ -3185,6 +3221,7 @@ export type Database = {
         }
         Insert: {
           body?: string | null
+          bot_generated?: boolean
           conversa_id?: string | null
           created_at?: string
           direction: string
@@ -3199,6 +3236,7 @@ export type Database = {
         }
         Update: {
           body?: string | null
+          bot_generated?: boolean
           conversa_id?: string | null
           created_at?: string
           direction?: string
