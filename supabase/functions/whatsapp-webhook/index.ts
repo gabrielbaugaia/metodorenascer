@@ -20,6 +20,49 @@ const log = (step: string, details?: unknown) => {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const WA_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+const WA_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+const GRAPH_VERSION = "v21.0";
+
+// Envia resposta do bot direto pra Cloud API da Meta.
+// Retorna o id da mensagem e o JSON bruto pra persistência.
+async function sendBotReply(
+  toPhoneE164: string,
+  body: string,
+): Promise<{ ok: boolean; waMessageId: string | null; metaResponse: unknown }> {
+  if (!WA_TOKEN || !WA_PHONE_ID) {
+    log("bot_send_missing_secrets");
+    return { ok: false, waMessageId: null, metaResponse: { error: "missing_secrets" } };
+  }
+  const toDigits = toPhoneE164.replace(/\D/g, "");
+  const url = `https://graph.facebook.com/${GRAPH_VERSION}/${WA_PHONE_ID}/messages`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${WA_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: toDigits,
+        type: "text",
+        text: { preview_url: false, body },
+      }),
+    });
+    const json = await res.json().catch(() => ({}));
+    const ok = res.status >= 200 && res.status < 300;
+    return {
+      ok,
+      waMessageId: ok ? (json?.messages?.[0]?.id ?? null) : null,
+      metaResponse: json,
+    };
+  } catch (e) {
+    log("bot_send_fetch_error", { error: (e as Error).message });
+    return { ok: false, waMessageId: null, metaResponse: { error: (e as Error).message } };
+  }
+}
 
 // Normaliza telefone: remove tudo que não é dígito.
 function normalizePhone(raw: string | null | undefined): string {
