@@ -1,77 +1,90 @@
-# Módulo Teste de VO2 Máx — Aeróbico
+## Teste de Esteira Interativo (Bruce + Cooper) com Cronômetro In-App
 
-Adicionar submódulo "Teste de VO2 Máx" dentro da página `/cardio`, com 3 protocolos (Cooper, Bruce, Astrand-Rhyming), cálculo automático, classificação por idade/sexo, salvamento no perfil, card no dashboard "Hoje" e gráfico em Evolução.
+Transformar o teste de esteira de "preencher tempo no final" para uma experiência guiada estilo treino de musculação: o cliente toca **Iniciar Teste**, o app cronometra, anuncia cada estágio com destaque visual + som/vibração, e ao **Finalizar** salva o tempo automaticamente. Depois, segunda etapa opcional para anexar dados do app fitness/foto da esteira.
 
-## Banco de dados
-
-Nova tabela `vo2max_tests`:
-- `user_id` (FK → profiles.id)
-- `protocolo` (text: 'cooper' | 'bruce' | 'astrand')
-- `valor_ml_kg_min` (numeric)
-- `classificacao` (text)
-- `test_date` (date)
-- `local` (text, nullable)
-- `dados_brutos` (jsonb — campos do teste)
-- `screenshot_url` (text, nullable — bucket fitness-screenshots)
-- `notas` (text, nullable)
-
-RLS: usuário CRUD nos próprios registros; admin pode ler tudo.
-
-## Estrutura de arquivos
+### Fluxo novo
 
 ```
-src/pages/Vo2Max.tsx                          (rota /vo2max — fluxo)
-src/components/vo2max/
-  Vo2MaxEntryButton.tsx                       (botão na página /cardio)
-  Vo2MaxProtocolSelector.tsx                  (3 cards de seleção)
-  Vo2MaxCooperForm.tsx                        (instruções + form Cooper)
-  Vo2MaxBruceForm.tsx                         (instruções + tabela estágios + form Bruce)
-  Vo2MaxAstrandForm.tsx                       (instruções + form Astrand)
-  Vo2MaxResultCard.tsx                        (resultado com counter animado + badge)
-  Vo2MaxHistoryList.tsx                       (histórico + gráfico linha)
-  Vo2MaxDashboardCard.tsx                     (card para Renascer/Hoje)
-src/lib/vo2maxCalc.ts                         (fórmulas + classificação)
+/vo2max → seleciona "Esteira (Bruce)" ou "Cooper 12min"
+   ↓
+PASSO 1 — Instruções + tabela de estágios (mantém)
+   ↓
+PASSO 2 — Tela de Execução Ao Vivo (NOVO)
+   [Iniciar Teste] → cronômetro grande começa
+   ├─ Banner do estágio atual: "ESTÁGIO 3 · 5.5 km/h · 14%"
+   ├─ Barra de progresso do estágio (0→3min)
+   ├─ Próximo estágio em prévia ("Próximo: 6.8 km/h · 16%")
+   ├─ A cada virada de estágio: pulse + beep + vibração + toast
+   ├─ Botões: [Pausar] [Finalizar Teste]
+   └─ Marcos motivacionais (3min/6min/9min/12min): badge XP
+   ↓
+PASSO 3 — Resultado Imediato (NOVO)
+   - Tempo final salvo automaticamente
+   - VO2 calculado + classificação animada
+   - "Salvar no perfil" (default ON)
+   ↓
+PASSO 4 — Anexos Opcionais (NOVO, skippable)
+   - Foto da tela da esteira (upload → fitness-screenshots)
+   - Screenshot do app fitness (Garmin/Apple Watch/Strava)
+   - Notas livres (sensações, BPM máx, etc)
+   - [Concluir]
 ```
 
-## Fórmulas (em `vo2maxCalc.ts`)
+### Mesma lógica para Cooper
 
-- **Cooper**: `(distancia_m − 504.9) / 44.73`
-- **Bruce** (T em min decimal):
-  - M: `14.8 − 1.379·T + 0.451·T² − 0.012·T³`
-  - F: `4.38·T − 3.9`
-- **Astrand** (ACSM simplificada): `(watts · 10.8 / peso_kg) + 7`
-- **Classificação**: tabela por sexo × faixa etária × VO2 (do PDF) retornando label + cor semântica.
+- Iniciar → cronômetro **regressivo de 12:00**
+- Marcos a cada 3 min ("¼ feito", "Metade!", "Reta final", "Sprint final")
+- Ao zerar: beep duplo + tela "Pare e meça sua distância"
+- Passo 3 pede só a distância percorrida → calcula
 
-## Integrações
+Astrand fica como está (não é cronometrado por estágios).
 
-1. **`/cardio`** (`src/pages/Cardio.tsx`): inserir `<Vo2MaxEntryButton />` abaixo de `<CardioLogForm />`. Botão navega para `/vo2max`.
-2. **Dashboard "Hoje"** (`src/pages/Renascer.tsx`): inserir `<Vo2MaxDashboardCard />` mostrando o último teste com badge colorido.
-3. **Evolução** (`src/pages/Evolucao.tsx`): adicionar seção "VO2 Máx" com gráfico de linha (Recharts) + tabela do histórico.
-4. **Navegação**: adicionar rota `/vo2max` em `src/App.tsx` (com `AuthGuard` + `SubscriptionGuard` no padrão de `/cardio`).
+### Gamificação (sugestões)
 
-## Fluxo UX
+1. **Badges por marco**: "Sobreviveu ao Estágio 4 (Bruce)", "Completou 12min sem parar (Cooper)" — salvas em `events` (`event_name='vo2max_milestone'`)
+2. **XP visível** subindo durante o teste (+10 XP por minuto, +50 por estágio completo)
+3. **Streak**: comparar com último teste do usuário ("Você superou seu recorde em +1:23!")
+4. **Som/Vibração**: Web Audio API (beep curto na virada) + `navigator.vibrate([200,100,200])`
+5. **Wake Lock**: `navigator.wakeLock.request('screen')` pra tela não apagar durante o teste
+6. **Modo Foco**: fundo escurece, tudo some exceto cronômetro + estágio atual (estilo Apple Workout)
+7. **Frase motivacional** rotativa nos últimos 30s de cada estágio
 
-1. `/cardio` → clica "🧪 Realizar Teste de VO2 Máx"
-2. `/vo2max` → seletor de protocolo (3 cards)
-3. Tela do protocolo escolhido: instruções + barra "Passo 1 de 2" → formulário "Passo 2 de 2"
-4. Resultado animado (counter), badge classificação, botões "Salvar" e "Ver histórico"
-5. Após salvar → invalida queries do Renascer e Evolução, toast de sucesso, volta para `/cardio`
+### Arquivos
 
-## Design
+**Novos:**
+- `src/components/vo2max/Vo2MaxLiveBruce.tsx` — execução ao vivo Bruce
+- `src/components/vo2max/Vo2MaxLiveCooper.tsx` — execução ao vivo Cooper
+- `src/components/vo2max/Vo2MaxStageBanner.tsx` — banner grande do estágio atual
+- `src/components/vo2max/Vo2MaxLiveTimer.tsx` — cronômetro central (reuso para os 2)
+- `src/components/vo2max/Vo2MaxAttachmentsStep.tsx` — passo 4 (upload + notas)
+- `src/lib/vo2maxAudio.ts` — helpers de beep + vibração + wake lock
+- `src/hooks/useVo2MaxSession.ts` — estado da sessão (start/pause/resume/finish, estágio atual, tempo)
 
-- Reusar tokens do design system Renascer (sem cores hardcoded; usar `bg-card`, `text-primary`, etc. — paleta já mapeada para #171614 / #E8632A em `index.css`)
-- Lucide icons (`Activity`, `Footprints`, `Bike`, `FlaskConical`)
-- Disclaimer no rodapé: "Este teste é uma estimativa indireta. Para resultado laboratorial preciso, consulte um profissional de saúde."
-- Print upload reaproveita bucket `fitness-screenshots` (path `${userId}/vo2max/`)
+**Editados:**
+- `src/components/vo2max/Vo2MaxBruceForm.tsx` — substitui input manual por modo "ao vivo" (com fallback "registrar manualmente" pra quem já fez)
+- `src/components/vo2max/Vo2MaxCooperForm.tsx` — mesmo padrão
+- `src/pages/Vo2Max.tsx` — orquestra os 4 passos
 
-## Validações
+### Banco
 
-- Cooper: distância > 0
-- Bruce: tempo total > 0, sexo obrigatório
-- Astrand: peso, watts, sexo obrigatórios; idade vinda do `profiles.birth_date` (fallback campo manual)
-- Toast de erro se campos faltando
+Adicionar colunas em `vo2max_tests` (sem breaking change):
+- `modo_execucao text` — `'ao_vivo' | 'manual'`
+- `estagio_max int` — só Bruce (último estágio completado)
+- `pausas int default 0`
+- `notas_execucao text`
+- `screenshot_app_url text` — separado do screenshot da esteira
 
-## Out of scope
+### Técnico
 
-- Não implementa integração com Apple Watch/Garmin para FC ao vivo
-- Não implementa timer in-app de 12min do Cooper (apenas registro pós-teste) — pode entrar em iteração futura se você quiser
+- **Timer**: `requestAnimationFrame` ou `setInterval(1000)` com `performance.now()` pra precisão (não confiar em setInterval cego).
+- **Persistência durante teste**: salvar estado em `localStorage` a cada 5s pra recuperar se app fechar/recarregar → ao voltar, modal "Continuar teste em andamento?"
+- **Beep**: `AudioContext` com oscilador curto (440Hz, 150ms) — sem arquivos.
+- **Wake Lock**: try/catch (nem todo browser suporta) — fallback: aviso "mantenha a tela ativa".
+- **Vibração**: feature-detect `navigator.vibrate`.
+- **Sem dependências novas**.
+
+### Fora de escopo
+
+- Integração nativa Apple Watch/Garmin (anexo é screenshot/foto)
+- BPM em tempo real
+- Voz sintetizada anunciando estágios (só beep + visual nessa V1)

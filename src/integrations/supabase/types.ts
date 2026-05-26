@@ -3087,10 +3087,15 @@ export type Database = {
           classificacao: string
           created_at: string
           dados_brutos: Json
+          estagio_max: number | null
           id: string
           local: string | null
+          modo_execucao: string | null
           notas: string | null
+          notas_execucao: string | null
+          pausas: number | null
           protocolo: string
+          screenshot_app_url: string | null
           screenshot_url: string | null
           test_date: string
           updated_at: string
@@ -3101,10 +3106,15 @@ export type Database = {
           classificacao: string
           created_at?: string
           dados_brutos?: Json
+          estagio_max?: number | null
           id?: string
           local?: string | null
+          modo_execucao?: string | null
           notas?: string | null
+          notas_execucao?: string | null
+          pausas?: number | null
           protocolo: string
+          screenshot_app_url?: string | null
           screenshot_url?: string | null
           test_date?: string
           updated_at?: string
@@ -3115,10 +3125,15 @@ export type Database = {
           classificacao?: string
           created_at?: string
           dados_brutos?: Json
+          estagio_max?: number | null
           id?: string
           local?: string | null
+          modo_execucao?: string | null
           notas?: string | null
+          notas_execucao?: string | null
+          pausas?: number | null
           protocolo?: string
+          screenshot_app_url?: string | null
           screenshot_url?: string | null
           test_date?: string
           updated_at?: string
