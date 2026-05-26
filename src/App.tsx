@@ -68,6 +68,7 @@ const ConnectSync = lazy(() => import("./pages/connect/ConnectSync"));
 const Renascer = lazy(() => import("./pages/Renascer"));
 const NutricaoTracking = lazy(() => import("./pages/NutricaoTracking"));
 const Cardio = lazy(() => import("./pages/Cardio"));
+const Vo2Max = lazy(() => import("./pages/Vo2Max"));
 const AnamneseExterna = lazy(() => import("./pages/AnamneseExterna"));
 const LandingV2 = lazy(() => import("./pages/LandingV2"));
 const AdminLeadsQuiz = lazy(() => import("./pages/admin/AdminLeadsQuiz"));
@@ -155,6 +156,7 @@ const App = () => {
             <Route path="/renascer" element={<SubscriptionGuard><Renascer /></SubscriptionGuard>} />
             <Route path="/nutricao-diario" element={<SubscriptionGuard><NutricaoTracking /></SubscriptionGuard>} />
             <Route path="/cardio" element={<SubscriptionGuard><Cardio /></SubscriptionGuard>} />
+            <Route path="/vo2max" element={<SubscriptionGuard><Vo2Max /></SubscriptionGuard>} />
             <Route path="/videos" element={<SubscriptionGuard><ReelsPage /></SubscriptionGuard>} />
 
             {/* ROTAS ADMIN (protegidas por AdminGuard) */}

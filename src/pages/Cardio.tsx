@@ -9,6 +9,7 @@ import { CardioStatsHeader } from "@/components/cardio/CardioStatsHeader";
 import { CardioLogForm } from "@/components/cardio/CardioLogForm";
 import { CardioHistoryList } from "@/components/cardio/CardioHistoryList";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Vo2MaxEntryButton } from "@/components/vo2max/Vo2MaxEntryButton";
 
 import { startOfMonth, format } from "date-fns";
 
