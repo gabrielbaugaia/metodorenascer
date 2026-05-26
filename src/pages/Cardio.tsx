@@ -146,6 +146,8 @@ export default function Cardio() {
           isSubmitting={createMutation.isPending}
         />
 
+        <Vo2MaxEntryButton />
+
         <div>
           <h3 className="font-semibold text-foreground mb-3">Histórico</h3>
           <CardioHistoryList
