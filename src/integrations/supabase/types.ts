@@ -3082,6 +3082,59 @@ export type Database = {
         }
         Relationships: []
       }
+      vo2max_tests: {
+        Row: {
+          classificacao: string
+          created_at: string
+          dados_brutos: Json
+          id: string
+          local: string | null
+          notas: string | null
+          protocolo: string
+          screenshot_url: string | null
+          test_date: string
+          updated_at: string
+          user_id: string
+          valor_ml_kg_min: number
+        }
+        Insert: {
+          classificacao: string
+          created_at?: string
+          dados_brutos?: Json
+          id?: string
+          local?: string | null
+          notas?: string | null
+          protocolo: string
+          screenshot_url?: string | null
+          test_date?: string
+          updated_at?: string
+          user_id: string
+          valor_ml_kg_min: number
+        }
+        Update: {
+          classificacao?: string
+          created_at?: string
+          dados_brutos?: Json
+          id?: string
+          local?: string | null
+          notas?: string | null
+          protocolo?: string
+          screenshot_url?: string | null
+          test_date?: string
+          updated_at?: string
+          user_id?: string
+          valor_ml_kg_min?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vo2max_tests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_checkins: {
         Row: {
           adherence_level: number | null
