@@ -9,6 +9,7 @@ import { CardioStatsHeader } from "@/components/cardio/CardioStatsHeader";
 import { CardioLogForm } from "@/components/cardio/CardioLogForm";
 import { CardioHistoryList } from "@/components/cardio/CardioHistoryList";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Vo2MaxEntryButton } from "@/components/vo2max/Vo2MaxEntryButton";
 
 import { startOfMonth, format } from "date-fns";
 
@@ -144,6 +145,8 @@ export default function Cardio() {
           onSubmit={(formData, screenshotUrl) => createMutation.mutate({ formData, screenshotUrl })}
           isSubmitting={createMutation.isPending}
         />
+
+        <Vo2MaxEntryButton />
 
         <div>
           <h3 className="font-semibold text-foreground mb-3">Histórico</h3>
