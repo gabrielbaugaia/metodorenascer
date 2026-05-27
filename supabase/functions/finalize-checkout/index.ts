@@ -152,6 +152,17 @@ serve(async (req) => {
     const userId = profile.id;
     logStep("User found", { userId });
 
+    // If caller is an authenticated user (not service role), they must match
+    // the user resolved from the Stripe session.
+    if (auth.kind === "user" && auth.userId && auth.userId !== userId) {
+      logStep("Caller mismatch", { callerId: auth.userId, sessionUserId: userId });
+      return new Response(
+        JSON.stringify({ error: "forbidden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+
     // Get plan info
     const priceId = subscription.items.data[0]?.price?.id;
     const planInfo = priceId ? PRICE_TO_PLAN[priceId] : null;
