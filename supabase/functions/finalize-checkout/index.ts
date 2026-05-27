@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { requireAuthenticatedUser } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,8 +44,18 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Require authenticated caller (or service role). Prevents anyone from
+    // replaying a leaked Stripe session_id to mutate subscription state.
+    const auth = await requireAuthenticatedUser(req);
+    if (!auth.ok) {
+      return new Response(
+        JSON.stringify({ error: auth.message }),
+        { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { session_id } = await req.json();
-    
+
     if (!session_id) {
       logStep("Missing session_id");
       return new Response(
@@ -53,7 +64,7 @@ serve(async (req) => {
       );
     }
 
-    logStep("Processing session", { session_id });
+    logStep("Processing session", { session_id, callerKind: auth.kind });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
@@ -140,6 +151,17 @@ serve(async (req) => {
 
     const userId = profile.id;
     logStep("User found", { userId });
+
+    // If caller is an authenticated user (not service role), they must match
+    // the user resolved from the Stripe session.
+    if (auth.kind === "user" && auth.userId && auth.userId !== userId) {
+      logStep("Caller mismatch", { callerId: auth.userId, sessionUserId: userId });
+      return new Response(
+        JSON.stringify({ error: "forbidden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
 
     // Get plan info
     const priceId = subscription.items.data[0]?.price?.id;
