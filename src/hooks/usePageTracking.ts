@@ -3,7 +3,8 @@ import { useLocation } from "react-router-dom";
 import { useAnalytics } from "./useAnalytics";
 
 const routeToPageName: Record<string, string> = {
-  "/": "landing",
+  "/": "landing_app",
+  "/quiz": "quiz_renascer",
   "/oferta": "oferta_vendas",
   "/auth": "auth",
   "/assinatura": "planos",
