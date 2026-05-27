@@ -44,8 +44,18 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Require authenticated caller (or service role). Prevents anyone from
+    // replaying a leaked Stripe session_id to mutate subscription state.
+    const auth = await requireAuthenticatedUser(req);
+    if (!auth.ok) {
+      return new Response(
+        JSON.stringify({ error: auth.message }),
+        { status: auth.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { session_id } = await req.json();
-    
+
     if (!session_id) {
       logStep("Missing session_id");
       return new Response(
@@ -54,7 +64,7 @@ serve(async (req) => {
       );
     }
 
-    logStep("Processing session", { session_id });
+    logStep("Processing session", { session_id, callerKind: auth.kind });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
