@@ -1,90 +1,97 @@
-## Teste de Esteira Interativo (Bruce + Cooper) com Cronômetro In-App
 
-Transformar o teste de esteira de "preencher tempo no final" para uma experiência guiada estilo treino de musculação: o cliente toca **Iniciar Teste**, o app cronometra, anuncia cada estágio com destaque visual + som/vibração, e ao **Finalizar** salva o tempo automaticamente. Depois, segunda etapa opcional para anexar dados do app fitness/foto da esteira.
+# Nova Landing Curta — Método Renascer App
 
-### Fluxo novo
+## Objetivo
+Substituir o Quiz como rota raiz (`/`) por uma **landing page curta, objetiva e de alta conversão**, focada no app. O Quiz continua disponível como caminho opcional ("Descobrir meu perfil em 60s") para quem prefere ser diagnosticado antes de decidir.
 
+## Roteamento
+
+| Rota | Hoje | Depois |
+|---|---|---|
+| `/` | Quiz | **Nova LandingApp** (curta) |
+| `/quiz` | — | Quiz Renascer (atual, intacto) |
+| `/landing-classica` | Index antigo | mantém |
+| `/v2` | LandingV2 luxury | mantém |
+| `/auth`, `/entrar` | Auth | mantém |
+
+CTAs primários da nova landing → `#planos` (na própria página) ou `/auth` (já é cliente).
+CTA secundário → `/quiz` ("Não sei por onde começar — fazer diagnóstico de 60s").
+
+## Estrutura da página (mobile-first, ~7 seções enxutas)
+
+Estilo: **Luxury Dark V2** já existente (Bebas Neue + DM Sans + Space Mono, #FF6500, fundo #050609). Reaproveita tokens e componentes de `src/components/landing-v2/`.
+
+```text
+┌─────────────────────────────────────┐
+│ 1. HERO                             │
+│    Headline forte + subheadline     │
+│    [Começar agora] [Fazer quiz 60s] │
+│    Mockup do app (1 imagem)         │
+├─────────────────────────────────────┤
+│ 2. PARA QUEM É (3 bullets curtos)   │
+├─────────────────────────────────────┤
+│ 3. O QUE O APP FAZ (4 cards)        │
+│    Treino IA · Nutrição · Mental ·  │
+│    SIS Score / Inteligência         │
+├─────────────────────────────────────┤
+│ 4. COMO FUNCIONA (3 passos)         │
+│    Anamnese → Protocolo → Evolução  │
+├─────────────────────────────────────┤
+│ 5. PROVA (1 depoimento + métricas)  │
+├─────────────────────────────────────┤
+│ 6. PLANOS (#planos) — 3 tiers       │
+│    Essencial 97 · PRO 297 · Elite   │
+├─────────────────────────────────────┤
+│ 7. FAQ enxuto (5 perguntas) + CTA   │
+│    final + faixa de garantia 7d     │
+└─────────────────────────────────────┘
 ```
-/vo2max → seleciona "Esteira (Bruce)" ou "Cooper 12min"
-   ↓
-PASSO 1 — Instruções + tabela de estágios (mantém)
-   ↓
-PASSO 2 — Tela de Execução Ao Vivo (NOVO)
-   [Iniciar Teste] → cronômetro grande começa
-   ├─ Banner do estágio atual: "ESTÁGIO 3 · 5.5 km/h · 14%"
-   ├─ Barra de progresso do estágio (0→3min)
-   ├─ Próximo estágio em prévia ("Próximo: 6.8 km/h · 16%")
-   ├─ A cada virada de estágio: pulse + beep + vibração + toast
-   ├─ Botões: [Pausar] [Finalizar Teste]
-   └─ Marcos motivacionais (3min/6min/9min/12min): badge XP
-   ↓
-PASSO 3 — Resultado Imediato (NOVO)
-   - Tempo final salvo automaticamente
-   - VO2 calculado + classificação animada
-   - "Salvar no perfil" (default ON)
-   ↓
-PASSO 4 — Anexos Opcionais (NOVO, skippable)
-   - Foto da tela da esteira (upload → fitness-screenshots)
-   - Screenshot do app fitness (Garmin/Apple Watch/Strava)
-   - Notas livres (sensações, BPM máx, etc)
-   - [Concluir]
-```
 
-### Mesma lógica para Cooper
+Total estimado: **~5 minutos de leitura, scroll curto**, contra os 9 steps do quiz.
 
-- Iniciar → cronômetro **regressivo de 12:00**
-- Marcos a cada 3 min ("¼ feito", "Metade!", "Reta final", "Sprint final")
-- Ao zerar: beep duplo + tela "Pare e meça sua distância"
-- Passo 3 pede só a distância percorrida → calcula
+## Conteúdo-chave (rascunho)
 
-Astrand fica como está (não é cronometrado por estágios).
+- **Headline:** "Seu corpo, seu protocolo. Calculado todo dia."
+- **Sub:** "App de prescrição física, nutricional e mental que se adapta aos seus dados reais — não a um plano genérico."
+- **CTAs hero:**
+  - Primário laranja: **Começar agora →** (rola para `#planos`)
+  - Secundário ghost: **Fazer diagnóstico de 60s** → `/quiz`
+- **Bloco "Para quem é":** executivos/profissionais 30+ que já tentaram academia, app genérico e nutricionista isolados e querem um sistema único guiado por dados.
+- **4 cards de feature:** Treino adaptado por HRV/sono · Nutrição com foto da refeição · Mindset diário · SIS Score (inteligência de performance).
+- **Como funciona:** 1) Anamnese 10 min → 2) Protocolo personalizado em 24h → 3) Ajustes mensais via IA + coach.
+- **Planos:** reaproveita `STRIPE_PRICE_IDS` de `planConstants.ts` (Essencial R$97 · PRO R$297 · Elite R$697). CTA cada card → checkout Stripe (mesmo fluxo do `/v2`).
+- **FAQ:** 5 perguntas (cancelamento, garantia, dispositivos, prazo de resultado, suporte).
+- **Garantia:** faixa "7 dias — devolução integral".
 
-### Gamificação (sugestões)
+## Arquivos a criar
 
-1. **Badges por marco**: "Sobreviveu ao Estágio 4 (Bruce)", "Completou 12min sem parar (Cooper)" — salvas em `events` (`event_name='vo2max_milestone'`)
-2. **XP visível** subindo durante o teste (+10 XP por minuto, +50 por estágio completo)
-3. **Streak**: comparar com último teste do usuário ("Você superou seu recorde em +1:23!")
-4. **Som/Vibração**: Web Audio API (beep curto na virada) + `navigator.vibrate([200,100,200])`
-5. **Wake Lock**: `navigator.wakeLock.request('screen')` pra tela não apagar durante o teste
-6. **Modo Foco**: fundo escurece, tudo some exceto cronômetro + estágio atual (estilo Apple Workout)
-7. **Frase motivacional** rotativa nos últimos 30s de cada estágio
+- `src/pages/LandingApp.tsx` — orquestra as 7 seções
+- `src/components/landing-app/LandingAppHero.tsx`
+- `src/components/landing-app/LandingAppForWho.tsx`
+- `src/components/landing-app/LandingAppFeatures.tsx`
+- `src/components/landing-app/LandingAppHowItWorks.tsx`
+- `src/components/landing-app/LandingAppSocialProof.tsx`
+- `src/components/landing-app/LandingAppPricing.tsx` (pode reaproveitar `V2PricingSection` se o estilo couber)
+- `src/components/landing-app/LandingAppFAQ.tsx`
+- `src/components/landing-app/LandingAppFooter.tsx` (ou reusar `V2Footer`)
 
-### Arquivos
+## Arquivos a editar
 
-**Novos:**
-- `src/components/vo2max/Vo2MaxLiveBruce.tsx` — execução ao vivo Bruce
-- `src/components/vo2max/Vo2MaxLiveCooper.tsx` — execução ao vivo Cooper
-- `src/components/vo2max/Vo2MaxStageBanner.tsx` — banner grande do estágio atual
-- `src/components/vo2max/Vo2MaxLiveTimer.tsx` — cronômetro central (reuso para os 2)
-- `src/components/vo2max/Vo2MaxAttachmentsStep.tsx` — passo 4 (upload + notas)
-- `src/lib/vo2maxAudio.ts` — helpers de beep + vibração + wake lock
-- `src/hooks/useVo2MaxSession.ts` — estado da sessão (start/pause/resume/finish, estágio atual, tempo)
+- `src/App.tsx`:
+  - `<Route path="/" element={<LandingApp />} />`
+  - `<Route path="/quiz" element={<Quiz />} />` (nova rota)
+- `src/hooks/usePageTracking.ts`: mapear `/` → `landing_app` e `/quiz` → `quiz_renascer`.
+- Memory `mem://landing/quiz-funnel-as-home`: atualizar para refletir que `/` agora é a landing curta e quiz vive em `/quiz`.
 
-**Editados:**
-- `src/components/vo2max/Vo2MaxBruceForm.tsx` — substitui input manual por modo "ao vivo" (com fallback "registrar manualmente" pra quem já fez)
-- `src/components/vo2max/Vo2MaxCooperForm.tsx` — mesmo padrão
-- `src/pages/Vo2Max.tsx` — orquestra os 4 passos
+## Fora de escopo
 
-### Banco
+- Não mexer em `/v2`, `/landing-classica`, no funil do quiz em si, nem nos planos/Stripe.
+- Sem novo backend, sem novas tabelas.
+- Sem mudanças no `/auth` ou no fluxo de checkout existente.
 
-Adicionar colunas em `vo2max_tests` (sem breaking change):
-- `modo_execucao text` — `'ao_vivo' | 'manual'`
-- `estagio_max int` — só Bruce (último estágio completado)
-- `pausas int default 0`
-- `notas_execucao text`
-- `screenshot_app_url text` — separado do screenshot da esteira
+## Perguntas rápidas antes de implementar
 
-### Técnico
-
-- **Timer**: `requestAnimationFrame` ou `setInterval(1000)` com `performance.now()` pra precisão (não confiar em setInterval cego).
-- **Persistência durante teste**: salvar estado em `localStorage` a cada 5s pra recuperar se app fechar/recarregar → ao voltar, modal "Continuar teste em andamento?"
-- **Beep**: `AudioContext` com oscilador curto (440Hz, 150ms) — sem arquivos.
-- **Wake Lock**: try/catch (nem todo browser suporta) — fallback: aviso "mantenha a tela ativa".
-- **Vibração**: feature-detect `navigator.vibrate`.
-- **Sem dependências novas**.
-
-### Fora de escopo
-
-- Integração nativa Apple Watch/Garmin (anexo é screenshot/foto)
-- BPM em tempo real
-- Voz sintetizada anunciando estágios (só beep + visual nessa V1)
+1. **Estilo visual:** seguir o Luxury Dark V2 (Bebas/DM Sans/laranja #FF6500, igual `/v2`), ou criar identidade própria mais limpa?
+2. **Planos na landing:** mostrar os 3 tiers (Essencial/PRO/Elite) como `/v2` faz, ou só 1 CTA único "Ver planos" levando para `/assinatura`?
+3. **Quiz como CTA secundário:** texto preferido — "Fazer diagnóstico de 60s", "Descobrir meu perfil", ou outro?
+4. **Posição do quiz:** só no hero, ou repetir também no final (antes do FAQ) como segunda chance pra quem ainda não decidiu?
