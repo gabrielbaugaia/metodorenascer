@@ -34,10 +34,11 @@ export const HealthService = {
       return false;
     }
     try {
-      const { success } = await Health.requestAuthorization({
+      const status = await Health.requestAuthorization({
         read: [...READ_TYPES],
         write: [],
       });
+      const success = (status.readAuthorized?.length ?? 0) > 0;
       if (success) {
         toast.success('Permissões de saúde concedidas!');
       } else {
