@@ -1,0 +1,62 @@
+workflows:
+  ios-workflow:
+    name: iOS Build (Método Renascer)
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    integrations:
+      app_store_connect: RenascerConnect # Nome da sua integração no Codemagic
+    environment:
+      node: latest
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+      - name: Build Web Project
+        script: |
+          npm run build
+      - name: Capacitor Sync
+        script: |
+          npx cap sync ios
+      - name: Update Pods
+        script: |
+          cd ios/App && pod install
+      - name: Build iOS App
+        script: |
+          # O Codemagic gerencia a build do Xcode automaticamente se configurado na UI
+          # Mas aqui garantimos a exportação do .ipa
+          xcode-project build-ipa \
+            --workspace "ios/App/App.xcworkspace" \
+            --scheme "App"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - {{email_do_usuario}} # Substituir pelo seu email
+      app_store_connect:
+        auth: integration
+
+  android-workflow:
+    name: Android Build (Método Renascer)
+    max_build_duration: 60
+    instance_type: linux
+    environment:
+      node: latest
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+      - name: Build Web Project
+        script: |
+          npm run build
+      - name: Capacitor Sync
+        script: |
+          npx cap sync android
+      - name: Build Android App
+        script: |
+          cd android && ./gradlew assembleRelease
+    artifacts:
+      - android/app/build/outputs/apk/release/*.apk
+      - android/app/build/outputs/bundle/release/*.aab
