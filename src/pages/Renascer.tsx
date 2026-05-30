@@ -62,11 +62,11 @@ export default function Renascer() {
     if (user?.id) {
       supabase.functions.invoke("classify-behavior").catch(console.error);
       
-      // Auto-sync health data if mode is auto
+      // Auto-sync health data se já autorizado (silencioso, com throttle de 15min)
       const syncHealth = async () => {
         const hasPermissions = await HealthService.checkPermissions();
         if (hasPermissions) {
-          await HealthService.readAndSyncDailyData();
+          await HealthService.readAndSyncDailyData({ silent: true });
         }
       };
       syncHealth();
