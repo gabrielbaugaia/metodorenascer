@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m1
     integrations:
-      app_store_connect: RenascerConnect # Nome da sua integração no Codemagic
+      app_store_connect: RenascerConnect
     environment:
       node: latest
       xcode: latest
@@ -24,17 +24,12 @@ workflows:
           cd ios/App && pod install
       - name: Build iOS App
         script: |
-          # O Codemagic gerencia a build do Xcode automaticamente se configurado na UI
-          # Mas aqui garantimos a exportação do .ipa
           xcode-project build-ipa \
             --workspace "ios/App/App.xcworkspace" \
             --scheme "App"
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
-      email:
-        recipients:
-          - {{email_do_usuario}} # Substituir pelo seu email
       app_store_connect:
         auth: integration
 
