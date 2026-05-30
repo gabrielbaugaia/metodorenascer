@@ -537,6 +537,172 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          }
+        ]
+      }
+      user_health_data: {
+        Row: {
+          id: string
+          user_id: string
+          date: string
+          steps: number | null
+          calories: number | null
+          heart_rate: number | null
+          sleep: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          date: string
+          steps?: number | null
+          calories?: number | null
+          heart_rate?: number | null
+          sleep?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          date?: string
+          steps?: number | null
+          calories?: number | null
+          heart_rate?: number | null
+          sleep?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_health_data_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      body_assessments: {
+        Row: {
+          arm_circumference_cm: number | null
+          assessed_at: string
+          bmi: number | null
+          bmr_kcal: number | null
+          body_age: number | null
+          body_fat_pct: number | null
+          body_type: string | null
+          bone_mass_kg: number | null
+          created_at: string
+          diet_suggestions: Json | null
+          exercise_suggestions: Json | null
+          fat_mass_kg: number | null
+          height: number | null
+          hip_cm: number | null
+          hydration_pct: number | null
+          id: string
+          leg_length_cm: number | null
+          muscle_mass_kg: number | null
+          muscle_pct: number | null
+          postural_analysis: Json | null
+          protein_pct: number | null
+          raw_data: Json | null
+          segment_analysis: Json | null
+          shoulder_width_cm: number | null
+          source_name: string | null
+          source_url: string | null
+          subcutaneous_fat_pct: number | null
+          thigh_circumference_cm: number | null
+          trunk_length_cm: number | null
+          updated_at: string
+          user_id: string
+          visceral_fat: number | null
+          waist_cm: number | null
+          waist_hip_ratio: number | null
+          weight: number | null
+          wingspan_cm: number | null
+        }
+        Insert: {
+          arm_circumference_cm?: number | null
+          assessed_at?: string
+          bmi?: number | null
+          bmr_kcal?: number | null
+          body_age?: number | null
+          body_fat_pct?: number | null
+          body_type?: string | null
+          bone_mass_kg?: number | null
+          created_at?: string
+          diet_suggestions?: Json | null
+          exercise_suggestions?: Json | null
+          fat_mass_kg?: number | null
+          height?: number | null
+          hip_cm?: number | null
+          hydration_pct?: number | null
+          id?: string
+          leg_length_cm?: number | null
+          muscle_mass_kg?: number | null
+          muscle_pct?: number | null
+          postural_analysis?: Json | null
+          protein_pct?: number | null
+          raw_data?: Json | null
+          segment_analysis?: Json | null
+          shoulder_width_cm?: number | null
+          source_name?: string | null
+          source_url?: string | null
+          subcutaneous_fat_pct?: number | null
+          thigh_circumference_cm?: number | null
+          trunk_length_cm?: number | null
+          updated_at?: string
+          user_id: string
+          visceral_fat?: number | null
+          waist_cm?: number | null
+          waist_hip_ratio?: number | null
+          weight?: number | null
+          wingspan_cm?: number | null
+        }
+        Update: {
+          arm_circumference_cm?: number | null
+          assessed_at?: string
+          bmi?: number | null
+          bmr_kcal?: number | null
+          body_age?: number | null
+          body_fat_pct?: number | null
+          body_type?: string | null
+          bone_mass_kg?: number | null
+          created_at?: string
+          diet_suggestions?: Json | null
+          exercise_suggestions?: Json | null
+          fat_mass_kg?: number | null
+          height?: number | null
+          hip_cm?: number | null
+          hydration_pct?: number | null
+          id?: string
+          leg_length_cm?: number | null
+          muscle_mass_kg?: number | null
+          muscle_pct?: number | null
+          postural_analysis?: Json | null
+          protein_pct?: number | null
+          raw_data?: Json | null
+          segment_analysis?: Json | null
+          shoulder_width_cm?: number | null
+          source_name?: string | null
+          source_url?: string | null
+          subcutaneous_fat_pct?: number | null
+          thigh_circumference_cm?: number | null
+          trunk_length_cm?: number | null
+          updated_at?: string
+          user_id?: string
+          visceral_fat?: number | null
+          waist_cm?: number | null
+          waist_hip_ratio?: number | null
+          weight?: number | null
+          wingspan_cm?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "body_assessments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }

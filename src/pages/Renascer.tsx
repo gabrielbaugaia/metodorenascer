@@ -35,6 +35,7 @@ import { format } from "date-fns";
 import { generateSisReportPdf } from "@/lib/generateSisReportPdf";
 import { toast } from "sonner";
 import { ptBR } from "date-fns/locale";
+import { HealthService } from "@/services/healthService";
 
 export default function Renascer() {
   const { user } = useAuth();
@@ -56,10 +57,19 @@ export default function Renascer() {
   // Behavioral AI
   const behavior = useBehaviorProfile();
 
-  // Classify behavior on dashboard load
+  // Classify behavior and sync health data on dashboard load
   useEffect(() => {
     if (user?.id) {
       supabase.functions.invoke("classify-behavior").catch(console.error);
+      
+      // Auto-sync health data if mode is auto
+      const syncHealth = async () => {
+        const hasPermissions = await HealthService.checkPermissions();
+        if (hasPermissions) {
+          await HealthService.readAndSyncDailyData();
+        }
+      };
+      syncHealth();
     }
   }, [user?.id]);
 

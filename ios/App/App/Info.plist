@@ -47,5 +47,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>O aplicativo Renascer Connect precisa acessar seus dados de saúde (passos, calorias, frequência cardíaca, sono) para personalizar seu plano de treino e nutrição, e acompanhar seu progresso de forma mais precisa.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>O aplicativo Renascer Connect precisa atualizar seus dados de saúde para registrar informações relevantes do seu progresso e garantir a sincronização completa com seu perfil.</string>
 </dict>
 </plist>

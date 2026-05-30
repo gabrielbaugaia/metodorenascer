@@ -8,10 +8,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Settings, Globe, Palette, Moon, Sun, Monitor, RefreshCw, Info, Smartphone, Wifi, WifiOff } from "lucide-react";
+import { Settings, Globe, Palette, Moon, Sun, Monitor, RefreshCw, Info, Smartphone, Wifi, WifiOff, HeartPulse, CheckCircle2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { APP_VERSION, getSWVersion, forceAppUpdate } from "@/lib/appVersion";
 import { toast } from "@/hooks/use-toast";
+import { HealthService } from "@/services/healthService";
 
 const languages = [
   { value: "pt-BR", label: "Português (Brasil)", flag: "🇧🇷" },
@@ -26,6 +27,8 @@ export default function Configuracoes() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [deviceDialogOpen, setDeviceDialogOpen] = useState(false);
   const [deviceDialogType, setDeviceDialogType] = useState<"android" | "apple">("android");
+  const [healthConnected, setHealthConnected] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -35,9 +38,26 @@ export default function Configuracoes() {
       if (savedLang) {
         setLanguage(savedLang);
       }
+      
+      const hasPermissions = await HealthService.checkPermissions();
+      setHealthConnected(hasPermissions);
     };
     init();
   }, []);
+
+  const handleConnectHealth = async () => {
+    const success = await HealthService.requestPermissions();
+    if (success) {
+      setHealthConnected(true);
+      setDeviceDialogOpen(false);
+    }
+  };
+
+  const handleSyncHealth = async () => {
+    setIsSyncing(true);
+    await HealthService.readAndSyncDailyData();
+    setIsSyncing(false);
+  };
 
   const handleLanguageChange = async (value: string) => {
     setLanguage(value);
@@ -86,35 +106,54 @@ export default function Configuracoes() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-              <WifiOff className="h-5 w-5 text-muted-foreground" />
+              {healthConnected ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              ) : (
+                <WifiOff className="h-5 w-5 text-muted-foreground" />
+              )}
               <div className="flex-1">
                 <p className="text-sm font-medium">Status</p>
-                <p className="text-xs text-muted-foreground">Nenhum dispositivo conectado</p>
+                <p className="text-xs text-muted-foreground">
+                  {healthConnected ? "Dispositivo sincronizado" : "Nenhum dispositivo conectado"}
+                </p>
               </div>
-              <Badge variant="outline" className="text-xs text-muted-foreground">
-                Não conectado
+              <Badge variant={healthConnected ? "default" : "outline"} className={`text-xs ${healthConnected ? "bg-green-500 hover:bg-green-600" : "text-muted-foreground"}`}>
+                {healthConnected ? "Conectado" : "Não conectado"}
               </Badge>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
+            
+            {healthConnected ? (
+              <Button 
+                onClick={handleSyncHealth} 
+                disabled={isSyncing}
+                className="w-full"
                 variant="outline"
-                className="h-auto py-3 flex flex-col items-center gap-1.5"
-                onClick={() => { setDeviceDialogType("android"); setDeviceDialogOpen(true); }}
               >
-                <Smartphone className="h-5 w-5" />
-                <span className="text-xs font-medium">Android</span>
-                <span className="text-[10px] text-muted-foreground">Health Connect</span>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? "Sincronizando..." : "Sincronizar Dados Agora"}
               </Button>
-              <Button
-                variant="outline"
-                className="h-auto py-3 flex flex-col items-center gap-1.5"
-                onClick={() => { setDeviceDialogType("apple"); setDeviceDialogOpen(true); }}
-              >
-                <Smartphone className="h-5 w-5" />
-                <span className="text-xs font-medium">Apple</span>
-                <span className="text-[10px] text-muted-foreground">HealthKit</span>
-              </Button>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  className="h-auto py-3 flex flex-col items-center gap-1.5"
+                  onClick={() => { setDeviceDialogType("android"); setDeviceDialogOpen(true); }}
+                >
+                  <Smartphone className="h-5 w-5" />
+                  <span className="text-xs font-medium">Android</span>
+                  <span className="text-[10px] text-muted-foreground">Health Connect</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-auto py-3 flex flex-col items-center gap-1.5"
+                  onClick={() => { setDeviceDialogType("apple"); setDeviceDialogOpen(true); }}
+                >
+                  <Smartphone className="h-5 w-5" />
+                  <span className="text-xs font-medium">Apple</span>
+                  <span className="text-[10px] text-muted-foreground">HealthKit</span>
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -126,21 +165,26 @@ export default function Configuracoes() {
               </DialogTitle>
               <DialogDescription>
                 {deviceDialogType === "android"
-                  ? "A integração com o Health Connect do Android estará disponível em breve. Você poderá sincronizar automaticamente passos, calorias, sono e frequência cardíaca."
-                  : "A integração com o Apple HealthKit estará disponível em breve. Você poderá sincronizar automaticamente passos, calorias, sono e frequência cardíaca."
+                  ? "Conecte-se ao Health Connect para sincronizar automaticamente seus passos, calorias, sono e frequência cardíaca do seu dispositivo Android ou Samsung."
+                  : "Conecte-se ao Apple Health para sincronizar automaticamente seus passos, calorias, sono e frequência cardíaca do seu Apple Watch ou iPhone."
                 }
               </DialogDescription>
             </DialogHeader>
             <div className="p-4 rounded-lg bg-muted/50 text-center space-y-2">
-              <Wifi className="h-8 w-8 mx-auto text-primary" />
-              <p className="text-sm font-medium">Em breve</p>
+              <HeartPulse className="h-8 w-8 mx-auto text-primary animate-pulse" />
+              <p className="text-sm font-medium">Integração de Saúde</p>
               <p className="text-xs text-muted-foreground">
-                Estamos preparando esta integração para você. Por enquanto, use o registro manual no Painel Avançado.
+                Ao conectar, o Renascer Connect terá acesso aos seus dados de atividade para personalizar sua experiência.
               </p>
             </div>
-            <Button variant="outline" onClick={() => setDeviceDialogOpen(false)}>
-              Entendi
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button onClick={handleConnectHealth}>
+                Autorizar e Conectar
+              </Button>
+              <Button variant="outline" onClick={() => setDeviceDialogOpen(false)}>
+                Cancelar
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
 
