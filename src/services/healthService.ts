@@ -55,11 +55,11 @@ export const HealthService = {
   async checkPermissions(): Promise<boolean> {
     if (!isNative) return false;
     try {
-      const { success } = await Health.checkAuthorization({
+      const status = await Health.checkAuthorization({
         read: [...READ_TYPES],
         write: [],
       });
-      return success;
+      return (status.readAuthorized?.length ?? 0) > 0;
     } catch (error) {
       console.error('[HealthService] checkPermissions error:', error);
       return false;
