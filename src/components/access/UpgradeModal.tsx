@@ -7,6 +7,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Crown, Check } from 'lucide-react';
+import { Browser } from '@capacitor/browser';
+import { isNative } from '@/services/platform';
 
 const STRIPE_TRIAL_LINK = 'https://buy.stripe.com/9B67sKeMW4ru2sp7Gy2B201';
 const STRIPE_DIRECT_LINK = 'https://buy.stripe.com/fZu3cudIS3nqaYVf902B205';
@@ -27,6 +29,14 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
+  const handleOpenLink = async (url: string) => {
+    if (isNative) {
+      await Browser.open({ url });
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -57,14 +67,14 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
           <Button
             variant="fire"
             className="w-full"
-            onClick={() => window.open(STRIPE_TRIAL_LINK, '_blank')}
+            onClick={() => handleOpenLink(STRIPE_TRIAL_LINK)}
           >
             Testar 7 dias grátis
           </Button>
           <Button
             variant="outline"
             className="w-full"
-            onClick={() => window.open(STRIPE_DIRECT_LINK, '_blank')}
+            onClick={() => handleOpenLink(STRIPE_DIRECT_LINK)}
           >
             Assinar agora
           </Button>

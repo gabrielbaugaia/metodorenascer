@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { capacitorStorage } from "@/lib/capacitor-storage";
 
 interface EventMetadata {
   [key: string]: string | number | boolean | null | undefined;
@@ -24,7 +25,7 @@ function getOrCreateSessionId(): string {
 }
 
 // Capture and store UTM parameters
-export function captureUtmParameters(): Record<string, string> | null {
+export async function captureUtmParameters(): Promise<Record<string, string> | null> {
   const urlParams = new URLSearchParams(window.location.search);
   const utmParams: Record<string, string> = {};
   
@@ -37,17 +38,17 @@ export function captureUtmParameters(): Record<string, string> | null {
   });
   
   if (Object.keys(utmParams).length > 0) {
-    localStorage.setItem(UTM_DATA_KEY, JSON.stringify(utmParams));
+    await capacitorStorage.setItem(UTM_DATA_KEY, JSON.stringify(utmParams));
     return utmParams;
   }
   
   // Return stored UTM data if available
-  const stored = localStorage.getItem(UTM_DATA_KEY);
+  const stored = await capacitorStorage.getItem(UTM_DATA_KEY);
   return stored ? JSON.parse(stored) : null;
 }
 
-export function getStoredUtmData(): Record<string, string> | null {
-  const stored = localStorage.getItem(UTM_DATA_KEY);
+export async function getStoredUtmData(): Promise<Record<string, string> | null> {
+  const stored = await capacitorStorage.getItem(UTM_DATA_KEY);
   return stored ? JSON.parse(stored) : null;
 }
 
@@ -65,7 +66,7 @@ export function useAnalytics() {
     ) => {
       try {
         // Get UTM data to include in metadata
-        const utmData = getStoredUtmData();
+        const utmData = await getStoredUtmData();
         const enrichedMetadata = {
           ...metadata,
           ...(utmData || {}),
@@ -303,17 +304,17 @@ export function useAnalytics() {
 }
 
 // Utility to capture UTM parameters and save acquisition channel
-export function captureAcquisitionChannel(): string | null {
+export async function captureAcquisitionChannel(): Promise<string | null> {
   const urlParams = new URLSearchParams(window.location.search);
   
   // Capture UTM params first
-  captureUtmParameters();
+  await captureUtmParameters();
   
   // Check UTM source first
   const utmSource = urlParams.get("utm_source");
   if (utmSource) {
     const channel = mapUtmToChannel(utmSource);
-    localStorage.setItem("acquisition_channel", channel);
+    await capacitorStorage.setItem("acquisition_channel", channel);
     return channel;
   }
   
@@ -321,11 +322,11 @@ export function captureAcquisitionChannel(): string | null {
   const referrer = document.referrer;
   if (referrer) {
     if (referrer.includes("instagram.com")) {
-      localStorage.setItem("acquisition_channel", "instagram_organico");
+      await capacitorStorage.setItem("acquisition_channel", "instagram_organico");
       return "instagram_organico";
     }
     if (referrer.includes("tiktok.com")) {
-      localStorage.setItem("acquisition_channel", "tiktok");
+      await capacitorStorage.setItem("acquisition_channel", "tiktok");
       return "tiktok";
     }
   }
@@ -333,11 +334,11 @@ export function captureAcquisitionChannel(): string | null {
   // Check if from referral
   const refCode = urlParams.get("ref");
   if (refCode) {
-    localStorage.setItem("acquisition_channel", "indicacao");
+    await capacitorStorage.setItem("acquisition_channel", "indicacao");
     return "indicacao";
   }
   
-  return localStorage.getItem("acquisition_channel");
+  return capacitorStorage.getItem("acquisition_channel");
 }
 
 function mapUtmToChannel(utmSource: string): string {

@@ -15,8 +15,11 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 
   // Capture acquisition channel and UTM on first load
   useEffect(() => {
-    captureAcquisitionChannel();
-    captureUtmParameters();
+    const initAnalytics = async () => {
+      await captureAcquisitionChannel();
+      await captureUtmParameters();
+    };
+    initAnalytics();
   }, []);
 
   // Track landing page view specifically

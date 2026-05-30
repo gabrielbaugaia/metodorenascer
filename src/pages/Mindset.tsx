@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { capacitorStorage } from "@/lib/capacitor-storage";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +95,7 @@ export default function Mindset() {
       if (data?.mensagens) {
         setCheckedItems(data.mensagens as Record<string, boolean>);
       } else {
-        const stored = localStorage.getItem(`mindset-progress-${user.id}`);
+        const stored = await capacitorStorage.getItem(`mindset-progress-${user.id}`);
         if (stored) {
           const parsed = JSON.parse(stored);
           setCheckedItems(parsed);
@@ -103,7 +104,7 @@ export default function Mindset() {
       }
     } catch (error) {
       console.error("Error loading mindset progress:", error);
-      const stored = localStorage.getItem(`mindset-progress-${user.id}`);
+      const stored = await capacitorStorage.getItem(`mindset-progress-${user.id}`);
       if (stored) {
         setCheckedItems(JSON.parse(stored));
       }
@@ -111,7 +112,7 @@ export default function Mindset() {
   };
 
   const saveCheckedItems = async (items: Record<string, boolean>) => {
-    localStorage.setItem(`mindset-progress-${user?.id}`, JSON.stringify(items));
+    await capacitorStorage.setItem(`mindset-progress-${user?.id}`, JSON.stringify(items));
     
     if (!user) return;
     

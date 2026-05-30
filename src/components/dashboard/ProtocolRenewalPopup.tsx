@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { capacitorStorage } from "@/lib/capacitor-storage";
 import {
   Dialog,
   DialogContent,
@@ -29,15 +30,19 @@ export function ProtocolRenewalPopup({ daysSinceLastProtocol }: ProtocolRenewalP
   useEffect(() => {
     if (!shouldShow) return;
 
-    const count = Number(localStorage.getItem(SHOW_COUNT_KEY) || 0);
-    if (count >= MAX_SHOWS) return;
+    const init = async () => {
+      const storedCount = await capacitorStorage.getItem(SHOW_COUNT_KEY);
+      const count = Number(storedCount || 0);
+      if (count >= MAX_SHOWS) return;
 
-    // Small delay so dashboard renders first
-    const timer = setTimeout(() => {
-      localStorage.setItem(SHOW_COUNT_KEY, String(count + 1));
-      setOpen(true);
-    }, 1200);
-    return () => clearTimeout(timer);
+      // Small delay so dashboard renders first
+      const timer = setTimeout(async () => {
+        await capacitorStorage.setItem(SHOW_COUNT_KEY, String(count + 1));
+        setOpen(true);
+      }, 1200);
+      return () => clearTimeout(timer);
+    };
+    init();
   }, [shouldShow]);
 
   const handleDismiss = () => {

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getStoredUtmData } from "@/hooks/useAnalytics";
+import { Browser } from "@capacitor/browser";
+import { isNative } from "@/services/platform";
 
 interface SubscriptionStatus {
   subscribed: boolean;
@@ -128,7 +130,11 @@ export function useSubscription() {
 
     if (error) throw error;
     if (data?.url) {
-      window.open(data.url, "_blank");
+      if (isNative) {
+        await Browser.open({ url: data.url });
+      } else {
+        window.open(data.url, "_blank");
+      }
     }
     
     return data;
@@ -147,7 +153,11 @@ export function useSubscription() {
 
     if (error) throw error;
     if (data?.url) {
-      window.open(data.url, "_blank");
+      if (isNative) {
+        await Browser.open({ url: data.url });
+      } else {
+        window.open(data.url, "_blank");
+      }
     }
     
     return data;

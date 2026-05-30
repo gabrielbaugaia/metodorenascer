@@ -7,6 +7,8 @@ export const getSWVersion = (): string => {
   return "v6"; // Should match CACHE_NAME in sw.js
 };
 
+import { capacitorStorage } from './capacitor-storage';
+
 // Force update function - clears SW cache and reloads
 export const forceAppUpdate = async (): Promise<void> => {
   try {
@@ -24,8 +26,8 @@ export const forceAppUpdate = async (): Promise<void> => {
       await Promise.all(cacheNames.map(name => caches.delete(name)));
     }
 
-    // Clear localStorage version markers
-    localStorage.removeItem('app_version');
+    // Clear storage version markers
+    await capacitorStorage.removeItem('app_version');
     
     // Hard reload to get fresh content
     window.location.reload();

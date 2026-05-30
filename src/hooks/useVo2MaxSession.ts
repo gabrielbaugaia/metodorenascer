@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { capacitorStorage } from "@/lib/capacitor-storage";
 
 export type SessionStatus = "idle" | "running" | "paused" | "finished";
 
@@ -31,29 +32,32 @@ export function useVo2MaxSession(opts: Options) {
 
   // Restaura sessão se existir
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return;
-      const p: Persisted = JSON.parse(raw);
-      if (p.status === "running" || p.status === "paused") {
-        accumulatedRef.current = p.accumulated;
-        setPauses(p.pauses);
-        if (p.status === "running") {
-          startedAtRef.current = Date.now();
-          setStatus("running");
-        } else {
-          setElapsed(p.accumulated);
-          setStatus("paused");
+    const init = async () => {
+      try {
+        const raw = await capacitorStorage.getItem(storageKey);
+        if (!raw) return;
+        const p: Persisted = JSON.parse(raw);
+        if (p.status === "running" || p.status === "paused") {
+          accumulatedRef.current = p.accumulated;
+          setPauses(p.pauses);
+          if (p.status === "running") {
+            startedAtRef.current = Date.now();
+            setStatus("running");
+          } else {
+            setElapsed(p.accumulated);
+            setStatus("paused");
+          }
         }
+      } catch {
+        /* noop */
       }
-    } catch {
-      /* noop */
-    }
+    };
+    init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const persist = useCallback(
-    (next: Partial<Persisted>) => {
+    async (next: Partial<Persisted>) => {
       try {
         const current: Persisted = {
           status,
@@ -62,7 +66,7 @@ export function useVo2MaxSession(opts: Options) {
           pauses,
           ...next,
         };
-        localStorage.setItem(storageKey, JSON.stringify(current));
+        await capacitorStorage.setItem(storageKey, JSON.stringify(current));
       } catch {
         /* noop */
       }
@@ -106,33 +110,33 @@ export function useVo2MaxSession(opts: Options) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elapsed, countdownSeconds, status]);
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     accumulatedRef.current = 0;
     startedAtRef.current = Date.now();
     setElapsed(0);
     setPauses(0);
     setStatus("running");
-    persist({ status: "running", startedAt: Date.now(), accumulated: 0, pauses: 0 });
+    await persist({ status: "running", startedAt: Date.now(), accumulated: 0, pauses: 0 });
   }, [persist]);
 
-  const pause = useCallback(() => {
+  const pause = useCallback(async () => {
     if (status !== "running") return;
     const live = startedAtRef.current ? (Date.now() - startedAtRef.current) / 1000 : 0;
     accumulatedRef.current += live;
     startedAtRef.current = null;
     setPauses((n) => n + 1);
     setStatus("paused");
-    persist({ status: "paused", accumulated: accumulatedRef.current, pauses: pauses + 1 });
+    await persist({ status: "paused", accumulated: accumulatedRef.current, pauses: pauses + 1 });
   }, [status, persist, pauses]);
 
-  const resume = useCallback(() => {
+  const resume = useCallback(async () => {
     if (status !== "paused") return;
     startedAtRef.current = Date.now();
     setStatus("running");
-    persist({ status: "running", startedAt: Date.now() });
+    await persist({ status: "running", startedAt: Date.now() });
   }, [status, persist]);
 
-  const finish = useCallback(() => {
+  const finish = useCallback(async () => {
     const live = startedAtRef.current ? (Date.now() - startedAtRef.current) / 1000 : 0;
     const total = accumulatedRef.current + live;
     accumulatedRef.current = total;
@@ -140,21 +144,21 @@ export function useVo2MaxSession(opts: Options) {
     setElapsed(total);
     setStatus("finished");
     try {
-      localStorage.removeItem(storageKey);
+      await capacitorStorage.removeItem(storageKey);
     } catch {
       /* noop */
     }
     return total;
   }, [storageKey]);
 
-  const reset = useCallback(() => {
+  const reset = useCallback(async () => {
     accumulatedRef.current = 0;
     startedAtRef.current = null;
     setElapsed(0);
     setPauses(0);
     setStatus("idle");
     try {
-      localStorage.removeItem(storageKey);
+      await capacitorStorage.removeItem(storageKey);
     } catch {
       /* noop */
     }

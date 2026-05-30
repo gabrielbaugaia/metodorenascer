@@ -4,6 +4,8 @@ import { useEntitlements } from "@/hooks/useEntitlements";
 import { UpgradeModal } from "@/components/access/UpgradeModal";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
+import { isNative } from "@/services/platform";
+import { Browser } from "@capacitor/browser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

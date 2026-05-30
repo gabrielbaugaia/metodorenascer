@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { isNative } from "@/services/platform";
+import { PushNotifications } from "@capacitor/push-notifications";
 
 interface NotificationPreferences {
   push_enabled: boolean;
@@ -38,7 +40,7 @@ export function usePushNotifications() {
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
 
   useEffect(() => {
-    const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    const supported = isNative || ("serviceWorker" in navigator && "PushManager" in window && "Notification" in window);
     setIsSupported(supported);
     
     if (supported && user) {
@@ -51,9 +53,14 @@ export function usePushNotifications() {
 
   const checkSubscription = async () => {
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await (registration as any).pushManager.getSubscription();
-      setIsSubscribed(!!subscription);
+      if (isNative) {
+        const permission = await PushNotifications.checkPermissions();
+        setIsSubscribed(permission.receive === 'granted');
+      } else {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await (registration as any).pushManager.getSubscription();
+        setIsSubscribed(!!subscription);
+      }
     } catch (error) {
       console.error("Erro ao verificar subscription:", error);
     } finally {
@@ -111,51 +118,67 @@ export function usePushNotifications() {
     if (!user || !isSupported) return false;
 
     try {
-      // Solicitar permissão
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        toast.error("Permissão para notificações negada");
-        return false;
-      }
-
-      // Registrar service worker
-      const registration = await navigator.serviceWorker.register("/sw.js");
-      await navigator.serviceWorker.ready;
-
-      // Verificar se já existe subscription
-      let subscription = await (registration as any).pushManager.getSubscription();
-      
-      if (!subscription) {
-        if (!VAPID_PUBLIC_KEY) {
-          console.error("VAPID_PUBLIC_KEY não configurada");
-          toast.error("Configuração de notificações incompleta");
+      if (isNative) {
+        let permStatus = await PushNotifications.checkPermissions();
+        if (permStatus.receive === 'prompt') {
+          permStatus = await PushNotifications.requestPermissions();
+        }
+        if (permStatus.receive !== 'granted') {
+          toast.error("Permissão para notificações negada");
           return false;
         }
-        const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-        subscription = await (registration as any).pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: applicationServerKey.buffer,
-        });
+        await PushNotifications.register();
+        // O token será capturado pelo listener configurado no main.tsx
+        setIsSubscribed(true);
+        toast.success("Notificações ativadas!");
+        return true;
+      } else {
+        // Solicitar permissão
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+          toast.error("Permissão para notificações negada");
+          return false;
+        }
+
+        // Registrar service worker
+        const registration = await navigator.serviceWorker.register("/sw.js");
+        await navigator.serviceWorker.ready;
+
+        // Verificar se já existe subscription
+        let subscription = await (registration as any).pushManager.getSubscription();
+        
+        if (!subscription) {
+          if (!VAPID_PUBLIC_KEY) {
+            console.error("VAPID_PUBLIC_KEY não configurada");
+            toast.error("Configuração de notificações incompleta");
+            return false;
+          }
+          const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+          subscription = await (registration as any).pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: applicationServerKey.buffer,
+          });
+        }
+
+        const subscriptionJson = subscription.toJSON();
+        
+        // Salvar no banco
+        const { error } = await supabase.from("push_subscriptions").upsert(
+          {
+            user_id: user.id,
+            endpoint: subscription.endpoint,
+            p256dh: subscriptionJson.keys?.p256dh || "",
+            auth: subscriptionJson.keys?.auth || "",
+          },
+          { onConflict: "user_id,endpoint" }
+        );
+
+        if (error) throw error;
+
+        setIsSubscribed(true);
+        toast.success("Notificações ativadas!");
+        return true;
       }
-
-      const subscriptionJson = subscription.toJSON();
-      
-      // Salvar no banco
-      const { error } = await supabase.from("push_subscriptions").upsert(
-        {
-          user_id: user.id,
-          endpoint: subscription.endpoint,
-          p256dh: subscriptionJson.keys?.p256dh || "",
-          auth: subscriptionJson.keys?.auth || "",
-        },
-        { onConflict: "user_id,endpoint" }
-      );
-
-      if (error) throw error;
-
-      setIsSubscribed(true);
-      toast.success("Notificações ativadas!");
-      return true;
     } catch (error) {
       console.error("Erro ao ativar notificações:", error);
       toast.error("Erro ao ativar notificações");

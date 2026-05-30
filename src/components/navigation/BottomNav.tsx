@@ -56,7 +56,7 @@ export function BottomNav() {
           "md:hidden fixed left-0 right-0 z-50 bg-background border-t border-border rounded-t-2xl shadow-xl transition-transform duration-200",
           moreOpen ? "translate-y-0" : "translate-y-full pointer-events-none",
         )}
-        style={{ bottom: "3.5rem" }} // h-14 = 56px = 3.5rem
+        style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
       >
         <div className="px-4 pt-3 pb-4">
           <p className="text-[10px] font-medium tracking-widest text-muted-foreground mb-3 uppercase">
@@ -87,8 +87,8 @@ export function BottomNav() {
       </div>
 
       {/* Bottom bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border safe-area-inset-bottom">
-        <div className="flex items-center justify-around h-14 px-2">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center justify-around h-16 px-2">
           {primaryNav.map((item) => {
             const isActive = location.pathname === item.href;
             return (

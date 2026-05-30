@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { capacitorStorage } from "@/lib/capacitor-storage";
 
 interface SetLog {
   exerciseName: string;
@@ -214,11 +215,11 @@ export function useWorkoutSession(exercises: Exercise[]) {
     };
   }, [sessionActive]);
 
-  // Rest timer based on endsAt (drift-proof) — with localStorage persistence
+  // Rest timer based on endsAt (drift-proof) — with capacitorStorage persistence
   useEffect(() => {
     if (restTimer.active && restTimer.endsAt) {
-      // Persist rest timer state to localStorage
-      localStorage.setItem("renascer_rest_timer", JSON.stringify({
+      // Persist rest timer state to storage
+      capacitorStorage.setItem("renascer_rest_timer", JSON.stringify({
         endsAt: restTimer.endsAt.toISOString(),
         exerciseName: restTimer.exerciseName,
         setNumber: restTimer.setNumber,
@@ -232,7 +233,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
         );
         if (remaining <= 0) {
           setRestTimer((prev) => ({ ...prev, active: false, remainingSeconds: 0 }));
-          localStorage.removeItem("renascer_rest_timer");
+          capacitorStorage.removeItem("renascer_rest_timer");
           // Vibrate on rest complete
           if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
           if (restIntervalRef.current) clearInterval(restIntervalRef.current);
@@ -241,35 +242,38 @@ export function useWorkoutSession(exercises: Exercise[]) {
         }
       }, 250);
     } else if (!restTimer.active) {
-      localStorage.removeItem("renascer_rest_timer");
+      capacitorStorage.removeItem("renascer_rest_timer");
     }
     return () => {
       if (restIntervalRef.current) clearInterval(restIntervalRef.current);
     };
   }, [restTimer.active, restTimer.endsAt]);
 
-  // Rehydrate rest timer from localStorage on mount
+  // Rehydrate rest timer from storage on mount
   useEffect(() => {
-    const saved = localStorage.getItem("renascer_rest_timer");
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved);
-      const endsAt = new Date(parsed.endsAt);
-      const remaining = Math.max(0, Math.ceil((endsAt.getTime() - Date.now()) / 1000));
-      if (remaining > 0) {
-        setRestTimer({
-          active: true,
-          remainingSeconds: remaining,
-          endsAt,
-          exerciseName: parsed.exerciseName || "",
-          setNumber: parsed.setNumber || 0,
-        });
-      } else {
-        localStorage.removeItem("renascer_rest_timer");
+    const init = async () => {
+      const saved = await capacitorStorage.getItem("renascer_rest_timer");
+      if (!saved) return;
+      try {
+        const parsed = JSON.parse(saved);
+        const endsAt = new Date(parsed.endsAt);
+        const remaining = Math.max(0, Math.ceil((endsAt.getTime() - Date.now()) / 1000));
+        if (remaining > 0) {
+          setRestTimer({
+            active: true,
+            remainingSeconds: remaining,
+            endsAt,
+            exerciseName: parsed.exerciseName || "",
+            setNumber: parsed.setNumber || 0,
+          });
+        } else {
+          await capacitorStorage.removeItem("renascer_rest_timer");
+        }
+      } catch {
+        await capacitorStorage.removeItem("renascer_rest_timer");
       }
-    } catch {
-      localStorage.removeItem("renascer_rest_timer");
-    }
+    };
+    init();
   }, []);
 
   const startSession = useCallback(

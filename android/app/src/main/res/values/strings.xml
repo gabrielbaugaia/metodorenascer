@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Renascer Connect</string>
+    <string name="title_activity_main">Renascer Connect</string>
+    <string name="package_name">com.renascer.connect</string>
+    <string name="custom_url_scheme">com.renascer.connect</string>
+</resources>

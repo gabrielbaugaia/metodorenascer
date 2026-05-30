@@ -1,6 +1,5 @@
-import { Preferences } from '@capacitor/preferences';
 import { supabase } from '@/integrations/supabase/client';
-import { isNative } from './platform';
+import { capacitorStorage } from '@/lib/capacitor-storage';
 
 const TOKEN_KEY = 'renascer_access_token';
 const LAST_SYNC_KEY = 'renascer_last_sync';
@@ -16,42 +15,21 @@ export async function getToken(): Promise<string | null> {
     // Supabase client indisponível — seguir para fallback
   }
 
-  // Fallback: Preferences (nativo) ou localStorage (web)
-  if (isNative) {
-    const { value } = await Preferences.get({ key: TOKEN_KEY });
-    return value;
-  }
-  return localStorage.getItem(TOKEN_KEY);
+  return capacitorStorage.getItem(TOKEN_KEY);
 }
 
 export async function saveToken(token: string): Promise<void> {
-  if (isNative) {
-    await Preferences.set({ key: TOKEN_KEY, value: token });
-  } else {
-    localStorage.setItem(TOKEN_KEY, token);
-  }
+  await capacitorStorage.setItem(TOKEN_KEY, token);
 }
 
 export async function clearToken(): Promise<void> {
-  if (isNative) {
-    await Preferences.remove({ key: TOKEN_KEY });
-  } else {
-    localStorage.removeItem(TOKEN_KEY);
-  }
+  await capacitorStorage.removeItem(TOKEN_KEY);
 }
 
 export async function saveLastSync(timestamp: string): Promise<void> {
-  if (isNative) {
-    await Preferences.set({ key: LAST_SYNC_KEY, value: timestamp });
-  } else {
-    localStorage.setItem(LAST_SYNC_KEY, timestamp);
-  }
+  await capacitorStorage.setItem(LAST_SYNC_KEY, timestamp);
 }
 
 export async function getLastSync(): Promise<string | null> {
-  if (isNative) {
-    const { value } = await Preferences.get({ key: LAST_SYNC_KEY });
-    return value;
-  }
-  return localStorage.getItem(LAST_SYNC_KEY);
+  return capacitorStorage.getItem(LAST_SYNC_KEY);
 }

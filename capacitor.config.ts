@@ -4,10 +4,26 @@ const config: CapacitorConfig = {
   appId: 'com.renascer.connect',
   appName: 'Renascer Connect',
   webDir: 'dist',
-  server: {
-    url: 'https://a75d46a2-4cbd-4416-81c4-9988ca4fb176.lovableproject.com/connect/login?forceHideBadge=true',
-    cleartext: false
-  }
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 3000,
+      launchAutoHide: true,
+      backgroundColor: "#ffffffff",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: true,
+      androidSpinnerStyle: "large",
+      iosSpinnerStyle: "small",
+      spinnerColor: "#999999",
+      splashFullScreen: true,
+      splashImmersive: true,
+      layoutName: "launch_screen",
+      useDialog: false,
+    },
+    StatusBar: {
+      style: 'DEFAULT',
+    },
+  },
 };
 
 export default config;

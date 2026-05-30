@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ClientLayout } from "@/components/layout/ClientLayout";
+import { capacitorStorage } from "@/lib/capacitor-storage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { Label } from "@/components/ui/label";
@@ -29,15 +30,18 @@ export default function Configuracoes() {
   useEffect(() => {
     setMounted(true);
     // Load saved language preference
-    const savedLang = localStorage.getItem("app-language");
-    if (savedLang) {
-      setLanguage(savedLang);
-    }
+    const init = async () => {
+      const savedLang = await capacitorStorage.getItem("app-language");
+      if (savedLang) {
+        setLanguage(savedLang);
+      }
+    };
+    init();
   }, []);
 
-  const handleLanguageChange = (value: string) => {
+  const handleLanguageChange = async (value: string) => {
     setLanguage(value);
-    localStorage.setItem("app-language", value);
+    await capacitorStorage.setItem("app-language", value);
   };
 
   const handleForceUpdate = async () => {

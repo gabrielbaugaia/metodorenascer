@@ -41,7 +41,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
         <ClientSidebar />
         <main className="flex-1 overflow-x-hidden overflow-y-auto min-w-0">
           {/* Mobile Header */}
-          <header className="md:hidden sticky top-0 z-40 flex h-12 items-center justify-between border-b border-border bg-background px-4">
+          <header className="md:hidden sticky top-0 z-40 flex h-[calc(3rem+env(safe-area-inset-top))] items-center justify-between border-b border-border bg-background px-4 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="h-8 w-8">
                 <Menu className="h-4 w-4" strokeWidth={1.5} />
@@ -59,7 +59,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
               <AdminSupportNotifications />
             </div>
           )}
-          <div className="p-4 md:p-6 pb-20 md:pb-6 max-w-full">
+          <div className="p-4 md:p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6 max-w-full">
             {children}
           </div>
         </main>

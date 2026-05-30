@@ -4,6 +4,7 @@ import gabrielBauPhoto from "@/assets/gabriel-bau-quiz.jpeg";
 import { Check, ChevronRight, Shield, Award, Activity, Brain, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { capacitorStorage } from "@/lib/capacitor-storage";
 
 const questions = [
   {
@@ -87,14 +88,18 @@ const Quiz = () => {
     }
 
     // Capture UTMs
-    const params = new URLSearchParams(window.location.search);
-    utmRef.current = {
-      utm_source: params.get("utm_source"),
-      utm_medium: params.get("utm_medium"),
-      utm_campaign: params.get("utm_campaign"),
-      utm_content: params.get("utm_content"),
-      session_id: localStorage.getItem("session_id") || null,
+    const init = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = await capacitorStorage.getItem("session_id");
+      utmRef.current = {
+        utm_source: params.get("utm_source"),
+        utm_medium: params.get("utm_medium"),
+        utm_campaign: params.get("utm_campaign"),
+        utm_content: params.get("utm_content"),
+        session_id: sessionId || null,
+      };
     };
+    init();
   }, []);
 
   const goTo = useCallback((s: number) => {

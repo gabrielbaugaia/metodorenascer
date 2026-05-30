@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Preferences } from "@capacitor/preferences";
 import { supabase } from "@/integrations/supabase/client";
 import { getToken, clearToken, getLastSync, saveLastSync } from "@/services/authStore";
 import { syncHealthData, type SyncResult } from "@/services/healthSync";
@@ -16,17 +17,17 @@ type HealthPermission = "unknown" | "granted" | "denied" | "unavailable" | "chec
 
 const PERMISSION_KEY = "renascer_health_permission";
 
-function loadPermission(): HealthPermission {
+async function loadPermission(): Promise<HealthPermission> {
   try {
-    const v = localStorage.getItem(PERMISSION_KEY);
-    if (v === "granted" || v === "denied") return v;
+    const { value } = await Preferences.get({ key: PERMISSION_KEY });
+    if (value === "granted" || value === "denied") return value as HealthPermission;
   } catch {}
   return "unknown";
 }
 
-function savePermission(v: HealthPermission) {
+async function savePermission(v: HealthPermission) {
   try {
-    localStorage.setItem(PERMISSION_KEY, v);
+    await Preferences.set({ key: PERMISSION_KEY, value: v });
   } catch {}
 }
 
@@ -84,7 +85,7 @@ const ConnectDashboard = () => {
       } else if (platform === 'web') {
         setHealthPermission("unavailable");
       } else {
-        const persisted = loadPermission();
+        const persisted = await loadPermission();
         setHealthPermission(persisted);
       }
     };
@@ -102,10 +103,10 @@ const ConnectDashboard = () => {
       }
       const status: HealthPermission = granted ? "granted" : "denied";
       setHealthPermission(status);
-      savePermission(status);
+      await savePermission(status);
     } catch {
       setHealthPermission("denied");
-      savePermission("denied");
+      await savePermission("denied");
     }
     setPermLoading(false);
   };

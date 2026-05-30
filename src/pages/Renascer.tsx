@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { capacitorStorage } from "@/lib/capacitor-storage";
 import { TransformationPhaseCard } from "@/components/renascer/TransformationPhaseCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useRenascerScore } from "@/hooks/useRenascerScore";
@@ -69,10 +70,11 @@ export default function Renascer() {
     setTimeout(() => setShowFeedback(false), 2500);
 
     const key = "renascer_celebrations_count";
-    const count = parseInt(localStorage.getItem(key) ?? "0", 10);
+    const savedCount = await capacitorStorage.getItem(key);
+    const count = parseInt(savedCount ?? "0", 10);
     if (count < 7) {
       setShowConfetti(true);
-      localStorage.setItem(key, String(count + 1));
+      await capacitorStorage.setItem(key, String(count + 1));
       setTimeout(() => setShowConfetti(false), 1200);
     }
 
