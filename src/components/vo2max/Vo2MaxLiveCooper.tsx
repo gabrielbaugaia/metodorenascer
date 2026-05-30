@@ -84,8 +84,8 @@ export function Vo2MaxLiveCooper({ onFinish, onBack }: Props) {
     session.start();
   };
 
-  const handleStopEarly = () => {
-    const total = session.finish();
+  const handleStopEarly = async () => {
+    const total = await session.finish();
     if (total < TOTAL) {
       beep(440, 200);
     }

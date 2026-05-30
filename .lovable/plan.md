@@ -1,97 +1,58 @@
+## Situação
 
-# Nova Landing Curta — Método Renascer App
+O Manus adicionou um sistema novo de saúde via `@capgo/capacitor-health` (`src/services/healthService.ts`), já plugado em **Configurações** e **Renascer**. Ele tenta gravar numa tabela nova `user_health_data` — **que não existe e não deve ser criada**, porque o projeto já tem toda uma infraestrutura madura:
 
-## Objetivo
-Substituir o Quiz como rota raiz (`/`) por uma **landing page curta, objetiva e de alta conversão**, focada no app. O Quiz continua disponível como caminho opcional ("Descobrir meu perfil em 60s") para quem prefere ser diagnosticado antes de decidir.
+- Tabela `health_daily` (passos, calorias, sono, FC repouso, HRV, etc.)
+- Tabela `health_workouts` (treinos com deduplicação por `external_id`)
+- Edge function `health-sync` (validação JWT, upsert por `user_id+date`)
+- Serviço `healthSync.ts` que já distingue iOS (HealthKit nativo) × Android (Health Connect) × Web (mock)
+- Hook `useHealthData` que alimenta SIS, Renascer Score, dashboards cardio
+- Bridges nativas Swift/Kotlin já documentadas (memória `mobile-health-v2`)
 
-## Roteamento
+Criar `user_health_data` quebraria essa cadeia: SIS, score, cardio e dashboard continuariam lendo `health_daily` vazio.
 
-| Rota | Hoje | Depois |
-|---|---|---|
-| `/` | Quiz | **Nova LandingApp** (curta) |
-| `/quiz` | — | Quiz Renascer (atual, intacto) |
-| `/landing-classica` | Index antigo | mantém |
-| `/v2` | LandingV2 luxury | mantém |
-| `/auth`, `/entrar` | Auth | mantém |
+## Plano: unificar no sistema existente
 
-CTAs primários da nova landing → `#planos` (na própria página) ou `/auth` (já é cliente).
-CTA secundário → `/quiz` ("Não sei por onde começar — fazer diagnóstico de 60s").
+### 1. Reescrever `src/services/healthService.ts`
+Manter a **API pública** que Configurações e Renascer já chamam (`isAvailable`, `checkPermissions`, `requestPermissions`, `readAndSyncDailyData`), mas internamente:
 
-## Estrutura da página (mobile-first, ~7 seções enxutas)
+- `isAvailable` / `checkPermissions` / `requestPermissions`: continuar usando `@capgo/capacitor-health` (já instalado) como wrapper unificado iOS+Android. Pedir leitura de `steps`, `calories`, `heartRate`, `sleep`.
+- `readAndSyncDailyData`: **não** gravar direto no Supabase. Em vez disso, chamar `syncHealthData(token)` do `src/services/healthSync.ts` já existente, que:
+  - detecta plataforma (iOS/Android/Web)
+  - usa as bridges nativas certas (HealthKit / Health Connect)
+  - posta no edge `health-sync` → grava em `health_daily` + `health_workouts`
+- Obter o `token` via `supabase.auth.getSession()` antes de chamar.
+- Manter os toasts de sucesso/erro que o Manus colocou (boa UX).
 
-Estilo: **Luxury Dark V2** já existente (Bebas Neue + DM Sans + Space Mono, #FF6500, fundo #050609). Reaproveita tokens e componentes de `src/components/landing-v2/`.
+### 2. Não criar a tabela `user_health_data`
+Ignorar a sugestão SQL do Manus. A tabela alvo continua sendo `health_daily` (já com RLS, índices e GRANTs corretos).
 
-```text
-┌─────────────────────────────────────┐
-│ 1. HERO                             │
-│    Headline forte + subheadline     │
-│    [Começar agora] [Fazer quiz 60s] │
-│    Mockup do app (1 imagem)         │
-├─────────────────────────────────────┤
-│ 2. PARA QUEM É (3 bullets curtos)   │
-├─────────────────────────────────────┤
-│ 3. O QUE O APP FAZ (4 cards)        │
-│    Treino IA · Nutrição · Mental ·  │
-│    SIS Score / Inteligência         │
-├─────────────────────────────────────┤
-│ 4. COMO FUNCIONA (3 passos)         │
-│    Anamnese → Protocolo → Evolução  │
-├─────────────────────────────────────┤
-│ 5. PROVA (1 depoimento + métricas)  │
-├─────────────────────────────────────┤
-│ 6. PLANOS (#planos) — 3 tiers       │
-│    Essencial 97 · PRO 297 · Elite   │
-├─────────────────────────────────────┤
-│ 7. FAQ enxuto (5 perguntas) + CTA   │
-│    final + faixa de garantia 7d     │
-└─────────────────────────────────────┘
-```
+### 3. Capability HealthKit no iOS
+O passo manual no Xcode (`Signing & Capabilities → + Capability → HealthKit`) **continua necessário** — isso não dá pra automatizar via código. O `Info.plist` já tem `NSHealthShareUsageDescription` e `NSHealthUpdateUsageDescription` (confirmado), então só falta a capability.
 
-Total estimado: **~5 minutos de leitura, scroll curto**, contra os 9 steps do quiz.
+### 4. Android — Health Connect
+O `AndroidManifest.xml` já foi atualizado pelo Manus. Manter como está. O Capgo Health usa Health Connect por baixo no Android, então funciona para Samsung Health / Garmin Connect / Mi Fitness desde que esses apps escrevam no Health Connect.
 
-## Conteúdo-chave (rascunho)
+### 5. Sincronização automática no Renascer
+O hook que o Manus adicionou em `Renascer.tsx` (sync ao abrir a tela) fica, mas passa a chamar o `healthService` reescrito → que delega para `healthSync` → edge function. Adicionar um throttle simples (não sincronizar mais que 1×/15min via `localStorage`) para não martelar a API a cada navegação.
 
-- **Headline:** "Seu corpo, seu protocolo. Calculado todo dia."
-- **Sub:** "App de prescrição física, nutricional e mental que se adapta aos seus dados reais — não a um plano genérico."
-- **CTAs hero:**
-  - Primário laranja: **Começar agora →** (rola para `#planos`)
-  - Secundário ghost: **Fazer diagnóstico de 60s** → `/quiz`
-- **Bloco "Para quem é":** executivos/profissionais 30+ que já tentaram academia, app genérico e nutricionista isolados e querem um sistema único guiado por dados.
-- **4 cards de feature:** Treino adaptado por HRV/sono · Nutrição com foto da refeição · Mindset diário · SIS Score (inteligência de performance).
-- **Como funciona:** 1) Anamnese 10 min → 2) Protocolo personalizado em 24h → 3) Ajustes mensais via IA + coach.
-- **Planos:** reaproveita `STRIPE_PRICE_IDS` de `planConstants.ts` (Essencial R$97 · PRO R$297 · Elite R$697). CTA cada card → checkout Stripe (mesmo fluxo do `/v2`).
-- **FAQ:** 5 perguntas (cancelamento, garantia, dispositivos, prazo de resultado, suporte).
-- **Garantia:** faixa "7 dias — devolução integral".
+### 6. UI de Configurações
+A seção "Conectar Dispositivos" que o Manus criou já está plugada. Após a refatoração, ela vai gravar nos lugares certos automaticamente, e o `useHealthData` (que alimenta Renascer/SIS/Cardio) vai refletir os dados na hora.
 
-## Arquivos a criar
+## Como testar depois
 
-- `src/pages/LandingApp.tsx` — orquestra as 7 seções
-- `src/components/landing-app/LandingAppHero.tsx`
-- `src/components/landing-app/LandingAppForWho.tsx`
-- `src/components/landing-app/LandingAppFeatures.tsx`
-- `src/components/landing-app/LandingAppHowItWorks.tsx`
-- `src/components/landing-app/LandingAppSocialProof.tsx`
-- `src/components/landing-app/LandingAppPricing.tsx` (pode reaproveitar `V2PricingSection` se o estilo couber)
-- `src/components/landing-app/LandingAppFAQ.tsx`
-- `src/components/landing-app/LandingAppFooter.tsx` (ou reusar `V2Footer`)
+1. `git pull` → `npm install` → `npm run build` → `npx cap sync`
+2. `npx cap open ios` → adicionar capability **HealthKit** (1× só)
+3. Rodar no iPhone físico
+4. Configurações → Conectar Dispositivos → Apple → Autorizar
+5. iOS abre painel do Saúde → marcar os tipos
+6. Voltar pra tela Renascer → sync automático dispara
+7. Verificar que passos/sono/FC aparecem nos cards de saúde e no SIS
 
-## Arquivos a editar
+## Fora deste plano
 
-- `src/App.tsx`:
-  - `<Route path="/" element={<LandingApp />} />`
-  - `<Route path="/quiz" element={<Quiz />} />` (nova rota)
-- `src/hooks/usePageTracking.ts`: mapear `/` → `landing_app` e `/quiz` → `quiz_renascer`.
-- Memory `mem://landing/quiz-funnel-as-home`: atualizar para refletir que `/` agora é a landing curta e quiz vive em `/quiz`.
+- Push notifications, ECG, importação manual Excel (já existem, sem mudança)
+- Tabela `user_health_data` (será descartada)
+- Mudanças em `health-sync` edge function (já cobre todos os campos necessários)
 
-## Fora de escopo
-
-- Não mexer em `/v2`, `/landing-classica`, no funil do quiz em si, nem nos planos/Stripe.
-- Sem novo backend, sem novas tabelas.
-- Sem mudanças no `/auth` ou no fluxo de checkout existente.
-
-## Perguntas rápidas antes de implementar
-
-1. **Estilo visual:** seguir o Luxury Dark V2 (Bebas/DM Sans/laranja #FF6500, igual `/v2`), ou criar identidade própria mais limpa?
-2. **Planos na landing:** mostrar os 3 tiers (Essencial/PRO/Elite) como `/v2` faz, ou só 1 CTA único "Ver planos" levando para `/assinatura`?
-3. **Quiz como CTA secundário:** texto preferido — "Fazer diagnóstico de 60s", "Descobrir meu perfil", ou outro?
-4. **Posição do quiz:** só no hero, ou repetir também no final (antes do FAQ) como segunda chance pra quem ainda não decidiu?
+Posso seguir com a refatoração?
