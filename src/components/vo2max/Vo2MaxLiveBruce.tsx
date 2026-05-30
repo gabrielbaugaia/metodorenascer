@@ -93,8 +93,8 @@ export function Vo2MaxLiveBruce({ onFinish, onBack }: Props) {
     session.start();
   };
 
-  const handleFinish = () => {
-    const total = session.finish();
+  const handleFinish = async () => {
+    const total = await session.finish();
     beepFinish();
     vibrate([300, 150, 300, 150, 500]);
     onFinish({
