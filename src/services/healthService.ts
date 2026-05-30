@@ -1,15 +1,20 @@
 import { Health } from '@capgo/capacitor-health';
 import { isNative } from '@/services/platform';
 import { supabase } from '@/integrations/supabase/client';
+import { syncHealthData } from '@/services/healthSync';
 import { toast } from 'sonner';
 
-export interface HealthData {
-  steps?: number;
-  calories?: number;
-  heartRate?: number;
-  sleep?: number;
-  // Adicione outros tipos de dados de saúde conforme necessário
-}
+/**
+ * HealthService — wrapper unificado iOS (HealthKit) + Android (Health Connect)
+ * via @capgo/capacitor-health, mas a PERSISTÊNCIA é delegada ao pipeline
+ * existente (`syncHealthData` → edge `health-sync` → tabela `health_daily`),
+ * mantendo SIS, Renascer Score e dashboards alimentados pelos mesmos dados.
+ */
+
+const SYNC_THROTTLE_KEY = 'health_last_sync_ts';
+const SYNC_THROTTLE_MS = 15 * 60 * 1000; // 15 min
+
+const READ_TYPES = ['steps', 'calories', 'heartRate', 'sleep'] as const;
 
 export const HealthService = {
   async isAvailable(): Promise<boolean> {
@@ -18,17 +23,20 @@ export const HealthService = {
       const { available } = await Health.isAvailable();
       return available;
     } catch (error) {
-      console.error('Erro ao verificar disponibilidade do Health:', error);
+      console.error('[HealthService] isAvailable error:', error);
       return false;
     }
   },
 
   async requestPermissions(): Promise<boolean> {
-    if (!isNative) return false;
+    if (!isNative) {
+      toast.info('Conexão com relógios só funciona no app instalado (iOS/Android).');
+      return false;
+    }
     try {
       const { success } = await Health.requestAuthorization({
-        read: ['steps', 'calories', 'heartRate', 'sleep'],
-        write: [], // Por enquanto, apenas leitura
+        read: [...READ_TYPES],
+        write: [],
       });
       if (success) {
         toast.success('Permissões de saúde concedidas!');
@@ -36,8 +44,8 @@ export const HealthService = {
         toast.error('Permissões de saúde negadas.');
       }
       return success;
-    } catch (error) {
-      console.error('Erro ao solicitar permissões de saúde:', error);
+    } catch (error: any) {
+      console.error('[HealthService] requestPermissions error:', error);
       toast.error('Erro ao solicitar permissões de saúde.');
       return false;
     }
@@ -47,84 +55,64 @@ export const HealthService = {
     if (!isNative) return false;
     try {
       const { success } = await Health.checkAuthorization({
-        read: ['steps', 'calories', 'heartRate', 'sleep'],
+        read: [...READ_TYPES],
         write: [],
       });
       return success;
     } catch (error) {
-      console.error('Erro ao verificar permissões de saúde:', error);
+      console.error('[HealthService] checkPermissions error:', error);
       return false;
     }
   },
 
-  async readAndSyncDailyData(): Promise<void> {
+  /**
+   * Lê dados de hoje (passos, calorias, sono, FC, HRV) e sincroniza
+   * no `health_daily` via edge function. Throttle de 15 min para evitar
+   * chamadas redundantes durante navegação.
+   */
+  async readAndSyncDailyData(options: { silent?: boolean; force?: boolean } = {}): Promise<void> {
+    const { silent = false, force = false } = options;
+
     if (!isNative) {
-      console.warn('HealthService: Não é uma plataforma nativa.');
+      if (!silent) toast.info('Sincronização disponível apenas no app instalado.');
       return;
+    }
+
+    // Throttle
+    if (!force) {
+      try {
+        const last = localStorage.getItem(SYNC_THROTTLE_KEY);
+        if (last && Date.now() - parseInt(last, 10) < SYNC_THROTTLE_MS) {
+          return;
+        }
+      } catch { /* ignore */ }
     }
 
     const hasPermissions = await this.checkPermissions();
     if (!hasPermissions) {
-      toast.info('Autorização de saúde necessária para sincronizar dados.');
+      if (!silent) toast.info('Autorize o acesso à saúde em Configurações > Conectar Dispositivos.');
       return;
     }
 
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
-      const readOptions = {
-        startDate: today.toISOString(),
-        endDate: tomorrow.toISOString(),
-        bucket: 'day',
-      };
-
-      const stepsData = await Health.queryAggregated({
-        dataType: 'steps',
-        ...readOptions,
-      });
-      const caloriesData = await Health.queryAggregated({
-        dataType: 'calories',
-        ...readOptions,
-      });
-      const heartRateData = await Health.queryAggregated({
-        dataType: 'heartRate',
-        ...readOptions,
-      });
-      const sleepData = await Health.queryAggregated({
-        dataType: 'sleep',
-        ...readOptions,
-      });
-
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      if (!userId) {
-        console.error('Usuário não autenticado para sincronizar dados de saúde.');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        if (!silent) toast.error('Sessão expirada. Faça login novamente.');
         return;
       }
 
-      const healthEntry = {
-        user_id: userId,
-        date: today.toISOString().split('T')[0],
-        steps: stepsData.value[0]?.value || 0,
-        calories: caloriesData.value[0]?.value || 0,
-        heart_rate: heartRateData.value[0]?.value || 0,
-        sleep: sleepData.value[0]?.value || 0,
-        // Adicione outros campos conforme o schema do seu banco de dados
-      };
+      const result = await syncHealthData(token);
 
-      const { error } = await supabase.from('user_health_data').upsert(healthEntry, { onConflict: 'user_id,date' });
-
-      if (error) {
-        console.error('Erro ao sincronizar dados de saúde com o Supabase:', error);
-        toast.error('Erro ao sincronizar dados de saúde.');
-      } else {
-        toast.success('Dados de saúde sincronizados com sucesso!');
+      if (result.success) {
+        try { localStorage.setItem(SYNC_THROTTLE_KEY, String(Date.now())); } catch { /* ignore */ }
+        if (!silent) toast.success(result.message);
+      } else if (!silent) {
+        toast.error(result.message);
       }
-    } catch (error) {
-      console.error('Erro ao ler e sincronizar dados de saúde:', error);
-      toast.error('Erro ao ler e sincronizar dados de saúde.');
+    } catch (error: any) {
+      console.error('[HealthService] sync error:', error);
+      if (!silent) toast.error('Erro ao sincronizar dados de saúde.');
     }
   },
 };
