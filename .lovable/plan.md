@@ -1,58 +1,441 @@
-## Situação
+Act as a world-class conversion designer, UX strategist and creative director.
 
-O Manus adicionou um sistema novo de saúde via `@capgo/capacitor-health` (`src/services/healthService.ts`), já plugado em **Configurações** e **Renascer**. Ele tenta gravar numa tabela nova `user_health_data` — **que não existe e não deve ser criada**, porque o projeto já tem toda uma infraestrutura madura:
+Completely redesign the Método Renascer sales page from scratch.
 
-- Tabela `health_daily` (passos, calorias, sono, FC repouso, HRV, etc.)
-- Tabela `health_workouts` (treinos com deduplicação por `external_id`)
-- Edge function `health-sync` (validação JWT, upsert por `user_id+date`)
-- Serviço `healthSync.ts` que já distingue iOS (HealthKit nativo) × Android (Health Connect) × Web (mock)
-- Hook `useHealthData` que alimenta SIS, Renascer Score, dashboards cardio
-- Bridges nativas Swift/Kotlin já documentadas (memória `mobile-health-v2`)
+Do not redesign the current page.
 
-Criar `user_health_data` quebraria essa cadeia: SIS, score, cardio e dashboard continuariam lendo `health_daily` vazio.
+Delete the current structure and create a new premium experience.
 
-## Plano: unificar no sistema existente
+The objective is to position Método Renascer as the most advanced transformation system for adults over 30 who want to regain control of their body, health, performance and routine.
 
-### 1. Reescrever `src/services/healthService.ts`
-Manter a **API pública** que Configurações e Renascer já chamam (`isAvailable`, `checkPermissions`, `requestPermissions`, `readAndSyncDailyData`), mas internamente:
+IMPORTANT:
 
-- `isAvailable` / `checkPermissions` / `requestPermissions`: continuar usando `@capgo/capacitor-health` (já instalado) como wrapper unificado iOS+Android. Pedir leitura de `steps`, `calories`, `heartRate`, `sleep`.
-- `readAndSyncDailyData`: **não** gravar direto no Supabase. Em vez disso, chamar `syncHealthData(token)` do `src/services/healthSync.ts` já existente, que:
-  - detecta plataforma (iOS/Android/Web)
-  - usa as bridges nativas certas (HealthKit / Health Connect)
-  - posta no edge `health-sync` → grava em `health_daily` + `health_workouts`
-- Obter o `token` via `supabase.auth.getSession()` antes de chamar.
-- Manter os toasts de sucesso/erro que o Manus colocou (boa UX).
+The page must NOT feel like a fitness course.
 
-### 2. Não criar a tabela `user_health_data`
-Ignorar a sugestão SQL do Manus. A tabela alvo continua sendo `health_daily` (já com RLS, índices e GRANTs corretos).
+The page must NOT feel like a generic AI app.
 
-### 3. Capability HealthKit no iOS
-O passo manual no Xcode (`Signing & Capabilities → + Capability → HealthKit`) **continua necessário** — isso não dá pra automatizar via código. O `Info.plist` já tem `NSHealthShareUsageDescription` e `NSHealthUpdateUsageDescription` (confirmado), então só falta a capability.
+The page must feel like:
 
-### 4. Android — Health Connect
-O `AndroidManifest.xml` já foi atualizado pelo Manus. Manter como está. O Capgo Health usa Health Connect por baixo no Android, então funciona para Samsung Health / Garmin Connect / Mi Fitness desde que esses apps escrevam no Health Connect.
+- Apple
 
-### 5. Sincronização automática no Renascer
-O hook que o Manus adicionou em `Renascer.tsx` (sync ao abrir a tela) fica, mas passa a chamar o `healthService` reescrito → que delega para `healthSync` → edge function. Adicionar um throttle simples (não sincronizar mais que 1×/15min via `localStorage`) para não martelar a API a cada navegação.
+- Porsche
 
-### 6. UI de Configurações
-A seção "Conectar Dispositivos" que o Manus criou já está plugada. Após a refatoração, ela vai gravar nos lugares certos automaticamente, e o `useHealthData` (que alimenta Renascer/SIS/Cardio) vai refletir os dados na hora.
+- Whoop
 
-## Como testar depois
+- Oura Ring
 
-1. `git pull` → `npm install` → `npm run build` → `npx cap sync`
-2. `npx cap open ios` → adicionar capability **HealthKit** (1× só)
-3. Rodar no iPhone físico
-4. Configurações → Conectar Dispositivos → Apple → Autorizar
-5. iOS abre painel do Saúde → marcar os tipos
-6. Voltar pra tela Renascer → sync automático dispara
-7. Verificar que passos/sono/FC aparecem nos cards de saúde e no SIS
+- Tesla
 
-## Fora deste plano
+- Eight Sleep
 
-- Push notifications, ECG, importação manual Excel (já existem, sem mudança)
-- Tabela `user_health_data` (será descartada)
-- Mudanças em `health-sync` edge function (já cobre todos os campos necessários)
+combined with a premium executive coaching experience.
 
-Posso seguir com a refatoração?
+The emotional message is:
+
+"You don't need more motivation.
+
+You need a system."
+
+The technology is NOT the hero.
+
+The transformation is the hero.
+
+Gabriel Baú is the authority.
+
+The technology is simply the mechanism.
+
+--------------------------------------------------
+
+VISUAL DIRECTION
+
+Luxury dark mode.
+
+Minimalist.
+
+Massive whitespace.
+
+Editorial design.
+
+Large typography.
+
+Photography over icons.
+
+No emojis.
+
+No cartoon icons.
+
+No generic SaaS cards.
+
+No repetitive layouts.
+
+Use:
+
+- subtle gradients
+
+- glass effects
+
+- premium shadows
+
+- motion design
+
+- reveal animations
+
+- cinematic transitions
+
+Color palette:
+
+#0B0B0B
+
+#161616
+
+#F5F5F5
+
+#A7A7A7
+
+#FF5A1F
+
+--------------------------------------------------
+
+SECTION 01
+
+FULL SCREEN HERO
+
+Background:
+
+Dark cinematic atmosphere.
+
+Subtle moving particles.
+
+Premium glow.
+
+Photo of Gabriel Baú.
+
+Headline:
+
+PARE DE RECOMEÇAR.
+
+Subheadline:
+
+O Método Renascer combina ciência, acompanhamento humano e inteligência de dados para criar a direção que faltava para seu corpo voltar a evoluir.
+
+Primary CTA:
+
+COMEÇAR MEU DIAGNÓSTICO
+
+Secondary CTA:
+
+COMO FUNCIONA
+
+Social proof bar:
+
++15 anos de experiência
+
++1000 alunos impactados
+
+Método baseado em ciência
+
+--------------------------------------------------
+
+SECTION 02
+
+THE REAL PROBLEM
+
+Title:
+
+O PROBLEMA NÃO É VOCÊ.
+
+Text:
+
+Você já tentou dieta.
+
+Já tentou academia.
+
+Já tentou motivação.
+
+Mas continua recomeçando.
+
+Porque ninguém te ensinou a construir um sistema.
+
+Visual:
+
+Split screen.
+
+Left:
+
+Caos.
+
+Direita:
+
+Direção.
+
+Animation on scroll.
+
+--------------------------------------------------
+
+SECTION 03
+
+ABOUT GABRIEL BAÚ
+
+Large portrait.
+
+Luxury editorial layout.
+
+Title:
+
+QUEM ESTÁ POR TRÁS DO MÉTODO
+
+Content:
+
+Gabriel Baú.
+
+Mestre em Ciência do Exercício.
+
+Especialista em performance e reabilitação.
+
+Mais de 15 anos ajudando pessoas a reconstruírem corpo, saúde e confiança.
+
+This section must create trust.
+
+--------------------------------------------------
+
+SECTION 04
+
+THE RENASCER METHOD
+
+Title:
+
+OS 5 PILARES DO RENASCER
+
+Do not use cards.
+
+Do not use icons.
+
+Create a vertical timeline.
+
+01 Clareza
+
+02 Movimento
+
+03 Nutrição
+
+04 Rotina
+
+05 Ajuste
+
+Each pillar reveals while scrolling.
+
+--------------------------------------------------
+
+SECTION 05
+
+WHY IT WORKS
+
+Title:
+
+VOCÊ PARA DE ADIVINHAR.
+
+Visual:
+
+Interactive dashboard.
+
+Modern premium design.
+
+No emojis.
+
+No fake metrics.
+
+Show:
+
+Sono
+
+Treino
+
+Recuperação
+
+Nutrição
+
+Consistência
+
+Text:
+
+Quando você mede, você entende.
+
+Quando entende, você ajusta.
+
+Quando ajusta, você evolui.
+
+--------------------------------------------------
+
+SECTION 06
+
+REAL TRANSFORMATIONS
+
+Title:
+
+RESULTADOS REAIS.
+
+Use real client photos.
+
+Before and after.
+
+Story cards.
+
+Example:
+
+Alan.
+
+Pizzaiolo.
+
+-10kg em 60 dias.
+
+Medicamentos suspensos pelo médico.
+
+Use emotional storytelling.
+
+--------------------------------------------------
+
+SECTION 07
+
+WHO THIS IS FOR
+
+Create three large cards.
+
+Not pricing.
+
+Identity.
+
+CARD 1
+
+Quero voltar a ter controle.
+
+CARD 2
+
+Quero emagrecer sem recomeçar.
+
+CARD 3
+
+Quero performance e longevidade.
+
+--------------------------------------------------
+
+SECTION 08
+
+PLANS
+
+Replace current comparison table.
+
+Create 3 premium pricing cards.
+
+ESSENCIAL
+
+PRO
+
+ELITE
+
+Each card should focus on outcome.
+
+Not features.
+
+Most chosen plan highlighted.
+
+No comparison table.
+
+No horizontal scrolling.
+
+--------------------------------------------------
+
+SECTION 09
+
+FREE DIAGNOSTIC
+
+Title:
+
+DESCUBRA SE O MÉTODO É PARA VOCÊ.
+
+Text:
+
+Antes de qualquer plano, você recebe um diagnóstico inicial.
+
+Sem custo.
+
+Sem compromisso.
+
+CTA:
+
+FAZER DIAGNÓSTICO GRATUITO
+
+Use a premium visual mockup.
+
+Remove shield icon.
+
+--------------------------------------------------
+
+SECTION 10
+
+FAQ
+
+Minimal accordion.
+
+Apple style.
+
+Large spacing.
+
+Minimal borders.
+
+--------------------------------------------------
+
+FINAL SECTION
+
+Title:
+
+VOCÊ PODE CONTINUAR RECOMEÇANDO.
+
+OU PODE CONSTRUIR UM SISTEMA.
+
+CTA:
+
+COMEÇAR MEU RENASCER
+
+Background:
+
+Cinematic image.
+
+Soft motion.
+
+Luxury feel.
+
+--------------------------------------------------
+
+MOBILE EXPERIENCE
+
+Design mobile-first.
+
+Avoid long sections.
+
+Break content into visual blocks.
+
+Large buttons.
+
+Thumb-friendly navigation.
+
+Sticky CTA at bottom.
+
+--------------------------------------------------
+
+CRITICAL RULES
+
+Remove every emoji.
+
+Remove every generic icon.
+
+Remove every repetitive card.
+
+Remove every comparison table.
+
+Show Gabriel Baú much more.
+
+Make transformation the hero.
+
+Make technology the mechanism.
+
+The page should feel handcrafted by a premium design agency and not generated by AI.
