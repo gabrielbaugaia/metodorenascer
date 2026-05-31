@@ -15,10 +15,16 @@ workflows:
           npm run mobile:sync:android
       - name: Configure Android SDK
         script: |
+          export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          java -version
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36"
       - name: Build Android preview APK
         script: |
+          export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          java -version
           cd android && ./gradlew assembleDebug --stacktrace
     artifacts:
       - android/app/build/outputs/apk/debug/*.apk
@@ -41,10 +47,16 @@ workflows:
           npm run mobile:sync:android
       - name: Configure Android SDK
         script: |
+          export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          java -version
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36"
       - name: Build Android App Bundle
         script: |
+          export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
+          export PATH="$JAVA_HOME/bin:$PATH"
+          java -version
           cd android && ./gradlew bundleRelease --stacktrace
     artifacts:
       - android/app/build/outputs/bundle/release/*.aab
