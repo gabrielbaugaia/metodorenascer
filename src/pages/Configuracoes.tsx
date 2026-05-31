@@ -247,6 +247,9 @@ export default function Configuracoes() {
                 <span className="text-sm font-medium">Sistema</span>
               </Label>
             </RadioGroup>
+            <p className="text-xs text-muted-foreground mt-3">
+              O modo Claro está disponível em telas internas (Configurações, Perfil, Admin). Algumas áreas com identidade visual fixa (Início, Treino, Landing) permanecem escuras por padrão de marca.
+            </p>
           </CardContent>
         </Card>
 
@@ -258,41 +261,22 @@ export default function Configuracoes() {
               Idioma
             </CardTitle>
             <CardDescription>
-              Selecione o idioma preferido da interface
+              Idioma da interface
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RadioGroup
-              value={language}
-              onValueChange={handleLanguageChange}
-              className="space-y-2"
-            >
-              {languages.map((lang) => (
-                <Label
-                  key={lang.value}
-                  htmlFor={`lang-${lang.value}`}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                    language === lang.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <RadioGroupItem value={lang.value} id={`lang-${lang.value}`} />
-                  <span className="text-xl">{lang.flag}</span>
-                  <span className="font-medium">{lang.label}</span>
-                  {lang.value !== "pt-BR" && (
-                    <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                      Em breve
-                    </span>
-                  )}
-                </Label>
-              ))}
-            </RadioGroup>
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-primary bg-primary/10">
+              <span className="text-xl">🇧🇷</span>
+              <span className="font-medium">Português (Brasil)</span>
+            </div>
             <p className="text-xs text-muted-foreground mt-3">
-              Atualmente apenas Português (Brasil) está disponível. Novos idiomas serão adicionados em breve.
+              Outros idiomas serão adicionados em versões futuras.
             </p>
           </CardContent>
         </Card>
+
+
+
 
         {/* Atualização e Versão */}
         <Card>
