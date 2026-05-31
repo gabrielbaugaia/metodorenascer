@@ -5,6 +5,7 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       node: latest
+      java: 21
     scripts:
       - name: Install dependencies
         script: |
@@ -18,7 +19,7 @@ workflows:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36"
       - name: Build Android preview APK
         script: |
-          cd android && ./gradlew assembleDebug
+          cd android && ./gradlew assembleDebug --stacktrace
     artifacts:
       - android/app/build/outputs/apk/debug/*.apk
 
@@ -28,6 +29,7 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       node: latest
+      java: 21
       android_signing:
         - renascer_connect_release
     scripts:
@@ -43,7 +45,7 @@ workflows:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36"
       - name: Build Android App Bundle
         script: |
-          cd android && ./gradlew bundleRelease
+          cd android && ./gradlew bundleRelease --stacktrace
     artifacts:
       - android/app/build/outputs/bundle/release/*.aab
 
