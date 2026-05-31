@@ -64,6 +64,8 @@ This project is built with:
 
 Este projeto utiliza **Capacitor** para converter a aplicação web em aplicativos nativos.
 
+Guia de publicação nas lojas: [`docs/MOBILE_RELEASE.md`](docs/MOBILE_RELEASE.md).
+
 ### Pré-requisitos
 - **Android:** Android Studio instalado.
 - **iOS:** Xcode instalado (necessário macOS).
