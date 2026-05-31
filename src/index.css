@@ -355,3 +355,82 @@
 .quiz-renascer .animate-fade-in-up {
   animation: quizFadeInUp 0.5s ease-out forwards;
 }
+
+/* ============================================================
+ * LANDING PREMIUM — namespace .lp-root (isolated tokens & utilities)
+ * ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&family=Inter+Tight:wght@300;400;500;600&display=swap');
+
+.lp-root {
+  --lp-bg: #0B0B0B;
+  --lp-surface: #161616;
+  --lp-text: #F5F5F5;
+  --lp-muted: #A7A7A7;
+  --lp-accent: #FF5A1F;
+  font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+}
+.lp-root .lp-display { font-family: 'Fraunces', 'Times New Roman', serif; font-weight: 400; font-feature-settings: 'ss01'; }
+.lp-root .lp-body { font-family: 'Inter Tight', 'Inter', system-ui, sans-serif; font-weight: 300; }
+.lp-root .lp-mono { font-family: 'Space Mono', ui-monospace, monospace; font-weight: 400; }
+.lp-root .lp-text { color: var(--lp-text); }
+.lp-root .lp-muted { color: var(--lp-muted); }
+.lp-root .lp-accent { color: var(--lp-accent); }
+.lp-root .lp-accent-bg { background-color: var(--lp-accent); }
+
+.lp-root .lp-btn-primary {
+  display: inline-block;
+  background: var(--lp-accent);
+  color: #000;
+  padding: 18px 32px;
+  border: 1px solid var(--lp-accent);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+  white-space: nowrap;
+}
+.lp-root .lp-btn-primary:hover {
+  background: transparent;
+  color: var(--lp-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 40px -12px rgba(255,90,31,0.4);
+}
+.lp-root .lp-btn-ghost {
+  display: inline-block;
+  background: transparent;
+  color: var(--lp-muted);
+  padding: 18px 32px;
+  border: 1px solid rgba(167,167,167,0.25);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+  white-space: nowrap;
+}
+.lp-root .lp-btn-ghost:hover {
+  color: var(--lp-text);
+  border-color: var(--lp-text);
+}
+
+.lp-root .lp-plan {
+  background: linear-gradient(160deg, rgba(22,22,22,0.6), rgba(11,11,11,0.4));
+  border: 1px solid rgba(167,167,167,0.1);
+  backdrop-filter: blur(20px);
+}
+.lp-root .lp-plan:hover { border-color: rgba(167,167,167,0.25); }
+.lp-root .lp-plan-featured {
+  background: linear-gradient(160deg, rgba(22,22,22,0.9), rgba(11,11,11,0.7));
+  border: 1px solid rgba(255,90,31,0.4);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 30px 80px -20px rgba(255,90,31,0.18), inset 0 1px 0 rgba(255,90,31,0.1);
+}
+.lp-root .lp-plan-featured:hover { border-color: var(--lp-accent); }
+
+@keyframes lpFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.lp-root .lp-fade-up {
+  animation: lpFadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.lp-root *::selection { background: var(--lp-accent); color: #000; }
