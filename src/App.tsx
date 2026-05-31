@@ -15,6 +15,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Critical routes loaded immediately
+import LandingPremium from "./pages/LandingPremium";
 import Index from "./pages/Index";
 import LandingApp from "./pages/LandingApp";
 const Quiz = lazy(() => import("./pages/Quiz"));
@@ -124,7 +125,8 @@ const App = () => {
             <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* ROTAS PÚBLICAS */}
-            <Route path="/" element={<LandingApp />} />
+            <Route path="/" element={<LandingPremium />} />
+            <Route path="/landing-app" element={<LandingApp />} />
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/landing-classica" element={<Index />} />
             <Route path="/v2" element={<LandingV2 />} />
