@@ -12,6 +12,10 @@ workflows:
       - name: Build web project and sync Android
         script: |
           npm run mobile:sync:android
+      - name: Configure Android SDK
+        script: |
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36"
       - name: Build Android preview APK
         script: |
           cd android && ./gradlew assembleDebug
@@ -33,6 +37,10 @@ workflows:
       - name: Build web project and sync Android
         script: |
           npm run mobile:sync:android
+      - name: Configure Android SDK
+        script: |
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36"
       - name: Build Android App Bundle
         script: |
           cd android && ./gradlew bundleRelease

@@ -72,6 +72,8 @@ Esse workflow gera:
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
+No Codemagic, os workflows Android criam `android/local.properties` automaticamente e instalam `platforms;android-36` antes de chamar o Gradle. Isso evita falhas quando a maquina de build nao vem com o mesmo SDK Android instalado no PC local.
+
 Depois que a build terminar, abra a pagina da build no Codemagic e procure o artefato `.apk`. Se o recurso App Preview estiver habilitado para sua equipe, aparece o botao `Quick Launch` ao lado do APK. Clique nele para abrir o emulador Android no navegador.
 
 Observacao: segundo a documentacao atual do Codemagic, o App Preview no navegador fica disponivel para equipes. Em conta pessoal, o caminho mais simples e baixar o `.apk` gerado e instalar em um aparelho Android ou emulador local.
