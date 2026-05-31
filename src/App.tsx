@@ -114,6 +114,7 @@ const App = () => {
 
   return (
   <QueryClientProvider client={queryClient}>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
     <AuthProvider>
       <TooltipProvider>
         <ErrorBoundary>
