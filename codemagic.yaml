@@ -15,19 +15,19 @@ workflows:
           npm run mobile:sync:android
       - name: Configure Android SDK
         script: |
-          export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
+          export JAVA_HOME="$(/usr/libexec/java_home -v 21)"
           export PATH="$JAVA_HOME/bin:$PATH"
           java -version
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36"
       - name: Build Android preview APK
         script: |
-          export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
+          export JAVA_HOME="$(/usr/libexec/java_home -v 21)"
           export PATH="$JAVA_HOME/bin:$PATH"
           java -version
           cd android
           ./gradlew --version
-          ./gradlew assembleDebug --stacktrace --no-daemon > ../gradle-android-preview.log 2>&1 || { tail -200 ../gradle-android-preview.log; exit 1; }
+          ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" assembleDebug --stacktrace --no-daemon > ../gradle-android-preview.log 2>&1 || { tail -200 ../gradle-android-preview.log; exit 1; }
           tail -80 ../gradle-android-preview.log
     artifacts:
       - android/app/build/outputs/apk/debug/*.apk
@@ -51,19 +51,19 @@ workflows:
           npm run mobile:sync:android
       - name: Configure Android SDK
         script: |
-          export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
+          export JAVA_HOME="$(/usr/libexec/java_home -v 21)"
           export PATH="$JAVA_HOME/bin:$PATH"
           java -version
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36"
       - name: Build Android App Bundle
         script: |
-          export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
+          export JAVA_HOME="$(/usr/libexec/java_home -v 21)"
           export PATH="$JAVA_HOME/bin:$PATH"
           java -version
           cd android
           ./gradlew --version
-          ./gradlew bundleRelease --stacktrace --no-daemon > ../gradle-android-release.log 2>&1 || { tail -200 ../gradle-android-release.log; exit 1; }
+          ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" bundleRelease --stacktrace --no-daemon > ../gradle-android-release.log 2>&1 || { tail -200 ../gradle-android-release.log; exit 1; }
           tail -80 ../gradle-android-release.log
     artifacts:
       - android/app/build/outputs/bundle/release/*.aab

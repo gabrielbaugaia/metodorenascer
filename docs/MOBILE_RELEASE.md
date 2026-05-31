@@ -72,7 +72,7 @@ Esse workflow gera:
 android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-No Codemagic, os workflows Android criam `android/local.properties` automaticamente, instalam `platforms;android-36` antes de chamar o Gradle e exportam `JAVA_HOME` para o JDK 21 no proprio passo de build. O Java 21 e necessario porque o plugin `@capgo/capacitor-health` compila o modulo Android com `JavaVersion.VERSION_21`.
+No Codemagic, os workflows Android criam `android/local.properties` automaticamente, instalam `platforms;android-36` antes de chamar o Gradle, resolvem o JDK 21 com `/usr/libexec/java_home -v 21` e passam esse JDK diretamente ao Gradle com `-Dorg.gradle.java.home`. O Java 21 e necessario porque Capacitor 8 compila o modulo Android com `JavaVersion.VERSION_21`.
 
 Depois que a build terminar, abra a pagina da build no Codemagic e procure o artefato `.apk`. Se o recurso App Preview estiver habilitado para sua equipe, aparece o botao `Quick Launch` ao lado do APK. Clique nele para abrir o emulador Android no navegador.
 
