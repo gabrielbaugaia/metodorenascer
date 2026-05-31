@@ -247,10 +247,34 @@ export default function Configuracoes() {
                 <span className="text-sm font-medium">Sistema</span>
               </Label>
             </RadioGroup>
+            <p className="text-xs text-muted-foreground mt-3">
+              O modo Claro está disponível em telas internas (Configurações, Perfil, Admin). Algumas áreas com identidade visual fixa (Início, Treino, Landing) permanecem escuras por padrão de marca.
+            </p>
           </CardContent>
         </Card>
 
         {/* Idioma */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Globe className="h-5 w-5" />
+              Idioma
+            </CardTitle>
+            <CardDescription>
+              Idioma da interface
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-primary bg-primary/10">
+              <span className="text-xl">🇧🇷</span>
+              <span className="font-medium">Português (Brasil)</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              Outros idiomas serão adicionados em versões futuras.
+            </p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
