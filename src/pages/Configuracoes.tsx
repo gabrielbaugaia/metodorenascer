@@ -275,48 +275,8 @@ export default function Configuracoes() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Globe className="h-5 w-5" />
-              Idioma
-            </CardTitle>
-            <CardDescription>
-              Selecione o idioma preferido da interface
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={language}
-              onValueChange={handleLanguageChange}
-              className="space-y-2"
-            >
-              {languages.map((lang) => (
-                <Label
-                  key={lang.value}
-                  htmlFor={`lang-${lang.value}`}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                    language === lang.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <RadioGroupItem value={lang.value} id={`lang-${lang.value}`} />
-                  <span className="text-xl">{lang.flag}</span>
-                  <span className="font-medium">{lang.label}</span>
-                  {lang.value !== "pt-BR" && (
-                    <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                      Em breve
-                    </span>
-                  )}
-                </Label>
-              ))}
-            </RadioGroup>
-            <p className="text-xs text-muted-foreground mt-3">
-              Atualmente apenas Português (Brasil) está disponível. Novos idiomas serão adicionados em breve.
-            </p>
-          </CardContent>
-        </Card>
+
+
 
         {/* Atualização e Versão */}
         <Card>
