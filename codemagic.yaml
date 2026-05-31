@@ -25,9 +25,13 @@ workflows:
           export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
           export PATH="$JAVA_HOME/bin:$PATH"
           java -version
-          cd android && ./gradlew assembleDebug --stacktrace
+          cd android
+          ./gradlew --version
+          ./gradlew assembleDebug --stacktrace --no-daemon > ../gradle-android-preview.log 2>&1 || { tail -200 ../gradle-android-preview.log; exit 1; }
+          tail -80 ../gradle-android-preview.log
     artifacts:
       - android/app/build/outputs/apk/debug/*.apk
+      - gradle-android-preview.log
 
   android-workflow:
     name: Android Release (Metodo Renascer)
@@ -57,9 +61,13 @@ workflows:
           export JAVA_HOME="/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home"
           export PATH="$JAVA_HOME/bin:$PATH"
           java -version
-          cd android && ./gradlew bundleRelease --stacktrace
+          cd android
+          ./gradlew --version
+          ./gradlew bundleRelease --stacktrace --no-daemon > ../gradle-android-release.log 2>&1 || { tail -200 ../gradle-android-release.log; exit 1; }
+          tail -80 ../gradle-android-release.log
     artifacts:
       - android/app/build/outputs/bundle/release/*.aab
+      - gradle-android-release.log
 
   ios-workflow:
     name: iOS Release (Metodo Renascer)
