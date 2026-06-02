@@ -1,89 +1,57 @@
-## Objetivo
+## Problema
 
-Substituir a home `/` (hoje `LandingApp.tsx` curta V2) por uma nova experiência editorial premium — referência Apple/Porsche/Whoop/Oura, modo escuro luxuoso, foco em transformação e na autoridade do Gabriel Baú. A tecnologia é mecanismo, não herói.
+No `LPHero` (src/components/landing-premium/LPSections.tsx, linhas 114–191):
 
-A `LandingApp.tsx` atual será preservada em `/landing-app` para fallback. `/landing-classica` (Index antigo) e `/quiz` permanecem intactos.
+- A `section` usa `min-h-[100svh] flex items-center`, o que centraliza verticalmente todo o bloco.
+- A barra de social proof (+15 / +1000 / 100%) está com `absolute bottom-12 left-6 right-6` dentro do mesmo container do conteúdo central.
+- Em viewports curtos no desktop (ex.: 815×486 do preview) e em mobile com teclado/altura reduzida, a barra absoluta encosta nos botões CTA → visual de "tudo em cima / embolado" exatamente como nas imagens enviadas.
+- No mobile, `flex-wrap` quebra os 3 stats em colunas que ainda ficam por cima dos botões (overlap), causando o "embolado".
 
-## Estrutura de rotas
+A tela `/auth` em si está correta (já usa `flex items-center justify-center min-h-screen`); a referência do usuário é o estado deslogado caindo no hero da landing premium.
 
-- `/` → **novo** `LandingPremium.tsx` (esta entrega)
-- `/landing-app` → LandingApp atual (preservada)
-- `/landing-classica` → Index antigo
-- `/quiz` → Quiz Renascer (CTA de diagnóstico aponta para `#planos`, conforme decisão)
+## Solução
 
-## Design system isolado
+Reestruturar o `LPHero` para usar **fluxo vertical natural** com `flex flex-col justify-between`, tirando o `absolute` da social proof e dando respiro real entre CTAs e métricas.
 
-Criar **`landing-premium`** como namespace de estilos isolado (não toca no V2/Luxury Dark existente nem no Quiz):
+### Mudanças em `src/components/landing-premium/LPSections.tsx` → `LPHero`
 
-- Paleta exata: `#0B0B0B` (bg), `#161616` (surface), `#F5F5F5` (text), `#A7A7A7` (muted), `#FF5A1F` (accent)
-- Tipografia: heading display serif/sans cinematográfica (testar **Fraunces** ou **Instrument Serif** para títulos editoriais + **Inter Tight** para corpo). Tamanhos massivos (clamp 80–160px nos H1).
-- Eyebrow/labels em mono uppercase letter-spaced (`Space Mono`, já carregado).
-- Variáveis em `index.css` sob escopo `.landing-premium { --lp-bg, --lp-surface, --lp-text, --lp-muted, --lp-accent }`. Nada vaza global.
-- Whitespace generoso: padding vertical mínimo 160px desktop / 96px mobile entre seções.
-- Sem emojis, sem ícones cartoon, sem cards SaaS repetitivos, sem tabela comparativa.
+1. **Container `section`**
+   - Trocar `min-h-[100svh] flex items-center` por `min-h-[100svh] flex flex-col` com `pt-32 md:pt-40 pb-10 md:pb-14`.
+   - Garante que conteúdo cresça top→bottom sem colisão.
 
-## Componentes a criar
+2. **Wrapper interno** (`div.relative.z-10`)
+   - Tornar `flex-1 flex flex-col justify-between` para empurrar a social proof para o rodapé naturalmente, sem `absolute`.
+   - Padding lateral mantido (`px-6 md:px-14`), remover `pt-32 md:pt-0` (subiu para a `section`).
 
-Todos sob `src/components/landing-premium/`:
+3. **Bloco principal (eyebrow + h1 + parágrafo + CTAs)**
+   - Reduzir `mb-*` para escala mais compacta no desktop curto:
+     - eyebrow `mb-6`
+     - h1 `mb-6`
+     - parágrafo `mb-8 md:mb-10`
+   - Ajustar tamanho do h1 para `clamp(48px, 8vw, 120px)` (um pouco menor para caber em viewports curtos).
+   - CTAs: `flex flex-col sm:flex-row gap-3 sm:gap-4`, garantir `w-full sm:w-auto` nos botões para mobile não estourar.
 
-```
-LPHero.tsx              Section 01 — full screen, partículas sutis, foto Gabriel, dual CTA
-LPProblem.tsx           Section 02 — split screen Caos/Direção, reveal on scroll
-LPMentor.tsx            Section 03 — retrato editorial grande do Gabriel
-LPPillars.tsx           Section 04 — timeline vertical 01→05, sticky scroll
-LPDashboard.tsx         Section 05 — mockup dashboard premium (Sono/Treino/Recup/Nutr/Consist)
-LPTransformations.tsx   Section 06 — antes/depois editorial (Alan + outros)
-LPIdentity.tsx          Section 07 — 3 cards de identidade grandes (não-pricing)
-LPPlans.tsx             Section 08 — 3 planos Essencial/Pro/Elite, Pro destacado
-LPDiagnostic.tsx        Section 09 — diagnóstico gratuito + mockup visual
-LPFaq.tsx               Section 10 — accordion minimalista estilo Apple
-LPClosing.tsx           Final — manifesto cinematográfico + CTA
-LPHeader.tsx            Header transparente, blur no scroll, CTA primário
-LPFooter.tsx            Footer minimal
-LPStickyMobileCTA.tsx   Mobile only, sticky bottom bar
-LPParticles.tsx         Partículas canvas sutis para o hero
-```
+4. **Social proof bar**
+   - Remover `absolute bottom-12 left-6 right-6`.
+   - Virar bloco em fluxo: `mt-16 md:mt-24 pt-8 border-t border-white/5 flex flex-wrap items-baseline gap-x-10 md:gap-x-14 gap-y-4`.
+   - No mobile: `grid grid-cols-1 sm:flex` opcional — vou usar simplesmente flex-wrap com gap mais comportado para que cada item fique numa linha quando faltar espaço, sem sobrepor os CTAs.
 
-Página: `src/pages/LandingPremium.tsx` agregando tudo + `useEffect` para SEO title/meta.
+5. **Foto do Gabriel (background)**
+   - Manter como está; apenas reduzir `opacity-[0.35]` para `opacity-[0.25]` no mobile para reduzir ruído visual atrás do texto (ajuda no "embolado").
 
-## Comportamento e motion
+### Resultado esperado
 
-- Reveal on scroll via `useScrollAnimation` (já existe) + IntersectionObserver
-- Pilares (Sec 04): sticky left index `01–05`, conteúdo grande à direita rola e troca o ativo
-- Problema (Sec 02): clip-path animado revelando o lado "Direção" sobre o "Caos" conforme scroll
-- Hero: partículas em `<canvas>` (60fps, desliga em `prefers-reduced-motion`), glow radial laranja sutil
-- Transições cinematográficas: fades longos (700–1000ms), easing customizado, sem bounce
-- Cursor glow desktop reaproveitado do padrão V2
+- **Desktop curto (815×486)**: hero ocupa 100svh, conteúdo no topo, social proof empurrada ao rodapé com respiro real entre CTAs e métricas.
+- **Desktop normal (1440+)**: mantém impacto editorial, melhor hierarquia vertical.
+- **Mobile (390px)**: tudo em coluna, CTAs full-width, social proof abaixo numa linha separada (com borda sutil para divisão clara).
 
-## Conteúdo e CTAs
+## Fora do escopo
 
-- Headline hero: "PARE DE RECOMEÇAR."
-- CTA primário "COMEÇAR MEU DIAGNÓSTICO" → âncora `#planos` (conforme decisão)
-- CTA secundário "COMO FUNCIONA" → âncora `#sistema` (Sec 05)
-- Social proof bar: +15 anos · +1000 alunos · Método baseado em ciência
-- Planos: reusar `STRIPE_PRICE_IDS` de `src/lib/planConstants.ts` e fluxo de checkout atual do `V2PricingSection` (criar `create-checkout` igual). Essencial R$97 · Pro R$297 (destacado) · Elite R$697. Foco em outcome, não em features.
-- Fotos: reaproveitar imagens de `src/components/landing/MentorSection.tsx` (Gabriel) e `TransformationsGallery` (Alan etc.). Sem placeholders.
-- Diagnóstico (Sec 09): CTA leva para `#planos` (mesmo target do hero, conforme decisão); manter mockup visual sem ícone de escudo.
+- Não mexer em `/auth` (já está centralizado corretamente).
+- Não alterar outras seções da landing (`LPProblem`, `LPPlans`, etc.).
+- Não trocar tipografia, paleta ou copy.
+- Sem mudanças de roteamento ou lógica.
 
-## Mobile-first
+## Arquivos afetados
 
-- Todas as seções pensadas em 390px primeiro
-- Tipografia escala com `clamp()`
-- `LPStickyMobileCTA` fixo bottom com "COMEÇAR DIAGNÓSTICO" (visível após scroll do hero)
-- Pilares viram lista vertical full-width no mobile (sem sticky)
-- Dashboard mockup vira stack vertical
-
-## Arquivos alterados
-
-- **Novo**: `src/pages/LandingPremium.tsx` + 15 componentes em `src/components/landing-premium/`
-- **Novo**: bloco `.landing-premium` em `src/index.css` com tokens isolados e fontes (`@import` Fraunces + Inter Tight via Google Fonts)
-- **Editado**: `src/App.tsx` — `/` aponta para `LandingPremium`; `LandingApp` movido para `/landing-app`
-- **Editado**: `mem://index.md` — Core atualizado refletindo nova home + nova entrada `landing/premium-redesign`
-
-## Fora de escopo
-
-- Mudar Quiz, Auth, Renascer, Admin, edge functions
-- Refatorar V2/Luxury Dark existente (fica como `/landing-app`)
-- Novas fotos via IA (usaremos as existentes)
-- Nova integração de checkout (reusa a atual)
-- i18n / tema claro
+- `src/components/landing-premium/LPSections.tsx` (apenas função `LPHero`, ~80 linhas).

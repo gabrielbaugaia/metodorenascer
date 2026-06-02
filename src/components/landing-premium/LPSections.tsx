@@ -115,12 +115,12 @@ export function LPHero() {
   return (
     <section
       id="top"
-      className="relative min-h-[100svh] flex items-center overflow-hidden"
+      className="relative min-h-[100svh] flex flex-col overflow-hidden pt-28 md:pt-36 pb-10 md:pb-14"
       style={{ background: "linear-gradient(180deg, #0B0B0B 0%, #0B0B0B 70%, #0E0E0E 100%)" }}
     >
       {/* Gabriel photo — desktop background right */}
       <div
-        className="absolute inset-y-0 right-0 w-full md:w-[55%] lg:w-[50%] opacity-[0.35] md:opacity-100 pointer-events-none"
+        className="absolute inset-y-0 right-0 w-full md:w-[55%] lg:w-[50%] opacity-[0.22] md:opacity-100 pointer-events-none"
         style={{
           backgroundImage: `url(${gabrielBauPhoto})`,
           backgroundSize: "cover",
@@ -143,37 +143,46 @@ export function LPHero() {
       />
       <HeroParticles />
 
-      <div className="relative z-10 w-full px-6 md:px-14 pt-32 md:pt-0">
+      <div className="relative z-10 w-full px-6 md:px-14 flex-1 flex flex-col justify-between gap-12 md:gap-16">
         <div className="max-w-[640px]">
-          <div className="lp-mono text-[10px] tracking-[4px] uppercase lp-accent mb-8 lp-fade-up">
+          <div className="lp-mono text-[10px] tracking-[4px] uppercase lp-accent mb-6 lp-fade-up">
             Método Renascer · Est. Alphaville
           </div>
           <h1
-            className="lp-display lp-text leading-[0.88] tracking-[-0.03em] mb-8 lp-fade-up"
-            style={{ fontSize: "clamp(56px, 9vw, 132px)", animationDelay: "0.1s" }}
+            className="lp-display lp-text leading-[0.9] tracking-[-0.03em] mb-6 lp-fade-up"
+            style={{ fontSize: "clamp(44px, 8vw, 120px)", animationDelay: "0.1s" }}
           >
             PARE DE<br />
             <span className="italic font-light" style={{ color: "#A7A7A7" }}>recomeçar</span>.
           </h1>
           <p
-            className="lp-body lp-muted leading-[1.6] max-w-[520px] mb-12 lp-fade-up"
-            style={{ fontSize: "clamp(16px, 1.4vw, 19px)", animationDelay: "0.2s" }}
+            className="lp-body lp-muted leading-[1.6] max-w-[520px] mb-8 md:mb-10 lp-fade-up"
+            style={{ fontSize: "clamp(15px, 1.3vw, 18px)", animationDelay: "0.2s" }}
           >
             O Método Renascer combina ciência, acompanhamento humano e inteligência de dados
             para criar a direção que faltava para seu corpo voltar a evoluir.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 lp-fade-up" style={{ animationDelay: "0.3s" }}>
-            <a href="#planos" className="lp-btn-primary lp-mono text-[11px] tracking-[2.5px] uppercase">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lp-fade-up" style={{ animationDelay: "0.3s" }}>
+            <a
+              href="#planos"
+              className="lp-btn-primary lp-mono text-[11px] tracking-[2.5px] uppercase w-full sm:w-auto text-center"
+            >
               Começar meu diagnóstico
             </a>
-            <a href="#sistema" className="lp-btn-ghost lp-mono text-[11px] tracking-[2.5px] uppercase">
+            <a
+              href="#sistema"
+              className="lp-btn-ghost lp-mono text-[11px] tracking-[2.5px] uppercase w-full sm:w-auto text-center"
+            >
               Como funciona
             </a>
           </div>
         </div>
 
-        {/* Social proof bar */}
-        <div className="absolute bottom-12 left-6 right-6 md:left-14 md:right-14 flex flex-wrap items-center gap-x-12 gap-y-3 lp-fade-up" style={{ animationDelay: "0.5s" }}>
+        {/* Social proof bar — in natural flow, pinned to hero bottom by justify-between */}
+        <div
+          className="pt-8 border-t border-white/5 grid grid-cols-1 sm:flex sm:flex-wrap items-baseline gap-x-10 md:gap-x-14 gap-y-4 lp-fade-up"
+          style={{ animationDelay: "0.5s" }}
+        >
           {[
             ["+15", "anos de experiência"],
             ["+1000", "alunos impactados"],
@@ -189,6 +198,7 @@ export function LPHero() {
     </section>
   );
 }
+
 
 /* ============================================================
  * SECTION 02 — THE REAL PROBLEM
