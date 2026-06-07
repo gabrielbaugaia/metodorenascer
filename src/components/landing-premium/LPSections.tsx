@@ -465,33 +465,16 @@ export function LPTransformations() {
           Resultados<br /><span className="italic font-light lp-muted">reais</span>.
         </h2>
 
-        <div className="space-y-24 md:space-y-40">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {TRANSFORMATIONS.map((t, i) => (
             <div
-              key={t.name}
-              className={`grid md:grid-cols-12 gap-10 md:gap-16 items-center transition-all duration-1000 ${
+              key={i}
+              className={`relative aspect-[4/3] overflow-hidden transition-all duration-700 ${
                 isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-              } ${i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""}`}
+              }`}
               style={{ transitionDelay: `${i * 80}ms` }}
             >
-              <div className="md:col-span-7">
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <img src={t.img} alt={`Transformação ${t.name}`} className="w-full h-full object-cover object-top" loading="lazy" />
-                  <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent 60%, rgba(11,11,11,0.7) 100%)" }} />
-                </div>
-              </div>
-              <div className="md:col-span-5">
-                <div className="lp-mono text-[10px] tracking-[3px] uppercase lp-accent mb-4">Caso 0{i + 1}</div>
-                <h3 className="lp-display lp-text leading-[1] mb-3" style={{ fontSize: "clamp(36px, 4vw, 56px)" }}>
-                  {t.name}
-                </h3>
-                <div className="lp-mono text-[10px] tracking-[2.5px] uppercase lp-muted mb-6">{t.role}</div>
-                <div className="h-px w-12 lp-accent-bg mb-6" />
-                <p className="lp-display lp-text leading-[1.1] mb-4" style={{ fontSize: "clamp(20px, 2vw, 28px)" }}>
-                  {t.result}
-                </p>
-                <p className="lp-body lp-muted text-[15px] leading-[1.7]">{t.note}</p>
-              </div>
+              <img src={t.img} alt="Transformação" className="w-full h-full object-cover object-top" loading="lazy" />
             </div>
           ))}
         </div>
