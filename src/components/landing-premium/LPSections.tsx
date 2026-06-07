@@ -47,12 +47,9 @@ export function LPHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-3 md:gap-5">
-          <Link to="/auth" className="lp-mono text-[10px] tracking-[2px] uppercase lp-muted hover:lp-text transition-colors hidden md:inline">
+          <Link to="/auth" className="lp-btn-primary lp-mono text-[10px] tracking-[2px] uppercase">
             Entrar
           </Link>
-          <a href="#planos" className="lp-btn-primary lp-mono text-[10px] tracking-[2px] uppercase">
-            Começar
-          </a>
         </div>
       </div>
     </header>
