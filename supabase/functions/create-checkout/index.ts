@@ -15,6 +15,9 @@ const VALID_PRICE_IDS = [
   "price_1ScZsTCuFZvf5xFdbW8kJeQF", // Trimestral
   "price_1ScZtrCuFZvf5xFd8iXDfbEp", // Semestral
   "price_1ScZvCCuFZvf5xFdjrs51JQB", // Anual
+  "price_1Thfm1CuFZvf5xFdtxckRlLP", // Landing Essencial R$97
+  "price_1ThfmJCuFZvf5xFd5UbFqbc2", // Landing PRO R$297
+  "price_1ThfmZCuFZvf5xFdkjfFSGEy", // Landing Elite R$697
 ];
 
 // Embaixador plan constants
