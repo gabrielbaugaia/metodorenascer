@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { supabase } from "@/integrations/supabase/client";
+import { LANDING_PRICE_IDS, type LandingPlanSlug } from "@/lib/planConstants";
 import gabrielBauPhoto from "@/assets/gabriel-bau.png";
 import transform1 from "@/assets/transformations/transform-1.jpeg";
 import transform2 from "@/assets/transformations/transform-2.jpeg";
