@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { supabase } from "@/integrations/supabase/client";
+import { LANDING_PRICE_IDS, type LandingPlanSlug } from "@/lib/planConstants";
 import gabrielBauPhoto from "@/assets/gabriel-bau.png";
 import transform1 from "@/assets/transformations/transform-1.jpeg";
 import transform2 from "@/assets/transformations/transform-2.jpeg";
@@ -527,7 +530,16 @@ export function LPIdentity() {
 /* ============================================================
  * SECTION 08 — PLANS
  * ============================================================ */
-const PLANS = [
+const PLANS: Array<{
+  tier: string;
+  name: string;
+  price: string;
+  outcome: string;
+  body: string;
+  cta: string;
+  featured: boolean;
+  slug: LandingPlanSlug;
+}> = [
   {
     tier: "I",
     name: "Essencial",
@@ -536,7 +548,7 @@ const PLANS = [
     body: "Acesso completo ao sistema. Direção contínua guiada por dados. Para quem quer autonomia com precisão.",
     cta: "Começar Essencial",
     featured: false,
-    href: "/auth?plan=essencial",
+    slug: "essencial",
   },
   {
     tier: "II",
@@ -546,7 +558,7 @@ const PLANS = [
     body: "Tudo do Essencial mais acompanhamento humano. Ajustes ativos. Resposta priorizada. Para acelerar com método.",
     cta: "Começar PRO",
     featured: true,
-    href: "/auth?plan=pro",
+    slug: "pro",
   },
   {
     tier: "III",
@@ -556,12 +568,46 @@ const PLANS = [
     body: "Acompanhamento 1:1 quinzenal, acesso direto, presencial em Alphaville. Para quem exige o máximo.",
     cta: "Falar com Baú",
     featured: false,
-    href: "/auth?plan=elite",
+    slug: "elite",
   },
 ];
 
 export function LPPlans() {
   const { ref, isVisible } = useScrollAnimation({ threshold: 0.1 });
+  const [loadingSlug, setLoadingSlug] = useState<LandingPlanSlug | null>(null);
+
+  const handleCheckout = async (slug: LandingPlanSlug) => {
+    if (loadingSlug) return;
+    setLoadingSlug(slug);
+    try {
+      // Reaproveita UTM capturados em sessionStorage
+      let utm_data: Record<string, string> = {};
+      try {
+        const raw = sessionStorage.getItem("utm_data");
+        if (raw) utm_data = JSON.parse(raw);
+      } catch {
+        // ignore
+      }
+
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { price_id: LANDING_PRICE_IDS[slug], utm_data },
+      });
+
+      if (error) throw error;
+      const url = (data as { url?: string } | null)?.url;
+      if (!url) throw new Error("URL de checkout indisponível");
+
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("[LPPlans] checkout error", err);
+      const message =
+        err instanceof Error ? err.message : "Não foi possível abrir o checkout. Tente novamente.";
+      toast.error(message);
+    } finally {
+      setLoadingSlug(null);
+    }
+  };
+
   return (
     <section ref={ref} id="planos" className="relative py-[120px] md:py-[180px] px-6 md:px-14" style={{ background: "linear-gradient(180deg, #0B0B0B 0%, #0E0E0E 50%, #0B0B0B 100%)" }}>
       <div className="max-w-[1280px] mx-auto">
@@ -574,42 +620,47 @@ export function LPPlans() {
         </p>
 
         <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-          {PLANS.map((p, i) => (
-            <a
-              key={p.name}
-              href={p.href}
-              className={`relative block p-10 md:p-12 transition-all duration-700 hover:-translate-y-1 ${
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-              } ${p.featured ? "lp-plan-featured" : "lp-plan"}`}
-              style={{ transitionDelay: `${i * 100}ms` }}
-            >
-              {p.featured && (
-                <div className="absolute -top-3 left-10 lp-accent-bg lp-mono text-[9px] tracking-[2.5px] uppercase text-black px-3 py-1">
-                  Mais escolhido
+          {PLANS.map((p, i) => {
+            const isLoading = loadingSlug === p.slug;
+            return (
+              <button
+                key={p.name}
+                type="button"
+                onClick={() => handleCheckout(p.slug)}
+                disabled={isLoading}
+                className={`relative block text-left p-10 md:p-12 transition-all duration-700 hover:-translate-y-1 disabled:opacity-60 disabled:cursor-wait ${
+                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                } ${p.featured ? "lp-plan-featured" : "lp-plan"}`}
+                style={{ transitionDelay: `${i * 100}ms` }}
+              >
+                {p.featured && (
+                  <div className="absolute -top-3 left-10 lp-accent-bg lp-mono text-[9px] tracking-[2.5px] uppercase text-black px-3 py-1">
+                    Mais escolhido
+                  </div>
+                )}
+                <div className="lp-mono text-[10px] tracking-[3px] uppercase lp-accent mb-4">Nível {p.tier}</div>
+                <h3 className="lp-display lp-text leading-none mb-10" style={{ fontSize: "clamp(40px, 4vw, 56px)" }}>
+                  {p.name}
+                </h3>
+                <div className="mb-10">
+                  <div className="flex items-baseline gap-2">
+                    <span className="lp-mono text-[10px] tracking-[2px] lp-muted">R$</span>
+                    <span className="lp-display lp-text leading-none" style={{ fontSize: "clamp(56px, 5vw, 80px)" }}>
+                      {p.price}
+                    </span>
+                    <span className="lp-mono text-[10px] tracking-[1.5px] lp-muted ml-1">/mês</span>
+                  </div>
                 </div>
-              )}
-              <div className="lp-mono text-[10px] tracking-[3px] uppercase lp-accent mb-4">Nível {p.tier}</div>
-              <h3 className="lp-display lp-text leading-none mb-10" style={{ fontSize: "clamp(40px, 4vw, 56px)" }}>
-                {p.name}
-              </h3>
-              <div className="mb-10">
-                <div className="flex items-baseline gap-2">
-                  <span className="lp-mono text-[10px] tracking-[2px] lp-muted">R$</span>
-                  <span className="lp-display lp-text leading-none" style={{ fontSize: "clamp(56px, 5vw, 80px)" }}>
-                    {p.price}
-                  </span>
-                  <span className="lp-mono text-[10px] tracking-[1.5px] lp-muted ml-1">/mês</span>
+                <p className="lp-display lp-text leading-[1.2] mb-6" style={{ fontSize: "20px" }}>
+                  {p.outcome}
+                </p>
+                <p className="lp-body lp-muted text-[14px] leading-[1.7] mb-12">{p.body}</p>
+                <div className={`lp-mono text-[10px] tracking-[2.5px] uppercase inline-block py-3 border-b ${p.featured ? "lp-accent" : "lp-text"}`} style={{ borderColor: p.featured ? "#FF5A1F" : "#A7A7A7" }}>
+                  {isLoading ? "Abrindo checkout…" : `${p.cta} →`}
                 </div>
-              </div>
-              <p className="lp-display lp-text leading-[1.2] mb-6" style={{ fontSize: "20px" }}>
-                {p.outcome}
-              </p>
-              <p className="lp-body lp-muted text-[14px] leading-[1.7] mb-12">{p.body}</p>
-              <div className={`lp-mono text-[10px] tracking-[2.5px] uppercase inline-block py-3 border-b ${p.featured ? "lp-accent" : "lp-text"}`} style={{ borderColor: p.featured ? "#FF5A1F" : "#A7A7A7" }}>
-                {p.cta} →
-              </div>
-            </a>
-          ))}
+              </button>
+            );
+          })}
         </div>
       </div>
     </section>

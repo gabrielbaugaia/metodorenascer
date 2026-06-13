@@ -54,6 +54,15 @@ export const STRIPE_PRICE_IDS: Record<string, string> = {
   [PLAN_TYPES.ANUAL]: "price_1ScZvCCuFZvf5xFdjrs51JQB"
 };
 
+// Landing Premium plan price IDs (Essencial / PRO / Elite — mensal BRL)
+export const LANDING_PRICE_IDS = {
+  essencial: "price_1Thfm1CuFZvf5xFdtxckRlLP",
+  pro: "price_1ThfmJCuFZvf5xFd5UbFqbc2",
+  elite: "price_1ThfmZCuFZvf5xFdkjfFSGEy",
+} as const;
+
+export type LandingPlanSlug = keyof typeof LANDING_PRICE_IDS;
+
 // Free duration options for admin invitation
 export const FREE_DURATION_OPTIONS = [
   { value: 7, label: "7 dias" },
