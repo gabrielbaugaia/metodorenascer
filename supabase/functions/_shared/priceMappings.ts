@@ -8,6 +8,9 @@ export const PRICE_TO_PLAN: Record<string, { type: string; name: string }> = {
   "price_1ScZsTCuFZvf5xFdbW8kJeQF": { type: "trimestral", name: "TRIMESTRAL" },
   "price_1ScZtrCuFZvf5xFd8iXDfbEp": { type: "semestral", name: "SEMESTRAL" },
   "price_1ScZvCCuFZvf5xFdjrs51JQB": { type: "anual", name: "ANUAL" },
+  "price_1Thfm1CuFZvf5xFdtxckRlLP": { type: "essencial", name: "ESSENCIAL" },
+  "price_1ThfmJCuFZvf5xFd5UbFqbc2": { type: "pro", name: "PRO" },
+  "price_1ThfmZCuFZvf5xFdkjfFSGEy": { type: "elite", name: "ELITE" },
 };
 
 // Map price to MRR value in cents (normalized to monthly)
@@ -17,6 +20,9 @@ export const PRICE_TO_MRR: Record<string, number> = {
   "price_1ScZsTCuFZvf5xFdbW8kJeQF": 16567,     // R$497/3 = ~R$165,67/mês
   "price_1ScZtrCuFZvf5xFd8iXDfbEp": 11617,     // R$697/6 = ~R$116,17/mês
   "price_1ScZvCCuFZvf5xFdjrs51JQB": 8308,      // R$997/12 = ~R$83,08/mês
+  "price_1Thfm1CuFZvf5xFdtxckRlLP": 9700,      // Essencial R$97/mês
+  "price_1ThfmJCuFZvf5xFd5UbFqbc2": 29700,     // PRO R$297/mês
+  "price_1ThfmZCuFZvf5xFdkjfFSGEy": 69700,     // Elite R$697/mês
 };
 
 // Price IDs for validation
