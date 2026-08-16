@@ -48,7 +48,7 @@ import { cn } from "@/lib/utils";
 const ICON_STROKE = 1.5;
 
 const clientMenuItems = [
-  { title: "Hoje", url: "/renascer", icon: Flame },
+  { title: "Hoje", url: "/dashboard", icon: Flame },
   { title: "Evolução", url: "/evolucao", icon: Camera },
   { title: "Treino", url: "/treino", icon: Dumbbell },
   { title: "Aeróbico", url: "/cardio", icon: HeartPulse },
@@ -138,9 +138,8 @@ export function ClientSidebar() {
       <div className="hidden md:flex h-14 items-center justify-between border-b border-border px-4">
         {!collapsed && (
           <div className="flex items-center gap-2.5">
-            <Flame className="h-5 w-5 text-primary" strokeWidth={ICON_STROKE} />
-            <span className="font-display text-sm tracking-wide text-foreground">
-              {isAdmin ? "Painel Admin" : "RENASCER"}
+            <span className="font-display text-sm tracking-widest text-foreground uppercase">
+              {isAdmin ? "Painel Admin" : "Gabriel Baú"}
             </span>
           </div>
         )}
@@ -150,9 +149,8 @@ export function ClientSidebar() {
       {/* Mobile header inside sheet */}
       <div className="md:hidden flex h-14 items-center border-b border-border px-4">
         <div className="flex items-center gap-2.5">
-          <Flame className="h-5 w-5 text-primary" strokeWidth={ICON_STROKE} />
-          <span className="font-display text-sm tracking-wide text-foreground">
-            {isAdmin ? "Painel Admin" : "RENASCER"}
+          <span className="font-display text-sm tracking-widest text-foreground uppercase">
+            {isAdmin ? "Painel Admin" : "Gabriel Baú"}
           </span>
         </div>
       </div>
