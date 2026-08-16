@@ -1,35 +1,60 @@
-# Sincronizar botões da landing com Stripe (Essencial / PRO / Elite)
+---
+name: Rebranding Gabriel Baú
+description: Plan to rebrand the entire application from "Método Renascer" to "Gabriel Baú Treinador", disable landing pages, and clean up the visual identity to match a minimalist premium style.
+type: feature
+---
 
-## Objetivo
-Ao clicar em "Começar Essencial / Começar PRO / Falar com Baú" na seção de planos da home (`LPPlans`), abrir o Stripe Checkout em nova aba (guest checkout permitido). CTAs secundários (#planos) continuam rolando.
+# Plan: Rebranding Gabriel Baú Treinador
 
-## Passo 1 — Criar 3 produtos/preços no Stripe (recurring mensal, BRL)
-- Essencial — R$ 97,00/mês
-- PRO — R$ 297,00/mês
-- Elite — R$ 697,00/mês
+The goal is to transform the "Método Renascer" platform into a personalized support system for "Gabriel Baú Treinador", prioritizing existing student access and cleaning up the visual identity to a minimalist, premium style (removing oranges, using clean colors).
 
-Os novos `price_id` serão registrados nos arquivos abaixo.
+## 1. Visual Identity & Brand Cleanup
 
-## Passo 2 — Registrar price_ids no código
-**`src/lib/planConstants.ts`**: adicionar bloco `LANDING_PRICE_IDS` com chaves `essencial | pro | elite`.
+- **Typography**: Keep the premium fonts (Fraunces, Inter Tight, Montserrat) but ensure consistency.
+- **Colors**: Replace the primary orange (`#FF5A1F`, `#FF6500`) with a clean, minimalist palette (Black, White, Slate/Gray tones) as requested.
+- **Naming**: Replace all occurrences of "Método Renascer" or "Renascer" with "Gabriel Baú Treinador" across the codebase (UI, PDFs, Page Titles, Metadata).
+- **Logo**: Prepare for the new logo (the user will provide it). For now, use a clean text-based placeholder "Gabriel Baú".
 
-**`supabase/functions/_shared/priceMappings.ts`**: adicionar os 3 novos price_ids em `PRICE_TO_PLAN`, `PRICE_TO_MRR` e `VALID_PRICE_IDS` (`type: "essencial" | "pro" | "elite"`).
+## 2. Navigation & Access Control
 
-**`supabase/functions/create-checkout/index.ts`**: adicionar os 3 price_ids ao array `VALID_PRICE_IDS`. Nenhuma outra mudança — o fluxo guest já está suportado.
+- **Landing Page**: Disable the current sales landing pages (`/`, `/landing-app`, `/quiz`).
+- **Home Route**: Change the root route (`/`) to redirect directly to the login page (`/auth`) or show a very minimalist login entry point.
+- **Header/Footer**: Remove sales CTAs. The only action should be "Login/Entrar".
 
-## Passo 3 — Plugar botões na landing
-**`src/components/landing-premium/LPSections.tsx`** — `LPPlans`:
-- Trocar `<a href={p.href}>` por `<button onClick={...}>` que chama `supabase.functions.invoke("create-checkout", { body: { price_id, utm_data } })` e faz `window.open(url, "_blank")`.
-- Adicionar `slug` em cada item de `PLANS` (`essencial | pro | elite`) para mapear ao price_id.
-- Estado `loading` por card, toast de erro com `sonner`.
-- Reaproveitar UTM via `sessionStorage` (padrão já existente do projeto).
+## 3. Technical Implementation Tasks
 
-## Passo 4 — Não mexer
-- Hero "Começar agora", Closing e Sticky Mobile continuam com `href="#planos"` (rolagem).
-- Header "Entrar" continua indo para `/auth`.
-- Diagnóstico continua indo para `/quiz`.
+### 3.1 Global Styles (`src/index.css`)
+- Update CSS variables to remove orange accents.
+- Set `--primary` and `--accent` to a neutral premium color (e.g., white or a specific slate).
+- Clean up legacy classes that hardcode brand colors.
 
-## Detalhes técnicos
-- Edge function `create-checkout` já existe, suporta guest, retorna `{ url }`.
-- Após pagamento, Stripe redireciona para `/checkout-success?session_id=…` (já existente, dispara `complete-guest-checkout` que cria conta + senha temporária).
-- Sem necessidade de migrations.
+### 3.2 Metadata & Config
+- Update `index.html` title and meta tags.
+- Update `capacitor.config.ts` and mobile-related strings (`strings.xml`, `Info.plist`).
+- Update `sw.js` (Service Worker) metadata.
+
+### 3.3 Auth Page Redesign (`src/pages/Auth.tsx`)
+- Simplify the login screen.
+- Remove references to "Método Renascer".
+- Remove "Conheça nossos planos" links.
+
+### 3.4 Component & Page Audit
+- Search and replace "Renascer" with "Gabriel Baú Treinador" in all `.tsx` files.
+- Special attention to:
+    - `src/components/layout/ClientSidebar.tsx` (Logo/Header)
+    - `src/pages/Renascer.tsx` (Main student page)
+    - PDF Generation logic (SIS reports, etc.)
+    - Edge Functions (if they return brand names).
+
+### 3.5 Routes (`src/App.tsx`)
+- Redirect `/` to `/auth`.
+- Remove or hide landing/quiz routes.
+
+## 4. Design Guidelines (Senior Level)
+
+- **Minimalism**: Focus on whitespace and high-quality typography.
+- **Tone**: Professional, exclusive, personal trainer/consultancy focus.
+- **Mobile First**: Ensure the transition to the new brand looks perfect on the mobile app.
+
+---
+**Next Step**: Implement the color and naming transition after user approval.
