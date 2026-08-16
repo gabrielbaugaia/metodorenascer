@@ -16,7 +16,7 @@
     --popover: 222 26% 8%;
     --popover-foreground: 216 33% 97%;
 
-    --primary: 14 100% 62%;
+    --primary: 0 0% 100%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 222 26% 12%;
@@ -25,7 +25,7 @@
     --muted: 222 26% 12%;
     --muted-foreground: 217 22% 70%;
 
-    --accent: 14 100% 62%;
+    --accent: 0 0% 100%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 100% 65%;
@@ -33,7 +33,7 @@
 
     --border: 218 24% 15%;
     --input: 222 26% 12%;
-    --ring: 14 100% 62%;
+    --ring: 0 0% 100%;
 
     --radius: 0.5rem;
 
@@ -48,12 +48,12 @@
     /* Sidebar */
     --sidebar-background: 225 40% 2%;
     --sidebar-foreground: 216 33% 97%;
-    --sidebar-primary: 14 100% 62%;
+    --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 222 26% 12%;
     --sidebar-accent-foreground: 216 33% 97%;
     --sidebar-border: 218 24% 15%;
-    --sidebar-ring: 14 100% 62%;
+    --sidebar-ring: 0 0% 100%;
   }
 
   .dark {
@@ -63,19 +63,19 @@
     --card-foreground: 216 33% 97%;
     --popover: 222 26% 8%;
     --popover-foreground: 216 33% 97%;
-    --primary: 14 100% 62%;
+    --primary: 0 0% 100%;
     --primary-foreground: 0 0% 100%;
     --secondary: 222 26% 12%;
     --secondary-foreground: 216 33% 97%;
     --muted: 222 26% 12%;
     --muted-foreground: 217 22% 70%;
-    --accent: 14 100% 62%;
+    --accent: 0 0% 100%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 100% 65%;
     --destructive-foreground: 0 0% 100%;
     --border: 218 24% 15%;
     --input: 222 26% 12%;
-    --ring: 14 100% 62%;
+    --ring: 0 0% 100%;
   }
 }
 
@@ -366,7 +366,7 @@
   --lp-surface: #161616;
   --lp-text: #F5F5F5;
   --lp-muted: #A7A7A7;
-  --lp-accent: #FF5A1F;
+  --lp-accent: #FFFFFF;
   font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -394,7 +394,7 @@
   background: transparent;
   color: var(--lp-accent);
   transform: translateY(-1px);
-  box-shadow: 0 16px 40px -12px rgba(255,90,31,0.4);
+  box-shadow: 0 16px 40px -12px rgba(255,255,255,0.2);
 }
 .lp-root .lp-btn-ghost {
   display: inline-block;
@@ -421,7 +421,7 @@
   background: linear-gradient(160deg, rgba(22,22,22,0.9), rgba(11,11,11,0.7));
   border: 1px solid rgba(255,90,31,0.4);
   backdrop-filter: blur(20px);
-  box-shadow: 0 30px 80px -20px rgba(255,90,31,0.18), inset 0 1px 0 rgba(255,90,31,0.1);
+  box-shadow: 0 30px 80px -20px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 .lp-root .lp-plan-featured:hover { border-color: var(--lp-accent); }
 
@@ -434,3 +434,10 @@
 }
 
 .lp-root *::selection { background: var(--lp-accent); color: #000; }
+437: 
+438: /* Gabriel Baú Branding */
+439: .text-gradient {
+440:   @apply text-foreground;
+441:   background: none;
+442:   -webkit-text-fill-color: initial;
+443: }
