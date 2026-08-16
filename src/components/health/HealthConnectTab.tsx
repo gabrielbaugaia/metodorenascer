@@ -53,7 +53,7 @@ export function HealthConnectTab({ lastSync }: HealthConnectTabProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Para sincronizar seus dados de saúde, use o Conector Gabriel Baú no celular.
+            Para sincronizar seus dados de saúde, use o Conector GabrielBau no celular.
           </p>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -77,8 +77,8 @@ export function HealthConnectTab({ lastSync }: HealthConnectTabProps) {
           <div className="rounded-lg bg-muted/50 p-4 text-sm space-y-2">
             <p className="font-medium">Passos:</p>
             <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-              <li>Baixe o Conector Gabriel Baú na App Store ou Play Store</li>
-              <li>Faça login com sua conta Gabriel Baú</li>
+              <li>Baixe o Conector GabrielBau na App Store ou Play Store</li>
+              <li>Faça login com sua conta GabrielBau</li>
               <li>Permita acesso aos dados de saúde</li>
               <li>Os dados serão sincronizados automaticamente</li>
             </ol>

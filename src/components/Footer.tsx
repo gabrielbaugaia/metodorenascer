@@ -24,7 +24,7 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
         </div>
 
         <div className="mt-8 pt-8 border-t border-border text-center space-y-2">
-          <p className="text-muted-foreground text-sm">2026 Metodo Gabriel Baú. Todos os direitos reservados.
+          <p className="text-muted-foreground text-sm">2026 Metodo GabrielBau. Todos os direitos reservados.
 
         </p>
           <p className="text-muted-foreground/60 text-xs">

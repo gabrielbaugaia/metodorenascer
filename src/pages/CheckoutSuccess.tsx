@@ -292,7 +292,7 @@ export default function CheckoutSuccess() {
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-muted-foreground">
-            Bem-vindo ao Gabriel Baú Treinador! Sua assinatura foi ativada com sucesso.
+            Bem-vindo ao GabrielBau Treinador! Sua assinatura foi ativada com sucesso.
           </p>
 
           {subscribed ? (

@@ -202,7 +202,7 @@ export default function AnamneseExterna() {
             </p>
             <div className="flex items-center justify-center gap-2 pt-4">
               <Flame className="h-5 w-5 text-primary" />
-              <span className="font-semibold">Gabriel Baú Treinador</span>
+              <span className="font-semibold">GabrielBau Treinador</span>
             </div>
           </CardContent>
         </Card>

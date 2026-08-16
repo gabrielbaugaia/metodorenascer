@@ -174,7 +174,7 @@ export default function Configuracoes() {
               <HeartPulse className="h-8 w-8 mx-auto animate-pulse" />
               <p className="text-sm font-medium">Integração de Saúde</p>
               <p className="text-xs text-muted-foreground">
-                Ao conectar, o Gabriel Baú Connect terá acesso aos seus dados de atividade para personalizar sua experiência.
+                Ao conectar, o GabrielBau Connect terá acesso aos seus dados de atividade para personalizar sua experiência.
               </p>
             </div>
             <div className="flex flex-col gap-2">

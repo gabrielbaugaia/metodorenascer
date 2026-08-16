@@ -7,7 +7,7 @@ const testimonials = [
   {
     name: "Ana SP",
     result: "Perdi 18kg sem sair de casa",
-    content: "O Gabriel Baú Treinador mudou completamente minha relação com exercício. Com o acompanhamento via WhatsApp e os treinos personalizados, consegui perder 18kg treinando em casa. Nunca imaginei que seria possível."
+    content: "O GabrielBau Treinador mudou completamente minha relação com exercício. Com o acompanhamento via WhatsApp e os treinos personalizados, consegui perder 18kg treinando em casa. Nunca imaginei que seria possível."
   },
   {
     name: "João RJ",
@@ -27,7 +27,7 @@ const testimonials = [
   {
     name: "Rafael Susin",
     result: "Empresário",
-    content: "O Gabriel Baú é extremamente profissional, assíduo, competente e - o melhor - traz resultados. Minha qualidade de vida melhorou significativamente."
+    content: "O GabrielBau é extremamente profissional, assíduo, competente e - o melhor - traz resultados. Minha qualidade de vida melhorou significativamente."
   }
 ];
 

@@ -148,7 +148,7 @@ const ConnectDashboard = () => {
               <Heart className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">Gabriel Baú Connect</h1>
+              <h1 className="text-lg font-bold text-foreground">GabrielBau Connect</h1>
               {userName && (
                 <p className="text-xs text-muted-foreground">Olá, {userName.split(" ")[0]}</p>
               )}
@@ -186,7 +186,7 @@ const ConnectDashboard = () => {
 
         {platform === 'web' && (
           <p className="text-xs text-center text-muted-foreground">
-            Baixe o app Gabriel Baú Connect para sincronizar dados reais do seu dispositivo
+            Baixe o app GabrielBau Connect para sincronizar dados reais do seu dispositivo
           </p>
         )}
       </div>
@@ -271,7 +271,7 @@ function HealthPermissionCard({
               </p>
               <p className="text-xs text-muted-foreground">
                 {platform === 'web'
-                  ? 'Use o app Gabriel Baú Connect no celular'
+                  ? 'Use o app GabrielBau Connect no celular'
                   : 'Não disponível neste dispositivo'}
               </p>
             </div>

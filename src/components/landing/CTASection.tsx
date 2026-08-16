@@ -20,7 +20,7 @@ export const CTASection = forwardRef<HTMLElement>((_, forwardedRef) => {
           {/* Reinforcement Block */}
           <div className="flex flex-col items-center gap-4 text-muted-foreground text-base md:text-lg leading-relaxed max-w-2xl mx-auto text-center">
             <p className="text-center">
-              O Gabriel Baú Treinador não é um desafio de 21 dias.<br />
+              O GabrielBau Treinador não é um desafio de 21 dias.<br />
               É um sistema contínuo de prescrição e ajuste.
             </p>
             <p className="text-center">

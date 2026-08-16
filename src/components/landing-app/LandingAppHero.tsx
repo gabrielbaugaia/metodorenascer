@@ -40,7 +40,7 @@ export function LandingAppHero() {
         }`}
       >
         <div className="inline-flex items-center font-mono-v2 text-[10px] tracking-[3px] uppercase text-primary border border-primary/40 px-[18px] py-[7px] mb-11">
-          App Gabriel Baú Treinador
+          App GabrielBau Treinador
         </div>
 
         <h1 className="font-display-v2 text-[clamp(56px,8vw,108px)] leading-[.92] tracking-[3px] text-foreground mb-4">

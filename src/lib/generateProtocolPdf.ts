@@ -36,7 +36,7 @@ export function generateProtocolPdf(protocol: Protocol, includeAudit: boolean = 
     doc.text("MÉTODO GABRIEL BAÚ", margin, 18);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Transformação Elite - Gabriel Baú", margin, 25);
+    doc.text("Transformação Elite - GabrielBau", margin, 25);
     yPos = 42;
   };
 
@@ -191,7 +191,7 @@ export function generateProtocolPdf(protocol: Protocol, includeAudit: boolean = 
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(7);
     doc.text(
-      `Gabriel Baú Treinador - Gabriel Baú | Página ${i} de ${pageCount}`,
+      `GabrielBau Treinador - GabrielBau | Página ${i} de ${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 8,
       { align: "center" }

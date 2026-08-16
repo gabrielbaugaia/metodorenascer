@@ -70,7 +70,7 @@ export async function generateAnamnesePdf(
     doc.text("MÉTODO GABRIEL BAÚ", margin, 18);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Anamnese do Cliente - Gabriel Baú", margin, 25);
+    doc.text("Anamnese do Cliente - GabrielBau", margin, 25);
     yPos = 42;
   };
 

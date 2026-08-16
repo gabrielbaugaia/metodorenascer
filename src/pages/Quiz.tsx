@@ -78,12 +78,12 @@ const Quiz = () => {
   });
 
   useEffect(() => {
-    document.title = "Diagnóstico Gabriel Baú | Descubra seu risco de Burnout";
+    document.title = "Diagnóstico GabrielBau | Descubra seu risco de Burnout";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) {
       meta.setAttribute(
         "content",
-        "Diagnóstico em 60s do Gabriel Baú Treinador: descubra seu risco de Burnout, Compulsão Alimentar e Queda de Motivação com base em sono, stress e comportamento."
+        "Diagnóstico em 60s do GabrielBau Treinador: descubra seu risco de Burnout, Compulsão Alimentar e Queda de Motivação com base em sono, stress e comportamento."
       );
     }
 
@@ -253,7 +253,7 @@ const Quiz = () => {
         >
           <div className="w-full max-w-md">
             <div className="mb-2 flex items-center justify-between text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
-              <span>Diagnóstico Gabriel Baú</span>
+              <span>Diagnóstico GabrielBau</span>
               <span>{step} de 4</span>
             </div>
             <div className="mb-10 h-px w-full bg-border relative">
@@ -344,7 +344,7 @@ const Quiz = () => {
               Para liberar sua <em className="text-primary italic">análise completa</em>
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-              Preciso de 3 informações para Gabriel Baú revisar seu perfil pessoalmente e te enviar o diagnóstico clínico detalhado.
+              Preciso de 3 informações para GabrielBau revisar seu perfil pessoalmente e te enviar o diagnóstico clínico detalhado.
             </p>
 
             <form
@@ -426,7 +426,7 @@ const Quiz = () => {
 
             <img
               src={gabrielBauPhoto}
-              alt="Gabriel Baú — Especialista em Treinamento"
+              alt="GabrielBau — Especialista em Treinamento"
               className="w-32 h-40 rounded-sm border border-border mb-6 object-cover object-top"
             />
 
@@ -481,7 +481,7 @@ const Quiz = () => {
 
             <div className="border border-border bg-card p-6 rounded-sm mb-8">
               <p className="text-primary text-xs uppercase tracking-[0.3em] font-medium mb-3">
-                Bem-vindo ao Gabriel Baú Treinador
+                Bem-vindo ao GabrielBau Treinador
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Um método que integra Engenharia do Movimento, SIS e Behavior — sistemas que mapeiam suas variáveis diariamente para que seu progresso seja eficiente e ultra personalizado. Se algo muda no seu corpo ou rotina, sou notificado e já ajusto o protocolo.
@@ -514,7 +514,7 @@ const Quiz = () => {
               Seu corpo é o seu <em className="text-primary italic">principal ativo.</em>
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-              Para empreendedores e executivos, disciplina física é performance nos negócios. O Gabriel Baú Treinador garante que você não quebre no meio do caminho.
+              Para empreendedores e executivos, disciplina física é performance nos negócios. O GabrielBau Treinador garante que você não quebre no meio do caminho.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">

@@ -128,8 +128,8 @@ export default function Indicacoes() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Gabriel Baú Treinador",
-          text: "Junte-se a mim no Gabriel Baú Treinador e ganhe desconto!",
+          title: "GabrielBau Treinador",
+          text: "Junte-se a mim no GabrielBau Treinador e ganhe desconto!",
           url: referralLink,
         });
       } catch (error) {

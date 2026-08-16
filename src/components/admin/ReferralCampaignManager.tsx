@@ -92,7 +92,7 @@ export function ReferralCampaignManager() {
     if (updates.benefit_type === "discount_percent") {
       updated[idx].label = `${updated[idx].value || 10}% de desconto`;
     } else if (updates.benefit_type === "consultation" && !updated[idx].label) {
-      updated[idx].label = "Consulta 30min com Gabriel Baú";
+      updated[idx].label = "Consulta 30min com GabrielBau";
     }
     if (updates.value !== undefined && updated[idx].benefit_type === "discount_percent") {
       updated[idx].label = `${updates.value}% de desconto`;

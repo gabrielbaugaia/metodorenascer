@@ -16,7 +16,7 @@ const plans = [
     desc: "Acesso completo ao sistema de inteligência. Para quem quer autonomia com dados reais guiando cada decisão.",
     items: [
       "SIS Score™ calculado diariamente",
-      "Gabriel Baú Score™ — prontidão para treino",
+      "GabrielBau Score™ — prontidão para treino",
       "Health Readiness com wearable",
       "6 índices de inteligência mental",
       "Plano de 90 dias adaptativo",
@@ -70,7 +70,7 @@ const plans = [
 ];
 const compareRows = [
   ["SIS Score™ diário", "✓", "✓", "✓"],
-  ["Gabriel Baú Score™", "✓", "✓", "✓"],
+  ["GabrielBau Score™", "✓", "✓", "✓"],
   ["IA disponível 24h", "✓", "✓", "✓"],
   ["Plano de 90 dias", "✓", "✓", "✓"],
   ["Acompanhamento humano semanal", "—", "✓", "✓"],

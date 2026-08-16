@@ -42,7 +42,7 @@ export function MethodologySection() {
         {/* Section Header */}
         <div className="text-center mb-12 md:mb-16 flex flex-col items-center gap-3">
           <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em]">
-            O <span className="text-primary">Gabriel Baú Treinador</span>
+            O <span className="text-primary">GabrielBau Treinador</span>
           </h2>
           <p className="text-muted-foreground text-lg md:text-xl">
             Um sistema completo de prescrição personalizada.

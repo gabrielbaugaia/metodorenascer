@@ -24,7 +24,7 @@ export function V2CTASection() {
         </p>
         <p className="font-body-v2 text-[16px] text-muted-foreground font-light max-w-[540px] mx-auto mb-[52px] leading-[1.8]">
           Você já passou tempo suficiente treinando no escuro.
-          O <strong className="text-foreground">Gabriel Baú Treinador</strong> existe para acabar com isso.
+          O <strong className="text-foreground">GabrielBau Treinador</strong> existe para acabar com isso.
         </p>
 
         <div className="flex gap-4 items-center justify-center flex-wrap">

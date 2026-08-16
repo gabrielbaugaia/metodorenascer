@@ -15,7 +15,7 @@ export const MentorSection = () => {
             <div className="relative w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 rounded-lg overflow-hidden border border-primary/30 shadow-2xl">
               <img 
                 src={gabrielBauPhoto} 
-                alt="Gabriel Baú - Criador do Gabriel Baú Treinador" 
+                alt="GabrielBau - Criador do GabrielBau Treinador" 
                 className="w-full h-full object-cover object-top" 
                 loading="lazy" 
                 decoding="async"
@@ -34,7 +34,7 @@ export const MentorSection = () => {
             </h2>
 
             <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
-              O Gabriel Baú Treinador nasceu da integração entre corpo, mente e rotina real. 
+              O GabrielBau Treinador nasceu da integração entre corpo, mente e rotina real. 
               Não foi criado para ser moda. Foi criado para funcionar.
             </p>
           </div>

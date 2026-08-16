@@ -165,7 +165,7 @@ export function generateBlankAnamnesePdf(clientName?: string): void {
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      `Página ${i} de ${pageCount} — Gabriel Baú Treinador`,
+      `Página ${i} de ${pageCount} — GabrielBau Treinador`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: "center" }

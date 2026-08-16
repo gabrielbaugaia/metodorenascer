@@ -13,7 +13,7 @@ interface DayLog {
   rpe: number | null;
 }
 
-export interface Gabriel BaúScore {
+export interface GabrielBauScore {
   score: number;
   classification: "ELITE" | "ALTO" | "MODERADO" | "RISCO";
   statusText: string;
@@ -25,7 +25,7 @@ export interface Gabriel BaúScore {
   isLoading: boolean;
 }
 
-export function useGabriel BaúScore(): Gabriel BaúScore {
+export function useGabrielBauScore(): GabrielBauScore {
   const { user } = useAuth();
 
   const { data, isLoading } = useQuery({

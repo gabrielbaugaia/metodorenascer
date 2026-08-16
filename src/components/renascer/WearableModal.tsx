@@ -59,7 +59,7 @@ export function WearableModal({ open, onOpenChange }: WearableModalProps) {
           )}
           {!isNative && (
             <p className="text-xs text-center text-muted-foreground pt-2">
-              Baixe o app Gabriel Baú Connect para sincronizar dados reais.
+              Baixe o app GabrielBau Connect para sincronizar dados reais.
             </p>
           )}
         </div>

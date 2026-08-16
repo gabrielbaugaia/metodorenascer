@@ -435,7 +435,7 @@
 
 .lp-root *::selection { background: var(--lp-accent); color: #000; }
 
-/* Gabriel Baú Branding */
+/* GabrielBau Branding */
 .text-gradient {
   background: none !important;
   -webkit-text-fill-color: currentColor !important;

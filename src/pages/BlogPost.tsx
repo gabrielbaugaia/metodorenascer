@@ -61,7 +61,7 @@ export default function BlogPost() {
 
   const updatePostMetaTags = (postData: BlogPostData) => {
     const baseUrl = window.location.origin;
-    const title = postData.meta_title || `${postData.title} | Gabriel Baú Treinador`;
+    const title = postData.meta_title || `${postData.title} | GabrielBau Treinador`;
     const description = postData.meta_description || postData.excerpt || '';
     const image = postData.cover_image_url || `${baseUrl}/og-blog.png`;
     const url = `${baseUrl}/blog/${postData.slug}`;
@@ -79,7 +79,7 @@ export default function BlogPost() {
       'og:title': title,
       'og:description': description,
       'og:image': image,
-      'og:site_name': 'Gabriel Baú Treinador'
+      'og:site_name': 'GabrielBau Treinador'
     };
 
     Object.entries(ogTags).forEach(([property, content]) => {
@@ -343,7 +343,7 @@ export default function BlogPost() {
               PRONTO PARA <span className="text-primary">GABRIEL BAÚ</span>?
             </h3>
             <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-              Conheça o Gabriel Baú Treinador e comece sua jornada de transformação física e mental.
+              Conheça o GabrielBau Treinador e comece sua jornada de transformação física e mental.
             </p>
             <Link 
               to="/#preco"

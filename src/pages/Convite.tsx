@@ -126,7 +126,7 @@ export default function Convite() {
           console.error("Error creating subscription:", subError);
         }
 
-        toast.success("Conta criada com sucesso! Bem-vindo ao Gabriel Baú Treinador!");
+        toast.success("Conta criada com sucesso! Bem-vindo ao GabrielBau Treinador!");
       }
     } catch (error: any) {
       const message = error.message === "User already registered" 
@@ -161,8 +161,8 @@ export default function Convite() {
           )}
           <p className="text-muted-foreground">
             {referrerName 
-              ? `${referrerName} te convidou para fazer parte do Gabriel Baú Treinador!`
-              : "Você foi convidado para fazer parte do Gabriel Baú Treinador com acesso cortesia!"
+              ? `${referrerName} te convidou para fazer parte do GabrielBau Treinador!`
+              : "Você foi convidado para fazer parte do GabrielBau Treinador com acesso cortesia!"
             }
           </p>
         </div>
@@ -245,7 +245,7 @@ export default function Convite() {
 
             <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border/50">
               <p className="text-xs text-muted-foreground text-center">
-                Ao criar sua conta, você terá acesso gratuito por 30 dias a todos os recursos do Gabriel Baú Treinador, incluindo treinos, nutrição e mentalidade personalizados.
+                Ao criar sua conta, você terá acesso gratuito por 30 dias a todos os recursos do GabrielBau Treinador, incluindo treinos, nutrição e mentalidade personalizados.
               </p>
             </div>
           </CardContent>

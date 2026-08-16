@@ -256,7 +256,7 @@ export default function AdminSuporteChats() {
           role: "admin",
           content: adminMessage.trim(),
           timestamp: new Date().toISOString(),
-          admin_name: "Gabriel Baú"
+          admin_name: "GabrielBau"
         }
       ];
 
@@ -441,7 +441,7 @@ export default function AdminSuporteChats() {
         role: "admin",
         content: newDirectMessage.trim(),
         timestamp: new Date().toISOString(),
-        admin_name: "Gabriel Baú"
+        admin_name: "GabrielBau"
       };
 
       if (existing) {
@@ -877,7 +877,7 @@ export default function AdminSuporteChats() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Suas mensagens aparecerão como "Admin (Gabriel Baú)" para o cliente
+                Suas mensagens aparecerão como "Admin (GabrielBau)" para o cliente
               </p>
             </div>
           </DialogContent>

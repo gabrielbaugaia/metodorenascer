@@ -562,7 +562,7 @@ export function EvolutionAnalysisResult({
               "{analysis.mensagemMotivacional}"
             </p>
             <p className="text-center text-xs text-muted-foreground mt-2">
-              — Gabriel Baú, seu mentor
+              — GabrielBau, seu mentor
             </p>
           </CardContent>
         </Card>

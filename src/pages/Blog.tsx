@@ -33,8 +33,8 @@ const CATEGORIES = [
 
 const updateMetaTags = () => {
   const baseUrl = window.location.origin;
-  const title = "Blog | Gabriel Baú Treinador - Transformação Física e Mental";
-  const description = "Artigos sobre treino, nutrição e mindset para sua transformação. Conteúdo exclusivo do Gabriel Baú Treinador.";
+  const title = "Blog | GabrielBau Treinador - Transformação Física e Mental";
+  const description = "Artigos sobre treino, nutrição e mindset para sua transformação. Conteúdo exclusivo do GabrielBau Treinador.";
   const image = `${baseUrl}/og-blog.png`;
 
   document.title = title;
@@ -50,7 +50,7 @@ const updateMetaTags = () => {
     'og:title': title,
     'og:description': description,
     'og:image': image,
-    'og:site_name': 'Gabriel Baú Treinador'
+    'og:site_name': 'GabrielBau Treinador'
   };
 
   Object.entries(ogTags).forEach(([property, content]) => {

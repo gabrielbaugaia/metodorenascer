@@ -107,7 +107,7 @@ function whatsappLink(phone: string, nome: string, riskScore: number) {
   const d = phone.replace(/\D/g, "");
   const num = d.startsWith("55") ? d : `55${d}`;
   const text = encodeURIComponent(
-    `Olá ${nome.split(" ")[0]}, aqui é da equipe Gabriel Baú. Vi que você completou o Diagnóstico (risco ${riskScore}%) e quero te ajudar a destravar isso. Posso te explicar o próximo passo?`
+    `Olá ${nome.split(" ")[0]}, aqui é da equipe GabrielBau. Vi que você completou o Diagnóstico (risco ${riskScore}%) e quero te ajudar a destravar isso. Posso te explicar o próximo passo?`
   );
   return `https://wa.me/${num}?text=${text}`;
 }

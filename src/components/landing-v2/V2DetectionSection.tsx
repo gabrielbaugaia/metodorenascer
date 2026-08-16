@@ -21,7 +21,7 @@ export function V2DetectionSection() {
           DETECTA O PROBLEMA<br />ANTES DE VOCÊ
         </h2>
         <p className="font-body-v2 text-[16px] text-muted-foreground font-light max-w-[580px] leading-[1.8] mb-16">
-          Nenhum método tradicional faz isso. O Gabriel Baú identifica padrões de risco
+          Nenhum método tradicional faz isso. O GabrielBau identifica padrões de risco
           silenciosos antes que se manifestem — e age automaticamente.
         </p>
       </div>

@@ -37,7 +37,7 @@ import type { SisAlert } from "@/lib/sisScoreCalc";
 import { generateBlankAnamnesePdf } from "@/lib/generateBlankAnamnesePdf";
 import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection";
 import { AdminAccessControlSection } from "@/components/admin/AdminAccessControlSection";
-import { AdminGabriel BaúSection } from "@/components/admin/AdminGabriel BaúSection";
+import { AdminGabrielBauSection } from "@/components/admin/AdminGabrielBauSection";
 import { BodyAssessmentImport } from "@/components/admin/BodyAssessmentImport";
 import { MindsetInsightsPanel } from "@/components/mindset/MindsetInsightsPanel";
 import {
@@ -1651,8 +1651,8 @@ export default function AdminClienteDetalhes() {
           </Card>
         )}
 
-        {/* Gabriel Baú Mode */}
-        {id && <AdminGabriel BaúSection clientId={id} />}
+        {/* GabrielBau Mode */}
+        {id && <AdminGabrielBauSection clientId={id} />}
 
         {/* Observações */}
         <Card>

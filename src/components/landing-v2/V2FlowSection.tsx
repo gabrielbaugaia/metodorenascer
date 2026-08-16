@@ -3,7 +3,7 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 const steps = [
   { n: "01", ico: "📲", title: "COLETA", text: "Você registra sono, estresse e energia. O wearable sincroniza VFC e FC automaticamente." },
   { n: "02", ico: "⚙️", title: "PROCESSO", text: "Centenas de variáveis processadas e convertidas em scores padronizados em tempo real." },
-  { n: "03", ico: "🎯", title: "SCORE", text: "SIS Score e Gabriel Baú Score consolidam tudo em dois números que definem seu dia." },
+  { n: "03", ico: "🎯", title: "SCORE", text: "SIS Score e GabrielBau Score consolidam tudo em dois números que definem seu dia." },
   { n: "04", ico: "🧠", title: "PRESCRIÇÃO", text: "IA consome 30 dias de dados e gera seu protocolo de treino, nutrição e mindset." },
   { n: "05", ico: "🔔", title: "ALERTA", text: "Antes de qualquer problema surgir, o sistema detecta e notifica para intervenção." },
 ];
