@@ -85,7 +85,7 @@ export default function Configuracoes() {
       <div className="max-w-3xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold uppercase flex items-center gap-2">
-            <Settings className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
+            <Settings className="h-6 w-6 sm:h-7 sm:w-7" />
             Configurações
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground">
@@ -171,7 +171,7 @@ export default function Configuracoes() {
               </DialogDescription>
             </DialogHeader>
             <div className="p-4 rounded-lg bg-muted/50 text-center space-y-2">
-              <HeartPulse className="h-8 w-8 mx-auto text-primary animate-pulse" />
+              <HeartPulse className="h-8 w-8 mx-auto animate-pulse" />
               <p className="text-sm font-medium">Integração de Saúde</p>
               <p className="text-xs text-muted-foreground">
                 Ao conectar, o Gabriel Baú Connect terá acesso aos seus dados de atividade para personalizar sua experiência.
