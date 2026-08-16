@@ -434,10 +434,10 @@
 }
 
 .lp-root *::selection { background: var(--lp-accent); color: #000; }
-437: 
-438: /* Gabriel Baú Branding */
-439: .text-gradient {
-440:   @apply text-foreground;
-441:   background: none;
-442:   -webkit-text-fill-color: initial;
-443: }
+
+/* Gabriel Baú Branding */
+.text-gradient {
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  color: inherit !important;
+}
