@@ -11,8 +11,8 @@ export const MentorSection = () => {
           
           {/* Photo with glow */}
           <div className="relative flex-shrink-0">
-            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-110" />
-            <div className="relative w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 rounded-lg overflow-hidden border border-primary/30 shadow-2xl">
+            <div className="absolute inset-0 bg-foreground/20 blur-3xl rounded-full scale-110" />
+            <div className="relative w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 rounded-lg overflow-hidden border border-foreground/30 shadow-2xl">
               <img 
                 src={gabrielBauPhoto} 
                 alt="GabrielBau - Criador do GabrielBau Treinador" 
@@ -25,12 +25,12 @@ export const MentorSection = () => {
 
           {/* Content - Authority focused */}
           <div className="flex-1 text-center md:text-left max-w-md flex flex-col gap-4">
-            <p className="text-primary text-sm md:text-base font-medium uppercase tracking-wider">
+            <p className="text-foreground text-sm md:text-base font-medium uppercase tracking-wider">
               Criado por quem vive o método
             </p>
             
             <h2 className="font-display font-black text-foreground text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em]">
-              Gabriel <span className="text-primary">Baú</span>
+              Gabriel <span className="text-foreground">Baú</span>
             </h2>
 
             <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">

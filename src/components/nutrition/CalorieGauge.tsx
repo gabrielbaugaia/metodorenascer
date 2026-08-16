@@ -10,7 +10,7 @@ export function CalorieGauge({ consumed, target, remaining }: CalorieGaugeProps)
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (pct / 100) * circumference;
 
-  const color = pct > 100 ? "text-red-400" : pct > 85 ? "text-yellow-500" : "text-primary";
+  const color = pct > 100 ? "text-red-400" : pct > 85 ? "text-yellow-500" : "text-foreground";
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -45,7 +45,7 @@ export function CalorieGauge({ consumed, target, remaining }: CalorieGaugeProps)
           <p className="text-[10px] text-muted-foreground">Meta</p>
         </div>
         <div>
-          <p className="text-lg font-bold text-primary">{Math.round(remaining)}</p>
+          <p className="text-lg font-bold text-foreground">{Math.round(remaining)}</p>
           <p className="text-[10px] text-muted-foreground">Restante</p>
         </div>
       </div>

@@ -117,8 +117,8 @@ export function WeeklyCheckinModal({ open, onOpenChange, onComplete }: WeeklyChe
                   className={cn(
                     "flex-1 py-2 rounded-lg border-2 transition-all",
                     energyLevel === level
-                      ? "border-primary bg-primary/20 text-primary"
-                      : "border-border hover:border-primary/50"
+                      ? "border-foreground bg-foreground/20 text-foreground"
+                      : "border-border hover:border-foreground/50"
                   )}
                 >
                   {level}

@@ -114,7 +114,7 @@ function MealCard({ refeicao, index }: { refeicao: Refeicao; index: number }) {
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-3 text-sm sm:text-base">
-            <Apple className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" strokeWidth={1.5} />
+            <Apple className="w-4 h-4 sm:w-5 sm:h-5 text-foreground shrink-0" strokeWidth={1.5} />
             <span>{refeicao.nome}</span>
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -154,7 +154,7 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false }
     <Card className="border border-border/50">
       <button onClick={() => setOpen(!open)} className="flex items-center justify-between w-full p-4 text-left">
         <div className="flex items-center gap-2">
-          <Icon className="w-5 h-5 text-primary" strokeWidth={1.5} />
+          <Icon className="w-5 h-5 text-foreground" strokeWidth={1.5} />
           <span className="text-sm sm:text-base font-semibold">{title}</span>
         </div>
         {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -211,7 +211,7 @@ export default function Nutricao() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Loader2 className="w-8 h-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -272,7 +272,7 @@ export default function Nutricao() {
             {isFull && hidratacao && (hidratacao.distribuicao || hidratacao.dicas) && (
               <Card className="p-4 border-border/50">
                 <div className="flex items-center gap-2 mb-3">
-                  <Droplets className="w-5 h-5 text-primary" strokeWidth={1.5} />
+                  <Droplets className="w-5 h-5 text-foreground" strokeWidth={1.5} />
                   <span className="font-semibold text-sm">Hidratação</span>
                   {hidratacao.calculo && <Badge variant="outline" className="text-xs">{hidratacao.calculo}</Badge>}
                 </div>
@@ -417,7 +417,7 @@ export default function Nutricao() {
                     <div key={ci}>
                       <p className="font-semibold text-sm mb-2">{cat.categoria}</p>
                       {cat.equivalencias?.map((eq, ei) => (
-                        <div key={ei} className="mb-2 pl-3 border-l-2 border-primary/30">
+                        <div key={ei} className="mb-2 pl-3 border-l-2 border-foreground/30">
                           <p className="text-sm font-medium">{eq.original} =</p>
                           <ul className="pl-3">
                             {eq.substituicoes?.map((sub, si) => (

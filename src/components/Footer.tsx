@@ -7,8 +7,8 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Flame className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center">
+              <Flame className="w-5 h-5 text-foreground" />
             </div>
             <span className="font-display text-xl text-foreground tracking-wider">GABRIEL BAÚ</span>
           </div>

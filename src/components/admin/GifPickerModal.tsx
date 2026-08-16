@@ -148,7 +148,7 @@ export function GifPickerModal({
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5 text-primary" />
+            <Search className="h-5 w-5 text-foreground" />
             Buscar GIF para Exercício
           </DialogTitle>
         </DialogHeader>
@@ -202,7 +202,7 @@ export function GifPickerModal({
         <ScrollArea className="flex-1 min-h-[300px]">
           {loading ? (
             <div className="flex items-center justify-center h-[300px]">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className="h-8 w-8 animate-spin text-foreground" />
             </div>
           ) : gifs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
@@ -216,7 +216,7 @@ export function GifPickerModal({
                 <button
                   key={gif.id}
                   onClick={() => handleSelect(gif)}
-                  className="group flex flex-col items-center p-2 rounded-lg border border-border bg-card hover:border-primary hover:bg-accent transition-colors cursor-pointer"
+                  className="group flex flex-col items-center p-2 rounded-lg border border-border bg-card hover:border-foreground hover:bg-accent transition-colors cursor-pointer"
                 >
                   <div className="relative w-full aspect-square rounded-md overflow-hidden bg-muted mb-2">
                     <img
@@ -226,7 +226,7 @@ export function GifPickerModal({
                       loading="lazy"
                     />
                   </div>
-                  <span className="text-xs text-center font-medium line-clamp-2 group-hover:text-primary transition-colors">
+                  <span className="text-xs text-center font-medium line-clamp-2 group-hover:text-foreground transition-colors">
                     {gif.exercise_name_pt}
                   </span>
                   {gif.muscle_group && gif.muscle_group.length > 0 && (

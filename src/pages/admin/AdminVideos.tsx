@@ -315,7 +315,7 @@ export default function AdminVideos() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <Card className="w-full sm:w-auto">
             <CardContent className="flex items-center gap-3 py-4">
-              <Video className="h-8 w-8 text-primary" />
+              <Video className="h-8 w-8 text-foreground" />
               <div>
                 <p className="text-2xl font-bold">{videos.length}</p>
                 <p className="text-sm text-muted-foreground">vídeos cadastrados</p>
@@ -513,7 +513,7 @@ export default function AdminVideos() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-foreground/10 text-foreground">
                             {video.muscle_group}
                           </span>
                         </TableCell>
@@ -531,7 +531,7 @@ export default function AdminVideos() {
                               onClick={() => setPreviewVideo(video)}
                               title="Preview"
                             >
-                              <Play className="h-4 w-4 text-primary" />
+                              <Play className="h-4 w-4 text-foreground" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -566,7 +566,7 @@ export default function AdminVideos() {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Video className="h-5 w-5 text-primary" />
+              <Video className="h-5 w-5 text-foreground" />
               {previewVideo?.exercise_name}
             </DialogTitle>
           </DialogHeader>
@@ -587,7 +587,7 @@ export default function AdminVideos() {
               </div>
             )}
             <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-foreground/10 text-foreground">
                 {previewVideo?.muscle_group}
               </span>
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground capitalize">

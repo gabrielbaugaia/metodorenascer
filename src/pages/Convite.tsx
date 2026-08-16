@@ -143,7 +143,7 @@ export default function Convite() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
-            <Flame className="w-8 h-8 text-primary" />
+            <Flame className="w-8 h-8 text-foreground" />
             <span className="font-display text-3xl text-gradient">MÉTODO GABRIEL BAÚ</span>
           </div>
           {referrerName ? (
@@ -154,9 +154,9 @@ export default function Convite() {
               </span>
             </div>
           ) : (
-            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-4 py-2 mb-4">
-              <Gift className="w-5 h-5 text-primary" />
-              <span className="text-primary font-semibold">Convite Exclusivo</span>
+            <div className="inline-flex items-center gap-2 bg-foreground/10 border border-foreground/30 rounded-full px-4 py-2 mb-4">
+              <Gift className="w-5 h-5 text-foreground" />
+              <span className="text-foreground font-semibold">Convite Exclusivo</span>
             </div>
           )}
           <p className="text-muted-foreground">
@@ -228,7 +228,7 @@ export default function Convite() {
                 </div>
               </div>
 
-              <Button type="submit" variant="fire" className="w-full" disabled={loading}>
+              <Button type="submit" variant="default" className="w-full" disabled={loading}>
                 {loading ? "Criando conta..." : (referralCode ? "CADASTRAR COM 10% OFF" : "Ativar Meu Acesso Gratuito")}
               </Button>
             </form>
@@ -237,7 +237,7 @@ export default function Convite() {
               <button
                 type="button"
                 onClick={() => navigate("/auth")}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Já tem conta? Entre aqui
               </button>

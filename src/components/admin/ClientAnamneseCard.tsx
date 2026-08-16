@@ -119,7 +119,7 @@ export function ClientAnamneseCard({ profile, currentWeight }: ClientAnamneseCar
     <Card className="bg-muted/30">
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <User className="h-4 w-4 text-primary" />
+          <User className="h-4 w-4 text-foreground" />
           Anamnese do Cliente
         </CardTitle>
       </CardHeader>
@@ -137,11 +137,11 @@ export function ClientAnamneseCard({ profile, currentWeight }: ClientAnamneseCar
             </div>
             {currentWeight && (
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-primary" />
+                <TrendingUp className="h-4 w-4 text-foreground" />
                 <div>
                   <p className="text-xs text-muted-foreground">Peso Atual</p>
                   <div className="flex items-center gap-1">
-                    <p className="font-medium text-primary">{currentWeight} kg</p>
+                    <p className="font-medium text-foreground">{currentWeight} kg</p>
                     {weightChange !== null && weightChange !== 0 && (
                       <Badge variant="outline" className={`text-xs ${weightChange < 0 ? "text-green-500 border-green-500/50" : "text-orange-500 border-orange-500/50"}`}>
                         {weightChange > 0 ? "+" : ""}{weightChange.toFixed(1)}
@@ -188,7 +188,7 @@ export function ClientAnamneseCard({ profile, currentWeight }: ClientAnamneseCar
         <div>
           <h4 className="text-sm font-medium mb-3 text-muted-foreground">Objetivo</h4>
           <div className="flex items-start gap-2">
-            <Target className="h-4 w-4 text-primary mt-0.5" />
+            <Target className="h-4 w-4 text-foreground mt-0.5" />
             <div>
               <Badge variant="secondary" className="mb-1">
                 {profile.objetivo_principal || profile.goals || "Não informado"}

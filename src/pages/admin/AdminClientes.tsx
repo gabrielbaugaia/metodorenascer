@@ -477,7 +477,7 @@ export default function AdminClientes() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -498,7 +498,7 @@ export default function AdminClientes() {
               <Download className="h-4 w-4 mr-2" />
               <span className="text-xs sm:text-sm">Exportar CSV</span>
             </Button>
-            <Button variant="fire" size="sm" onClick={() => navigate("/admin/criar-cliente")} className="w-full sm:w-auto">
+            <Button variant="default" size="sm" onClick={() => navigate("/admin/criar-cliente")} className="w-full sm:w-auto">
               <UserPlus className="h-4 w-4 mr-2" />
               <span className="text-xs sm:text-sm">Novo Cliente</span>
             </Button>

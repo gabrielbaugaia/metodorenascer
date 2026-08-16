@@ -64,7 +64,7 @@ function PhotoUploadBox({
             )}
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center aspect-[3/4] border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:border-primary/50 transition-colors bg-muted/20">
+          <label className="flex flex-col items-center justify-center aspect-[3/4] border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:border-foreground/50 transition-colors bg-muted/20">
             <input
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -74,7 +74,7 @@ function PhotoUploadBox({
             />
             {isProcessing ? (
               <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-1" />
+                <Loader2 className="h-8 w-8 animate-spin text-foreground mx-auto mb-1" />
                 <span className="text-xs text-muted-foreground">{isValidating ? "Validando..." : "Enviando..."}</span>
               </div>
             ) : (
@@ -99,13 +99,13 @@ export function PhotoUploadSection({
   onRemove 
 }: PhotoUploadSectionProps) {
   return (
-    <Card className="border-primary/50">
+    <Card className="border-foreground/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           Fotos Corporais <span className="text-muted-foreground text-sm font-normal">(opcional)</span>
         </CardTitle>
         <CardDescription>
-          <span className="text-primary font-medium">Recomendado:</span> Envie as 3 fotos para receber uma análise corporal personalizada e acompanhar sua evolução visual.
+          <span className="text-foreground font-medium">Recomendado:</span> Envie as 3 fotos para receber uma análise corporal personalizada e acompanhar sua evolução visual.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

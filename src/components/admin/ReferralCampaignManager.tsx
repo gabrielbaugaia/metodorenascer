@@ -224,7 +224,7 @@ export function ReferralCampaignManager() {
             <div className="space-y-2">
               <Label className="text-xs">Banner (imagem)</Label>
               <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 cursor-pointer border border-dashed border-border rounded-lg px-4 py-2.5 hover:border-primary/50 transition-colors">
+                <label className="flex items-center gap-2 cursor-pointer border border-dashed border-border rounded-lg px-4 py-2.5 hover:border-foreground/50 transition-colors">
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 text-muted-foreground" />}
                   <span className="text-sm text-muted-foreground">{uploading ? "Enviando..." : "Upload"}</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleUploadBanner} disabled={uploading} />

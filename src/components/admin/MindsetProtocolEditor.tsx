@@ -176,7 +176,7 @@ export function MindsetProtocolEditor({
             <RefreshCw className="h-4 w-4 mr-2" />
             <span className="text-xs sm:text-sm">Gerar Novo Protocolo</span>
           </Button>
-          <Button onClick={handleSave} disabled={saving} variant="fire" size="sm" className="w-full sm:w-auto">
+          <Button onClick={handleSave} disabled={saving} variant="default" size="sm" className="w-full sm:w-auto">
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
@@ -189,7 +189,7 @@ export function MindsetProtocolEditor({
 
       {/* Regenerate input */}
       {showRegenerateInput && (
-        <Card className="border-primary/30">
+        <Card className="border-foreground/30">
           <CardContent className="pt-4 space-y-4">
             <div className="space-y-2">
               <Label>Ajustes para o novo protocolo</Label>
@@ -200,7 +200,7 @@ export function MindsetProtocolEditor({
                 rows={3}
               />
             </div>
-            <Button onClick={handleRegenerate} disabled={regenerating} variant="fire" className="w-full">
+            <Button onClick={handleRegenerate} disabled={regenerating} variant="default" className="w-full">
               {regenerating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -221,7 +221,7 @@ export function MindsetProtocolEditor({
       <Card className="bg-muted/30">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <Brain className="h-4 w-4 text-primary" />
+            <Brain className="h-4 w-4 text-foreground" />
             Mentalidade Necessária
           </CardTitle>
         </CardHeader>

@@ -610,7 +610,7 @@ export default function Suporte() {
             <Card variant="glass" className="h-[600px] flex flex-col">
               <CardHeader className="border-b border-border/50 flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-lg uppercase">
-                  <Bot className="h-5 w-5 text-primary" />
+                  <Bot className="h-5 w-5 text-foreground" />
                   Como posso te ajudar?
                 </CardTitle>
                 {messages.length > 0 && (
@@ -650,31 +650,31 @@ export default function Suporte() {
                           )}
                         >
                           {message.role === "assistant" && (
-                            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                              <Bot className="h-4 w-4 text-primary" />
+                            <div className="h-8 w-8 rounded-full bg-foreground/20 flex items-center justify-center shrink-0">
+                              <Bot className="h-4 w-4 text-foreground" />
                             </div>
                           )}
                           <div
                             className={cn(
                               "max-w-[80%] rounded-2xl px-4 py-2",
                               message.role === "user"
-                                ? "bg-primary text-primary-foreground"
+                                ? "bg-foreground text-foreground-foreground"
                                 : "bg-muted"
                             )}
                           >
                             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                           </div>
                           {message.role === "user" && (
-                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-                              <UserIcon className="h-4 w-4 text-primary-foreground" />
+                            <div className="h-8 w-8 rounded-full bg-foreground flex items-center justify-center shrink-0">
+                              <UserIcon className="h-4 w-4 text-foreground-foreground" />
                             </div>
                           )}
                         </div>
                       ))}
                       {isLoading && messages[messages.length - 1]?.content === "" && (
                         <div className="flex gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                            <Bot className="h-4 w-4 text-primary" />
+                          <div className="h-8 w-8 rounded-full bg-foreground/20 flex items-center justify-center shrink-0">
+                            <Bot className="h-4 w-4 text-foreground" />
                           </div>
                           <div className="bg-muted rounded-2xl px-4 py-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -699,7 +699,7 @@ export default function Suporte() {
                     <Button 
                       onClick={sendMessage} 
                       disabled={!input.trim() || isLoading || (isTrialing && trialUsage.used_support_count >= 1)}
-                      variant="fire"
+                      variant="default"
                     >
                       {isLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -717,7 +717,7 @@ export default function Suporte() {
             <Card variant="glass">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <HelpCircle className="h-5 w-5 text-primary" />
+                  <HelpCircle className="h-5 w-5 text-foreground" />
                   Perguntas Frequentes
                 </CardTitle>
               </CardHeader>

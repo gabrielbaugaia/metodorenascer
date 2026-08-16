@@ -80,7 +80,7 @@ const TransformationsGallery = () => {
         {/* Section Header */}
         <div className="text-center mb-14 max-w-3xl mx-auto flex flex-col items-center gap-4">
           <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center">
-            Transformações <span className="text-primary">Reais</span>
+            Transformações <span className="text-foreground">Reais</span>
           </h2>
           <p className="text-muted-foreground text-base md:text-lg leading-relaxed text-center max-w-xl">
             Resultados reais de nossos alunos
@@ -105,7 +105,7 @@ const TransformationsGallery = () => {
         {/* CTA */}
         <div className="text-center mt-12">
           <p className="text-muted-foreground text-sm mb-4">Você pode ser o próximo</p>
-          <Button variant="fire" size="lg" asChild>
+          <Button variant="default" size="lg" asChild>
             <a href="#preco">
               ENTRAR NO MÉTODO
             </a>

@@ -108,7 +108,7 @@ export function WorkoutSessionManager({
           <h2 className="text-lg font-bold text-foreground uppercase">{workoutName}</h2>
         </div>
         <Card className="p-8 text-center space-y-3">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-foreground" />
           <p className="text-sm text-muted-foreground">Verificando sessão anterior...</p>
         </Card>
       </div>
@@ -147,7 +147,7 @@ export function WorkoutSessionManager({
             </p>
           </div>
           <Button
-            variant="fire"
+            variant="default"
             size="lg"
             className="w-full"
             onClick={handleStart}
@@ -192,16 +192,16 @@ export function WorkoutSessionManager({
               {workoutName}
             </h2>
             {recovered && (
-              <p className="text-xs text-primary flex items-center gap-1">
+              <p className="text-xs text-foreground flex items-center gap-1">
                 <RotateCcw className="w-3 h-3" />
                 Sessão recuperada
               </p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
-          <Clock className="w-4 h-4 text-primary" />
-          <span className="text-sm font-bold text-primary tabular-nums">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-foreground/10 border border-foreground/20">
+          <Clock className="w-4 h-4 text-foreground" />
+          <span className="text-sm font-bold text-foreground tabular-nums">
             {formatElapsed(session.elapsedSeconds)}
           </span>
         </div>
@@ -228,7 +228,7 @@ export function WorkoutSessionManager({
 
       {/* Complete button */}
       <Button
-        variant="fire"
+        variant="default"
         size="lg"
         className="w-full"
         disabled={session.saving}

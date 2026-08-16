@@ -92,7 +92,7 @@ export default function AcessoBloqueado() {
 
             <Button 
               onClick={handlePurchasePlan}
-              className="w-full gap-2 bg-primary hover:bg-primary/90"
+              className="w-full gap-2 bg-foreground hover:bg-foreground/90"
             >
               <CreditCard className="w-4 h-4" />
               {isFreeExpired ? "Assinar Agora" : "Adquirir um Plano"}

@@ -71,7 +71,7 @@ export function RestCountdown({
         "fixed top-0 left-0 right-0 z-50 px-4 py-2 flex items-center gap-3 animate-fade-in transition-colors duration-300",
         isUrgent
           ? "bg-destructive/95 backdrop-blur-sm"
-          : "bg-primary/95 backdrop-blur-sm"
+          : "bg-foreground/95 backdrop-blur-sm"
       )}
     >
       {/* Mini circular progress */}

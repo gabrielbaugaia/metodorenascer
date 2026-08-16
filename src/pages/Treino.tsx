@@ -221,7 +221,7 @@ export default function Treino() {
       <ClientLayout>
         <SuccessAnimation show={showSuccess} onComplete={() => setShowSuccess(false)} type="trophy" message="Treino Concluído!" subMessage="Você está cada vez mais perto do seu objetivo!" />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Loader2 className="w-8 h-8 animate-spin text-foreground" />
           <p className="text-muted-foreground text-sm">Carregando seu treino...</p>
         </div>
       </ClientLayout>
@@ -322,7 +322,7 @@ export default function Treino() {
               <Card className="p-3 sm:p-4 border-border/50">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <Trophy className="w-4 h-4 text-primary shrink-0" strokeWidth={1.5} />
+                    <Trophy className="w-4 h-4 text-foreground shrink-0" strokeWidth={1.5} />
                     <div className="min-w-0">
                       <p className="font-semibold text-sm text-foreground truncate">{protocol.conteudo.fase}</p>
                       <p className="text-xs text-muted-foreground truncate">{protocol.conteudo.descricao || "Fase do seu protocolo"}</p>
@@ -330,12 +330,12 @@ export default function Treino() {
                   </div>
                   {protocol.conteudo.total_semanas && (
                     <div className="text-right shrink-0">
-                      <p className="text-xs font-medium text-primary whitespace-nowrap">
+                      <p className="text-xs font-medium text-foreground whitespace-nowrap">
                         Sem. {protocol.conteudo.semana_atual || 1}/{protocol.conteudo.total_semanas}
                       </p>
                       <div className="w-16 sm:w-24 h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
                         <div
-                          className="h-full bg-primary rounded-full"
+                          className="h-full bg-foreground rounded-full"
                           style={{ width: `${((protocol.conteudo.semana_atual || 1) / protocol.conteudo.total_semanas) * 100}%` }}
                         />
                       </div>

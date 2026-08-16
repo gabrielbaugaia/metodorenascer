@@ -167,7 +167,7 @@ export default function Auth() {
                     }
                   }
                 }}
-                className="block w-full text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="block w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Esqueceu sua senha?
               </button>

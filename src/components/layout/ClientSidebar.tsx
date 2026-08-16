@@ -177,7 +177,7 @@ export function ClientSidebar() {
                         )}
                       >
                         {isActive(item.url) && (
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-r" />
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-foreground rounded-r" />
                         )}
                         <item.icon className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} />
                         {!collapsed && <span>{item.title}</span>}
@@ -211,7 +211,7 @@ export function ClientSidebar() {
                         )}
                       >
                         {isActive(item.url) && (
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-primary rounded-r" />
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-foreground rounded-r" />
                         )}
                         <item.icon className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} />
                         {!collapsed && <span>{item.title}</span>}

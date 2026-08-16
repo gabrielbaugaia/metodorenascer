@@ -130,7 +130,7 @@ export function BodyPremiumIndicators({ userId }: Props) {
             <chip.icon className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" strokeWidth={1.5} />
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground leading-none mb-1">{chip.title}</p>
-              <p className={`text-base font-semibold leading-tight flex items-center gap-1 ${chip.hasData ? "text-primary" : "text-muted-foreground"}`}>
+              <p className={`text-base font-semibold leading-tight flex items-center gap-1 ${chip.hasData ? "text-foreground" : "text-muted-foreground"}`}>
                 {chip.value}
                 {ArrowIcon && chip.hasData && (
                   <ArrowIcon className="h-3.5 w-3.5" strokeWidth={2} />

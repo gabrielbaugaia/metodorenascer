@@ -375,7 +375,7 @@ export function HealthMetricDetailDrawer({ open, onClose, metric, dailyData }: P
           {/* Scientific explanation */}
           <div className="rounded-xl border border-border/50 bg-card p-4 mb-3">
             <div className="flex items-start gap-3">
-              <BookOpen className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <BookOpen className="h-4 w-4 text-foreground shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-semibold text-foreground mb-1">O que significa</p>
                 <p className="text-[12px] text-muted-foreground leading-relaxed">{cfg.explanation}</p>
@@ -385,9 +385,9 @@ export function HealthMetricDetailDrawer({ open, onClose, metric, dailyData }: P
 
           {/* Actionable tip */}
           {currentValue != null && (
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <div className="rounded-xl border border-foreground/20 bg-foreground/5 p-4">
               <div className="flex items-start gap-3">
-                <Lightbulb className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <Lightbulb className="h-4 w-4 text-foreground shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-semibold text-foreground mb-1">Orientação para amanhã</p>
                   <p className="text-[12px] text-muted-foreground leading-relaxed">{cfg.tips(currentValue)}</p>

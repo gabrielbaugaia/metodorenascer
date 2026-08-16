@@ -30,12 +30,12 @@ export function formatAiContent(content: string, variant: "default" | "compact" 
 
   const headingClasses = variant === "compact" 
     ? {
-        h2: "text-sm font-bold text-primary mt-3 mb-1",
+        h2: "text-sm font-bold text-foreground mt-3 mb-1",
         h3: "text-xs font-semibold text-foreground mt-2 mb-1",
         h4: "text-xs font-medium text-foreground mt-2 mb-0.5",
       }
     : {
-        h2: "text-lg font-bold text-primary mt-4 mb-2",
+        h2: "text-lg font-bold text-foreground mt-4 mb-2",
         h3: "text-base font-semibold text-foreground mt-3 mb-1",
         h4: "text-sm font-medium text-foreground mt-2 mb-1",
       };

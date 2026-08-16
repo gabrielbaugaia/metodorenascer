@@ -47,25 +47,25 @@ export function Header() {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <button onClick={handleLogoClick} className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-              <Flame className="w-4 h-4 text-primary" />
+            <div className="w-8 h-8 rounded-full bg-foreground/20 flex items-center justify-center">
+              <Flame className="w-4 h-4 text-foreground" />
             </div>
             <span className="font-display text-lg md:text-xl text-foreground tracking-wider">GABRIEL BAÚ</span>
           </button>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="/#metodologia" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
+            <a href="/#metodologia" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">
               Metodologia
             </a>
-            <a href="/#preco" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
+            <a href="/#preco" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">
               Planos
             </a>
-            <Link to="/blog" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
+            <Link to="/blog" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">
               Blog
             </Link>
             {user && (
-              <Link to="/dashboard" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
+              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">
                 Dashboard
               </Link>
             )}
@@ -104,21 +104,21 @@ export function Header() {
             <nav className="flex flex-col gap-4">
               <a 
                 href="/#metodologia" 
-                className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
+                className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Metodologia
               </a>
               <a 
                 href="/#preco" 
-                className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
+                className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Planos
               </a>
               <Link 
                 to="/blog" 
-                className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
+                className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Blog
@@ -127,7 +127,7 @@ export function Header() {
                 <>
                   <Link 
                     to="/dashboard" 
-                    className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
+                    className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Dashboard

@@ -22,7 +22,7 @@ export function HowItWorksSection() {
           {/* Header */}
           <div className="text-center flex flex-col items-center gap-4">
             <h2 className="font-display font-black text-[2.5rem] sm:text-4xl md:text-5xl leading-[1.1] tracking-[-0.02em]">
-              O método se adapta à sua vida. <span className="text-primary">Não o contrário.</span>
+              O método se adapta à sua vida. <span className="text-foreground">Não o contrário.</span>
             </h2>
             
             <p className="text-lg md:text-xl leading-relaxed max-w-2xl">
@@ -37,13 +37,13 @@ export function HowItWorksSection() {
               <div key={step.label} className="flex items-center gap-4 md:gap-6">
                 <div className="flex flex-col items-center gap-2">
                   <div
-                    className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary/10 flex items-center justify-center"
+                    className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-foreground/10 flex items-center justify-center"
                     style={{
                       animation: isVisible ? step.animation : 'none',
                       animationDelay: `${index * 0.15}s`,
                     }}
                   >
-                    <step.icon className="w-7 h-7 md:w-8 md:h-8 text-primary" />
+                    <step.icon className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
                   </div>
                   <span className="font-display text-sm md:text-base">
                     {step.label}
@@ -53,7 +53,7 @@ export function HowItWorksSection() {
                 {/* Arrow connector (not on last item) */}
                 {index < steps.length - 1 && (
                   <div
-                    className="hidden md:block text-primary text-2xl font-bold"
+                    className="hidden md:block text-foreground text-2xl font-bold"
                     style={{
                       animation: isVisible ? 'arrowSlide 2.5s ease-in-out infinite' : 'none',
                       animationDelay: `${index * 0.3}s`,

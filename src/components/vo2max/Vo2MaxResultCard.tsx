@@ -44,7 +44,7 @@ export function Vo2MaxResultCard({ protocolo, vo2, classification, testDate, loc
     <Card className="p-6 space-y-4 text-center">
       <p className="text-xs uppercase tracking-wider text-muted-foreground">VO2 Máx Estimado</p>
       <div>
-        <div className="text-5xl font-bold text-primary tabular-nums">{display.toFixed(1)}</div>
+        <div className="text-5xl font-bold text-foreground tabular-nums">{display.toFixed(1)}</div>
         <div className="text-sm text-muted-foreground mt-1">ml/kg/min</div>
       </div>
       <Badge className={`text-sm px-3 py-1 ${badgeClass}`}>{classification.label}</Badge>

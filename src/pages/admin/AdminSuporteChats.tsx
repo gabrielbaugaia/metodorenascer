@@ -516,7 +516,7 @@ export default function AdminSuporteChats() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -797,7 +797,7 @@ export default function AdminSuporteChats() {
                     <div
                       className={`relative max-w-[85%] md:max-w-[80%] rounded-lg p-3 ${
                         msg.role === "user"
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-foreground text-foreground-foreground"
                           : msg.role === "admin"
                           ? "bg-blue-500 text-white"
                           : "bg-muted"

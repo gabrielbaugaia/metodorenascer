@@ -33,7 +33,7 @@ export function MealPhotoAnalysis({ foods, isLoading, onConfirm, onCancel }: Mea
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-10 gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         <p className="text-sm text-muted-foreground">Analisando sua refeição...</p>
       </div>
     );

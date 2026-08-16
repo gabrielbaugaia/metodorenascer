@@ -75,7 +75,7 @@ export function AnamneseSection() {
     return (
       <Card>
         <CardContent className="py-8 flex justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <Loader2 className="h-6 w-6 animate-spin text-foreground" />
         </CardContent>
       </Card>
     );
@@ -114,7 +114,7 @@ export function AnamneseSection() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <User className="h-4 w-4 text-primary" />
+            <User className="h-4 w-4 text-foreground" />
             Dados Pessoais
           </CardTitle>
         </CardHeader>
@@ -134,7 +134,7 @@ export function AnamneseSection() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Target className="h-4 w-4 text-primary" />
+            <Target className="h-4 w-4 text-foreground" />
             Objetivo
           </CardTitle>
         </CardHeader>
@@ -147,7 +147,7 @@ export function AnamneseSection() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Dumbbell className="h-4 w-4 text-primary" />
+            <Dumbbell className="h-4 w-4 text-foreground" />
             Histórico de Treino
           </CardTitle>
         </CardHeader>
@@ -165,7 +165,7 @@ export function AnamneseSection() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Heart className="h-4 w-4 text-primary" />
+            <Heart className="h-4 w-4 text-foreground" />
             Saúde
           </CardTitle>
         </CardHeader>
@@ -180,7 +180,7 @@ export function AnamneseSection() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Apple className="h-4 w-4 text-primary" />
+            <Apple className="h-4 w-4 text-foreground" />
             Alimentação
           </CardTitle>
         </CardHeader>
@@ -195,7 +195,7 @@ export function AnamneseSection() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Moon className="h-4 w-4 text-primary" />
+            <Moon className="h-4 w-4 text-foreground" />
             Estilo de Vida
           </CardTitle>
         </CardHeader>
@@ -212,7 +212,7 @@ export function AnamneseSection() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Camera className="h-4 w-4 text-primary" />
+              <Camera className="h-4 w-4 text-foreground" />
               Fotos Corporais
             </CardTitle>
           </CardHeader>

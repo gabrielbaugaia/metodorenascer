@@ -267,7 +267,7 @@ export default function AdminLeadsQuiz() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -302,7 +302,7 @@ export default function AdminLeadsQuiz() {
             icon={Target}
             label="Completaram Quiz"
             value={funnel.completed}
-            color="text-primary"
+            color="text-foreground"
           />
           <FunnelCard
             icon={Eye}
@@ -573,7 +573,7 @@ export default function AdminLeadsQuiz() {
                     href={whatsappLink(selected.whatsapp, selected.nome, selected.risk_score)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-foreground text-foreground-foreground text-sm font-medium hover:opacity-90"
                   >
                     Abrir WhatsApp
                   </a>

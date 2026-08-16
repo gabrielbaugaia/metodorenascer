@@ -85,7 +85,7 @@ export default function RedefinirSenha() {
   if (checking) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <Loader2 className="h-12 w-12 animate-spin text-foreground" />
       </div>
     );
   }
@@ -99,7 +99,7 @@ export default function RedefinirSenha() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
-            <Flame className="w-8 h-8 text-primary" />
+            <Flame className="w-8 h-8 text-foreground" />
             <span className="font-display text-3xl text-gradient">METODO GABRIEL BAÚ</span>
           </div>
           <p className="text-muted-foreground">
@@ -159,7 +159,7 @@ export default function RedefinirSenha() {
                 </div>
               </div>
 
-              <Button type="submit" variant="fire" className="w-full" disabled={loading}>
+              <Button type="submit" variant="default" className="w-full" disabled={loading}>
                 {loading ? "Alterando..." : "Alterar Senha"}
               </Button>
             </form>

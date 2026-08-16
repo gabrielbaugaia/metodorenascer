@@ -16,7 +16,7 @@ export function StatCardMini({ label, value, icon: Icon, onClick, className }: S
       onClick={onClick}
       className={cn(
         "flex items-center gap-2.5 rounded-xl border border-border/50 bg-card p-3 text-left transition-colors",
-        onClick && "cursor-pointer hover:border-primary/30",
+        onClick && "cursor-pointer hover:border-foreground/30",
         className
       )}
     >

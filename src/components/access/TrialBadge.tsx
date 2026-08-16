@@ -76,14 +76,14 @@ export function TrialBanner({ isTrialing, trialDaysLeft, onUpgradeClick, classNa
         ? "bg-destructive/10 border border-destructive/20" 
         : isExpiringSoon 
           ? "bg-amber-500/10 border border-amber-500/20" 
-          : "bg-primary/10 border border-primary/20",
+          : "bg-foreground/10 border border-foreground/20",
       className
     )}>
       <div className="flex items-center gap-2">
         {isLastDay ? (
           <Clock className="w-5 h-5 text-destructive animate-pulse" />
         ) : (
-          <Sparkles className="w-5 h-5 text-primary" />
+          <Sparkles className="w-5 h-5 text-foreground" />
         )}
         <span className="font-medium">
           {isLastDay 
@@ -100,7 +100,7 @@ export function TrialBanner({ isTrialing, trialDaysLeft, onUpgradeClick, classNa
           "px-4 py-1.5 rounded-md font-medium text-sm transition-colors",
           isLastDay
             ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            : "bg-primary text-primary-foreground hover:bg-primary/90"
+            : "bg-foreground text-foreground-foreground hover:bg-foreground/90"
         )}
       >
         Fazer Upgrade

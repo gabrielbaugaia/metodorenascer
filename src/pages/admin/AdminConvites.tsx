@@ -263,7 +263,7 @@ export default function AdminConvites() {
         <Card variant="glass">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-primary" />
+              <Mail className="h-5 w-5 text-foreground" />
               Dados do Convidado
             </CardTitle>
             <CardDescription>
@@ -394,7 +394,7 @@ export default function AdminConvites() {
                 </Button>
                 <Button 
                   type="submit" 
-                  variant="fire" 
+                  variant="default" 
                   disabled={loading}
                   className="order-1 sm:order-2 flex-1"
                 >

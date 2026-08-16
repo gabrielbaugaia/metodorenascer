@@ -192,7 +192,7 @@ export default function Assinatura() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <Loader2 className="h-12 w-12 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -207,12 +207,12 @@ export default function Assinatura() {
         </div>
 
         {/* Status da Assinatura Atual */}
-        <Card className="border-primary/20">
+        <Card className="border-foreground/20">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/20 shrink-0">
-                  <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                <div className="p-2 rounded-lg bg-foreground/20 shrink-0">
+                  <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-foreground" />
                 </div>
                 <div className="min-w-0">
                   <CardTitle className="text-base sm:text-lg">Status da Assinatura</CardTitle>
@@ -317,13 +317,13 @@ export default function Assinatura() {
             {availablePlans.map((plan) => (
               <Card
                 key={plan.id}
-                className={`relative transition-all hover:border-primary/50 ${
-                  plan.popular ? "border-primary ring-1 ring-primary/20" : ""
+                className={`relative transition-all hover:border-foreground/50 ${
+                  plan.popular ? "border-foreground ring-1 ring-primary/20" : ""
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground">Mais Popular</Badge>
+                    <Badge className="bg-foreground text-foreground-foreground">Mais Popular</Badge>
                   </div>
                 )}
                 <CardHeader>
@@ -342,7 +342,7 @@ export default function Assinatura() {
                   <ul className="space-y-2">
                     {plan.features.map((feature, idx) => (
                       <li key={idx} className="flex items-center gap-2 text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        <CheckCircle2 className="h-4 w-4 text-foreground" />
                         {feature}
                       </li>
                     ))}
@@ -351,7 +351,7 @@ export default function Assinatura() {
                   {plan.dualCta ? (
                     <div className="space-y-2">
                       <Button
-                        variant="fire"
+                        variant="default"
                         className="w-full"
                         onClick={() => window.open(STRIPE_TRIAL_LINK, "_blank")}
                       >
@@ -393,7 +393,7 @@ export default function Assinatura() {
           <CardContent className="py-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
+                <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-foreground shrink-0" />
                 <div className="min-w-0">
                   <p className="font-semibold text-sm sm:text-base">Indique e Ganhe</p>
                   <p className="text-xs sm:text-sm text-muted-foreground">

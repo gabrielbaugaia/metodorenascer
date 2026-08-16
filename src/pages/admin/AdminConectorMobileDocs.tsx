@@ -24,7 +24,7 @@ const CodeBlock = ({ children, title }: { children: string; title?: string }) =>
 
 const SectionIcon = ({ icon: Icon, label }: { icon: React.ElementType; label: string }) => (
   <span className="flex items-center gap-2 text-base font-semibold">
-    <Icon className="h-5 w-5 text-primary" />
+    <Icon className="h-5 w-5 text-foreground" />
     {label}
   </span>
 );

@@ -13,9 +13,9 @@ export function V2DetectionSection() {
   return (
     <section id="v2-deteccao" ref={ref} className="py-[110px] px-7 md:px-[60px]">
       <div className={`transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"}`}>
-        <div className="flex items-center gap-3.5 font-mono-v2 text-[10px] tracking-[4px] uppercase text-primary mb-[18px]">
+        <div className="flex items-center gap-3.5 font-mono-v2 text-[10px] tracking-[4px] uppercase text-foreground mb-[18px]">
           04 — Prevenção
-          <span className="w-10 h-[1px] bg-primary" />
+          <span className="w-10 h-[1px] bg-foreground" />
         </div>
         <h2 className="font-display-v2 text-[clamp(44px,5.5vw,72px)] tracking-[2px] leading-[.96] text-foreground mb-5">
           DETECTA O PROBLEMA<br />ANTES DE VOCÊ
@@ -30,17 +30,17 @@ export function V2DetectionSection() {
         {alerts.map((a, i) => (
           <div
             key={a.title}
-            className={`bg-card border border-border p-8 grid grid-cols-[60px_1fr] gap-5 items-start hover:border-primary transition-all duration-300 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"}`}
+            className={`bg-card border border-border p-8 grid grid-cols-[60px_1fr] gap-5 items-start hover:border-foreground transition-all duration-300 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"}`}
             style={{ transitionDelay: `${i * 100}ms` }}
           >
-            <div className="w-[60px] h-[60px] bg-primary/8 border border-primary flex items-center justify-center text-[24px] flex-shrink-0">
+            <div className="w-[60px] h-[60px] bg-foreground/8 border border-foreground flex items-center justify-center text-[24px] flex-shrink-0">
               {a.ico}
             </div>
             <div>
-              <div className="font-mono-v2 text-[8.5px] tracking-[2px] uppercase text-primary mb-1.5">{a.tag}</div>
+              <div className="font-mono-v2 text-[8.5px] tracking-[2px] uppercase text-foreground mb-1.5">{a.tag}</div>
               <h3 className="font-display-v2 text-[22px] tracking-[1px] text-foreground mb-2">{a.title}</h3>
               <p className="font-body-v2 text-[12.5px] text-muted-foreground leading-[1.65]">{a.body}</p>
-              <p className="font-mono-v2 text-[9.5px] tracking-[1px] text-primary mt-3">{a.action}</p>
+              <p className="font-mono-v2 text-[9.5px] tracking-[1px] text-foreground mt-3">{a.action}</p>
             </div>
           </div>
         ))}

@@ -212,8 +212,8 @@ export default function Configuracoes() {
                 htmlFor="theme-light"
                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   theme === "light"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/50"
+                    ? "border-foreground bg-foreground/10"
+                    : "border-border hover:border-foreground/50"
                 }`}
               >
                 <RadioGroupItem value="light" id="theme-light" className="sr-only" />
@@ -225,8 +225,8 @@ export default function Configuracoes() {
                 htmlFor="theme-dark"
                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   theme === "dark"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/50"
+                    ? "border-foreground bg-foreground/10"
+                    : "border-border hover:border-foreground/50"
                 }`}
               >
                 <RadioGroupItem value="dark" id="theme-dark" className="sr-only" />
@@ -238,8 +238,8 @@ export default function Configuracoes() {
                 htmlFor="theme-system"
                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                   theme === "system"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/50"
+                    ? "border-foreground bg-foreground/10"
+                    : "border-border hover:border-foreground/50"
                 }`}
               >
                 <RadioGroupItem value="system" id="theme-system" className="sr-only" />
@@ -265,7 +265,7 @@ export default function Configuracoes() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-primary bg-primary/10">
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-foreground bg-foreground/10">
               <span className="text-xl">🇧🇷</span>
               <span className="font-medium">Português (Brasil)</span>
             </div>

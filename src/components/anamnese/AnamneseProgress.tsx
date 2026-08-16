@@ -19,7 +19,7 @@ export function AnamneseProgress({ currentStep, totalSteps, stepLabels }: Anamne
       </div>
       <div className="h-2 bg-muted rounded-full overflow-hidden">
         <div
-          className="h-full bg-primary rounded-full transition-all duration-500"
+          className="h-full bg-foreground rounded-full transition-all duration-500"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
@@ -28,7 +28,7 @@ export function AnamneseProgress({ currentStep, totalSteps, stepLabels }: Anamne
           <div
             key={index}
             className={`w-2 h-2 rounded-full transition-colors ${
-              index + 1 <= currentStep ? 'bg-primary' : 'bg-muted'
+              index + 1 <= currentStep ? 'bg-foreground' : 'bg-muted'
             }`}
             title={label}
           />

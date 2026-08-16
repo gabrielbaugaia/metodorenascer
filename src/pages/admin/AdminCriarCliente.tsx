@@ -184,7 +184,7 @@ export default function AdminCriarCliente() {
                   {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                   {copied ? "Copiado!" : "Copiar Credenciais"}
                 </Button>
-                <Button variant="fire" onClick={() => navigate("/admin/clientes")}>
+                <Button variant="default" onClick={() => navigate("/admin/clientes")}>
                   Ver Clientes
                 </Button>
               </div>
@@ -195,7 +195,7 @@ export default function AdminCriarCliente() {
         <Card variant="glass">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5 text-primary" />
+              <UserPlus className="h-5 w-5 text-foreground" />
               Dados do Cliente
             </CardTitle>
             <CardDescription>
@@ -356,7 +356,7 @@ export default function AdminCriarCliente() {
                 <Button type="button" variant="outline" onClick={() => navigate("/admin/clientes")}>
                   Cancelar
                 </Button>
-                <Button type="submit" variant="fire" disabled={loading}>
+                <Button type="submit" variant="default" disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />

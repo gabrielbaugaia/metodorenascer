@@ -274,10 +274,10 @@ export function ScheduleAndPhotosFields({ formData, userId, userName, onChange }
 
       {/* Body Analysis Result */}
       {analyzingBody && (
-        <Card className="border-primary/50 bg-primary/5">
+        <Card className="border-foreground/50 bg-foreground/5">
           <CardContent className="py-8">
             <div className="flex flex-col items-center justify-center text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+              <Loader2 className="h-8 w-8 animate-spin text-foreground mb-3" />
               <h3 className="font-medium mb-1">Analisando sua composição corporal...</h3>
               <p className="text-sm text-muted-foreground">
                 Nossa IA está avaliando suas fotos para gerar uma análise personalizada
@@ -289,12 +289,12 @@ export function ScheduleAndPhotosFields({ formData, userId, userName, onChange }
 
       {bodyAnalysis && !analyzingBody && (
         <Collapsible open={analysisOpen} onOpenChange={setAnalysisOpen}>
-          <Card className="border-primary/30">
+          <Card className="border-foreground/30">
             <CardHeader className="pb-2">
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Sparkles className="h-5 w-5 text-primary" />
+                    <Sparkles className="h-5 w-5 text-foreground" />
                     Avaliação Física por IA
                   </CardTitle>
                   <span className="text-sm text-muted-foreground">

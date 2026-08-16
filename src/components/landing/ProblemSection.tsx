@@ -25,7 +25,7 @@ export function ProblemSection() {
         <div className="max-w-3xl mx-auto">
           {/* Section Header - No subtitle */}
           <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center mb-12">
-            O Fitness Tradicional <span className="text-primary">FALHOU</span> com Você
+            O Fitness Tradicional <span className="text-foreground">FALHOU</span> com Você
           </h2>
 
           {/* Statement Lines - No cards */}
@@ -46,7 +46,7 @@ export function ProblemSection() {
 
           {/* Bottom Message */}
           <div className="text-center mt-12">
-            <p className="text-primary text-lg md:text-xl font-semibold">
+            <p className="text-foreground text-lg md:text-xl font-semibold">
               O GabrielBau Treinador é o ultimato para mudar sua vida.
             </p>
           </div>

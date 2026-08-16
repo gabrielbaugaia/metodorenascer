@@ -138,7 +138,7 @@ export default function Admin() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <Loader2 className="w-8 h-8 animate-spin text-foreground mx-auto" />
           <p className="text-muted-foreground">Carregando painel...</p>
         </div>
       </div>
@@ -242,7 +242,7 @@ export default function Admin() {
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
+                  <Users className="w-5 h-5 text-foreground" />
                   Lista de Clientes
                 </CardTitle>
                 <div className="relative w-full md:w-72">
@@ -281,8 +281,8 @@ export default function Admin() {
                         <TableRow key={client.id}>
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                                <User className="w-5 h-5 text-primary" />
+                              <div className="w-10 h-10 rounded-full bg-foreground/20 flex items-center justify-center">
+                                <User className="w-5 h-5 text-foreground" />
                               </div>
                               <div>
                                 <p className="font-medium text-foreground">

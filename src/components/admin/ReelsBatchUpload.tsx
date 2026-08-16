@@ -439,7 +439,7 @@ export function ReelsBatchUpload({ onUploaded }: ReelsBatchUploadProps) {
     <div className="space-y-4">
       <Card
         className={`border-2 border-dashed transition-colors ${
-          isDragging ? "border-primary bg-primary/5" : "border-border"
+          isDragging ? "border-foreground bg-foreground/5" : "border-border"
         }`}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}

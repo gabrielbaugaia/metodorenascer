@@ -149,7 +149,7 @@ export default function Indicacoes() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <Loader2 className="h-12 w-12 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -170,15 +170,15 @@ export default function Indicacoes() {
 
         {/* Saldo de Cashback */}
         {cashbackBalance > 0 && (
-          <Card className="border-primary/30 bg-primary/5">
+          <Card className="border-foreground/30 bg-foreground/5">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary/20 rounded-lg">
-                    <Coins className="h-6 w-6 text-primary" />
+                  <div className="p-3 bg-foreground/20 rounded-lg">
+                    <Coins className="h-6 w-6 text-foreground" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-primary">{cashbackBalance}x 10%</p>
+                    <p className="text-2xl font-bold text-foreground">{cashbackBalance}x 10%</p>
                     <p className="text-sm text-muted-foreground">Descontos disponíveis para usar</p>
                   </div>
                 </div>
@@ -197,14 +197,14 @@ export default function Indicacoes() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-primary" />
+              <Gift className="h-5 w-5 text-foreground" />
               Como Funciona
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 gap-4">
               <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                <div className="w-8 h-8 rounded-full bg-foreground/20 flex items-center justify-center text-foreground font-bold">
                   1
                 </div>
                 <div>
@@ -213,7 +213,7 @@ export default function Indicacoes() {
                 </div>
               </div>
               <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                <div className="w-8 h-8 rounded-full bg-foreground/20 flex items-center justify-center text-foreground font-bold">
                   2
                 </div>
                 <div>
@@ -222,7 +222,7 @@ export default function Indicacoes() {
                 </div>
               </div>
               <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                <div className="w-8 h-8 rounded-full bg-foreground/20 flex items-center justify-center text-foreground font-bold">
                   3
                 </div>
                 <div>
@@ -238,7 +238,7 @@ export default function Indicacoes() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Share2 className="h-5 w-5 text-primary" />
+              <Share2 className="h-5 w-5 text-foreground" />
               Seu Link de Indicação
             </CardTitle>
             <CardDescription>
@@ -269,7 +269,7 @@ export default function Indicacoes() {
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">Seu código:</span>{" "}
-                <span className="font-mono text-primary">{referralCode}</span>
+                <span className="font-mono text-foreground">{referralCode}</span>
               </p>
             </div>
           </CardContent>
@@ -280,8 +280,8 @@ export default function Indicacoes() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Users className="h-6 w-6 text-primary" />
+                <div className="p-3 bg-foreground/10 rounded-lg">
+                  <Users className="h-6 w-6 text-foreground" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{referrals.length}</p>
@@ -322,7 +322,7 @@ export default function Indicacoes() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+              <Users className="h-5 w-5 text-foreground" />
               Suas Indicações
             </CardTitle>
           </CardHeader>

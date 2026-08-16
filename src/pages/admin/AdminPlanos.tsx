@@ -390,7 +390,7 @@ export default function AdminPlanos() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -412,7 +412,7 @@ export default function AdminPlanos() {
               onCheckedChange={() => handleToggleActive(protocol.id, protocol.ativo)}
               className="scale-75"
             />
-            <span className={`text-[10px] font-medium ${protocol.ativo ? "text-primary" : "text-muted-foreground"}`}>
+            <span className={`text-[10px] font-medium ${protocol.ativo ? "text-foreground" : "text-muted-foreground"}`}>
               {protocol.ativo ? "Ativo" : "Inativo"}
             </span>
           </div>
@@ -480,7 +480,7 @@ export default function AdminPlanos() {
                       disabled={togglingProtocol === protocol.id}
                       onCheckedChange={() => handleToggleActive(protocol.id, protocol.ativo)}
                     />
-                    <span className={`text-xs ${protocol.ativo ? "text-primary font-medium" : "text-muted-foreground"}`}>
+                    <span className={`text-xs ${protocol.ativo ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                       {protocol.ativo ? "Ativo" : "Inativo"}
                     </span>
                   </div>
@@ -594,7 +594,7 @@ export default function AdminPlanos() {
                 {userId && (
                   <div className="mb-4 flex flex-col sm:flex-row gap-2">
                     <Button 
-                      variant="fire" 
+                      variant="default" 
                       onClick={() => handleGenerateProtocol(userId, "treino")}
                       disabled={generatingProtocol !== null}
                     >
@@ -633,7 +633,7 @@ export default function AdminPlanos() {
                 {userId && (
                   <div className="mb-4">
                     <Button 
-                      variant="fire" 
+                      variant="default" 
                       onClick={() => handleGenerateProtocol(userId, "nutricao")}
                       disabled={generatingProtocol !== null}
                     >
@@ -653,7 +653,7 @@ export default function AdminPlanos() {
                 {userId && (
                   <div className="mb-4">
                     <Button 
-                      variant="fire" 
+                      variant="default" 
                       onClick={() => handleGenerateProtocol(userId, "mindset")}
                       disabled={generatingProtocol !== null}
                     >
@@ -723,11 +723,11 @@ export default function AdminPlanos() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 {editDialog.protocol?.tipo === "treino" ? (
-                  <Dumbbell className="h-5 w-5 text-primary" />
+                  <Dumbbell className="h-5 w-5 text-foreground" />
                 ) : editDialog.protocol?.tipo === "nutricao" ? (
-                  <Apple className="h-5 w-5 text-primary" />
+                  <Apple className="h-5 w-5 text-foreground" />
                 ) : (
-                  <Brain className="h-5 w-5 text-primary" />
+                  <Brain className="h-5 w-5 text-foreground" />
                 )}
                 Editar Protocolo
               </DialogTitle>

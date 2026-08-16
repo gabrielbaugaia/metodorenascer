@@ -115,7 +115,7 @@ export function EvolutionTimeline({
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
             Timeline de Evolução
           </CardTitle>
           {checkins.length > 0 && (
@@ -159,10 +159,10 @@ export function EvolutionTimeline({
               return (
                 <div key={checkin.id} className="relative pl-8 min-w-0 overflow-hidden">
                   {/* Timeline dot */}
-                  <div className="absolute left-1.5 top-2 w-3 h-3 rounded-full bg-primary ring-4 ring-background" />
+                  <div className="absolute left-1.5 top-2 w-3 h-3 rounded-full bg-foreground ring-4 ring-background" />
 
                   <Collapsible open={isExpanded} onOpenChange={() => toggleExpand(checkin.id)}>
-                    <div className="py-2 px-3 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors">
+                    <div className="py-2 px-3 rounded-lg bg-muted/30 border border-border/50 hover:border-foreground/30 transition-colors">
                       {/* Header */}
                       <CollapsibleTrigger asChild>
                         <button className="w-full text-left">
@@ -215,7 +215,7 @@ export function EvolutionTimeline({
                                 </Badge>
                               )}
                               {analysis.data && (
-                                <Badge variant="secondary" className="text-xs bg-primary/20 text-primary">
+                                <Badge variant="secondary" className="text-xs bg-foreground/20 text-foreground">
                                   <Sparkles className="h-3 w-3 mr-1" />
                                   Análise IA
                                 </Badge>
@@ -267,7 +267,7 @@ export function EvolutionTimeline({
                           {analysis.data && (
                             <div className="border-t border-border/30 pt-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <Sparkles className="h-4 w-4 text-primary" />
+                                <Sparkles className="h-4 w-4 text-foreground" />
                                 <span className="font-medium text-sm">Análise do Mentor</span>
                               </div>
                               
@@ -287,7 +287,7 @@ export function EvolutionTimeline({
                                   }}
                                 />
                               ) : (
-                                <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                                <div className="p-3 rounded-lg bg-foreground/5 border border-foreground/20">
                                   <div
                                     className="text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:break-word]"
                                     dangerouslySetInnerHTML={{

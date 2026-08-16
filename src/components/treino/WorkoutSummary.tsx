@@ -25,8 +25,8 @@ export function WorkoutSummary({
       <Card className="w-full max-w-md p-6 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
-            <Trophy className="w-8 h-8 text-primary" />
+          <div className="w-16 h-16 mx-auto rounded-full bg-foreground/20 flex items-center justify-center">
+            <Trophy className="w-8 h-8 text-foreground" />
           </div>
           <h2 className="text-xl font-bold text-foreground uppercase">
             Treino Concluído!
@@ -36,8 +36,8 @@ export function WorkoutSummary({
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center">
-            <Clock className="w-5 h-5 text-primary mx-auto mb-1" />
+          <div className="p-3 rounded-xl bg-foreground/10 border border-foreground/20 text-center">
+            <Clock className="w-5 h-5 text-foreground mx-auto mb-1" />
             <p className="text-lg font-bold text-foreground tabular-nums">
               {formatDuration(summary.totalDurationSeconds)}
             </p>
@@ -66,7 +66,7 @@ export function WorkoutSummary({
           </div>
         </div>
 
-        <Button variant="fire" className="w-full" size="lg" onClick={onClose}>
+        <Button variant="default" className="w-full" size="lg" onClick={onClose}>
           Salvar e Fechar
         </Button>
       </Card>

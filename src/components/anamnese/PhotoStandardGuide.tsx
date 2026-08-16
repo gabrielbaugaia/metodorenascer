@@ -16,7 +16,7 @@ export function PhotoStandardGuide({ compact = false }: PhotoStandardGuideProps)
     return (
       <div className="bg-muted/50 border border-border rounded-lg p-3">
         <div className="flex items-start gap-3">
-          <HelpCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+          <HelpCircle className="h-5 w-5 text-foreground flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground mb-2">Modelo padrão para fotos:</p>
             <div className="grid grid-cols-2 gap-2 mb-2">
@@ -26,7 +26,7 @@ export function PhotoStandardGuide({ compact = false }: PhotoStandardGuideProps)
                     <img 
                       src={photoModelMale} 
                       alt="Modelo masculino" 
-                      className="w-full h-auto rounded-md border border-border/50 group-hover:border-primary/50 transition-colors"
+                      className="w-full h-auto rounded-md border border-border/50 group-hover:border-foreground/50 transition-colors"
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors rounded-md">
                       <ZoomIn className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -48,7 +48,7 @@ export function PhotoStandardGuide({ compact = false }: PhotoStandardGuideProps)
                     <img 
                       src={photoModelFemale} 
                       alt="Modelo feminino" 
-                      className="w-full h-auto rounded-md border border-border/50 group-hover:border-primary/50 transition-colors"
+                      className="w-full h-auto rounded-md border border-border/50 group-hover:border-foreground/50 transition-colors"
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors rounded-md">
                       <ZoomIn className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -94,7 +94,7 @@ export function PhotoStandardGuide({ compact = false }: PhotoStandardGuideProps)
                   <img 
                     src={photoModelMale} 
                     alt="Modelo masculino" 
-                    className="w-full h-auto rounded-lg border-2 border-border group-hover:border-primary transition-colors"
+                    className="w-full h-auto rounded-lg border-2 border-border group-hover:border-foreground transition-colors"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors rounded-lg">
                     <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -118,7 +118,7 @@ export function PhotoStandardGuide({ compact = false }: PhotoStandardGuideProps)
                   <img 
                     src={photoModelFemale} 
                     alt="Modelo feminino" 
-                    className="w-full h-auto rounded-lg border-2 border-border group-hover:border-primary transition-colors"
+                    className="w-full h-auto rounded-lg border-2 border-border group-hover:border-foreground transition-colors"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors rounded-lg">
                     <ZoomIn className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />

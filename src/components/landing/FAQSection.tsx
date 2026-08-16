@@ -76,7 +76,7 @@ export const FAQSection = () => {
       <div className="container mx-auto px-4">
         {/* Section Header - No subtitle */}
         <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center mb-12 md:mb-16">
-          Perguntas <span className="text-primary">Frequentes</span>
+          Perguntas <span className="text-foreground">Frequentes</span>
         </h2>
 
         <div className="max-w-3xl mx-auto">
@@ -88,7 +88,7 @@ export const FAQSection = () => {
                 value={`item-${index}`}
                 className="border-b border-border/20 last:border-b-0"
               >
-                <AccordionTrigger className="text-left text-foreground font-medium text-base md:text-lg hover:text-primary hover:no-underline py-5">
+                <AccordionTrigger className="text-left text-foreground font-medium text-base md:text-lg hover:text-foreground hover:no-underline py-5">
                   {faq.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground text-sm md:text-base pb-5 leading-relaxed">

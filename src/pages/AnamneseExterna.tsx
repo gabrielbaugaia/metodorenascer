@@ -166,7 +166,7 @@ export default function AnamneseExterna() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+          <Loader2 className="h-10 w-10 animate-spin text-foreground mx-auto" />
           <p className="text-muted-foreground">Validando link...</p>
         </div>
       </div>
@@ -195,13 +195,13 @@ export default function AnamneseExterna() {
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
-            <CheckCircle2 className="h-16 w-16 text-primary mx-auto" />
+            <CheckCircle2 className="h-16 w-16 text-foreground mx-auto" />
             <h2 className="text-xl font-bold">Anamnese Enviada!</h2>
             <p className="text-muted-foreground">
               Seus dados foram recebidos com sucesso, {clientName}. Seu treinador já tem acesso às informações para personalizar seu programa.
             </p>
             <div className="flex items-center justify-center gap-2 pt-4">
-              <Flame className="h-5 w-5 text-primary" />
+              <Flame className="h-5 w-5 text-foreground" />
               <span className="font-semibold">GabrielBau Treinador</span>
             </div>
           </CardContent>
@@ -220,7 +220,7 @@ export default function AnamneseExterna() {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Flame className="h-8 w-8 text-primary" />
+            <Flame className="h-8 w-8 text-foreground" />
             <span className="text-2xl font-bold">MÉTODO GABRIEL BAÚ</span>
           </div>
           <h1 className="text-2xl font-bold mb-2">Olá, {clientName}!</h1>
@@ -231,7 +231,7 @@ export default function AnamneseExterna() {
           {/* Progress */}
           <div className="w-full bg-muted rounded-full h-2 mb-2">
             <div
-              className="bg-primary h-2 rounded-full transition-all duration-300"
+              className="bg-foreground h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -277,7 +277,7 @@ export default function AnamneseExterna() {
 
           <Button
             type="submit"
-            variant="fire"
+            variant="default"
             size="xl"
             className="w-full"
             disabled={submitting}

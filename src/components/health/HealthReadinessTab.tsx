@@ -72,7 +72,7 @@ export function HealthReadinessTab({ score, recommendation, hasData }: HealthRea
           <CardTitle className="text-base">Recomendação do Dia</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-lg font-semibold text-primary">{recommendation}</p>
+          <p className="text-lg font-semibold text-foreground">{recommendation}</p>
           <p className="text-xs text-muted-foreground mt-1">
             Baseado nos seus dados dos últimos 7 dias
           </p>

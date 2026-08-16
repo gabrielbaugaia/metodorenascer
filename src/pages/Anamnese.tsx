@@ -445,7 +445,7 @@ export default function Anamnese() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-8 h-8 animate-spin text-foreground" />
       </div>
     );
   }
@@ -460,7 +460,7 @@ export default function Anamnese() {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Flame className="h-8 w-8 text-primary" />
+            <Flame className="h-8 w-8 text-foreground" />
             <span className="text-2xl font-bold">MÉTODO GABRIEL BAÚ</span>
           </div>
           <h1 className="text-3xl font-bold uppercase mb-2">Complete sua Anamnese</h1>
@@ -489,13 +489,13 @@ export default function Anamnese() {
           <div className="bg-card border border-border rounded-lg p-4">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-muted-foreground">Progresso</span>
-              <span className="text-primary font-medium">
+              <span className="text-foreground font-medium">
                 {filledFields} de {totalFields} campos preenchidos
               </span>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div 
-                className="h-full bg-primary rounded-full transition-all duration-300"
+                className="h-full bg-foreground rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -568,7 +568,7 @@ export default function Anamnese() {
           {/* Submit Button */}
           <Button
             type="submit"
-            variant="fire"
+            variant="default"
             size="lg"
             className="w-full"
             disabled={loading}

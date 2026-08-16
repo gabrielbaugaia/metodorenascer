@@ -218,7 +218,7 @@ export default function MeuPerfil() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <Loader2 className="h-12 w-12 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -262,13 +262,13 @@ export default function MeuPerfil() {
                   src={avatarSrc || undefined}
                   alt={`Foto de perfil de ${profile.full_name}`}
                 />
-                <AvatarFallback className="text-2xl bg-primary/20 text-primary">
+                <AvatarFallback className="text-2xl bg-foreground/20 text-foreground">
                   {getInitials(profile.full_name)}
                 </AvatarFallback>
               </Avatar>
               {uploading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-full">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <Loader2 className="h-8 w-8 animate-spin text-foreground" />
                 </div>
               )}
             </div>

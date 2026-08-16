@@ -405,7 +405,7 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
                 <div className="text-center pt-2 pb-1">
                   <button
                     onClick={() => setView("manual")}
-                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                    className="text-xs text-foreground hover:underline inline-flex items-center gap-1"
                   >
                     <PenLine className="h-3 w-3" />
                     Não encontrou? Adicionar manualmente

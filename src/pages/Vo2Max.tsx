@@ -323,21 +323,21 @@ export default function Vo2Max() {
 
                 <button
                   onClick={() => setPhase("live")}
-                  className="w-full text-left rounded-xl border-2 border-primary bg-primary/5 hover:bg-primary/10 transition p-4 flex items-start gap-3"
+                  className="w-full text-left rounded-xl border-2 border-foreground bg-foreground/5 hover:bg-foreground/10 transition p-4 flex items-start gap-3"
                 >
-                  <div className="rounded-lg bg-primary/15 p-2">
-                    <Activity className="h-5 w-5 text-primary" />
+                  <div className="rounded-lg bg-foreground/15 p-2">
+                    <Activity className="h-5 w-5 text-foreground" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold">Fazer agora (ao vivo)</p>
-                      <span className="text-[9px] uppercase tracking-wider bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                      <span className="text-[9px] uppercase tracking-wider bg-foreground text-foreground-foreground px-1.5 py-0.5 rounded">
                         Recomendado
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       App cronometra, avisa os estágios e salva tudo automático.
-                      <span className="inline-flex items-center gap-1 ml-1 text-primary">
+                      <span className="inline-flex items-center gap-1 ml-1 text-foreground">
                         <Zap className="h-3 w-3" /> ganha XP
                       </span>
                     </p>

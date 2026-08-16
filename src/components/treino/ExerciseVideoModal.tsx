@@ -154,7 +154,7 @@ export function ExerciseVideoModal({
       <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base sm:text-xl pr-6">
-            <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
+            <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-foreground shrink-0" />
             <span className="uppercase">{exercise.name}</span>
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -169,7 +169,7 @@ export function ExerciseVideoModal({
               <div className="relative aspect-square max-h-[300px] rounded-xl overflow-hidden bg-gradient-to-br from-muted to-muted/50">
                 <Skeleton className="w-full h-full animate-pulse" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <div className="w-12 h-12 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                  <div className="w-12 h-12 rounded-full border-2 border-foreground/30 border-t-primary animate-spin" />
                   <p className="text-sm text-muted-foreground animate-pulse">Carregando demonstração...</p>
                 </div>
               </div>
@@ -181,7 +181,7 @@ export function ExerciseVideoModal({
             <div className="relative aspect-square max-h-[300px] rounded-xl overflow-hidden bg-gradient-to-br from-muted to-muted/30">
               {!imageLoaded && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
-                  <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+                  <div className="w-10 h-10 rounded-full border-2 border-foreground/30 border-t-primary animate-spin" />
                 </div>
               )}
               <img
@@ -203,7 +203,7 @@ export function ExerciseVideoModal({
                 </Badge>
               )}
               {exerciseData.target && (
-                <Badge className="text-xs capitalize bg-primary/20 text-primary border-primary/30">
+                <Badge className="text-xs capitalize bg-foreground/20 text-foreground border-foreground/30">
                   🎯 {exerciseData.target}
                 </Badge>
               )}
@@ -220,8 +220,8 @@ export function ExerciseVideoModal({
             <div className="relative aspect-[4/3] max-h-[200px] rounded-xl overflow-hidden bg-gradient-to-br from-primary/5 via-muted to-secondary/10 border border-border/50">
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
                 <div className="relative">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <ImageOff className="w-8 h-8 text-primary/60" />
+                  <div className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center">
+                    <ImageOff className="w-8 h-8 text-foreground/60" />
                   </div>
                   <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-secondary flex items-center justify-center">
                     <Sparkles className="w-3 h-3 text-secondary-foreground" />
@@ -271,9 +271,9 @@ export function ExerciseVideoModal({
                   {completedSets.map((s) => (
                     <div
                       key={s.setNumber}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-foreground/10 border border-foreground/20"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
                       <span className="text-xs text-muted-foreground">
                         Série {s.setNumber}
                       </span>
@@ -322,7 +322,7 @@ export function ExerciseVideoModal({
                     />
                   </div>
                   <Button
-                    variant="fire"
+                    variant="default"
                     className="h-12 px-6 mt-4 text-base font-bold"
                     disabled={!canLog}
                     onClick={handleLogSet}
@@ -335,7 +335,7 @@ export function ExerciseVideoModal({
               {/* All done message */}
               {allDone && (
                 <div className="text-center py-2">
-                  <p className="text-sm text-primary font-semibold">
+                  <p className="text-sm text-foreground font-semibold">
                     Todas as séries concluídas! 🎉
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -372,8 +372,8 @@ export function ExerciseVideoModal({
 
           {/* Coach tips */}
           {exercise.tips && (
-            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-              <p className="text-sm font-medium text-primary mb-1">Dica do Coach</p>
+            <div className="bg-foreground/10 border border-foreground/20 rounded-lg p-4">
+              <p className="text-sm font-medium text-foreground mb-1">Dica do Coach</p>
               <p className="text-sm text-muted-foreground">{exercise.tips}</p>
             </div>
           )}

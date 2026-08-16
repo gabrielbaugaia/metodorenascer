@@ -91,7 +91,7 @@ function PillarDetailDrawer({
       <DrawerContent className="max-h-[85vh]">
         <DrawerHeader className="pb-2">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-2">{card.icon}</div>
+            <div className="rounded-lg bg-foreground/10 p-2">{card.icon}</div>
             <div>
               <DrawerTitle className="text-base">{card.label}</DrawerTitle>
               <DrawerDescription className="text-xs">Pilar do Shape Intelligence Score™</DrawerDescription>
@@ -126,7 +126,7 @@ function PillarDetailDrawer({
           {/* What it measures */}
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-2">
             <div className="flex items-center gap-2 text-foreground">
-              <Info className="h-4 w-4 text-primary" />
+              <Info className="h-4 w-4 text-foreground" />
               <h4 className="text-sm font-semibold">O que este número significa</h4>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">{pillarInfo.description}</p>
@@ -142,9 +142,9 @@ function PillarDetailDrawer({
           </div>
 
           {/* Why fill data */}
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+          <div className="rounded-xl border border-foreground/20 bg-foreground/5 p-4 space-y-2">
             <div className="flex items-center gap-2 text-foreground">
-              <AlertTriangle className="h-4 w-4 text-primary" />
+              <AlertTriangle className="h-4 w-4 text-foreground" />
               <h4 className="text-sm font-semibold">Por que preencher?</h4>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">{pillarInfo.whyFill}</p>
@@ -181,7 +181,7 @@ export function SisSubScoreCards({ mechanical, recovery, cognitive, consistency,
           <button
             key={card.key}
             onClick={() => setOpenPillar(card.key)}
-            className="rounded-xl border border-border/50 bg-card p-3 space-y-1 text-left transition-colors hover:border-primary/30 cursor-pointer"
+            className="rounded-xl border border-border/50 bg-card p-3 space-y-1 text-left transition-colors hover:border-foreground/30 cursor-pointer"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-muted-foreground">

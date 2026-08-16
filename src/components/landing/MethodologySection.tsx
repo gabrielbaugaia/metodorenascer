@@ -42,7 +42,7 @@ export function MethodologySection() {
         {/* Section Header */}
         <div className="text-center mb-12 md:mb-16 flex flex-col items-center gap-3">
           <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em]">
-            O <span className="text-primary">GabrielBau Treinador</span>
+            O <span className="text-foreground">GabrielBau Treinador</span>
           </h2>
           <p className="text-muted-foreground text-lg md:text-xl">
             Um sistema completo de prescrição personalizada.
@@ -57,8 +57,8 @@ export function MethodologySection() {
               className="flex flex-col items-center text-center gap-3 animate-fade-in group"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300">
-                <pillar.icon className="w-7 h-7 md:w-8 md:h-8 text-primary" />
+              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-foreground/10 flex items-center justify-center group-hover:bg-foreground/20 transition-colors duration-300">
+                <pillar.icon className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
               </div>
               <h3 className="font-display text-foreground text-base md:text-lg font-semibold">
                 {pillar.title}

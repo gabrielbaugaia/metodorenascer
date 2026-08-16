@@ -260,7 +260,7 @@ export function AdminEvolutionSection({
       <Card>
         <CardContent className="py-8">
           <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <Loader2 className="h-6 w-6 animate-spin text-foreground" />
           </div>
         </CardContent>
       </Card>
@@ -272,7 +272,7 @@ export function AdminEvolutionSection({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
+            <Calendar className="h-5 w-5 text-foreground" />
             Evolução do Cliente
           </CardTitle>
         </CardHeader>
@@ -299,7 +299,7 @@ export function AdminEvolutionSection({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
+              <Calendar className="h-5 w-5 text-foreground" />
               Evolução do Cliente
             </CardTitle>
             <CardDescription>
@@ -322,7 +322,7 @@ export function AdminEvolutionSection({
             </Button>
             {latestWithAnalysis && (
               <Button
-                variant="fire"
+                variant="default"
                 size="sm"
                 onClick={() => handleGenerateAdjustedProtocols(latestWithAnalysis)}
                 disabled={generatingProtocols}
@@ -379,7 +379,7 @@ export function AdminEvolutionSection({
                             </Badge>
                           )}
                           {analysis.data && (
-                            <Badge variant="secondary" className="text-xs bg-primary/20 text-primary">
+                            <Badge variant="secondary" className="text-xs bg-foreground/20 text-foreground">
                               <Sparkles className="h-3 w-3" />
                             </Badge>
                           )}
@@ -436,7 +436,7 @@ export function AdminEvolutionSection({
                       <div className="border-t pt-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-primary" />
+                            <Sparkles className="h-4 w-4 text-foreground" />
                             <span className="font-medium text-sm">Análise Comparativa</span>
                           </div>
                           {analysis.structured && (
@@ -462,7 +462,7 @@ export function AdminEvolutionSection({
                         {analysis.structured ? (
                           <EvolutionAnalysisResult analysis={analysis.data} />
                         ) : (
-                          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                          <div className="p-3 rounded-lg bg-foreground/5 border border-foreground/20">
                             <pre className="text-xs whitespace-pre-wrap">{analysis.data}</pre>
                           </div>
                         )}

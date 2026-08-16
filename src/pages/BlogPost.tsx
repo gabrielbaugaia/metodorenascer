@@ -227,7 +227,7 @@ export default function BlogPost() {
               O artigo que você procura não existe ou foi removido.
             </p>
             <Link to="/blog">
-              <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
+              <Button variant="outline" className="border-foreground/50 text-foreground hover:bg-foreground hover:text-foreground-foreground">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar ao Blog
               </Button>
@@ -262,7 +262,7 @@ export default function BlogPost() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
                     Início
                   </Link>
                 </BreadcrumbLink>
@@ -270,14 +270,14 @@ export default function BlogPost() {
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to="/blog" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Link to="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
                     Blog
                   </Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage className="text-primary truncate max-w-[200px] md:max-w-[300px]">
+                <BreadcrumbPage className="text-foreground truncate max-w-[200px] md:max-w-[300px]">
                   {post.title}
                 </BreadcrumbPage>
               </BreadcrumbItem>
@@ -293,15 +293,15 @@ export default function BlogPost() {
             <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
               {post.published_at && (
                 <span className="flex items-center gap-1.5 text-sm">
-                  <Calendar className="h-4 w-4 text-primary/70" />
+                  <Calendar className="h-4 w-4 text-foreground/70" />
                   {format(new Date(post.published_at), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </span>
               )}
               <span className="flex items-center gap-1.5 text-sm">
-                <Clock className="h-4 w-4 text-primary/70" />
+                <Clock className="h-4 w-4 text-foreground/70" />
                 {estimateReadTime()} de leitura
               </span>
-              <Button variant="ghost" size="sm" onClick={handleShare} className="text-muted-foreground hover:text-primary">
+              <Button variant="ghost" size="sm" onClick={handleShare} className="text-muted-foreground hover:text-foreground">
                 <Share2 className="h-4 w-4 mr-1.5" />
                 Compartilhar
               </Button>
@@ -310,7 +310,7 @@ export default function BlogPost() {
 
           {/* Excerpt */}
           {post.excerpt && (
-            <p className="text-xl text-muted-foreground mb-10 leading-relaxed border-l-4 border-primary pl-6">
+            <p className="text-xl text-muted-foreground mb-10 leading-relaxed border-l-4 border-foreground pl-6">
               {post.excerpt}
             </p>
           )}
@@ -338,16 +338,16 @@ export default function BlogPost() {
           )}
 
           {/* CTA Section */}
-          <div className="mt-16 glass-card p-10 md:p-14 text-center border-primary/20">
+          <div className="mt-16 glass-card p-10 md:p-14 text-center border-foreground/20">
             <h3 className="font-display text-3xl md:text-4xl text-foreground mb-4">
-              PRONTO PARA <span className="text-primary">GABRIEL BAÚ</span>?
+              PRONTO PARA <span className="text-foreground">GABRIEL BAÚ</span>?
             </h3>
             <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
               Conheça o GabrielBau Treinador e comece sua jornada de transformação física e mental.
             </p>
             <Link 
               to="/#preco"
-              className="btn-fire inline-flex items-center gap-2 px-10 py-4 rounded-lg text-primary-foreground font-semibold uppercase tracking-wider"
+              className="btn-fire inline-flex items-center gap-2 px-10 py-4 rounded-lg text-foreground-foreground font-semibold uppercase tracking-wider"
             >
               <span className="relative z-10">Conhecer os Planos</span>
               <ArrowRight className="w-5 h-5 relative z-10" />

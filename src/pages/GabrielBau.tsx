@@ -205,7 +205,7 @@ export default function GabrielBau() {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                className="flex-1 gap-2 border-foreground/30 text-foreground hover:bg-foreground/10"
                 onClick={() => setBatchUploadOpen(true)}
               >
                 <CalendarDays className="h-4 w-4" />
@@ -213,7 +213,7 @@ export default function GabrielBau() {
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                className="flex-1 gap-2 border-foreground/30 text-foreground hover:bg-foreground/10"
                 onClick={() => setExcelImportOpen(true)}
               >
                 <FileSpreadsheet className="h-4 w-4" />
@@ -307,7 +307,7 @@ export default function GabrielBau() {
             <div className="text-center pt-2">
               <Link
                 to="/dados-corpo"
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 Painel Avançado
                 <ExternalLink className="h-3 w-3" />

@@ -17,7 +17,7 @@ export function V2CTASection() {
 
       <div className={`relative z-[1] transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"}`}>
         <h2 className="font-display-v2 text-[clamp(48px,7vw,96px)] tracking-[3px] leading-[.92] text-foreground mb-3">
-          DADOS GERAM<br /><span className="text-primary">RESULTADO.</span>
+          DADOS GERAM<br /><span className="text-foreground">RESULTADO.</span>
         </h2>
         <p className="font-display-v2 text-[clamp(22px,3vw,36px)] tracking-[4px] text-muted-foreground mb-9">
           INTUIÇÃO É O PASSADO.
@@ -30,13 +30,13 @@ export function V2CTASection() {
         <div className="flex gap-4 items-center justify-center flex-wrap">
           <a
             href="#v2-preco"
-            className="font-mono-v2 text-[11px] tracking-[2.5px] uppercase bg-primary text-primary-foreground px-10 py-4 border border-primary hover:bg-transparent hover:text-primary transition-all duration-200 inline-block"
+            className="font-mono-v2 text-[11px] tracking-[2.5px] uppercase bg-foreground text-foreground-foreground px-10 py-4 border border-foreground hover:bg-transparent hover:text-foreground transition-all duration-200 inline-block"
           >
             Começar Diagnóstico Gratuito
           </a>
           <a
             href="#v2-preco"
-            className="font-mono-v2 text-[11px] tracking-[2px] uppercase bg-transparent text-muted-foreground px-10 py-4 border border-border hover:border-primary hover:text-primary transition-all duration-200 inline-block"
+            className="font-mono-v2 text-[11px] tracking-[2px] uppercase bg-transparent text-muted-foreground px-10 py-4 border border-border hover:border-foreground hover:text-foreground transition-all duration-200 inline-block"
           >
             Ver Planos →
           </a>

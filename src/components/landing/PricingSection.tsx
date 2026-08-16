@@ -141,7 +141,7 @@ export function PricingSection() {
           <p className="text-base md:text-lg leading-relaxed text-center max-w-xl text-muted-foreground">
             O método é o mesmo. Você escolhe o ritmo e a condição que fazem sentido para sua fase.
           </p>
-          <p className="text-primary text-sm font-medium">
+          <p className="text-foreground text-sm font-medium">
             Garantia de 7 dias. Não gostou? Devolvemos 100%.
           </p>
         </div>
@@ -153,13 +153,13 @@ export function PricingSection() {
               key={plan.name}
               className={`relative overflow-hidden animate-fade-in transition-all duration-300 h-full ${
                 plan.popular
-                  ? "border-primary bg-card md:scale-105"
+                  ? "border-foreground bg-card md:scale-105"
                   : "bg-card border-border/50"
               }`}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               {plan.popular && plan.badge && (
-                <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold rounded-bl-lg">
+                <div className="absolute top-0 right-0 bg-foreground text-foreground-foreground px-3 py-1 text-xs font-semibold rounded-bl-lg">
                   {plan.badge}
                 </div>
               )}
@@ -177,7 +177,7 @@ export function PricingSection() {
 
                 <div className="flex items-baseline gap-1 mb-1">
                   <span className="text-sm text-muted-foreground">R$</span>
-                  <span className="font-display text-3xl text-primary">
+                  <span className="font-display text-3xl text-foreground">
                     {plan.price}
                   </span>
                   <span className="text-xs text-muted-foreground">
@@ -201,7 +201,7 @@ export function PricingSection() {
                 <ul className="space-y-2 mb-6 flex-1">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                      <Check className="w-4 h-4 text-foreground flex-shrink-0 mt-0.5" />
                       <span className="text-xs text-muted-foreground">
                         {feature}
                       </span>
@@ -212,7 +212,7 @@ export function PricingSection() {
                 {plan.dualCta ? (
                   <div className="space-y-2 mt-auto">
                     <Button
-                      variant="fire"
+                      variant="default"
                       size="sm"
                       className="w-full"
                       onClick={() => {
@@ -257,7 +257,7 @@ export function PricingSection() {
         {/* Cancellation Policy */}
         <div className="mt-12 max-w-2xl mx-auto text-center space-y-3">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
-            <ShieldCheck className="w-5 h-5 text-primary" />
+            <ShieldCheck className="w-5 h-5 text-foreground" />
             <span className="text-sm font-semibold text-foreground">Política de cancelamento transparente</span>
           </div>
           <p className="text-xs leading-relaxed text-muted-foreground">

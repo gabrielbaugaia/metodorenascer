@@ -75,7 +75,7 @@ export function NotificationSettings() {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <Loader2 className="h-6 w-6 animate-spin text-foreground" />
         </CardContent>
       </Card>
     );
@@ -94,7 +94,7 @@ export function NotificationSettings() {
         <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-3">
             {isSubscribed ? (
-              <Bell className="h-5 w-5 text-primary" />
+              <Bell className="h-5 w-5 text-foreground" />
             ) : (
               <BellOff className="h-5 w-5 text-muted-foreground" />
             )}

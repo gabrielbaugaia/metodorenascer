@@ -42,8 +42,8 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
       <DialogContent className="max-w-md">
         <DialogHeader className="text-center">
           <div className="flex justify-center mb-2">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <Crown className="w-8 h-8 text-primary" />
+            <div className="p-3 bg-foreground/10 rounded-full">
+              <Crown className="w-8 h-8 text-foreground" />
             </div>
           </div>
           <DialogTitle className="text-2xl">
@@ -57,7 +57,7 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
         <ul className="space-y-3 my-4">
           {BENEFITS.map((benefit) => (
             <li key={benefit} className="flex items-center gap-3 text-sm">
-              <Check className="w-4 h-4 text-primary flex-shrink-0" />
+              <Check className="w-4 h-4 text-foreground flex-shrink-0" />
               <span>{benefit}</span>
             </li>
           ))}
@@ -65,7 +65,7 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
 
         <div className="space-y-3">
           <Button
-            variant="fire"
+            variant="default"
             className="w-full"
             onClick={() => handleOpenLink(STRIPE_TRIAL_LINK)}
           >

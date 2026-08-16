@@ -31,11 +31,11 @@ export const CTASection = forwardRef<HTMLElement>((_, forwardedRef) => {
 
           {/* Main Headline */}
           <h2 className="font-display font-black text-foreground text-[2rem] sm:text-3xl md:text-4xl lg:text-5xl leading-[1.1] tracking-[-0.02em] text-center">
-            Corpo forte, mente disciplinada e rotina sob controle <span className="text-primary">mudam tudo.</span>
+            Corpo forte, mente disciplinada e rotina sob controle <span className="text-foreground">mudam tudo.</span>
           </h2>
 
           <div className="pt-2">
-            <Button variant="fire" size="xl" asChild className="group text-base md:text-lg px-10 md:px-14 py-6 md:py-7">
+            <Button variant="default" size="xl" asChild className="group text-base md:text-lg px-10 md:px-14 py-6 md:py-7">
               <a href="#preco">
                 <span className="relative z-10 font-semibold tracking-wide">
                   ENTRAR NO MÉTODO GABRIEL BAÚ

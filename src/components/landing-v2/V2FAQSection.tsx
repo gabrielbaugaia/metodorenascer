@@ -15,9 +15,9 @@ export function V2FAQSection() {
   return (
     <section id="v2-faq" ref={ref} className="py-[110px] px-7 md:px-[60px] bg-card/50">
       <div className={`transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"}`}>
-        <div className="flex items-center gap-3.5 font-mono-v2 text-[10px] tracking-[4px] uppercase text-primary mb-[18px]">
+        <div className="flex items-center gap-3.5 font-mono-v2 text-[10px] tracking-[4px] uppercase text-foreground mb-[18px]">
           07 — Dúvidas
-          <span className="w-10 h-[1px] bg-primary" />
+          <span className="w-10 h-[1px] bg-foreground" />
         </div>
         <h2 className="font-display-v2 text-[clamp(44px,5.5vw,72px)] tracking-[2px] leading-[.96] text-foreground mb-5">
           PERGUNTAS<br />FREQUENTES
@@ -29,10 +29,10 @@ export function V2FAQSection() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-[2px] max-w-[900px] mx-auto">
         {faqs.map((f) => (
-          <div key={f.q} className="bg-card border border-border p-7 hover:border-primary transition-colors">
+          <div key={f.q} className="bg-card border border-border p-7 hover:border-foreground transition-colors">
             <div className="font-display-v2 text-[18px] tracking-[1px] text-foreground mb-2.5 flex justify-between items-start gap-3">
               {f.q}
-              <span className="text-primary text-[22px] flex-shrink-0">+</span>
+              <span className="text-foreground text-[22px] flex-shrink-0">+</span>
             </div>
             <p className="font-body-v2 text-[13px] text-muted-foreground leading-[1.7]">{f.a}</p>
           </div>

@@ -42,7 +42,7 @@ export function AdminGabrielBauSection({ clientId }: AdminGabrielBauSectionProps
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Flame className="h-5 w-5 text-primary" /> Gabriel Baú
+            <Flame className="h-5 w-5 text-foreground" /> Gabriel Baú
           </CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center py-8">
@@ -59,7 +59,7 @@ export function AdminGabrielBauSection({ clientId }: AdminGabrielBauSectionProps
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Flame className="h-5 w-5 text-primary" /> Gabriel Baú
+            <Flame className="h-5 w-5 text-foreground" /> Gabriel Baú
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -87,7 +87,7 @@ export function AdminGabrielBauSection({ clientId }: AdminGabrielBauSectionProps
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <Flame className="h-5 w-5 text-primary" /> Gabriel Baú
+          <Flame className="h-5 w-5 text-foreground" /> Gabriel Baú
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">

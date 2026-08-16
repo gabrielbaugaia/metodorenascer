@@ -319,7 +319,7 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <FileSpreadsheet className="h-5 w-5 text-primary" />
+            <FileSpreadsheet className="h-5 w-5 text-foreground" />
             Importar Dados via Excel
           </DialogTitle>
         </DialogHeader>
@@ -347,7 +347,7 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
             <div className="text-xs text-muted-foreground space-y-1">
               <p className="font-medium">Colunas aceitas:</p>
               <p>Data, Sono, Estresse, Energia, Treinou, RPE, Passos, Calorias, Exercício, Em Pé, Distância, FC Repouso, VFC, FC Média</p>
-              <p className="mt-1 text-primary/70">
+              <p className="mt-1 text-foreground/70">
                 <Heart className="h-3 w-3 inline mr-1" />
                 CSVs granulares do HeartWatch são agregados automaticamente por dia
               </p>
@@ -456,7 +456,7 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
                 Voltar
               </Button>
               <Button
-                className="flex-1 bg-primary text-primary-foreground"
+                className="flex-1 bg-foreground text-foreground-foreground"
                 onClick={() => importMutation.mutate()}
                 disabled={importMutation.isPending || effectiveRows <= 0}
               >

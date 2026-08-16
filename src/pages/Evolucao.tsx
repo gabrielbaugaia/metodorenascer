@@ -523,7 +523,7 @@ export default function Evolucao() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <Loader2 className="h-12 w-12 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -537,11 +537,11 @@ export default function Evolucao() {
 
         {/* AI Analysis Modal/Card */}
         {showAnalysis && aiAnalysis && (
-          <Card className="border-primary/50 w-full min-w-0 overflow-hidden">
+          <Card className="border-foreground/50 w-full min-w-0 overflow-hidden">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
-                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-foreground shrink-0" />
                   Análise Comparativa
                 </CardTitle>
                 <Button variant="ghost" size="icon" onClick={() => setShowAnalysis(false)}>
@@ -584,7 +584,7 @@ export default function Evolucao() {
         <Card>
           <CardHeader className="pb-2 px-3 sm:px-6 py-3">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <ImageIcon className="h-4 w-4 text-primary" />
+              <ImageIcon className="h-4 w-4 text-foreground" />
               Fotos Iniciais
             </CardTitle>
           </CardHeader>
@@ -628,7 +628,7 @@ export default function Evolucao() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-                  <Upload className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <Upload className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
                   Enviar Evolução
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm">3 fotos + peso atual</CardDescription>
@@ -643,13 +643,13 @@ export default function Evolucao() {
           </CardHeader>
           <CardContent className="space-y-4 sm:space-y-6 px-3 sm:px-6">
             {!canSubmitNew && (
-              <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-foreground/5 border border-foreground/20">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-foreground shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-xs sm:text-sm text-foreground">Próximo check-in em breve</p>
                   <p className="text-[10px] sm:text-sm text-muted-foreground">
                     Liberado a cada 30 dias. Faltam{" "}
-                    <span className="text-primary font-medium">{30 - (daysSinceLastCheckin || 0)} dias</span>.
+                    <span className="text-foreground font-medium">{30 - (daysSinceLastCheckin || 0)} dias</span>.
                   </p>
                 </div>
               </div>
@@ -670,7 +670,7 @@ export default function Evolucao() {
                   return (
                     <div key={key} className="space-y-1 sm:space-y-2">
                       <div
-                        className={`relative aspect-[3/4] rounded-md sm:rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors ${!canSubmitNew || isValidating ? "pointer-events-none" : ""} ${!canSubmitNew ? "opacity-50" : ""}`}
+                        className={`relative aspect-[3/4] rounded-md sm:rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-foreground/50 transition-colors ${!canSubmitNew || isValidating ? "pointer-events-none" : ""} ${!canSubmitNew ? "opacity-50" : ""}`}
                         onClick={() => canSubmitNew && !isValidating && fileInputRefs[key].current?.click()}
                       >
                         {photoPreviews[key] ? (
@@ -706,7 +706,7 @@ export default function Evolucao() {
                           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                             {isValidating ? (
                               <>
-                                <Loader2 className="h-5 w-5 sm:h-8 sm:w-8 animate-spin text-primary mb-1 sm:mb-2" />
+                                <Loader2 className="h-5 w-5 sm:h-8 sm:w-8 animate-spin text-foreground mb-1 sm:mb-2" />
                                 <p className="text-[9px] sm:text-xs">Validando...</p>
                               </>
                             ) : (
@@ -769,7 +769,7 @@ export default function Evolucao() {
               onClick={handleSubmitCheckin}
               disabled={!canSubmitNew || submitting || analyzing || !newWeight}
               className="w-full"
-              variant="fire"
+              variant="default"
             >
               {submitting || analyzing ? (
                 <>

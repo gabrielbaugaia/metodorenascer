@@ -22,7 +22,7 @@ export function HealthConnectTab({ lastSync }: HealthConnectTabProps) {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Watch className="h-5 w-5 text-primary" />
+            <Watch className="h-5 w-5 text-foreground" />
             Status da Sincronização
           </CardTitle>
         </CardHeader>

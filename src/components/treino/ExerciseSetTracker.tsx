@@ -87,7 +87,7 @@ export function ExerciseSetTracker({
         className={cn(
           "rounded-xl border transition-all",
           allDone
-            ? "border-primary/30 bg-primary/5"
+            ? "border-foreground/30 bg-foreground/5"
             : "border-border/50 bg-card"
         )}
       >
@@ -95,14 +95,14 @@ export function ExerciseSetTracker({
           <div className="flex items-center justify-between p-3 cursor-pointer select-none" onClick={(e) => { if (onExerciseClick) { e.stopPropagation(); onExerciseClick(exerciseName); } }}>
             <div className="flex items-center gap-2 min-w-0">
               {allDone ? (
-                <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-foreground shrink-0" />
               ) : (
                 <Dumbbell className="w-5 h-5 text-muted-foreground shrink-0" />
               )}
               <span
                 className={cn(
                   "font-medium text-sm truncate",
-                  allDone && "text-primary"
+                  allDone && "text-foreground"
                 )}
               >
                 {exerciseName}
@@ -113,7 +113,7 @@ export function ExerciseSetTracker({
                 variant={allDone ? "default" : "outline"}
                 className={cn(
                   "text-xs",
-                  allDone && "bg-primary/20 text-primary border-primary/30"
+                  allDone && "bg-foreground/20 text-foreground border-foreground/30"
                 )}
               >
                 {completedSets.length}/{totalSets}
@@ -139,7 +139,7 @@ export function ExerciseSetTracker({
 
             {lastWeight > 0 && (
               <p className="text-xs text-muted-foreground">
-                Última carga: <span className="text-primary font-semibold">{lastWeight} kg</span>
+                Última carga: <span className="text-foreground font-semibold">{lastWeight} kg</span>
               </p>
             )}
 
@@ -154,9 +154,9 @@ export function ExerciseSetTracker({
                 return (
                   <div
                     key={setNum}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-foreground/10 border border-foreground/20"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
                     <span className="text-xs text-muted-foreground w-12">
                       Série {setNum}
                     </span>
@@ -209,7 +209,7 @@ export function ExerciseSetTracker({
                     />
                     <Button
                       size="sm"
-                      variant="fire"
+                      variant="default"
                       className="h-8 px-3 text-xs ml-auto"
                       disabled={!canLog}
                       onClick={() => handleLog(setNum)}

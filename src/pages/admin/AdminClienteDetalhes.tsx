@@ -648,7 +648,7 @@ export default function AdminClienteDetalhes() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -676,7 +676,7 @@ export default function AdminClienteDetalhes() {
                 <FileText className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Ver Protocolos</span>
               </Button>
-              <Button variant="fire" size="sm" onClick={handleSave} disabled={saving}>
+              <Button variant="default" size="sm" onClick={handleSave} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin sm:mr-2" /> : <Save className="h-4 w-4 sm:mr-2" />}
                 <span className="hidden sm:inline">Salvar</span>
               </Button>
@@ -684,10 +684,10 @@ export default function AdminClienteDetalhes() {
           </div>
 
           {/* Actions Card */}
-          <Card className="border-primary/30 bg-primary/5">
+          <Card className="border-foreground/30 bg-foreground/5">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
+                <Sparkles className="h-5 w-5 text-foreground" />
                 Ações Rápidas
               </CardTitle>
             </CardHeader>
@@ -834,7 +834,7 @@ export default function AdminClienteDetalhes() {
                   </Button>
                 </div>
                 <Button 
-                  variant="fire" 
+                  variant="default" 
                   onClick={handleGenerateAllProtocols} 
                   disabled={generatingProtocol !== null}
                   className="w-full"
@@ -987,7 +987,7 @@ export default function AdminClienteDetalhes() {
                         Cancelar
                       </Button>
                       <Button 
-                        variant="fire" 
+                        variant="default" 
                         onClick={handleResetPassword}
                         disabled={resettingPassword || newPassword.length < 6}
                       >
@@ -1042,7 +1042,7 @@ export default function AdminClienteDetalhes() {
                         Cancelar
                       </Button>
                       <Button 
-                        variant="fire" 
+                        variant="default" 
                         onClick={handleUpdateEmail}
                         disabled={updatingEmail || !newEmail}
                       >
@@ -1176,10 +1176,10 @@ export default function AdminClienteDetalhes() {
         </div>
 
         {/* Fotos Corporais - Upload pelo Admin */}
-        <Card className="border-primary/30 bg-primary/5">
+        <Card className="border-foreground/30 bg-foreground/5">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Camera className="h-5 w-5 text-primary" />
+              <Camera className="h-5 w-5 text-foreground" />
               Fotos Corporais
             </CardTitle>
             <CardDescription>
@@ -1307,7 +1307,7 @@ export default function AdminClienteDetalhes() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <User className="h-5 w-5 text-primary" />
+              <User className="h-5 w-5 text-foreground" />
               Informações Básicas
             </CardTitle>
           </CardHeader>

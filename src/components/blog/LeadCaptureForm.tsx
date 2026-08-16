@@ -71,10 +71,10 @@ export function LeadCaptureForm({
 
   if (submitted) {
     return (
-      <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+      <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-foreground/20">
         <CardContent className="pt-6 text-center">
-          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Gift className="h-8 w-8 text-primary" />
+          <div className="w-16 h-16 bg-foreground/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Gift className="h-8 w-8 text-foreground" />
           </div>
           <h3 className="text-xl font-bold text-foreground mb-2">Obrigado!</h3>
           <p className="text-muted-foreground">
@@ -88,10 +88,10 @@ export function LeadCaptureForm({
   }
 
   return (
-    <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+    <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-foreground/20">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
-          {documentUrl && <Download className="h-5 w-5 text-primary" />}
+          {documentUrl && <Download className="h-5 w-5 text-foreground" />}
           {title}
         </CardTitle>
         <CardDescription>{description}</CardDescription>

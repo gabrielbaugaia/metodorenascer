@@ -31,7 +31,7 @@ export function TransformationPhaseCard() {
     return (
       <div className="rounded-xl border border-border/50 bg-card p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <Rocket className="h-5 w-5 text-primary" />
+          <Rocket className="h-5 w-5 text-foreground" />
           <h3 className="text-sm font-semibold">Jornada 90 Dias</h3>
         </div>
         <p className="text-xs text-muted-foreground">
@@ -50,7 +50,7 @@ export function TransformationPhaseCard() {
     <div className="rounded-xl border border-border/50 bg-card p-5 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <PhaseIcon className="h-5 w-5 text-primary" />
+          <PhaseIcon className="h-5 w-5 text-foreground" />
           <h3 className="text-sm font-semibold">{phaseLabel}</h3>
         </div>
         <span className="text-xs font-medium text-muted-foreground">
@@ -69,7 +69,7 @@ export function TransformationPhaseCard() {
             key={b.badge}
             className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium ${
               b.earned
-                ? "bg-primary/10 text-primary"
+                ? "bg-foreground/10 text-foreground"
                 : "bg-muted text-muted-foreground"
             }`}
           >
@@ -80,7 +80,7 @@ export function TransformationPhaseCard() {
       </div>
 
       {isCompleted && (
-        <p className="text-xs text-primary font-semibold text-center">
+        <p className="text-xs text-foreground font-semibold text-center">
           🎉 Jornada completa! A disciplina se tornou sua identidade.
         </p>
       )}

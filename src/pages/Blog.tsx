@@ -166,10 +166,10 @@ export default function Blog() {
           <div className="flex items-center justify-between h-16 gap-4">
             {/* Logo */}
             <RouterLink to="/blog" className="flex items-center gap-2 shrink-0">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <Flame className="w-4 h-4 text-primary" />
+              <div className="w-8 h-8 rounded-full bg-foreground/20 flex items-center justify-center">
+                <Flame className="w-4 h-4 text-foreground" />
               </div>
-              <span className="text-primary font-display text-lg uppercase tracking-wider">Blog</span>
+              <span className="text-foreground font-display text-lg uppercase tracking-wider">Blog</span>
             </RouterLink>
 
             {/* Desktop/Tablet: Categories + Search + Nav - all in one line */}
@@ -182,7 +182,7 @@ export default function Blog() {
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`px-2 lg:px-2.5 py-1 rounded-full text-[10px] lg:text-xs font-medium whitespace-nowrap transition-all duration-300 ease-out ${
                       selectedCategory === cat.id
-                        ? 'bg-primary text-primary-foreground shadow-[0_0_12px_rgba(255,69,0,0.5)] ring-1 ring-primary/50 scale-105'
+                        ? 'bg-foreground text-foreground-foreground shadow-[0_0_12px_rgba(255,69,0,0.5)] ring-1 ring-primary/50 scale-105'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 scale-100'
                     }`}
                   >
@@ -199,7 +199,7 @@ export default function Blog() {
                   placeholder="Buscar..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-7 lg:pl-8 pr-6 py-1 h-7 lg:h-8 text-[10px] lg:text-xs bg-muted/30 border-border focus:border-primary"
+                  className="pl-7 lg:pl-8 pr-6 py-1 h-7 lg:h-8 text-[10px] lg:text-xs bg-muted/30 border-border focus:border-foreground"
                 />
                 {searchQuery && (
                   <button
@@ -216,10 +216,10 @@ export default function Blog() {
 
               {/* Navigation */}
               <nav className="flex items-center gap-2 lg:gap-3">
-                <RouterLink to="/" className="text-[10px] lg:text-xs text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
+                <RouterLink to="/" className="text-[10px] lg:text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
                   Início
                 </RouterLink>
-                <RouterLink to="/#preco" className="text-[10px] lg:text-xs text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
+                <RouterLink to="/#preco" className="text-[10px] lg:text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
                   Planos
                 </RouterLink>
               </nav>
@@ -246,7 +246,7 @@ export default function Blog() {
                   placeholder="Buscar artigos..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-10 py-2 text-sm bg-muted/30 border-border focus:border-primary"
+                  className="pl-10 pr-10 py-2 text-sm bg-muted/30 border-border focus:border-foreground"
                 />
                 {searchQuery && (
                   <button
@@ -266,7 +266,7 @@ export default function Blog() {
                     onClick={() => { setSelectedCategory(cat.id); setMobileMenuOpen(false); }}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                       selectedCategory === cat.id
-                        ? 'bg-primary text-primary-foreground'
+                        ? 'bg-foreground text-foreground-foreground'
                         : 'bg-muted/50 text-muted-foreground hover:text-foreground'
                     }`}
                   >
@@ -279,14 +279,14 @@ export default function Blog() {
               <div className="flex items-center gap-4 pt-2 border-t border-border">
                 <RouterLink 
                   to="/" 
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Início
                 </RouterLink>
                 <RouterLink 
                   to="/#preco" 
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Planos
@@ -332,7 +332,7 @@ export default function Blog() {
               {(searchQuery || selectedCategory !== 'todos') && (
                 <button
                   onClick={() => { setSearchQuery(""); setSelectedCategory("todos"); }}
-                  className="mt-6 text-primary hover:underline"
+                  className="mt-6 text-foreground hover:underline"
                 >
                   Limpar filtros
                 </button>
@@ -358,16 +358,16 @@ export default function Blog() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
                         {post.category && (
-                          <span className="absolute top-4 left-4 px-3 py-1 bg-primary/90 text-primary-foreground text-xs font-medium rounded-full">
+                          <span className="absolute top-4 left-4 px-3 py-1 bg-foreground/90 text-foreground-foreground text-xs font-medium rounded-full">
                             {getCategoryLabel(post.category)}
                           </span>
                         )}
                       </div>
                     ) : (
                       <div className="relative h-64 flex items-center justify-center" style={{ background: 'var(--gradient-card)' }}>
-                        <Flame className="w-16 h-16 text-primary/30" />
+                        <Flame className="w-16 h-16 text-foreground/30" />
                         {post.category && (
-                          <span className="absolute top-4 left-4 px-3 py-1 bg-primary/90 text-primary-foreground text-xs font-medium rounded-full">
+                          <span className="absolute top-4 left-4 px-3 py-1 bg-foreground/90 text-foreground-foreground text-xs font-medium rounded-full">
                             {getCategoryLabel(post.category)}
                           </span>
                         )}
@@ -378,17 +378,17 @@ export default function Blog() {
                       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                         {post.published_at && (
                           <span className="flex items-center gap-1.5">
-                            <Calendar className="h-4 w-4 text-primary/70" />
+                            <Calendar className="h-4 w-4 text-foreground/70" />
                             {format(new Date(post.published_at), "d MMM yyyy", { locale: ptBR })}
                           </span>
                         )}
                         <span className="flex items-center gap-1.5">
-                          <Clock className="h-4 w-4 text-primary/70" />
+                          <Clock className="h-4 w-4 text-foreground/70" />
                           {estimateReadTime(post.excerpt)}
                         </span>
                       </div>
                       
-                      <h2 className="font-display text-xl md:text-2xl text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                      <h2 className="font-display text-xl md:text-2xl text-foreground mb-3 group-hover:text-foreground transition-colors line-clamp-2">
                         {post.title}
                       </h2>
                       
@@ -399,7 +399,7 @@ export default function Blog() {
                       )}
                       
                       <div className="mt-4 pt-4 border-t border-border">
-                        <span className="text-primary font-medium text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
+                        <span className="text-foreground font-medium text-sm flex items-center gap-2 group-hover:gap-3 transition-all">
                           Ler artigo 
                           <ArrowRight className="h-4 w-4" />
                         </span>
@@ -440,16 +440,16 @@ export default function Blog() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
                         {post.category && (
-                          <span className="absolute top-4 left-4 px-3 py-1 bg-primary/90 text-primary-foreground text-xs font-medium rounded-full">
+                          <span className="absolute top-4 left-4 px-3 py-1 bg-foreground/90 text-foreground-foreground text-xs font-medium rounded-full">
                             {getCategoryLabel(post.category)}
                           </span>
                         )}
                       </div>
                     ) : (
                       <div className="relative h-48 flex items-center justify-center" style={{ background: 'var(--gradient-card)' }}>
-                        <Flame className="w-12 h-12 text-primary/30" />
+                        <Flame className="w-12 h-12 text-foreground/30" />
                         {post.category && (
-                          <span className="absolute top-4 left-4 px-3 py-1 bg-primary/90 text-primary-foreground text-xs font-medium rounded-full">
+                          <span className="absolute top-4 left-4 px-3 py-1 bg-foreground/90 text-foreground-foreground text-xs font-medium rounded-full">
                             {getCategoryLabel(post.category)}
                           </span>
                         )}
@@ -460,17 +460,17 @@ export default function Blog() {
                       <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
                         {post.published_at && (
                           <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3 text-primary/70" />
+                            <Calendar className="h-3 w-3 text-foreground/70" />
                             {format(new Date(post.published_at), "d MMM yyyy", { locale: ptBR })}
                           </span>
                         )}
                         <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 text-primary/70" />
+                          <Clock className="h-3 w-3 text-foreground/70" />
                           {estimateReadTime(post.excerpt)}
                         </span>
                       </div>
                       
-                      <h2 className="font-display text-lg text-foreground mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                      <h2 className="font-display text-lg text-foreground mb-2 group-hover:text-foreground transition-colors line-clamp-2">
                         {post.title}
                       </h2>
                       
@@ -481,7 +481,7 @@ export default function Blog() {
                       )}
                       
                       <div className="mt-3 pt-3 border-t border-border">
-                        <span className="text-primary font-medium text-xs flex items-center gap-2 group-hover:gap-3 transition-all">
+                        <span className="text-foreground font-medium text-xs flex items-center gap-2 group-hover:gap-3 transition-all">
                           Ler artigo 
                           <ArrowRight className="h-3 w-3" />
                         </span>
@@ -500,14 +500,14 @@ export default function Blog() {
         <div className="container mx-auto">
           <div className="max-w-3xl mx-auto text-center glass-card p-10 md:p-16">
             <h2 className="font-display text-3xl md:text-4xl text-foreground mb-4">
-              PRONTO PARA <span className="text-primary">GABRIEL BAÚ</span>?
+              PRONTO PARA <span className="text-foreground">GABRIEL BAÚ</span>?
             </h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
               Transforme seu corpo e mente com acompanhamento personalizado, treino, nutrição e suporte 24h.
             </p>
             <Link 
               to="/#preco"
-              className="btn-fire inline-flex items-center gap-2 px-10 py-4 rounded-lg text-primary-foreground font-semibold uppercase tracking-wider"
+              className="btn-fire inline-flex items-center gap-2 px-10 py-4 rounded-lg text-foreground-foreground font-semibold uppercase tracking-wider"
             >
               <span className="relative z-10">Conhecer os Planos</span>
               <ArrowRight className="w-5 h-5 relative z-10" />

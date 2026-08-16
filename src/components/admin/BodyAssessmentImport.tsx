@@ -107,7 +107,7 @@ export function BodyAssessmentImport({ clientId, onAssessmentImported }: BodyAss
     if (value == null) return null;
     return (
       <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-        {Icon && <Icon className="h-4 w-4 text-primary shrink-0" />}
+        {Icon && <Icon className="h-4 w-4 text-foreground shrink-0" />}
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground truncate">{label}</p>
           <p className="text-sm font-semibold">
@@ -120,10 +120,10 @@ export function BodyAssessmentImport({ clientId, onAssessmentImported }: BodyAss
   };
 
   return (
-    <Card className="border-primary/30 bg-primary/5">
+    <Card className="border-foreground/30 bg-foreground/5">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
+          <Activity className="h-5 w-5 text-foreground" />
           Avaliação Corporal Externa
         </CardTitle>
         <CardDescription>
@@ -145,7 +145,7 @@ export function BodyAssessmentImport({ clientId, onAssessmentImported }: BodyAss
                 disabled={importing}
               />
             </div>
-            <Button onClick={handleImport} disabled={importing || !url.trim()} variant="fire">
+            <Button onClick={handleImport} disabled={importing || !url.trim()} variant="default">
               {importing ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (

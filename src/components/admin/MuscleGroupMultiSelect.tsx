@@ -94,7 +94,7 @@ export function MuscleGroupMultiSelect({
           className={cn(
             "justify-between font-normal",
             value.length === 0 && "text-muted-foreground",
-            value.length > 0 && "border-primary/50",
+            value.length > 0 && "border-foreground/50",
             className
           )}
         >
@@ -165,8 +165,8 @@ export function MuscleGroupMultiSelect({
                   key={group}
                   className={cn(
                     "flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-muted",
-                    isSelected && "bg-primary/10",
-                    isLegSubgroup && "ml-4 border-l-2 border-primary/30"
+                    isSelected && "bg-foreground/10",
+                    isLegSubgroup && "ml-4 border-l-2 border-foreground/30"
                   )}
                   onClick={() => handleToggle(group)}
                 >
@@ -178,7 +178,7 @@ export function MuscleGroupMultiSelect({
                   <span className={cn(
                     "text-sm",
                     isSelected && "font-medium",
-                    group === "Perna" && "font-semibold text-primary"
+                    group === "Perna" && "font-semibold text-foreground"
                   )}>
                     {group}
                   </span>

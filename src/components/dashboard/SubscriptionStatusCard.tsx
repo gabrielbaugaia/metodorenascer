@@ -7,9 +7,9 @@ interface SubscriptionStatusCardProps {
 
 export function SubscriptionStatusCard({ subscriptionEnd }: SubscriptionStatusCardProps) {
   return (
-    <Card variant="glass" className="mb-4 p-4 border-primary/20">
+    <Card variant="glass" className="mb-4 p-4 border-foreground/20">
       <div className="flex items-center gap-3">
-        <Crown className="w-5 h-5 text-primary" />
+        <Crown className="w-5 h-5 text-foreground" />
         <div>
           <p className="text-sm font-medium text-foreground">Assinatura Ativa</p>
           <p className="text-xs text-muted-foreground">
