@@ -78,12 +78,12 @@ const Quiz = () => {
   });
 
   useEffect(() => {
-    document.title = "Diagnóstico Renascer | Descubra seu risco de Burnout";
+    document.title = "Diagnóstico GabrielBau | Descubra seu risco de Burnout";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) {
       meta.setAttribute(
         "content",
-        "Diagnóstico em 60s do Método Renascer: descubra seu risco de Burnout, Compulsão Alimentar e Queda de Motivação com base em sono, stress e comportamento."
+        "Diagnóstico em 60s do GabrielBau Treinador: descubra seu risco de Burnout, Compulsão Alimentar e Queda de Motivação com base em sono, stress e comportamento."
       );
     }
 
@@ -209,7 +209,7 @@ const Quiz = () => {
       {step !== 10 && (
         <Link
           to="/auth"
-          className="fixed top-4 right-4 z-50 inline-flex items-center gap-2 border border-border bg-card/80 backdrop-blur px-4 py-2 text-[0.65rem] uppercase tracking-[0.25em] font-medium text-foreground hover:border-primary hover:text-primary transition-colors rounded-sm"
+          className="fixed top-4 right-4 z-50 inline-flex items-center gap-2 border border-border bg-card/80 backdrop-blur px-4 py-2 text-[0.65rem] uppercase tracking-[0.25em] font-medium text-foreground hover:border-foreground hover:text-foreground transition-colors rounded-sm"
         >
           Entrar
         </Link>
@@ -222,12 +222,12 @@ const Quiz = () => {
           className="animate-fade-in-up flex min-h-screen flex-col items-center justify-center px-6 text-center"
         >
           <span className="eyebrow mb-4 inline-flex items-center gap-2">
-            <span className="inline-block h-px w-6 bg-primary" />
-            DIAGNÓSTICO RENASCER
+            <span className="inline-block h-px w-6 bg-foreground" />
+            DIAGNÓSTICO GABRIEL BAÚ
           </span>
           <h1 className="font-serif-display text-[clamp(2.2rem,6vw,4rem)] font-light leading-[0.95] tracking-tight mb-6">
             Descubra seu risco de<br />
-            <em className="text-primary font-light italic">Burnout, Compulsão</em><br />
+            <em className="text-foreground font-light italic">Burnout, Compulsão</em><br />
             e Queda de Motivação.
           </h1>
           <p className="max-w-md text-muted-foreground text-sm leading-relaxed mb-10">
@@ -235,12 +235,12 @@ const Quiz = () => {
           </p>
           <button
             onClick={() => goTo(1)}
-            className="animate-pulse-subtle bg-primary text-primary-foreground px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity"
+            className="animate-pulse-subtle bg-foreground text-foreground-foreground px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity"
           >
             Fazer diagnóstico em 60s [grátis]
           </button>
           <p className="mt-4 text-[0.7rem] text-muted-foreground">
-            Analiso apenas 20 novos alunos por semana. <span className="text-primary font-medium">7 vagas restantes.</span>
+            Analiso apenas 20 novos alunos por semana. <span className="text-foreground font-medium">7 vagas restantes.</span>
           </p>
         </section>
       )}
@@ -253,12 +253,12 @@ const Quiz = () => {
         >
           <div className="w-full max-w-md">
             <div className="mb-2 flex items-center justify-between text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
-              <span>Diagnóstico Renascer</span>
+              <span>Diagnóstico GabrielBau</span>
               <span>{step} de 4</span>
             </div>
             <div className="mb-10 h-px w-full bg-border relative">
               <div
-                className="absolute left-0 top-0 h-full bg-primary transition-all duration-500"
+                className="absolute left-0 top-0 h-full bg-foreground transition-all duration-500"
                 style={{ width: `${(step / 4) * 100}%` }}
               />
             </div>
@@ -272,7 +272,7 @@ const Quiz = () => {
                 <button
                   key={i}
                   onClick={() => handleAnswer(opt.score)}
-                  className="group w-full border border-border bg-card text-left px-5 py-4 rounded-sm text-sm text-foreground hover:border-primary hover:bg-secondary transition-all duration-300"
+                  className="group w-full border border-border bg-card text-left px-5 py-4 rounded-sm text-sm text-foreground hover:border-foreground hover:bg-secondary transition-all duration-300"
                 >
                   {opt.text}
                 </button>
@@ -290,7 +290,7 @@ const Quiz = () => {
         >
           <div className="w-full max-w-md">
             <span className="eyebrow mb-6 inline-flex items-center gap-2">
-              <span className="inline-block h-px w-6 bg-primary" />
+              <span className="inline-block h-px w-6 bg-foreground" />
               PRÉ-LAUDO CONCLUÍDO
             </span>
 
@@ -320,7 +320,7 @@ const Quiz = () => {
 
             <button
               onClick={() => goTo(6)}
-              className="animate-pulse-subtle bg-primary text-primary-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity"
+              className="animate-pulse-subtle bg-foreground text-foreground-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity"
             >
               Liberar análise completa
             </button>
@@ -336,15 +336,15 @@ const Quiz = () => {
         >
           <div className="w-full max-w-md">
             <span className="eyebrow mb-6 inline-flex items-center gap-2">
-              <span className="inline-block h-px w-6 bg-primary" />
+              <span className="inline-block h-px w-6 bg-foreground" />
               ÚLTIMO PASSO
             </span>
 
             <h2 className="font-serif-display text-[clamp(1.6rem,4.5vw,2.4rem)] font-light leading-tight mb-3">
-              Para liberar sua <em className="text-primary italic">análise completa</em>
+              Para liberar sua <em className="text-foreground italic">análise completa</em>
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-              Preciso de 3 informações para Gabriel Baú revisar seu perfil pessoalmente e te enviar o diagnóstico clínico detalhado.
+              Preciso de 3 informações para GabrielBau revisar seu perfil pessoalmente e te enviar o diagnóstico clínico detalhado.
             </p>
 
             <form
@@ -362,7 +362,7 @@ const Quiz = () => {
                 disabled={submitting}
                 maxLength={100}
                 autoComplete="name"
-                className="w-full border border-border bg-card px-4 py-3.5 rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                className="w-full border border-border bg-card px-4 py-3.5 rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
               />
               <input
                 type="email"
@@ -373,7 +373,7 @@ const Quiz = () => {
                 maxLength={200}
                 autoComplete="email"
                 inputMode="email"
-                className="w-full border border-border bg-card px-4 py-3.5 rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                className="w-full border border-border bg-card px-4 py-3.5 rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
               />
               <input
                 type="tel"
@@ -384,13 +384,13 @@ const Quiz = () => {
                 maxLength={20}
                 autoComplete="tel"
                 inputMode="tel"
-                className="w-full border border-border bg-card px-4 py-3.5 rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                className="w-full border border-border bg-card px-4 py-3.5 rounded-sm text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
               />
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-4 bg-primary text-primary-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="mt-4 bg-foreground text-foreground-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>
@@ -404,7 +404,7 @@ const Quiz = () => {
               </button>
 
               <p className="text-[0.65rem] text-muted-foreground text-center mt-2 inline-flex items-center justify-center gap-1.5">
-                <Shield size={12} strokeWidth={1.5} className="text-primary" />
+                <Shield size={12} strokeWidth={1.5} className="text-foreground" />
                 Seus dados estão seguros. Não fazemos spam.
               </p>
             </form>
@@ -420,18 +420,18 @@ const Quiz = () => {
         >
           <div className="w-full max-w-lg">
             <span className="eyebrow mb-6 inline-flex items-center gap-2">
-              <span className="inline-block h-px w-6 bg-primary" />
+              <span className="inline-block h-px w-6 bg-foreground" />
               QUEM VAI ANALISAR SEUS DADOS
             </span>
 
             <img
               src={gabrielBauPhoto}
-              alt="Gabriel Baú — Especialista em Treinamento"
+              alt="GabrielBau — Especialista em Treinamento"
               className="w-32 h-40 rounded-sm border border-border mb-6 object-cover object-top"
             />
 
             <h2 className="font-serif-display text-[clamp(1.6rem,4.5vw,2.4rem)] font-light leading-tight mb-4">
-              Gabriel <em className="text-primary italic">Baú</em>
+              Gabriel <em className="text-foreground italic">Baú</em>
             </h2>
 
             <p className="text-sm text-muted-foreground leading-relaxed mb-8">
@@ -446,7 +446,7 @@ const Quiz = () => {
               ].map(({ icon: Icon, text }, i) => (
                 <div key={i} className="flex items-center gap-3 text-sm text-foreground">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-border rounded-sm">
-                    <Icon size={16} strokeWidth={1.5} className="text-primary" />
+                    <Icon size={16} strokeWidth={1.5} className="text-foreground" />
                   </div>
                   {text}
                 </div>
@@ -455,7 +455,7 @@ const Quiz = () => {
 
             <button
               onClick={() => goTo(8)}
-              className="bg-primary text-primary-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
+              className="bg-foreground text-foreground-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
             >
               Avançar e ver o método <ChevronRight size={16} strokeWidth={1.5} />
             </button>
@@ -471,17 +471,17 @@ const Quiz = () => {
         >
           <div className="w-full max-w-lg">
             <span className="eyebrow mb-6 inline-flex items-center gap-2">
-              <span className="inline-block h-px w-6 bg-primary" />
+              <span className="inline-block h-px w-6 bg-foreground" />
               O MÉTODO
             </span>
 
             <h2 className="font-serif-display text-[clamp(1.8rem,5vw,3rem)] font-light leading-[0.95] mb-3">
-              O fim da <em className="text-primary italic">tentativa e erro.</em>
+              O fim da <em className="text-foreground italic">tentativa e erro.</em>
             </h2>
 
             <div className="border border-border bg-card p-6 rounded-sm mb-8">
-              <p className="text-primary text-xs uppercase tracking-[0.3em] font-medium mb-3">
-                Bem-vindo ao Método Renascer
+              <p className="text-foreground text-xs uppercase tracking-[0.3em] font-medium mb-3">
+                Bem-vindo ao GabrielBau Treinador
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Um método que integra Engenharia do Movimento, SIS e Behavior — sistemas que mapeiam suas variáveis diariamente para que seu progresso seja eficiente e ultra personalizado. Se algo muda no seu corpo ou rotina, sou notificado e já ajusto o protocolo.
@@ -490,7 +490,7 @@ const Quiz = () => {
 
             <button
               onClick={() => goTo(9)}
-              className="bg-primary text-primary-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
+              className="bg-foreground text-foreground-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
             >
               Ver o que o sistema mostra <ChevronRight size={16} strokeWidth={1.5} />
             </button>
@@ -506,26 +506,26 @@ const Quiz = () => {
         >
           <div className="w-full max-w-lg">
             <span className="eyebrow mb-6 inline-flex items-center gap-2">
-              <span className="inline-block h-px w-6 bg-primary" />
+              <span className="inline-block h-px w-6 bg-foreground" />
               PROVA + COMPLIANCE
             </span>
 
             <h2 className="font-serif-display text-[clamp(1.6rem,4.5vw,2.4rem)] font-light leading-tight mb-3">
-              Seu corpo é o seu <em className="text-primary italic">principal ativo.</em>
+              Seu corpo é o seu <em className="text-foreground italic">principal ativo.</em>
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-              Para empreendedores e executivos, disciplina física é performance nos negócios. O Método Renascer garante que você não quebre no meio do caminho.
+              Para empreendedores e executivos, disciplina física é performance nos negócios. O GabrielBau Treinador garante que você não quebre no meio do caminho.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
               <div className="border border-border bg-card p-6 rounded-sm">
-                <p className="text-primary text-xs uppercase tracking-[0.3em] font-medium mb-3">O que você vê</p>
+                <p className="text-foreground text-xs uppercase tracking-[0.3em] font-medium mb-3">O que você vê</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Um aplicativo simples onde você lança como dormiu e como está se sentindo em menos de 1 minuto por dia.
                 </p>
               </div>
-              <div className="border border-primary/30 bg-card p-6 rounded-sm">
-                <p className="text-primary text-xs uppercase tracking-[0.3em] font-medium mb-3">O que eu vejo</p>
+              <div className="border border-foreground/30 bg-card p-6 rounded-sm">
+                <p className="text-foreground text-xs uppercase tracking-[0.3em] font-medium mb-3">O que eu vejo</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Um dashboard clínico completo me alertando exatamente quando devemos acelerar os resultados ou focar na recuperação.
                 </p>
@@ -534,7 +534,7 @@ const Quiz = () => {
 
             <button
               onClick={() => goTo(10)}
-              className="bg-primary text-primary-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
+              className="bg-foreground text-foreground-foreground w-full px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
             >
               Ver a proposta completa <ChevronRight size={16} strokeWidth={1.5} />
             </button>
@@ -550,16 +550,16 @@ const Quiz = () => {
         >
           <div className="w-full max-w-lg">
             <span className="eyebrow mb-6 inline-flex items-center gap-2">
-              <span className="inline-block h-px w-6 bg-primary" />
+              <span className="inline-block h-px w-6 bg-foreground" />
               FECHAMENTO
             </span>
 
             <h2 className="font-serif-display text-[clamp(1.8rem,5vw,3rem)] font-light leading-[0.95] mb-6">
-              Diagnóstico 360º + <em className="text-primary italic">Protocolo</em>
+              Diagnóstico 360º + <em className="text-foreground italic">Protocolo</em>
             </h2>
 
             <div className="border border-border bg-card p-6 rounded-sm mb-8">
-              <p className="text-primary text-xs uppercase tracking-[0.3em] font-medium mb-4">
+              <p className="text-foreground text-xs uppercase tracking-[0.3em] font-medium mb-4">
                 O que você vai receber agora:
               </p>
               <div className="flex flex-col gap-3">
@@ -570,7 +570,7 @@ const Quiz = () => {
                   "Protocolo de treino 100% prescrito e assinado por mim",
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3 text-sm text-foreground">
-                    <Check size={16} strokeWidth={1.5} className="text-primary mt-0.5 shrink-0" />
+                    <Check size={16} strokeWidth={1.5} className="text-foreground mt-0.5 shrink-0" />
                     {item}
                   </div>
                 ))}
@@ -580,7 +580,7 @@ const Quiz = () => {
             <div className="text-center mb-8">
               <p className="text-muted-foreground text-sm line-through mb-1">De R$ 1.997</p>
               <p className="font-serif-display text-[clamp(1.4rem,4vw,2rem)] font-light">
-                12x de <span className="text-primary font-semibold">R$ 49,70</span>
+                12x de <span className="text-foreground font-semibold">R$ 49,70</span>
               </p>
               <p className="text-muted-foreground text-xs mt-1">ou R$ 497 à vista</p>
             </div>
@@ -590,20 +590,20 @@ const Quiz = () => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => updateLeadStatus("clicked_checkout")}
-              className="animate-pulse-subtle block w-full bg-primary text-primary-foreground text-center px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity"
+              className="animate-pulse-subtle block w-full bg-foreground text-foreground-foreground text-center px-8 py-4 text-xs uppercase tracking-[0.25em] font-bold rounded-sm hover:opacity-90 transition-opacity"
             >
               Garantir minha vaga agora
             </a>
 
             <p className="mt-4 text-center text-[0.7rem] text-muted-foreground inline-flex items-center justify-center gap-2 w-full">
-              <Shield size={14} strokeWidth={1.5} className="text-primary" />
+              <Shield size={14} strokeWidth={1.5} className="text-foreground" />
               7 de 20 vagas disponíveis. Compra 100% Segura.
             </p>
 
             <div className="mt-10 text-center">
               <Link
                 to="/auth"
-                className="text-[0.65rem] uppercase tracking-[0.25em] text-muted-foreground hover:text-primary transition-colors"
+                className="text-[0.65rem] uppercase tracking-[0.25em] text-muted-foreground hover:text-foreground transition-colors"
               >
                 Já sou aluno → Entrar
               </Link>

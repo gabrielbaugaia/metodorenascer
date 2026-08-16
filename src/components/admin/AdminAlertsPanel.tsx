@@ -165,10 +165,10 @@ export function AdminAlertsPanel() {
   if (loading || alerts.length === 0) return null;
 
   return (
-    <Card className="border-primary/30">
+    <Card className="border-foreground/30">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <AlertTriangle className="h-5 w-5 text-primary" />
+          <AlertTriangle className="h-5 w-5 text-foreground" />
           Central de Alertas
           <Badge variant="secondary" className="ml-auto">{alerts.length}</Badge>
         </CardTitle>

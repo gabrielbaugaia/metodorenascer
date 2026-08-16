@@ -82,7 +82,7 @@ export function ProtocolRenewalPopup({ daysSinceLastProtocol }: ProtocolRenewalP
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleDismiss(); }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className={`text-lg ${is90 ? "text-destructive" : "text-primary"}`}>
+          <DialogTitle className={`text-lg ${is90 ? "text-destructive" : "text-foreground"}`}>
             {title}
           </DialogTitle>
           <DialogDescription className="text-sm">
@@ -96,7 +96,7 @@ export function ProtocolRenewalPopup({ daysSinceLastProtocol }: ProtocolRenewalP
           </p>
           {bullets.map((b, i) => (
             <div key={i} className="flex items-start gap-3">
-              <b.icon className={`h-4 w-4 mt-0.5 shrink-0 ${is90 ? "text-destructive" : "text-primary"}`} />
+              <b.icon className={`h-4 w-4 mt-0.5 shrink-0 ${is90 ? "text-destructive" : "text-foreground"}`} />
               <p className="text-sm text-foreground">{b.text}</p>
             </div>
           ))}

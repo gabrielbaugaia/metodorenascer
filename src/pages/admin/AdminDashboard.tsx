@@ -242,7 +242,7 @@ export default function AdminDashboard() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -311,7 +311,7 @@ export default function AdminDashboard() {
             <div
               key={card.label}
               onClick={() => navigate(card.href)}
-              className="bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer rounded-lg p-4"
+              className="bg-card border border-border/50 hover:border-foreground/30 transition-colors cursor-pointer rounded-lg p-4"
             >
               <div className="flex items-center gap-2 mb-1.5">
                 <card.icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
@@ -330,7 +330,7 @@ export default function AdminDashboard() {
               <div
                 key={action.title}
                 onClick={() => navigate(action.url)}
-                className="bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer rounded-lg p-3 flex items-center gap-2.5"
+                className="bg-card border border-border/50 hover:border-foreground/30 transition-colors cursor-pointer rounded-lg p-3 flex items-center gap-2.5"
               >
                 <action.icon className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
                 <span className="text-sm text-foreground truncate">{action.title}</span>
@@ -428,7 +428,7 @@ export default function AdminDashboard() {
                   <div className="grid lg:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       {planDistribution.map((plan, idx) => {
-                        const colors = ["bg-primary", "bg-green-500", "bg-blue-500", "bg-purple-500", "bg-yellow-500"];
+                        const colors = ["bg-foreground", "bg-green-500", "bg-blue-500", "bg-purple-500", "bg-yellow-500"];
                         return (
                           <div key={plan.plan} className="flex items-center justify-between p-2.5 bg-muted/30 rounded-lg">
                             <div className="flex items-center gap-2 min-w-0">

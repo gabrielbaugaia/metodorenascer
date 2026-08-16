@@ -249,7 +249,7 @@ export default function CheckoutSuccess() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <Loader2 className="w-12 h-12 animate-spin text-foreground mx-auto" />
           <p className="text-muted-foreground">
             {!user && sessionId
               ? "Criando sua conta..."
@@ -292,12 +292,12 @@ export default function CheckoutSuccess() {
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-muted-foreground">
-            Bem-vindo ao Método Renascer! Sua assinatura foi ativada com sucesso.
+            Bem-vindo ao GabrielBau Treinador! Sua assinatura foi ativada com sucesso.
           </p>
 
           {subscribed ? (
-            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-              <p className="text-sm text-primary font-medium">
+            <div className="bg-foreground/10 border border-foreground/20 rounded-lg p-4">
+              <p className="text-sm text-foreground font-medium">
                 Sua assinatura está ativa
               </p>
             </div>

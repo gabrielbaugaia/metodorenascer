@@ -96,10 +96,10 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
   return (
     <div className="space-y-4">
       {/* Resumo Geral */}
-      <Card className="border-primary/30 bg-primary/5">
+      <Card className="border-foreground/30 bg-foreground/5">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Activity className="h-5 w-5 text-primary" />
+            <Activity className="h-5 w-5 text-foreground" />
             Resumo da Avaliação Física
           </CardTitle>
         </CardHeader>
@@ -152,7 +152,7 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
                 />
               </div>
               {analysis.composicaoCorporal.escalaVisualGordura && (
-                <p className="text-xs text-muted-foreground mt-3 italic border-l-2 border-primary/30 pl-2">
+                <p className="text-xs text-muted-foreground mt-3 italic border-l-2 border-foreground/30 pl-2">
                   {analysis.composicaoCorporal.escalaVisualGordura}
                 </p>
               )}
@@ -248,7 +248,7 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
                 <ul className="space-y-1">
                   {analysis.recomendacoes.prioridades.map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
-                      <ArrowRight className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                      <ArrowRight className="h-4 w-4 mt-0.5 text-foreground shrink-0" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -289,7 +289,7 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
 
       {/* Mensagem Motivacional */}
       {analysis.mensagemMotivacional && (
-        <Card className="border-primary bg-gradient-to-r from-primary/10 to-primary/5">
+        <Card className="border-foreground bg-gradient-to-r from-primary/10 to-primary/5">
           <CardContent className="pt-6">
             <p className="text-center italic text-sm">
               "{analysis.mensagemMotivacional}"

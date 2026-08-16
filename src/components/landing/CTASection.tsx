@@ -20,7 +20,7 @@ export const CTASection = forwardRef<HTMLElement>((_, forwardedRef) => {
           {/* Reinforcement Block */}
           <div className="flex flex-col items-center gap-4 text-muted-foreground text-base md:text-lg leading-relaxed max-w-2xl mx-auto text-center">
             <p className="text-center">
-              O Método Renascer não é um desafio de 21 dias.<br />
+              O GabrielBau Treinador não é um desafio de 21 dias.<br />
               É um sistema contínuo de prescrição e ajuste.
             </p>
             <p className="text-center">
@@ -31,14 +31,14 @@ export const CTASection = forwardRef<HTMLElement>((_, forwardedRef) => {
 
           {/* Main Headline */}
           <h2 className="font-display font-black text-foreground text-[2rem] sm:text-3xl md:text-4xl lg:text-5xl leading-[1.1] tracking-[-0.02em] text-center">
-            Corpo forte, mente disciplinada e rotina sob controle <span className="text-primary">mudam tudo.</span>
+            Corpo forte, mente disciplinada e rotina sob controle <span className="text-foreground">mudam tudo.</span>
           </h2>
 
           <div className="pt-2">
-            <Button variant="fire" size="xl" asChild className="group text-base md:text-lg px-10 md:px-14 py-6 md:py-7">
+            <Button variant="default" size="xl" asChild className="group text-base md:text-lg px-10 md:px-14 py-6 md:py-7">
               <a href="#preco">
                 <span className="relative z-10 font-semibold tracking-wide">
-                  ENTRAR NO MÉTODO RENASCER
+                  ENTRAR NO MÉTODO GABRIEL BAÚ
                 </span>
                 <ArrowRight className="w-5 h-5 relative z-10 ml-2 group-hover:translate-x-1 transition-transform" />
               </a>

@@ -51,7 +51,7 @@ export function BatchRenameModal({
       <DialogContent className="max-w-4xl max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Wand2 className="h-5 w-5 text-primary" />
+            <Wand2 className="h-5 w-5 text-foreground" />
             Revisar Sugestões da IA
           </DialogTitle>
           <DialogDescription>
@@ -66,7 +66,7 @@ export function BatchRenameModal({
               id="select-all"
               checked={allSelected}
               onCheckedChange={onToggleAll}
-              className="data-[state=checked]:bg-primary"
+              className="data-[state=checked]:bg-foreground"
             />
             <label
               htmlFor="select-all"
@@ -84,7 +84,7 @@ export function BatchRenameModal({
                   key={suggestion.id}
                   className={`flex items-start gap-4 p-3 rounded-lg border transition-colors ${
                     suggestion.selected
-                      ? "bg-primary/5 border-primary/30"
+                      ? "bg-foreground/5 border-foreground/30"
                       : "bg-muted/20 border-muted"
                   }`}
                 >

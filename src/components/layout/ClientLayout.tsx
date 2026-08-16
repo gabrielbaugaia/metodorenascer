@@ -47,8 +47,8 @@ export function ClientLayout({ children }: ClientLayoutProps) {
                 <Menu className="h-4 w-4" strokeWidth={1.5} />
               </SidebarTrigger>
               <div className="flex items-center gap-2">
-                <Flame className="h-4 w-4 text-primary" strokeWidth={1.5} />
-                <span className="font-display text-sm text-foreground">RENASCER</span>
+                <Flame className="h-4 w-4 text-foreground" strokeWidth={1.5} />
+                <span className="font-display text-sm text-foreground">GABRIEL BAÚ</span>
               </div>
             </div>
             {isAdmin && <AdminSupportNotifications />}

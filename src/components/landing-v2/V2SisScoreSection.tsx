@@ -28,9 +28,9 @@ export function V2SisScoreSection() {
   return (
     <section ref={ref} className="py-[110px] px-7 md:px-[60px]">
       <div className={`transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"}`}>
-        <div className="flex items-center gap-3.5 font-mono-v2 text-[10px] tracking-[4px] uppercase text-primary mb-[18px]">
+        <div className="flex items-center gap-3.5 font-mono-v2 text-[10px] tracking-[4px] uppercase text-foreground mb-[18px]">
           02 — Score Central
-          <span className="w-10 h-[1px] bg-primary" />
+          <span className="w-10 h-[1px] bg-foreground" />
         </div>
         <h2 className="font-display-v2 text-[clamp(44px,5.5vw,72px)] tracking-[2px] leading-[.96] text-foreground mb-5">
           SHAPE INTELLIGENCE<br />SCORE™
@@ -59,7 +59,7 @@ export function V2SisScoreSection() {
             <span className="font-display-v2 text-[80px] text-foreground leading-none tracking-[2px]">
               {animated ? scoreValue : 0}
             </span>
-            <span className="font-mono-v2 text-[9px] tracking-[3px] text-primary mt-0.5">SIS SCORE</span>
+            <span className="font-mono-v2 text-[9px] tracking-[3px] text-foreground mt-0.5">SIS SCORE</span>
           </div>
         </div>
 
@@ -81,7 +81,7 @@ export function V2SisScoreSection() {
                     }}
                   />
                 </div>
-                <span className="font-mono-v2 text-[12px] text-primary text-right">{p.pct}%</span>
+                <span className="font-mono-v2 text-[12px] text-foreground text-right">{p.pct}%</span>
               </div>
               <p className="font-body-v2 text-[12px] text-muted-foreground mt-1 ml-0 md:ml-[168px]">{p.desc}</p>
             </div>

@@ -118,7 +118,7 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.setCharSpace(0.3);
-    doc.text("MÉTODO RENASCER", margin, 14);
+    doc.text("MÉTODO GABRIEL BAÚ", margin, 14);
     doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setCharSpace(0.1);

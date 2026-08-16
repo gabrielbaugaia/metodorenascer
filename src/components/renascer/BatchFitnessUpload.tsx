@@ -303,7 +303,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
-            <CalendarDays className="h-5 w-5 text-primary" />
+            <CalendarDays className="h-5 w-5 text-foreground" />
             Recuperar Semana
           </DialogTitle>
         </DialogHeader>
@@ -344,7 +344,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
                 {files.length < maxImages && (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="h-20 rounded-lg border-2 border-dashed border-primary/30 flex flex-col items-center justify-center text-primary/60 hover:border-primary/60 transition-colors"
+                    className="h-20 rounded-lg border-2 border-dashed border-foreground/30 flex flex-col items-center justify-center text-foreground/60 hover:border-foreground/60 transition-colors"
                   >
                     <Plus className="h-5 w-5" />
                     <span className="text-[10px]">{files.length}/{maxImages}</span>
@@ -356,7 +356,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
             {files.length === 0 && (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-10 rounded-xl border-2 border-dashed border-primary/30 flex flex-col items-center gap-2 text-primary/60 hover:border-primary/60 hover:text-primary transition-colors"
+                className="w-full py-10 rounded-xl border-2 border-dashed border-foreground/30 flex flex-col items-center gap-2 text-foreground/60 hover:border-foreground/60 hover:text-foreground transition-colors"
               >
                 <Camera className="h-8 w-8" />
                 <span className="text-sm font-medium">Selecionar imagens</span>
@@ -367,8 +367,8 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
             {processing && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span className="text-sm text-primary font-medium">
+                  <Loader2 className="h-4 w-4 animate-spin text-foreground" />
+                  <span className="text-sm text-foreground font-medium">
                     Processando imagens...
                   </span>
                 </div>
@@ -430,7 +430,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
                       ) : (
                         <button
                           onClick={() => toggleDateEditing(idx)}
-                          className="flex items-center gap-1.5 text-sm font-semibold hover:text-primary transition-colors"
+                          className="flex items-center gap-1.5 text-sm font-semibold hover:text-foreground transition-colors"
                         >
                           {format(new Date(day.date + "T12:00:00"), "EEE, dd/MM/yyyy", { locale: ptBR })}
                           <Pencil className="h-3 w-3 text-muted-foreground" />

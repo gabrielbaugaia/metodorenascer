@@ -35,7 +35,7 @@ export function LPHeader() {
     >
       <div className="flex items-center justify-between px-6 md:px-14 h-[72px]">
         <a href="#top" className="lp-mono text-[11px] tracking-[3px] uppercase lp-text">
-          RENASCER<span className="lp-accent">.</span>
+          GABRIEL BAÚ<span className="lp-accent">.</span>
         </a>
         <nav className="hidden md:flex items-center gap-10">
           {[
@@ -146,7 +146,7 @@ export function LPHero() {
       <div className="relative z-10 w-full px-6 md:px-14 flex-1 flex flex-col justify-between gap-12 md:gap-16">
         <div className="max-w-[640px]">
           <div className="lp-mono text-[10px] tracking-[4px] uppercase lp-accent mb-6 lp-fade-up">
-            Método Renascer · Est. Alphaville
+            GabrielBau Treinador · Est. Alphaville
           </div>
           <h1
             className="lp-display lp-text leading-[0.9] tracking-[-0.03em] mb-6 lp-fade-up"
@@ -159,7 +159,7 @@ export function LPHero() {
             className="lp-body lp-muted leading-[1.6] max-w-[520px] mb-8 md:mb-10 lp-fade-up"
             style={{ fontSize: "clamp(15px, 1.3vw, 18px)", animationDelay: "0.2s" }}
           >
-            O Método Renascer combina ciência, acompanhamento humano e inteligência de dados
+            O GabrielBau Treinador combina ciência, acompanhamento humano e inteligência de dados
             para criar a direção que faltava para seu corpo voltar a evoluir.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lp-fade-up" style={{ animationDelay: "0.3s" }}>
@@ -250,7 +250,7 @@ export function LPProblem() {
             </p>
             <div className="mt-10 h-px w-16 lp-accent-bg" />
             <p className="lp-mono text-[10px] tracking-[2.5px] uppercase lp-muted mt-6">
-              O sistema é o método. O método é o Renascer.
+              O sistema é o método. O método é o GabrielBau.
             </p>
           </div>
         </div>
@@ -272,7 +272,7 @@ export function LPMentor() {
             <div className="absolute inset-0 lp-accent-bg opacity-20 blur-3xl scale-90" />
             <img
               src={gabrielBauPhoto}
-              alt="Gabriel Baú — criador do Método Renascer"
+              alt="GabrielBau — criador do GabrielBau Treinador"
               className="relative w-full h-full object-cover object-top grayscale-[20%]"
               loading="lazy"
             />
@@ -280,7 +280,7 @@ export function LPMentor() {
             <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
               <div>
                 <div className="lp-mono text-[9px] tracking-[3px] uppercase lp-accent mb-1">Mentor</div>
-                <div className="lp-display lp-text text-[22px] tracking-tight">Gabriel Baú</div>
+                <div className="lp-display lp-text text-[22px] tracking-tight">GabrielBau</div>
               </div>
               <div className="lp-mono text-[9px] tracking-[2px] uppercase lp-muted">Alphaville · BR</div>
             </div>
@@ -335,7 +335,7 @@ export function LPPillars() {
         <div className="lp-mono text-[10px] tracking-[4px] uppercase lp-accent mb-10">03 — Método</div>
         <h2 className="lp-display lp-text leading-[0.94] tracking-[-0.03em] mb-20 md:mb-32 max-w-[900px]" style={{ fontSize: "clamp(44px, 6vw, 88px)" }}>
           Os 5 pilares<br />
-          <span className="italic font-light lp-muted">do Renascer</span>.
+          <span className="italic font-light lp-muted">do GabrielBau</span>.
         </h2>
 
         <div className="relative">
@@ -697,7 +697,7 @@ export function LPDiagnostic() {
               boxShadow: "0 40px 80px -20px rgba(0,0,0,0.6)",
             }}
           >
-            <div className="lp-mono text-[9px] tracking-[3px] uppercase lp-muted mb-8">Diagnóstico Renascer™</div>
+            <div className="lp-mono text-[9px] tracking-[3px] uppercase lp-muted mb-8">Diagnóstico GabrielBau™</div>
             <div className="space-y-5">
               {[
                 ["Q1", "Como está seu sono nas últimas semanas?"],
@@ -809,7 +809,7 @@ export function LPClosing() {
         </h2>
         <div className="flex flex-col sm:flex-row gap-4">
           <a href="#planos" className="lp-btn-primary lp-mono text-[11px] tracking-[2.5px] uppercase">
-            Começar meu Renascer
+            Começar meu GabrielBau
           </a>
           <Link to="/quiz" className="lp-btn-ghost lp-mono text-[11px] tracking-[2.5px] uppercase">
             Fazer diagnóstico gratuito
@@ -829,7 +829,7 @@ export function LPFooter() {
       <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
         <div>
           <div className="lp-mono text-[11px] tracking-[3px] uppercase lp-text mb-3">
-            RENASCER<span className="lp-accent">.</span>
+            GABRIEL BAÚ<span className="lp-accent">.</span>
           </div>
           <p className="lp-mono text-[9px] tracking-[2px] uppercase lp-muted">Sistema · Direção · Resultado</p>
         </div>
@@ -840,7 +840,7 @@ export function LPFooter() {
           <Link to="/auth" className="hover:lp-text transition-colors">Entrar</Link>
         </div>
         <div className="lp-mono text-[9px] tracking-[2px] uppercase lp-muted">
-          © {new Date().getFullYear()} Método Renascer
+          © {new Date().getFullYear()} GabrielBau Treinador
         </div>
       </div>
     </footer>

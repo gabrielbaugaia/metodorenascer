@@ -16,7 +16,7 @@ const plans = [
     desc: "Acesso completo ao sistema de inteligência. Para quem quer autonomia com dados reais guiando cada decisão.",
     items: [
       "SIS Score™ calculado diariamente",
-      "Renascer Score™ — prontidão para treino",
+      "GabrielBau Score™ — prontidão para treino",
       "Health Readiness com wearable",
       "6 índices de inteligência mental",
       "Plano de 90 dias adaptativo",
@@ -70,7 +70,7 @@ const plans = [
 ];
 const compareRows = [
   ["SIS Score™ diário", "✓", "✓", "✓"],
-  ["Renascer Score™", "✓", "✓", "✓"],
+  ["GabrielBau Score™", "✓", "✓", "✓"],
   ["IA disponível 24h", "✓", "✓", "✓"],
   ["Plano de 90 dias", "✓", "✓", "✓"],
   ["Acompanhamento humano semanal", "—", "✓", "✓"],
@@ -88,7 +88,7 @@ export function V2PricingSection() {
       <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 60% 60% at 50% 40%, rgba(255,101,0,.05) 0%, transparent 65%)" }} />
 
       <div className={`relative z-[1] text-center mb-[72px] transition-all duration-700 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"}`}>
-        <div className="flex items-center justify-center gap-3.5 font-mono-v2 text-[10px] tracking-[4px] uppercase text-primary mb-[18px]">
+        <div className="flex items-center justify-center gap-3.5 font-mono-v2 text-[10px] tracking-[4px] uppercase text-foreground mb-[18px]">
           05 — Planos
         </div>
         <h2 className="font-display-v2 text-[clamp(44px,5.5vw,72px)] tracking-[2px] leading-[.96] text-foreground mb-5">
@@ -106,17 +106,17 @@ export function V2PricingSection() {
             key={p.name}
             className={`bg-card border p-[44px_36px_40px] flex flex-col relative overflow-hidden transition-transform duration-300 hover:-translate-y-1.5 ${
               p.featured
-                ? "border-primary bg-secondary -translate-y-2 hover:-translate-y-3.5"
+                ? "border-foreground bg-secondary -translate-y-2 hover:-translate-y-3.5"
                 : "border-border"
             }`}
           >
             {p.featured && (
-              <div className="absolute -top-px left-1/2 -translate-x-1/2 bg-primary font-mono-v2 text-[9px] tracking-[2.5px] uppercase text-primary-foreground px-5 py-[5px] whitespace-nowrap">
+              <div className="absolute -top-px left-1/2 -translate-x-1/2 bg-foreground font-mono-v2 text-[9px] tracking-[2.5px] uppercase text-foreground-foreground px-5 py-[5px] whitespace-nowrap">
                 Mais Escolhido
               </div>
             )}
 
-            <span className="font-mono-v2 text-[9.5px] tracking-[3px] uppercase text-primary mb-3">{p.tier}</span>
+            <span className="font-mono-v2 text-[9.5px] tracking-[3px] uppercase text-foreground mb-3">{p.tier}</span>
             <h3 className="font-display-v2 text-[34px] tracking-[2px] text-foreground mb-6 leading-none">{p.name}</h3>
 
             <div className="mb-7">
@@ -135,7 +135,7 @@ export function V2PricingSection() {
             <ul className="flex-1 mb-9 space-y-0">
               {p.items.map((item) => (
                 <li key={item} className="flex items-start gap-3 font-body-v2 text-[13px] text-foreground/80 leading-[1.55] py-[7px] border-b border-border last:border-none">
-                  <span className="font-mono-v2 text-[11px] text-primary flex-shrink-0 mt-0.5">→</span>
+                  <span className="font-mono-v2 text-[11px] text-foreground flex-shrink-0 mt-0.5">→</span>
                   {item}
                 </li>
               ))}
@@ -147,8 +147,8 @@ export function V2PricingSection() {
               rel={STRIPE_LINKS[p.stripeKey] !== "#" ? "noopener noreferrer" : undefined}
               className={`font-mono-v2 text-[10px] tracking-[2.5px] uppercase p-[15px] text-center border block transition-all duration-200 ${
                 p.featured
-                  ? "bg-primary border-primary text-primary-foreground hover:bg-transparent hover:text-primary"
-                  : "bg-transparent border-border text-muted-foreground hover:border-primary hover:text-primary"
+                  ? "bg-foreground border-foreground text-foreground-foreground hover:bg-transparent hover:text-foreground"
+                  : "bg-transparent border-border text-muted-foreground hover:border-foreground hover:text-foreground"
               }`}
             >
               {p.cta}
@@ -159,12 +159,12 @@ export function V2PricingSection() {
 
       {/* Comparison table */}
       <div className="mt-20 overflow-x-auto relative z-[1]">
-        <p className="font-mono-v2 text-[10px] tracking-[4px] uppercase text-primary text-center mb-8">Comparativo Completo</p>
+        <p className="font-mono-v2 text-[10px] tracking-[4px] uppercase text-foreground text-center mb-8">Comparativo Completo</p>
         <table className="w-full border-collapse min-w-[600px]">
           <thead>
             <tr>
               {["O que está incluso", "Essencial", "PRO", "Elite"].map((h, i) => (
-                <th key={h} className={`bg-secondary font-mono-v2 text-[10px] tracking-[2.5px] uppercase p-[18px_24px] text-left border border-border ${i === 0 ? "text-muted-foreground" : "text-primary"}`}>
+                <th key={h} className={`bg-secondary font-mono-v2 text-[10px] tracking-[2.5px] uppercase p-[18px_24px] text-left border border-border ${i === 0 ? "text-muted-foreground" : "text-foreground"}`}>
                   {h}
                 </th>
               ))}
@@ -179,7 +179,7 @@ export function V2PricingSection() {
                     className={`p-[16px_24px] border border-border text-[13.5px] leading-[1.5] ${
                       ri % 2 === 0 ? "bg-card" : "bg-secondary"
                     } ${ci === 0 ? "text-foreground font-medium" : ""} ${
-                      cell === "✓" ? "text-primary" : cell === "—" ? "text-border" : "text-foreground/80"
+                      cell === "✓" ? "text-foreground" : cell === "—" ? "text-border" : "text-foreground/80"
                     }`}
                   >
                     {cell}

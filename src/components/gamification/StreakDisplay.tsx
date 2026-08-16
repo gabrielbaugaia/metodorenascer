@@ -11,7 +11,7 @@ export function StreakDisplay({ currentStreak, longestStreak, compact = false }:
   const getStreakColor = (streak: number) => {
     if (streak >= 30) return "text-yellow-400";
     if (streak >= 14) return "text-orange-400";
-    if (streak >= 7) return "text-primary";
+    if (streak >= 7) return "text-foreground";
     return "text-muted-foreground";
   };
 
@@ -23,7 +23,7 @@ export function StreakDisplay({ currentStreak, longestStreak, compact = false }:
 
   if (compact) {
     return (
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-foreground/10 rounded-full">
         <Flame className={cn("h-4 w-4", getStreakColor(currentStreak), getFlameIntensity(currentStreak))} />
         <span className={cn("font-bold text-sm", getStreakColor(currentStreak))}>
           {currentStreak} {currentStreak === 1 ? "dia" : "dias"}
@@ -38,7 +38,7 @@ export function StreakDisplay({ currentStreak, longestStreak, compact = false }:
         <div className="flex items-center gap-3">
           <div className={cn(
             "h-12 w-12 rounded-full flex items-center justify-center",
-            currentStreak > 0 ? "bg-primary/20" : "bg-muted"
+            currentStreak > 0 ? "bg-foreground/20" : "bg-muted"
           )}>
             <Flame className={cn(
               "h-6 w-6",

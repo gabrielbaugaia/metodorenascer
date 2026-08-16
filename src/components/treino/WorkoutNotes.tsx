@@ -73,7 +73,7 @@ export function WorkoutNotes({ protocoloId, workoutDay }: WorkoutNotesProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors mt-3 w-full justify-center py-2 rounded-lg border border-dashed border-border/50 hover:border-primary/30"
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-3 w-full justify-center py-2 rounded-lg border border-dashed border-border/50 hover:border-foreground/30"
       >
         <MessageSquare className="h-3.5 w-3.5" />
         {existingNote ? "Ver anotação" : "Adicionar anotação sobre este treino"}

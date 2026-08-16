@@ -55,7 +55,7 @@ const ConnectSync = () => {
         <CardContent className="pt-6 space-y-6 text-center">
           {state === "syncing" && (
             <>
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+              <Loader2 className="h-12 w-12 animate-spin text-foreground mx-auto" />
               <p className="text-lg font-semibold text-foreground">Sincronizando...</p>
               <p className="text-sm text-muted-foreground">Enviando dados de saúde para o servidor.</p>
             </>

@@ -86,7 +86,7 @@ export function AchievementBadge({
                   {name}
                 </p>
                 {unlocked && (
-                  <p className="text-[10px] text-primary">+{points} pts</p>
+                  <p className="text-[10px] text-foreground">+{points} pts</p>
                 )}
               </div>
             )}
@@ -97,7 +97,7 @@ export function AchievementBadge({
             <p className="font-semibold">{name}</p>
             <p className="text-sm text-muted-foreground">{description}</p>
             {unlocked && unlockedAt && (
-              <p className="text-xs text-primary">
+              <p className="text-xs text-foreground">
                 Desbloqueado em {new Date(unlockedAt).toLocaleDateString("pt-BR")}
               </p>
             )}

@@ -455,7 +455,7 @@ export default function AdminBlogEditor() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -469,7 +469,7 @@ export default function AdminBlogEditor() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/admin" className="text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/admin" className="text-muted-foreground hover:text-foreground transition-colors">
                 Admin
               </Link>
             </BreadcrumbLink>
@@ -477,14 +477,14 @@ export default function AdminBlogEditor() {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/admin/blog" className="text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/admin/blog" className="text-muted-foreground hover:text-foreground transition-colors">
                 Blog
               </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage className="text-primary">
+            <BreadcrumbPage className="text-foreground">
               {isNew ? 'Novo Artigo' : 'Editar'}
             </BreadcrumbPage>
           </BreadcrumbItem>
@@ -518,10 +518,10 @@ export default function AdminBlogEditor() {
       </div>
 
       {/* AI Generation */}
-      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-purple-500/5">
+      <Card className="border-foreground/20 bg-gradient-to-r from-primary/5 to-purple-500/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Sparkles className="h-5 w-5 text-foreground" />
             Gerar com IA
           </CardTitle>
           <CardDescription>
@@ -759,7 +759,7 @@ export default function AdminBlogEditor() {
                       <div className="relative h-40 rounded-lg overflow-hidden">
                         <Skeleton className="w-full h-full" />
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                          <Loader2 className="h-8 w-8 animate-spin text-foreground mb-2" />
                           <span className="text-sm font-medium text-foreground">Gerando imagem IA...</span>
                           <span className="text-xs text-muted-foreground mt-1">Isso pode levar alguns segundos</span>
                         </div>
@@ -776,7 +776,7 @@ export default function AdminBlogEditor() {
                     </div>
                   ) : (
                     <>
-                      <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                      <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-foreground/50 transition-colors">
                         {uploadingCover ? (
                           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                         ) : (
@@ -959,7 +959,7 @@ export default function AdminBlogEditor() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                        <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-foreground/50 transition-colors">
                           {uploadingLeadDoc ? (
                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                           ) : (
@@ -1006,7 +1006,7 @@ export default function AdminBlogEditor() {
         <DialogContent className="max-w-4xl max-h-[90vh] p-0">
           <DialogHeader className="p-6 pb-0">
             <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-primary" />
+              <Eye className="h-5 w-5 text-foreground" />
               Preview do Artigo
             </DialogTitle>
           </DialogHeader>
@@ -1031,14 +1031,14 @@ export default function AdminBlogEditor() {
 
               {/* Category Badge */}
               {category && (
-                <span className="inline-block px-3 py-1 bg-primary/20 text-primary text-sm rounded-full mb-4">
+                <span className="inline-block px-3 py-1 bg-foreground/20 text-foreground text-sm rounded-full mb-4">
                   {BLOG_CATEGORIES.find(c => c.id === category)?.label || category}
                 </span>
               )}
 
               {/* Excerpt */}
               {excerpt && (
-                <p className="text-lg text-muted-foreground mb-6 border-l-4 border-primary pl-4">
+                <p className="text-lg text-muted-foreground mb-6 border-l-4 border-foreground pl-4">
                   {excerpt}
                 </p>
               )}
@@ -1056,7 +1056,7 @@ export default function AdminBlogEditor() {
 
               {/* Lead Capture Preview */}
               {enableLeadCapture && (
-                <div className="mt-6 glass-card p-6 border-primary/30 bg-gradient-to-r from-primary/10 to-purple-500/10">
+                <div className="mt-6 glass-card p-6 border-foreground/30 bg-gradient-to-r from-primary/10 to-purple-500/10">
                   <h3 className="font-display text-xl text-foreground mb-2">
                     {leadCaptureTitle || "Receba mais conteúdos exclusivos"}
                   </h3>

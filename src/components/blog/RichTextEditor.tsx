@@ -288,7 +288,7 @@ export function RichTextEditor({ blocks, onChange, onRewriteSection, rewritingSe
               value={block.content || ''}
               onChange={(e) => updateBlock(block.id, { content: e.target.value })}
               placeholder={block.type === 'quote' ? 'Digite a citação...' : 'Digite o texto...'}
-              className={`min-h-[100px] ${block.type === 'heading1' ? 'text-2xl font-bold' : ''} ${block.type === 'heading2' ? 'text-xl font-semibold' : ''} ${block.type === 'heading3' ? 'text-lg font-medium' : ''} ${block.type === 'quote' ? 'italic border-l-4 border-primary pl-4' : ''}`}
+              className={`min-h-[100px] ${block.type === 'heading1' ? 'text-2xl font-bold' : ''} ${block.type === 'heading2' ? 'text-xl font-semibold' : ''} ${block.type === 'heading3' ? 'text-lg font-medium' : ''} ${block.type === 'quote' ? 'italic border-l-4 border-foreground pl-4' : ''}`}
             />
           )}
 
@@ -323,7 +323,7 @@ export function RichTextEditor({ blocks, onChange, onRewriteSection, rewritingSe
 
           {block.type === 'document' && (
             <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-              <FileDown className="h-8 w-8 text-primary" />
+              <FileDown className="h-8 w-8 text-foreground" />
               <div className="flex-1">
                 <p className="font-medium">{block.fileName}</p>
                 <p className="text-sm text-muted-foreground">Documento para download</p>

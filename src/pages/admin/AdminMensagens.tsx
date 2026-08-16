@@ -346,7 +346,7 @@ export default function AdminMensagens() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
         </div>
       </ClientLayout>
     );
@@ -510,7 +510,7 @@ export default function AdminMensagens() {
                     {/* Header row */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-2 bg-primary/10 rounded-lg text-primary shrink-0">
+                        <div className="p-2 bg-foreground/10 rounded-lg text-foreground shrink-0">
                           {config.icon}
                         </div>
                         <div className="min-w-0">
@@ -553,7 +553,7 @@ export default function AdminMensagens() {
                         disabled={sending === message.id}
                       >
                         {sending === message.id ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-foreground"></div>
                         ) : (
                           <>
                             <Send className="h-4 w-4" />

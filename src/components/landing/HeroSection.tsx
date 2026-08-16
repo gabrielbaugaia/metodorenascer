@@ -16,7 +16,7 @@ export const HeroSection = memo(function HeroSection() {
           <div className="animate-fade-in w-full flex flex-col items-center gap-4">
             <h1 className="font-display font-black text-foreground text-[2.25rem] sm:text-6xl md:text-7xl lg:text-8xl leading-[1] tracking-[0.01em] text-center">
               Treinos que funcionam de verdade —{" "}
-              <span className="text-primary drop-shadow-[0_0_40px_rgba(255,69,0,0.7)]">com método e progresso visível.</span>
+              <span className="text-foreground drop-shadow-[0_0_40px_rgba(255,69,0,0.7)]">com método e progresso visível.</span>
             </h1>
           </div>
 
@@ -30,7 +30,7 @@ export const HeroSection = memo(function HeroSection() {
 
           {/* Reinforcement phrase */}
           <p 
-            className="text-primary text-sm md:text-base font-semibold animate-fade-in text-center" 
+            className="text-foreground text-sm md:text-base font-semibold animate-fade-in text-center" 
             style={{ animationDelay: "0.2s" }}
           >
             Não é desafio. Não é treino genérico. É método.
@@ -42,7 +42,7 @@ export const HeroSection = memo(function HeroSection() {
             style={{ animationDelay: "0.3s" }}
           >
             <Button 
-              variant="fire" 
+              variant="default" 
               size="xl" 
               asChild 
               className="group text-xl md:text-2xl px-12 md:px-16 py-7 md:py-8 rounded-xl shadow-2xl animate-pulse-glow hover:animate-none"

@@ -304,7 +304,7 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
             {format(new Date(log.date + "T12:00:00"), "EEE dd/MM", { locale: ptBR })}
           </span>
           <div className="flex items-center gap-3 text-muted-foreground">
-            {hasScreenshots && <ImageIcon className="h-3 w-3 text-primary" />}
+            {hasScreenshots && <ImageIcon className="h-3 w-3 text-foreground" />}
             <span className="flex items-center gap-1 text-xs">
               <Moon className="h-3 w-3" />
               {log.sleep_hours ?? "—"}h
@@ -405,7 +405,7 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
               <Button
                 onClick={() => editMutation.mutate()}
                 disabled={editMutation.isPending}
-                className="w-full bg-primary text-primary-foreground"
+                className="w-full bg-foreground text-foreground-foreground"
                 size="sm"
               >
                 {editMutation.isPending ? (
@@ -512,7 +512,7 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
             <div className="flex gap-2 flex-wrap">
               {previews.map((p, idx) => (
                 <div key={idx} className="relative inline-block">
-                  <img src={p} alt={`Novo print ${idx + 1}`} className="h-16 w-16 object-cover rounded-lg border border-primary/30" />
+                  <img src={p} alt={`Novo print ${idx + 1}`} className="h-16 w-16 object-cover rounded-lg border border-foreground/30" />
                   <button
                     onClick={() => removeNewFile(idx)}
                     className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5"
@@ -526,9 +526,9 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
 
           {/* Extracting indicator */}
           {extracting && (
-            <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-primary/10 border border-primary/20">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <span className="text-xs font-medium text-primary">Lendo dados da imagem...</span>
+            <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-foreground/10 border border-foreground/20">
+              <Loader2 className="h-4 w-4 animate-spin text-foreground" />
+              <span className="text-xs font-medium text-foreground">Lendo dados da imagem...</span>
             </div>
           )}
 
@@ -546,7 +546,7 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
               type="button"
               variant="outline"
               size="sm"
-              className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10"
+              className="w-full gap-2 border-foreground/30 text-foreground hover:bg-foreground/10"
               onClick={() => fileInputRef.current?.click()}
             >
               <Camera className="h-4 w-4" />
@@ -559,7 +559,7 @@ function DayDetailDialog({ log, prev, dayScore, classification, classColors, has
             <Button
               onClick={() => saveMutation.mutate()}
               disabled={saveMutation.isPending || extracting}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+              className="w-full bg-foreground hover:bg-foreground/90 text-foreground-foreground font-bold"
             >
               {saveMutation.isPending ? "Salvando..." : "Salvar alterações"}
             </Button>

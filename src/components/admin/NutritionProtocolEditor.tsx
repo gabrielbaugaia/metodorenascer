@@ -170,7 +170,7 @@ export function NutritionProtocolEditor({
             <RefreshCw className="h-4 w-4 mr-2" />
             <span className="text-xs sm:text-sm">Gerar Novo Protocolo</span>
           </Button>
-          <Button onClick={handleSave} disabled={saving} variant="fire" size="sm" className="w-full sm:w-auto">
+          <Button onClick={handleSave} disabled={saving} variant="default" size="sm" className="w-full sm:w-auto">
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
@@ -183,7 +183,7 @@ export function NutritionProtocolEditor({
 
       {/* Regenerate input */}
       {showRegenerateInput && (
-        <Card className="border-primary/30">
+        <Card className="border-foreground/30">
           <CardContent className="pt-4 space-y-4">
             <div className="space-y-2">
               <Label>Ajustes para o novo protocolo</Label>
@@ -194,7 +194,7 @@ export function NutritionProtocolEditor({
                 rows={3}
               />
             </div>
-            <Button onClick={handleRegenerate} disabled={regenerating} variant="fire" className="w-full">
+            <Button onClick={handleRegenerate} disabled={regenerating} variant="default" className="w-full">
               {regenerating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -257,7 +257,7 @@ export function NutritionProtocolEditor({
           <AccordionItem key={refeicaoIndex} value={`meal-${refeicaoIndex}`} className="border rounded-lg px-4">
             <AccordionTrigger className="hover:no-underline">
               <div className="flex items-center gap-3">
-                <Utensils className="h-4 w-4 text-primary" />
+                <Utensils className="h-4 w-4 text-foreground" />
                 <span className="font-display">{refeicao.nome}</span>
                 <Badge variant="outline" className="ml-2">{refeicao.horario}</Badge>
               </div>

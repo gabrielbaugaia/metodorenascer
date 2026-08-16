@@ -95,7 +95,7 @@ export default function Protocolos() {
                   {semana.dias?.map((dia: any, dIndex: number) => (
                     <div key={dIndex} className="bg-muted/30 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-primary">{dia.dia}</h4>
+                        <h4 className="font-semibold text-foreground">{dia.dia}</h4>
                         <Badge variant="outline">{dia.foco}</Badge>
                       </div>
                       <div className="space-y-2">
@@ -130,8 +130,8 @@ export default function Protocolos() {
       <div className="space-y-6">
         {/* Macros Overview */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-primary/10 p-4 rounded-lg text-center">
-            <p className="text-2xl font-bold text-primary">{conteudo.calorias_diarias || "--"}</p>
+          <div className="bg-foreground/10 p-4 rounded-lg text-center">
+            <p className="text-2xl font-bold text-foreground">{conteudo.calorias_diarias || "--"}</p>
             <p className="text-xs text-muted-foreground">Calorias/dia</p>
           </div>
           <div className="bg-blue-500/10 p-4 rounded-lg text-center">
@@ -194,7 +194,7 @@ export default function Protocolos() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-foreground" />
           </div>
         ) : (
           <Tabs defaultValue="treino" className="space-y-6">
@@ -231,7 +231,7 @@ export default function Protocolos() {
                       <div className="flex items-center justify-between">
                         <div>
                           <CardTitle className="flex items-center gap-2">
-                            <Dumbbell className="h-5 w-5 text-primary" />
+                            <Dumbbell className="h-5 w-5 text-foreground" />
                             {protocol.titulo}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2 mt-1">

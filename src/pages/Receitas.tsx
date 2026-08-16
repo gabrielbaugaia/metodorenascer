@@ -256,7 +256,7 @@ export default function Receitas() {
           </div>
           <div>
             <h1 className="text-3xl font-bold uppercase text-foreground">
-              Gerador de <span className="text-primary">Receitas</span>
+              Gerador de <span className="text-foreground">Receitas</span>
             </h1>
             <p className="text-muted-foreground text-sm">
               {isTrialing 
@@ -290,7 +290,7 @@ export default function Receitas() {
             <Card variant="dashboard">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg uppercase">
-                  <Sparkles className="w-5 h-5 text-primary" />
+                  <Sparkles className="w-5 h-5 text-foreground" />
                   Selecione seus ingredientes
                 </CardTitle>
               </CardHeader>
@@ -320,7 +320,7 @@ export default function Receitas() {
                       <Badge
                         key={ing}
                         variant={ingredients.includes(ing.toLowerCase()) ? "default" : "outline"}
-                        className="cursor-pointer hover:bg-primary/20 transition-colors"
+                        className="cursor-pointer hover:bg-foreground/20 transition-colors"
                         onClick={() => {
                           if (ingredients.includes(ing.toLowerCase())) {
                             removeIngredient(ing.toLowerCase());
@@ -392,7 +392,7 @@ export default function Receitas() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
-                      <ChefHat className="w-5 h-5 text-primary" />
+                      <ChefHat className="w-5 h-5 text-foreground" />
                       {recipeTitle}
                     </CardTitle>
                     <div className="flex gap-2">
@@ -436,7 +436,7 @@ export default function Receitas() {
           <TabsContent value="saved" className="space-y-4">
             {loadingRecipes ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin text-foreground" />
               </div>
             ) : savedRecipes.length === 0 ? (
               <Card variant="dashboard" className="p-8 text-center">
@@ -468,7 +468,7 @@ export default function Receitas() {
           <TabsContent value="favorites" className="space-y-4">
             {loadingRecipes ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin text-foreground" />
               </div>
             ) : favoriteRecipes.length === 0 ? (
               <Card variant="dashboard" className="p-8 text-center">
@@ -525,7 +525,7 @@ function RecipeCard({
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <ChefHat className="w-5 h-5 text-primary" />
+              <ChefHat className="w-5 h-5 text-foreground" />
               {recipe.title}
               {recipe.is_favorite && (
                 <Heart className="h-4 w-4 fill-red-500 text-red-500" />

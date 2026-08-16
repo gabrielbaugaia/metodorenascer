@@ -119,7 +119,7 @@ export function BeforeAfterSlider({
       <div className="absolute bottom-4 left-4 px-3 py-1 bg-black/70 backdrop-blur-sm rounded-full text-xs font-bold text-white">
         {beforeLabel}
       </div>
-      <div className="absolute bottom-4 right-4 px-3 py-1 bg-primary/90 backdrop-blur-sm rounded-full text-xs font-bold text-white">
+      <div className="absolute bottom-4 right-4 px-3 py-1 bg-foreground/90 backdrop-blur-sm rounded-full text-xs font-bold text-white">
         {afterLabel}
       </div>
     </div>

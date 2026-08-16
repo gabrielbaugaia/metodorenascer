@@ -55,7 +55,7 @@ export function BlogPostRenderer({ blocks, onDocumentClick }: BlogPostRendererPr
         return (
           <blockquote 
             key={block.id} 
-            className="border-l-4 border-primary pl-4 py-2 my-6 italic text-muted-foreground bg-muted/30 rounded-r-lg"
+            className="border-l-4 border-foreground pl-4 py-2 my-6 italic text-muted-foreground bg-muted/30 rounded-r-lg"
           >
             {block.content}
           </blockquote>
@@ -95,11 +95,11 @@ export function BlogPostRenderer({ blocks, onDocumentClick }: BlogPostRendererPr
         return (
           <div 
             key={block.id} 
-            className="flex items-center gap-4 p-4 my-6 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover:border-primary/40 transition-colors"
+            className="flex items-center gap-4 p-4 my-6 bg-gradient-to-r from-primary/10 to-primary/5 border border-foreground/20 rounded-lg cursor-pointer hover:border-foreground/40 transition-colors"
             onClick={() => onDocumentClick?.(block.url || '', block.fileName || '')}
           >
-            <div className="p-3 bg-primary/20 rounded-lg">
-              <FileDown className="h-8 w-8 text-primary" />
+            <div className="p-3 bg-foreground/20 rounded-lg">
+              <FileDown className="h-8 w-8 text-foreground" />
             </div>
             <div className="flex-1">
               <p className="font-semibold text-foreground">{block.fileName}</p>

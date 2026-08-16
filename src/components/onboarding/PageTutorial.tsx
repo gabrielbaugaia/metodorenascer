@@ -171,7 +171,7 @@ const TUTORIALS: Record<string, { title: string; steps: TutorialStep[] }> = {
     steps: [
       {
         title: "Registre dados do dia",
-        description: "Informe horas de sono, nível de estresse (1-10) e nível de energia/foco (1-10). Esses dados alimentam seu Score Renascer diário.",
+        description: "Informe horas de sono, nível de estresse (1-10) e nível de energia/foco (1-10). Esses dados alimentam seu Score GabrielBau diário.",
         icon: Heart,
       },
       {
@@ -190,7 +190,7 @@ const TUTORIALS: Record<string, { title: string; steps: TutorialStep[] }> = {
         icon: BarChart3,
       },
       {
-        title: "O que é o Score Renascer",
+        title: "O que é o Score GabrielBau",
         description: "É uma pontuação de 0-100 calculada com base em sono, estresse, energia, treino e atividade física. Quanto mais consistente, maior o score. Acima de 70 é ótimo!",
         icon: Trophy,
       },
@@ -254,14 +254,14 @@ export function PageTutorialBanner({ pageId }: PageTutorialProps) {
     <>
       <div
         className={cn(
-          "rounded-xl border border-primary/30 bg-primary/5 p-4 transition-all duration-300",
+          "rounded-xl border border-foreground/30 bg-foreground/5 p-4 transition-all duration-300",
           fadeOut && "opacity-0 scale-95"
         )}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-              <HelpCircle className="w-4 h-4 text-primary" />
+            <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center shrink-0 mt-0.5">
+              <HelpCircle className="w-4 h-4 text-foreground" />
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">Primeira vez aqui?</p>
@@ -287,7 +287,7 @@ export function PageTutorialBanner({ pageId }: PageTutorialProps) {
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
-              <HelpCircle className="w-5 h-5 text-primary" />
+              <HelpCircle className="w-5 h-5 text-foreground" />
               {tutorial.title}
             </DialogTitle>
           </DialogHeader>
@@ -297,8 +297,8 @@ export function PageTutorialBanner({ pageId }: PageTutorialProps) {
               return (
                 <div key={index} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Icon className="w-4 h-4 text-primary" />
+                    <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4 text-foreground" />
                     </div>
                     {index < tutorial.steps.length - 1 && (
                       <div className="w-px h-full bg-border/50 mt-1" />
@@ -357,7 +357,7 @@ export function PageTutorial({ pageId }: PageTutorialProps) {
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
-              <HelpCircle className="w-5 h-5 text-primary" />
+              <HelpCircle className="w-5 h-5 text-foreground" />
               {tutorial.title}
             </DialogTitle>
           </DialogHeader>
@@ -367,8 +367,8 @@ export function PageTutorial({ pageId }: PageTutorialProps) {
               return (
                 <div key={index} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Icon className="w-4 h-4 text-primary" />
+                    <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4 text-foreground" />
                     </div>
                     {index < tutorial.steps.length - 1 && (
                       <div className="w-px h-full bg-border/50 mt-1" />

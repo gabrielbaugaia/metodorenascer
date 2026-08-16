@@ -73,7 +73,7 @@ export function BottomNav() {
                   className={cn(
                     "flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition-colors",
                     isActive
-                      ? "bg-primary/10 text-primary"
+                      ? "bg-foreground/10 text-foreground"
                       : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                   )}
                 >
@@ -98,7 +98,7 @@ export function BottomNav() {
                 onClick={() => moreOpen && setMoreOpen(false)}
                 className={cn(
                   "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground",
+                  isActive ? "text-foreground" : "text-muted-foreground",
                 )}
               >
                 <item.icon className="h-5 w-5" strokeWidth={ICON_STROKE} />
@@ -112,7 +112,7 @@ export function BottomNav() {
             onClick={() => setMoreOpen((prev) => !prev)}
             className={cn(
               "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
-              moreOpen || isMoreActive ? "text-primary" : "text-muted-foreground",
+              moreOpen || isMoreActive ? "text-foreground" : "text-muted-foreground",
             )}
           >
             {moreOpen ? (

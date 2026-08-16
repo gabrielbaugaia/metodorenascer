@@ -76,7 +76,7 @@ export function ReferralCampaignPopup() {
 
   const shareWhatsApp = () => {
     const text = encodeURIComponent(
-      `${campaign?.title || "Indique e Ganhe"} - Junte-se a mim no Método Renascer! ${referralLink}`
+      `${campaign?.title || "Indique e Ganhe"} - Junte-se a mim no sistema de Gabriel Baú Treinador! ${referralLink}`
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
@@ -118,7 +118,7 @@ export function ReferralCampaignPopup() {
               {campaign.cashback_rules.map((rule: any, idx: number) => (
                 <div key={idx} className="bg-muted/40 rounded-lg px-3 py-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-primary">
+                    <span className="font-semibold text-foreground">
                       {rule.label || `${rule.plan_type}: ${rule.cashback_amount}x cashback`}
                     </span>
                   </div>
@@ -134,7 +134,7 @@ export function ReferralCampaignPopup() {
           {referralCode && (
             <div className="bg-muted/30 rounded-lg p-3 text-center">
               <p className="text-xs text-muted-foreground mb-1">Seu código</p>
-              <p className="font-mono text-lg font-bold text-primary">{referralCode}</p>
+              <p className="font-mono text-lg font-bold text-foreground">{referralCode}</p>
             </div>
           )}
 
@@ -144,7 +144,7 @@ export function ReferralCampaignPopup() {
               {copied ? <CheckCircle className="h-4 w-4 mr-1.5" /> : <Copy className="h-4 w-4 mr-1.5" />}
               {copied ? "Copiado" : "Copiar Link"}
             </Button>
-            <Button onClick={shareWhatsApp} className="flex-1 bg-primary hover:bg-primary/90" size="sm">
+            <Button onClick={shareWhatsApp} className="flex-1 bg-foreground hover:bg-foreground/90" size="sm">
               <Share2 className="h-4 w-4 mr-1.5" />
               WhatsApp
             </Button>

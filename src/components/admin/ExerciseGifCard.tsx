@@ -89,7 +89,7 @@ export function ExerciseGifCard({
 
   return (
     <Card 
-      className={`p-4 ${hasBrokenUrl ? 'border-destructive/50 bg-destructive/5' : ''} ${isReady ? 'border-primary/30 bg-primary/5' : ''} ${selected ? 'ring-2 ring-primary' : ''}`}
+      className={`p-4 ${hasBrokenUrl ? 'border-destructive/50 bg-destructive/5' : ''} ${isReady ? 'border-foreground/30 bg-foreground/5' : ''} ${selected ? 'ring-2 ring-primary' : ''}`}
     >
       <div className="flex gap-4">
         {/* Batch Select Checkbox + GIF Preview */}
@@ -142,7 +142,7 @@ export function ExerciseGifCard({
               onChange={(e) => onInlineUpdate(gif.id, 'exercise_name_pt', e.target.value)}
               className={`h-9 text-sm flex-1 ${
                 editingFields[`${gif.id}-exercise_name_pt`] 
-                  ? 'border-primary' 
+                  ? 'border-foreground' 
                   : ''
               }`}
               placeholder="Nome do exercício"
@@ -158,7 +158,7 @@ export function ExerciseGifCard({
               {suggestingName === gif.id ? (
                 <LoadingSpinner size="sm" />
               ) : (
-                <Wand2 className="h-4 w-4 text-primary" />
+                <Wand2 className="h-4 w-4 text-foreground" />
               )}
             </Button>
           </div>
@@ -170,7 +170,7 @@ export function ExerciseGifCard({
             muscleGroups={muscleGroups}
             className={`h-9 text-sm w-full ${
               editingFields[`${gif.id}-muscle_group`] 
-                ? 'border-primary' 
+                ? 'border-foreground' 
                 : currentGroups.length === 0 || currentGroups.includes("Pendente")
                   ? 'border-destructive/50' 
                   : ''
@@ -189,7 +189,7 @@ export function ExerciseGifCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-primary"
+                    className="h-8 w-8 text-foreground"
                     onClick={() => onSaveChanges(gif.id)}
                     disabled={savingInline === gif.id}
                   >
@@ -220,7 +220,7 @@ export function ExerciseGifCard({
                   variant="ghost"
                   size="icon"
                   asChild
-                  className="h-8 w-8 text-primary"
+                  className="h-8 w-8 text-foreground"
                 >
                   <span>
                     <Upload className="h-4 w-4" />
@@ -233,7 +233,7 @@ export function ExerciseGifCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-primary"
+                  className="h-8 w-8 text-foreground"
                   onClick={() => onSearchOnline(gif)}
                   disabled={searchingOnline === gif.id}
                   title="Buscar GIF na internet"
@@ -251,7 +251,7 @@ export function ExerciseGifCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-primary"
+                  className="h-8 w-8 text-foreground"
                   onClick={() => onActivate(gif)}
                 >
                   <CheckCircle className="h-4 w-4" />

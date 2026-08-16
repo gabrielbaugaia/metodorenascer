@@ -20,8 +20,8 @@ export function CardioStatsHeader({ stats }: { stats: CardioStats }) {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {kpis.map((kpi) => (
         <Card key={kpi.label} className="p-3 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <kpi.icon className="h-4 w-4 text-primary" />
+          <div className="p-2 rounded-lg bg-foreground/10">
+            <kpi.icon className="h-4 w-4 text-foreground" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">{kpi.label}</p>

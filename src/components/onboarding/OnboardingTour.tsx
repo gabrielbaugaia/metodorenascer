@@ -175,7 +175,7 @@ export function OnboardingTour() {
 
         <div className="bg-muted/50 rounded-lg p-4 my-4">
           <div className="flex items-start gap-3">
-            <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <Sparkles className="w-5 h-5 text-foreground shrink-0 mt-0.5" />
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">Dica: </span>
               {step.tip}
@@ -196,7 +196,7 @@ export function OnboardingTour() {
           <Button
             variant="default"
             onClick={handleNext}
-            className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white font-semibold"
+            className="w-full sm:w-auto bg-foreground hover:bg-foreground/90 text-white font-semibold"
           >
             {isLastStep ? (
               <>

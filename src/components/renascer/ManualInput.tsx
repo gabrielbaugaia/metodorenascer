@@ -317,7 +317,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         </h3>
         <div className="flex items-center justify-between">
           <Label className="text-sm text-muted-foreground">Dados automáticos</Label>
-          <span className="text-xs text-primary font-medium">Ativado</span>
+          <span className="text-xs text-foreground font-medium">Ativado</span>
         </div>
         <div className="text-center py-4 space-y-3">
           <p className="text-sm text-muted-foreground">
@@ -356,8 +356,8 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
               className={cn(
                 "flex-1 py-2 rounded-lg text-xs font-semibold border transition-all",
                 dateOption === opt
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-muted/50 text-muted-foreground border-border/50 hover:border-primary/50"
+                  ? "bg-foreground text-foreground-foreground border-foreground"
+                  : "bg-muted/50 text-muted-foreground border-border/50 hover:border-foreground/50"
               )}
             >
               {opt === "today" ? "Hoje" : opt === "yesterday" ? "Ontem" : "Outra data"}
@@ -407,7 +407,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
             {screenshotFiles.length < 3 && (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="h-24 w-24 rounded-lg border-2 border-dashed border-primary/30 flex flex-col items-center justify-center text-primary/60 hover:border-primary/60 hover:text-primary transition-colors"
+                className="h-24 w-24 rounded-lg border-2 border-dashed border-foreground/30 flex flex-col items-center justify-center text-foreground/60 hover:border-foreground/60 hover:text-foreground transition-colors"
               >
                 <Plus className="h-5 w-5" />
                 <span className="text-[10px] mt-0.5">Adicionar</span>
@@ -421,7 +421,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
             <Button
               type="button"
               variant="outline"
-              className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary py-5"
+              className="w-full gap-2 border-foreground/30 text-foreground hover:bg-foreground/10 hover:text-foreground py-5"
               onClick={() => fileInputRef.current?.click()}
             >
               <Camera className="h-5 w-5" />
@@ -434,9 +434,9 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
         )}
 
         {extracting && (
-          <div className="flex items-center gap-2 py-3 px-3 rounded-lg bg-primary/10 border border-primary/20">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <span className="text-xs font-medium text-primary">Lendo dados da imagem...</span>
+          <div className="flex items-center gap-2 py-3 px-3 rounded-lg bg-foreground/10 border border-foreground/20">
+            <Loader2 className="h-4 w-4 animate-spin text-foreground" />
+            <span className="text-xs font-medium text-foreground">Lendo dados da imagem...</span>
           </div>
         )}
       </div>
@@ -481,8 +481,8 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
               className={cn(
                 "flex-1 py-2 rounded-lg text-sm font-semibold border transition-all",
                 energy === v
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-muted/50 text-muted-foreground border-border/50 hover:border-primary/50"
+                  ? "bg-foreground text-foreground-foreground border-foreground"
+                  : "bg-muted/50 text-muted-foreground border-border/50 hover:border-foreground/50"
               )}
             >
               {v}
@@ -521,7 +521,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
             <span className="flex items-center gap-1.5">
               📱 Dados do Fitness
               {hasFitnessData && (
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary" />
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-foreground" />
               )}
             </span>
             <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", fitnessOpen && "rotate-180")} />
@@ -610,7 +610,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
       <Button
         onClick={() => saveMutation.mutate()}
         disabled={saveMutation.isPending}
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+        className="w-full bg-foreground hover:bg-foreground/90 text-foreground-foreground font-bold"
       >
         {saveMutation.isPending ? "Salvando..." : `Salvar ${getDateLabel().toLowerCase()}`}
       </Button>

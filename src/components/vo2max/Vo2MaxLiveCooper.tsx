@@ -95,7 +95,7 @@ export function Vo2MaxLiveCooper({ onFinish, onBack }: Props) {
   if (session.status === "idle") {
     return (
       <Card className="p-6 space-y-5 text-center">
-        <Flame className="h-12 w-12 mx-auto text-primary" />
+        <Flame className="h-12 w-12 mx-auto text-foreground" />
         <div className="space-y-2">
           <h3 className="text-xl font-bold">12 minutos. Sua melhor distância.</h3>
           <p className="text-sm text-muted-foreground">
@@ -128,7 +128,7 @@ export function Vo2MaxLiveCooper({ onFinish, onBack }: Props) {
         <div className="flex items-center justify-center gap-1 text-[10px] uppercase tracking-[2px] text-muted-foreground">
           <Timer className="h-3 w-3" /> Tempo restante
         </div>
-        <p className="text-7xl font-mono font-black tabular-nums text-primary">
+        <p className="text-7xl font-mono font-black tabular-nums text-foreground">
           {formatClock(remaining)}
         </p>
         <div className="flex justify-center gap-2">
@@ -146,8 +146,8 @@ export function Vo2MaxLiveCooper({ onFinish, onBack }: Props) {
       <Progress value={pct} className="h-3" />
 
       {milestone && (
-        <div className="rounded-lg bg-primary/15 border border-primary/40 p-3 text-center animate-scale-in">
-          <p className="text-sm font-semibold text-primary">{milestone}</p>
+        <div className="rounded-lg bg-foreground/15 border border-foreground/40 p-3 text-center animate-scale-in">
+          <p className="text-sm font-semibold text-foreground">{milestone}</p>
         </div>
       )}
 

@@ -109,7 +109,7 @@ export function Vo2MaxLiveBruce({ onFinish, onBack }: Props) {
     return (
       <Card className="p-6 space-y-5 text-center">
         <div className="space-y-2">
-          <Flame className="h-12 w-12 mx-auto text-primary" />
+          <Flame className="h-12 w-12 mx-auto text-foreground" />
           <h3 className="text-xl font-bold">Pronto para começar?</h3>
           <p className="text-sm text-muted-foreground">
             O app cronometra e avisa cada virada de estágio.
@@ -147,14 +147,14 @@ export function Vo2MaxLiveBruce({ onFinish, onBack }: Props) {
       <div
         key={pulseKey}
         className={cn(
-          "rounded-xl bg-primary/10 border border-primary/40 p-4 text-center",
+          "rounded-xl bg-foreground/10 border border-foreground/40 p-4 text-center",
           "animate-scale-in"
         )}
       >
-        <p className="text-[10px] uppercase tracking-[2px] text-primary/70 font-semibold">
+        <p className="text-[10px] uppercase tracking-[2px] text-foreground/70 font-semibold">
           Estágio Atual
         </p>
-        <p className="text-4xl font-black text-primary mt-1">
+        <p className="text-4xl font-black text-foreground mt-1">
           {stage.e}
         </p>
         <p className="text-sm font-medium text-foreground mt-1">

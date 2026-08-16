@@ -120,8 +120,8 @@ export function WorkoutCard({
         className={cn(
           "animate-fade-in overflow-hidden transition-all",
           completed
-            ? "border-primary/40 bg-primary/5"
-            : "border-border/50 hover:border-primary/30"
+            ? "border-foreground/40 bg-foreground/5"
+            : "border-border/50 hover:border-foreground/30"
         )}
         style={{ animationDelay: `${index * 0.1}s` }}
       >
@@ -135,7 +135,7 @@ export function WorkoutCard({
                     className={cn(
                       "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center shrink-0",
                       completed
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-foreground text-foreground-foreground"
                         : "bg-gradient-to-br from-orange-500 to-red-500 text-white"
                     )}
                   >
@@ -174,7 +174,7 @@ export function WorkoutCard({
                     variant={completed ? "default" : "outline"}
                     className={cn(
                       "text-[10px] sm:text-xs px-1.5 sm:px-2.5",
-                      completed && "bg-primary/20 text-primary border-primary/30"
+                      completed && "bg-foreground/20 text-foreground border-foreground/30"
                     )}
                   >
                     {safeExercises.length} exercícios
@@ -199,7 +199,7 @@ export function WorkoutCard({
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-primary rounded-full transition-all"
+                      className="h-full bg-foreground rounded-full transition-all"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
@@ -218,7 +218,7 @@ export function WorkoutCard({
               {!completed && !todayCompleted && onComplete && (
                 <div className="mt-4 flex gap-2">
                   <Button 
-                    variant="fire" 
+                    variant="default" 
                     className="flex-1" 
                     size="lg"
                     onClick={(e) => {

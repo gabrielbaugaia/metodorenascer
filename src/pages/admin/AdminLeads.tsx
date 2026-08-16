@@ -123,7 +123,7 @@ export default function AdminLeads() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -155,8 +155,8 @@ export default function AdminLeads() {
           <Card variant="glass">
             <CardContent className="p-3 sm:pt-6">
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-                <div className="p-2 sm:p-3 rounded-full bg-primary/10">
-                  <Users className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />
+                <div className="p-2 sm:p-3 rounded-full bg-foreground/10">
+                  <Users className="h-4 w-4 sm:h-6 sm:w-6 text-foreground" />
                 </div>
                 <div className="text-center sm:text-left">
                   <p className="text-[10px] sm:text-sm text-muted-foreground">Total</p>

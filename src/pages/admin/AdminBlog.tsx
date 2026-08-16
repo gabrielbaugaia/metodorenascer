@@ -151,14 +151,14 @@ export default function AdminBlog() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/admin" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/admin" className="text-muted-foreground hover:text-foreground transition-colors">
                   Admin
                 </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage className="text-primary">Blog</BreadcrumbPage>
+              <BreadcrumbPage className="text-foreground">Blog</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -180,8 +180,8 @@ export default function AdminBlog() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <FileText className="h-5 w-5 text-primary" />
+              <div className="p-2 bg-foreground/10 rounded-lg">
+                <FileText className="h-5 w-5 text-foreground" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{posts.length}</p>

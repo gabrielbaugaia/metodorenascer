@@ -82,8 +82,8 @@ export function ReelCard({ draft, onChange, onRemove, onSuggestTitle, onGenerate
               </div>
             )}
             {draft.status === "done" && (
-              <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                <Badge className="bg-primary">Enviado</Badge>
+              <div className="absolute inset-0 bg-foreground/20 flex items-center justify-center">
+                <Badge className="bg-foreground">Enviado</Badge>
               </div>
             )}
           </div>

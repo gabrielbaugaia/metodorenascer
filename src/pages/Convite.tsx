@@ -126,7 +126,7 @@ export default function Convite() {
           console.error("Error creating subscription:", subError);
         }
 
-        toast.success("Conta criada com sucesso! Bem-vindo ao Método Renascer!");
+        toast.success("Conta criada com sucesso! Bem-vindo ao GabrielBau Treinador!");
       }
     } catch (error: any) {
       const message = error.message === "User already registered" 
@@ -143,8 +143,8 @@ export default function Convite() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
-            <Flame className="w-8 h-8 text-primary" />
-            <span className="font-display text-3xl text-gradient">MÉTODO RENASCER</span>
+            <Flame className="w-8 h-8 text-foreground" />
+            <span className="font-display text-3xl text-gradient">MÉTODO GABRIEL BAÚ</span>
           </div>
           {referrerName ? (
             <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2 mb-4">
@@ -154,15 +154,15 @@ export default function Convite() {
               </span>
             </div>
           ) : (
-            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-4 py-2 mb-4">
-              <Gift className="w-5 h-5 text-primary" />
-              <span className="text-primary font-semibold">Convite Exclusivo</span>
+            <div className="inline-flex items-center gap-2 bg-foreground/10 border border-foreground/30 rounded-full px-4 py-2 mb-4">
+              <Gift className="w-5 h-5 text-foreground" />
+              <span className="text-foreground font-semibold">Convite Exclusivo</span>
             </div>
           )}
           <p className="text-muted-foreground">
             {referrerName 
-              ? `${referrerName} te convidou para fazer parte do Método Renascer!`
-              : "Você foi convidado para fazer parte do Método Renascer com acesso cortesia!"
+              ? `${referrerName} te convidou para fazer parte do GabrielBau Treinador!`
+              : "Você foi convidado para fazer parte do GabrielBau Treinador com acesso cortesia!"
             }
           </p>
         </div>
@@ -228,7 +228,7 @@ export default function Convite() {
                 </div>
               </div>
 
-              <Button type="submit" variant="fire" className="w-full" disabled={loading}>
+              <Button type="submit" variant="default" className="w-full" disabled={loading}>
                 {loading ? "Criando conta..." : (referralCode ? "CADASTRAR COM 10% OFF" : "Ativar Meu Acesso Gratuito")}
               </Button>
             </form>
@@ -237,7 +237,7 @@ export default function Convite() {
               <button
                 type="button"
                 onClick={() => navigate("/auth")}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Já tem conta? Entre aqui
               </button>
@@ -245,7 +245,7 @@ export default function Convite() {
 
             <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border/50">
               <p className="text-xs text-muted-foreground text-center">
-                Ao criar sua conta, você terá acesso gratuito por 30 dias a todos os recursos do Método Renascer, incluindo treinos, nutrição e mentalidade personalizados.
+                Ao criar sua conta, você terá acesso gratuito por 30 dias a todos os recursos do GabrielBau Treinador, incluindo treinos, nutrição e mentalidade personalizados.
               </p>
             </div>
           </CardContent>

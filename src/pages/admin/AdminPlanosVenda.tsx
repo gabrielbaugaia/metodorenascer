@@ -151,7 +151,7 @@ export default function AdminPlanosVenda() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -243,8 +243,8 @@ export default function AdminPlanosVenda() {
           <Card variant="glass">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/20">
-                  <DollarSign className="h-5 w-5 text-primary" />
+                <div className="p-2 rounded-lg bg-foreground/20">
+                  <DollarSign className="h-5 w-5 text-foreground" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Planos Ativos</p>
@@ -303,12 +303,12 @@ export default function AdminPlanosVenda() {
             <Card 
               key={plan.id} 
               className={`relative transition-all ${
-                plan.popular ? "border-primary ring-1 ring-primary/20" : ""
+                plan.popular ? "border-foreground ring-1 ring-primary/20" : ""
               } ${!plan.active ? "opacity-60" : ""}`}
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground">
+                  <Badge className="bg-foreground text-foreground-foreground">
                     <Sparkles className="h-3 w-3 mr-1" />
                     Mais Popular
                   </Badge>

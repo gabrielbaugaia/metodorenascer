@@ -42,10 +42,10 @@ export function Vo2MaxProtocolSelector({ onSelect }: Props) {
     <div className="grid gap-3">
       {OPTIONS.map(({ id, title, description, badge, Icon }) => (
         <button key={id} onClick={() => onSelect(id)} className="text-left">
-          <Card className="p-4 hover:border-primary transition-colors cursor-pointer">
+          <Card className="p-4 hover:border-foreground transition-colors cursor-pointer">
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Icon className="h-5 w-5 text-primary" />
+              <div className="h-10 w-10 rounded-full bg-foreground/10 flex items-center justify-center shrink-0">
+                <Icon className="h-5 w-5 text-foreground" />
               </div>
               <div className="flex-1 space-y-1.5">
                 <h4 className="font-semibold text-foreground">{title}</h4>

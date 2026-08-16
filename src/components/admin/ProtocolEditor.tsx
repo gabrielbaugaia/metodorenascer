@@ -152,7 +152,7 @@ const ExerciseCard = ({
           <button
             type="button"
             onClick={() => onPreviewGif(exercise.video_url || null)}
-            className="relative w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-muted border-2 border-border hover:border-primary transition-colors group"
+            className="relative w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-muted border-2 border-border hover:border-foreground transition-colors group"
           >
             <img
               src={exercise.video_url}
@@ -212,7 +212,7 @@ const ExerciseCard = ({
             {exercise.video_url && (
               <>
                 {exercise.video_url.includes("supabase.co/storage") && (
-                  <Badge variant="outline" className="ml-2 text-[10px] border-primary/50 text-primary">
+                  <Badge variant="outline" className="ml-2 text-[10px] border-foreground/50 text-foreground">
                     <Image className="h-2.5 w-2.5 mr-1" />
                     GIF
                   </Badge>
@@ -462,7 +462,7 @@ export function ProtocolEditor({
             <Dumbbell className="h-4 w-4 mr-2" />
             <span className="text-xs sm:text-sm">Entrada Manual</span>
           </Button>
-          <Button onClick={handleSave} disabled={saving} variant="fire" size="sm" className="w-full sm:w-auto">
+          <Button onClick={handleSave} disabled={saving} variant="default" size="sm" className="w-full sm:w-auto">
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
@@ -475,7 +475,7 @@ export function ProtocolEditor({
 
       {/* Regenerate input */}
       {showRegenerateInput && (
-        <Card className="border-primary/30">
+        <Card className="border-foreground/30">
           <CardContent className="pt-4 space-y-4">
             <div className="space-y-2">
               <Label>Ajustes para o novo protocolo</Label>
@@ -486,7 +486,7 @@ export function ProtocolEditor({
                 rows={3}
               />
             </div>
-            <Button onClick={handleRegenerate} disabled={regenerating} variant="fire" className="w-full">
+            <Button onClick={handleRegenerate} disabled={regenerating} variant="default" className="w-full">
               {regenerating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -522,7 +522,7 @@ export function ProtocolEditor({
             <AccordionItem key={treinoIndex} value={`treino-${treinoIndex}`} className="border rounded-lg px-4">
               <AccordionTrigger className="hover:no-underline">
                 <span className="font-display flex items-center gap-2">
-                  <Dumbbell className="h-4 w-4 text-primary" />
+                  <Dumbbell className="h-4 w-4 text-foreground" />
                   Treino {treino.letra} - {treino.foco}
                   {treino.duracao_minutos && (
                     <Badge variant="outline" className="ml-2 text-xs">
@@ -572,7 +572,7 @@ export function ProtocolEditor({
                   <Card key={dayIndex} className="bg-muted/30">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Dumbbell className="h-4 w-4 text-primary" />
+                        <Dumbbell className="h-4 w-4 text-foreground" />
                         {day.dia} - {day.foco}
                       </CardTitle>
                     </CardHeader>

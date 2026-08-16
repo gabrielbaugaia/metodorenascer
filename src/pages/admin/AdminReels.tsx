@@ -774,7 +774,7 @@ export default function AdminReels() {
 
         {/* Barra de ações em lote */}
         {someSelected && (
-          <Card className="p-3 border-primary/40 bg-primary/5 sticky top-2 z-20">
+          <Card className="p-3 border-foreground/40 bg-foreground/5 sticky top-2 z-20">
             <div className="flex flex-wrap items-center gap-2 justify-between">
               <div className="flex items-center gap-2">
                 <Badge variant="default">{selectedIds.size} selecionado(s)</Badge>

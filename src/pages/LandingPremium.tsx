@@ -21,12 +21,12 @@ const LandingPremium = () => {
   const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.title = "Método Renascer | Sistema de transformação para adultos +30";
+    document.title = "GabrielBau Treinador | Sistema de transformação para adultos +30";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) {
       meta.setAttribute(
         "content",
-        "Você não precisa de mais motivação. Você precisa de um sistema. Método Renascer combina ciência, acompanhamento humano e inteligência de dados.",
+        "Você não precisa de mais motivação. Você precisa de um sistema. GabrielBau Treinador combina ciência, acompanhamento humano e inteligência de dados.",
       );
     }
   }, []);

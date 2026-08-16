@@ -366,7 +366,7 @@ export async function generateMessageReportPdf(
     doc.setTextColor(156, 163, 175);
     doc.setFont("helvetica", "normal");
     doc.text(
-      `Página ${i} de ${totalPages} | Método Renascer - Relatório de Mensagens`,
+      `Página ${i} de ${totalPages} | GabrielBau Treinador - Relatório de Mensagens`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: "center" }

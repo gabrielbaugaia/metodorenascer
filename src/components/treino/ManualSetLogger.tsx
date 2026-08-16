@@ -237,7 +237,7 @@ export function ManualSetLogger({
 
       {/* Save button */}
       <Button
-        variant="fire"
+        variant="default"
         size="lg"
         className="w-full"
         disabled={saving || !hasAnyData}

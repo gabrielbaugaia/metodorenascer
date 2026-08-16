@@ -1990,7 +1990,7 @@ export default function AdminExerciseGifs() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="flex items-center gap-3 py-4">
-              <Image className="h-8 w-8 text-primary" />
+              <Image className="h-8 w-8 text-foreground" />
               <div>
                 <p className="text-2xl font-bold">{stats.total}</p>
                 <p className="text-sm text-muted-foreground">Total</p>
@@ -2135,7 +2135,7 @@ export default function AdminExerciseGifs() {
                 return (
                   <div
                     key={group}
-                    className="p-4 rounded-lg border bg-card hover:border-primary/50 transition-colors cursor-pointer"
+                    className="p-4 rounded-lg border bg-card hover:border-foreground/50 transition-colors cursor-pointer"
                     onClick={() => {
                       setSelectedGroupForView(group);
                       setShowGroupModal(true);
@@ -2199,7 +2199,7 @@ export default function AdminExerciseGifs() {
             variant="outline"
             onClick={handleImportFromDatabase}
             disabled={importingDatabase}
-            className="border-primary/50 text-primary hover:bg-primary/10"
+            className="border-foreground/50 text-foreground hover:bg-foreground/10"
           >
             {importingDatabase ? <LoadingSpinner size="sm" className="mr-2" /> : <Database className="h-4 w-4 mr-2" />}
             Importar Base Completa ({(exercisesDatabase as ExerciseFromDb[]).length} exercícios)
@@ -2417,12 +2417,12 @@ export default function AdminExerciseGifs() {
         </div>
 
         {/* Upload Area */}
-        <Card className="mb-6 border-dashed border-2 border-primary/30 bg-primary/5">
+        <Card className="mb-6 border-dashed border-2 border-foreground/30 bg-foreground/5">
           <CardContent className="py-6">
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <div className="flex-1">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Upload className="h-5 w-5 text-primary" />
+                  <Upload className="h-5 w-5 text-foreground" />
                   Carregar GIF do Computador
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -2739,7 +2739,7 @@ export default function AdminExerciseGifs() {
                       return (
                         <TableRow 
                           key={gif.id} 
-                          className={`${hasBrokenUrl ? 'bg-destructive/5 border-l-2 border-l-destructive' : ''} ${isReady ? 'bg-primary/5' : ''} ${isSelected ? 'bg-primary/10' : ''}`}
+                          className={`${hasBrokenUrl ? 'bg-destructive/5 border-l-2 border-l-destructive' : ''} ${isReady ? 'bg-foreground/5' : ''} ${isSelected ? 'bg-foreground/10' : ''}`}
                         >
                           {/* Selection Checkbox */}
                           <TableCell>
@@ -2804,7 +2804,7 @@ export default function AdminExerciseGifs() {
                                 {suggestingName === gif.id ? (
                                   <LoadingSpinner size="sm" />
                                 ) : (
-                                  <Wand2 className="h-4 w-4 text-primary" />
+                                  <Wand2 className="h-4 w-4 text-foreground" />
                                 )}
                               </Button>
                             </div>
@@ -2821,7 +2821,7 @@ export default function AdminExerciseGifs() {
                                 >
                                   <SelectTrigger className={`h-9 text-sm ${
                                     editingFields[`${gif.id}-muscle_group`] 
-                                      ? 'border-primary' 
+                                      ? 'border-foreground' 
                                       : currentGroups.length === 0 || currentGroups.includes("Pendente")
                                         ? 'border-destructive/50' 
                                         : ''
@@ -2886,7 +2886,7 @@ export default function AdminExerciseGifs() {
                                   size="icon"
                                   asChild
                                   title="Carregar GIF"
-                                  className="text-primary hover:text-primary h-8 w-8"
+                                  className="text-foreground hover:text-foreground h-8 w-8"
                                 >
                                   <span>
                                     <Upload className="h-4 w-4" />

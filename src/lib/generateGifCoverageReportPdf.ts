@@ -382,7 +382,7 @@ export async function generateGifCoverageReportPdf(
     doc.setTextColor(156, 163, 175);
     doc.setFont("helvetica", "normal");
     doc.text(
-      `Página ${i} de ${totalPages} | Método Renascer - Relatório de Cobertura de GIFs`,
+      `Página ${i} de ${totalPages} | GabrielBau Treinador - Relatório de Cobertura de GIFs`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: "center" }

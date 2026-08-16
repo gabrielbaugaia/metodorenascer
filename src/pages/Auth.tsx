@@ -69,8 +69,8 @@ export default function Auth() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
-            <Flame className="w-8 h-8 text-primary" />
-            <span className="font-display text-3xl text-gradient">MÉTODO RENASCER</span>
+            <span className="font-display text-3xl text-gradient uppercase tracking-tighter">Gabriel Baú</span>
+            <span className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground -mt-1">Treinador</span>
           </div>
           <p className="text-muted-foreground">
             Entre na sua conta
@@ -126,7 +126,7 @@ export default function Auth() {
                 </div>
               </div>
 
-              <Button type="submit" variant="fire" className="w-full" disabled={loading}>
+              <Button type="submit" variant="default" className="w-full h-12 text-[11px] uppercase tracking-[2px] font-mono" disabled={loading}>
                 {loading ? "Carregando..." : "Entrar"}
               </Button>
             </form>
@@ -167,16 +167,13 @@ export default function Auth() {
                     }
                   }
                 }}
-                className="block w-full text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="block w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Esqueceu sua senha?
               </button>
               
               <p className="text-xs text-muted-foreground mt-4">
-                Ainda não é cliente?{" "}
-                <a href="/#preco" className="text-primary hover:underline">
-                  Conheça nossos planos
-                </a>
+                Exclusivo para alunos de consultoria e personal trainer.
               </p>
             </div>
           </CardContent>

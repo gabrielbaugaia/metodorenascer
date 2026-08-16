@@ -206,7 +206,7 @@ export default function AdminWhatsApp() {
     <ClientLayout>
       <div className="space-y-4 max-w-full">
         <div className="flex items-center gap-3">
-          <MessageCircle className="w-6 h-6 text-primary" />
+          <MessageCircle className="w-6 h-6 text-foreground" />
           <h1 className="text-xl font-semibold text-foreground">WhatsApp</h1>
         </div>
 
@@ -253,7 +253,7 @@ export default function AdminWhatsApp() {
                                 {c.display_name || c.phone_e164}
                               </p>
                               {c.unread && (
-                                <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                                <span className="w-2 h-2 rounded-full bg-foreground flex-shrink-0" />
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -328,7 +328,7 @@ export default function AdminWhatsApp() {
                                   isOut
                                     ? failed
                                       ? "bg-destructive/20 text-foreground"
-                                      : "bg-primary text-primary-foreground"
+                                      : "bg-foreground text-foreground-foreground"
                                     : "bg-muted text-foreground"
                                 }`}
                               >

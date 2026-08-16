@@ -108,7 +108,7 @@ export function EcgUploadCard() {
 
           {selectedFile ? (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border/50">
-              <FileText className="h-4 w-4 text-primary shrink-0" />
+              <FileText className="h-4 w-4 text-foreground shrink-0" />
               <span className="text-xs truncate flex-1">{selectedFile.name}</span>
               <Button
                 variant="ghost"

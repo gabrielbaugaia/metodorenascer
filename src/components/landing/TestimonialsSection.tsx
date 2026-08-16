@@ -7,7 +7,7 @@ const testimonials = [
   {
     name: "Ana SP",
     result: "Perdi 18kg sem sair de casa",
-    content: "O Método Renascer mudou completamente minha relação com exercício. Com o acompanhamento via WhatsApp e os treinos personalizados, consegui perder 18kg treinando em casa. Nunca imaginei que seria possível."
+    content: "O GabrielBau Treinador mudou completamente minha relação com exercício. Com o acompanhamento via WhatsApp e os treinos personalizados, consegui perder 18kg treinando em casa. Nunca imaginei que seria possível."
   },
   {
     name: "João RJ",
@@ -27,7 +27,7 @@ const testimonials = [
   {
     name: "Rafael Susin",
     result: "Empresário",
-    content: "O Gabriel Baú é extremamente profissional, assíduo, competente e - o melhor - traz resultados. Minha qualidade de vida melhorou significativamente."
+    content: "O GabrielBau é extremamente profissional, assíduo, competente e - o melhor - traz resultados. Minha qualidade de vida melhorou significativamente."
   }
 ];
 
@@ -64,7 +64,7 @@ export function TestimonialsSection() {
       <div className="container mx-auto px-4">
         {/* Section Header - No subtitle */}
         <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center mb-12 md:mb-16">
-          Resultados <span className="text-primary">Reais</span>
+          Resultados <span className="text-foreground">Reais</span>
         </h2>
 
         <div className="max-w-3xl mx-auto">
@@ -72,7 +72,7 @@ export function TestimonialsSection() {
             {/* Editorial style - no card borders */}
             <div className="px-4 md:px-8 py-8 md:py-12">
               {/* Large quote mark */}
-              <span className="text-primary/20 text-[6rem] md:text-[8rem] font-serif leading-none absolute -top-4 left-0">"</span>
+              <span className="text-foreground/20 text-[6rem] md:text-[8rem] font-serif leading-none absolute -top-4 left-0">"</span>
               
               <div className="min-h-[200px] flex flex-col justify-center relative z-10">
                 <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground leading-relaxed mb-8 italic">
@@ -80,7 +80,7 @@ export function TestimonialsSection() {
                 </p>
                 
                 <div className="border-t border-border/30 pt-6">
-                  <p className="text-primary font-semibold text-xl md:text-2xl">
+                  <p className="text-foreground font-semibold text-xl md:text-2xl">
                     {testimonials[currentIndex].result}
                   </p>
                   <p className="text-foreground text-base mt-2">
@@ -94,7 +94,7 @@ export function TestimonialsSection() {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-12 text-muted-foreground hover:text-primary"
+              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-12 text-muted-foreground hover:text-foreground"
               onClick={goToPrevious}
             >
               <ChevronLeft className="w-8 h-8" />
@@ -103,7 +103,7 @@ export function TestimonialsSection() {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-12 text-muted-foreground hover:text-primary"
+              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-12 text-muted-foreground hover:text-foreground"
               onClick={goToNext}
             >
               <ChevronRight className="w-8 h-8" />
@@ -117,7 +117,7 @@ export function TestimonialsSection() {
                 key={index}
                 className={`w-2 h-2 rounded-full transition-all duration-300 ${
                   index === currentIndex 
-                    ? 'bg-primary w-8' 
+                    ? 'bg-foreground w-8' 
                     : 'bg-muted-foreground/20 hover:bg-muted-foreground/40'
                 }`}
                 onClick={() => {

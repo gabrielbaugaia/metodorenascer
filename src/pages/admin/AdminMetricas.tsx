@@ -102,7 +102,7 @@ export default function AdminMetricas() {
   if (adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-8 h-8 animate-spin text-foreground" />
       </div>
     );
   }
@@ -143,7 +143,7 @@ export default function AdminMetricas() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-primary">
+              <p className="text-2xl font-bold text-foreground">
                 R$ {totalMrr.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </p>
             </CardContent>
@@ -252,13 +252,13 @@ export default function AdminMetricas() {
                       <div className="text-sm text-muted-foreground">↓ {funnelConversion?.checkoutToComplete}%</div>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-primary/10 border border-primary rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-foreground/10 border border-foreground rounded-lg">
                       <div>
-                        <p className="font-medium text-primary">Conversão Completa</p>
-                        <p className="text-2xl font-bold text-primary">{funnel.checkout_completed}</p>
+                        <p className="font-medium text-foreground">Conversão Completa</p>
+                        <p className="text-2xl font-bold text-foreground">{funnel.checkout_completed}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-primary">{funnelConversion?.overallConversion}%</p>
+                        <p className="text-sm text-foreground">{funnelConversion?.overallConversion}%</p>
                       </div>
                     </div>
                   </div>
@@ -423,7 +423,7 @@ export default function AdminMetricas() {
               {mrrSummary.map(plan => (
                 <div key={plan.plan_name} className="p-4 bg-muted rounded-lg text-center">
                   <p className="font-medium capitalize">{plan.plan_name || "Não definido"}</p>
-                  <p className="text-2xl font-bold text-primary">
+                  <p className="text-2xl font-bold text-foreground">
                     R$ {(Number(plan.total_mrr || 0) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-sm text-muted-foreground">{plan.active_subscriptions} assinantes</p>

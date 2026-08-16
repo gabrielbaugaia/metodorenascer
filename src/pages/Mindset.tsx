@@ -156,7 +156,7 @@ export default function Mindset() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -167,12 +167,12 @@ export default function Mindset() {
       <ClientLayout>
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-16">
-            <Brain className="h-16 w-16 text-primary mx-auto mb-4" />
+            <Brain className="h-16 w-16 text-foreground mx-auto mb-4" />
             <h1 className="text-3xl font-display font-bold mb-2">Protocolo de Mindset</h1>
             <p className="text-muted-foreground mb-8">
               Seu protocolo de mentalidade ainda não foi gerado. Fale com seu mentor para solicitar ajustes.
             </p>
-            <Button onClick={() => navigate("/suporte")} variant="fire" size="lg">
+            <Button onClick={() => navigate("/suporte")} variant="default" size="lg">
               <MessageCircle className="h-5 w-5 mr-2" />
               Falar com Mentor
             </Button>
@@ -206,7 +206,7 @@ export default function Mindset() {
             <PageTutorial pageId="mindset" />
           </div>
           <div className="flex items-center justify-center gap-3 mb-2">
-            <Brain className="h-10 w-10 text-primary" />
+            <Brain className="h-10 w-10 text-foreground" />
             <h1 className="text-3xl font-bold uppercase text-foreground">MINDSET</h1>
           </div>
           <p className="text-muted-foreground uppercase text-sm">
@@ -221,7 +221,7 @@ export default function Mindset() {
           <CardContent className="py-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-muted-foreground">Progresso semanal:</span>
-              <span className="text-sm font-medium text-primary">
+              <span className="text-sm font-medium text-foreground">
                 {completed}/{total} práticas
               </span>
             </div>
@@ -240,7 +240,7 @@ export default function Mindset() {
                 </span>
               </div>
               <p className="text-lg mb-2">
-                <span className="text-primary font-medium">
+                <span className="text-foreground font-medium">
                   {content.mentalidade_necessaria.titulo}.
                 </span>{" "}
                 {content.mentalidade_necessaria.descricao}
@@ -261,7 +261,7 @@ export default function Mindset() {
                   <Sun className="h-5 w-5 text-yellow-500" />
                   ROTINA DA MANHÃ
                 </CardTitle>
-                <Badge variant="secondary" className="text-primary">
+                <Badge variant="secondary" className="text-foreground">
                   {content.rotina_manha.duracao || content.rotina_manha.duracao_total}
                 </Badge>
               </div>
@@ -275,7 +275,7 @@ export default function Mindset() {
                 >
                   <Checkbox
                     checked={checkedItems[`manha-${index}`] || false}
-                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    className="data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
                   />
                   <div className="flex-1">
                     <span className={checkedItems[`manha-${index}`] ? "line-through text-muted-foreground" : ""}>
@@ -298,7 +298,7 @@ export default function Mindset() {
                     <Moon className="h-5 w-5 text-indigo-400" />
                     ROTINA DA NOITE
                   </CardTitle>
-                  <Badge variant="secondary" className="text-primary">
+                  <Badge variant="secondary" className="text-foreground">
                     {content.rotina_noite.duracao || content.rotina_noite.duracao_total}
                   </Badge>
                 </div>
@@ -312,7 +312,7 @@ export default function Mindset() {
                   >
                     <Checkbox
                       checked={checkedItems[`noite-${index}`] || false}
-                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                      className="data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
                     />
                     <div className="flex-1">
                       <span className={checkedItems[`noite-${index}`] ? "line-through text-muted-foreground" : ""}>
@@ -414,7 +414,7 @@ export default function Mindset() {
                   const text = typeof afirmacao === 'string' ? afirmacao : afirmacao.afirmacao;
                   return (
                     <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                      <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-foreground shrink-0" />
                       <span className="text-sm">{text}</span>
                     </div>
                   );

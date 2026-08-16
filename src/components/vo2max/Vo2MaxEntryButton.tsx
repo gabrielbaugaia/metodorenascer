@@ -7,7 +7,7 @@ export function Vo2MaxEntryButton() {
   return (
     <Button
       variant="outline"
-      className="w-full border-primary/40 text-primary hover:bg-primary/10"
+      className="w-full border-foreground/40 text-foreground hover:bg-foreground/10"
       onClick={() => navigate("/vo2max")}
     >
       <FlaskConical className="h-4 w-4 mr-2" />

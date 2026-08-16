@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { capacitorStorage } from "@/lib/capacitor-storage";
 import { TransformationPhaseCard } from "@/components/renascer/TransformationPhaseCard";
 import { useAuth } from "@/hooks/useAuth";
-import { useRenascerScore } from "@/hooks/useRenascerScore";
+import { useGabrielBauScore } from "@/hooks/useGabrielBauScore";
 import { useSisScore } from "@/hooks/useSisScore";
 import { useBehaviorProfile } from "@/hooks/useBehaviorProfile";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,7 +37,7 @@ import { toast } from "sonner";
 import { ptBR } from "date-fns/locale";
 import { HealthService } from "@/services/healthService";
 
-export default function Renascer() {
+export default function GabrielBau() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [celebrating, setCelebrating] = useState(false);
@@ -49,7 +49,7 @@ export default function Renascer() {
   const [excelImportOpen, setExcelImportOpen] = useState(false);
 
   // Legacy score (kept for ManualInput compatibility)
-  const { todayLog, isLoading: legacyLoading } = useRenascerScore();
+  const { todayLog, isLoading: legacyLoading } = useGabrielBauScore();
 
   // SIS score
   const sis = useSisScore();
@@ -205,7 +205,7 @@ export default function Renascer() {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                className="flex-1 gap-2 border-foreground/30 text-foreground hover:bg-foreground/10"
                 onClick={() => setBatchUploadOpen(true)}
               >
                 <CalendarDays className="h-4 w-4" />
@@ -213,7 +213,7 @@ export default function Renascer() {
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                className="flex-1 gap-2 border-foreground/30 text-foreground hover:bg-foreground/10"
                 onClick={() => setExcelImportOpen(true)}
               >
                 <FileSpreadsheet className="h-4 w-4" />
@@ -307,7 +307,7 @@ export default function Renascer() {
             <div className="text-center pt-2">
               <Link
                 to="/dados-corpo"
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 Painel Avançado
                 <ExternalLink className="h-3 w-3" />

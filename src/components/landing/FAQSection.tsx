@@ -8,12 +8,12 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const faqs = [
   {
-    question: "Como funciona o Método Renascer?",
-    answer: "O Método Renascer é uma consultoria online completa que combina treino personalizado, nutrição estratégica e acompanhamento comportamental. Após a inscrição, você preenche uma anamnese detalhada e recebe seu plano personalizado em até 48 horas. Todo o suporte é feito via app, com resposta rápida do seu mentor.",
+    question: "Como funciona o GabrielBau Treinador?",
+    answer: "O GabrielBau Treinador é uma consultoria online completa que combina treino personalizado, nutrição estratégica e acompanhamento comportamental. Após a inscrição, você preenche uma anamnese detalhada e recebe seu plano personalizado em até 48 horas. Todo o suporte é feito via app, com resposta rápida do seu mentor.",
   },
   {
     question: "Os planos substituem um profissional?",
-    answer: "Não. O Método Renascer já é uma consultoria especializada conduzida pelo Personal Trainer Gabriel Baú, profissional de educação física, mestre em exercício físico, e por uma equipe multidisciplinar formada por nutricionistas e consultores médicos, todos registrados em seus conselhos. Você terá acompanhamento real de especialistas, e não fichas prontas ou planilhas genéricas como se vê por aí.",
+    answer: "Não. O GabrielBau Treinador já é uma consultoria especializada conduzida pelo Personal Trainer GabrielBau, profissional de educação física, mestre em exercício físico, e por uma equipe multidisciplinar formada por nutricionistas e consultores médicos, todos registrados em seus conselhos. Você terá acompanhamento real de especialistas, e não fichas prontas ou planilhas genéricas como se vê por aí.",
   },
   {
     question: "Como funciona o pagamento?",
@@ -29,7 +29,7 @@ const faqs = [
   },
   {
     question: "Como recebo meu plano personalizado?",
-    answer: "Após preencher a anamnese completa com seus dados, objetivos e limitações, seu plano é elaborado em até 48 horas com o apoio do nosso sistema de alta tecnologia desenvolvido exclusivamente para o Método Renascer. Ele é disponibilizado diretamente na plataforma, com vídeos explicativos de cada exercício.",
+    answer: "Após preencher a anamnese completa com seus dados, objetivos e limitações, seu plano é elaborado em até 48 horas com o apoio do nosso sistema de alta tecnologia desenvolvido exclusivamente para o GabrielBau Treinador. Ele é disponibilizado diretamente na plataforma, com vídeos explicativos de cada exercício.",
   },
   {
     question: "Terei suporte para tirar dúvidas?",
@@ -53,7 +53,7 @@ const faqs = [
   },
   {
     question: "E se eu tiver lesões ou restrições de saúde?",
-    answer: "Nesse caso, seu plano é montado respeitando suas limitações e histórico. Sempre recomendamos que você tenha liberação do seu médico e siga orientações profissionais específicas para o seu caso. O Método Renascer adapta treinos e estratégias dentro do que é seguro para você.",
+    answer: "Nesse caso, seu plano é montado respeitando suas limitações e histórico. Sempre recomendamos que você tenha liberação do seu médico e siga orientações profissionais específicas para o seu caso. O GabrielBau Treinador adapta treinos e estratégias dentro do que é seguro para você.",
   },
   {
     question: "Tenho pouco tempo por dia. Ainda assim funciona?",
@@ -61,7 +61,7 @@ const faqs = [
   },
   {
     question: "O método inclui medicamentos ou hormônios?",
-    answer: "Não. O Método Renascer não prescreve medicamentos nem hormônios. Qualquer uso desse tipo de recurso deve ser decidido e acompanhado exclusivamente pelo seu médico. Nosso foco está em treino, nutrição estratégica e mentalidade para resultados sustentáveis.",
+    answer: "Não. O GabrielBau Treinador não prescreve medicamentos nem hormônios. Qualquer uso desse tipo de recurso deve ser decidido e acompanhado exclusivamente pelo seu médico. Nosso foco está em treino, nutrição estratégica e mentalidade para resultados sustentáveis.",
   },
 ];
 
@@ -76,7 +76,7 @@ export const FAQSection = () => {
       <div className="container mx-auto px-4">
         {/* Section Header - No subtitle */}
         <h2 className="font-display font-black text-foreground text-[2.5rem] sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-[-0.02em] text-center mb-12 md:mb-16">
-          Perguntas <span className="text-primary">Frequentes</span>
+          Perguntas <span className="text-foreground">Frequentes</span>
         </h2>
 
         <div className="max-w-3xl mx-auto">
@@ -88,7 +88,7 @@ export const FAQSection = () => {
                 value={`item-${index}`}
                 className="border-b border-border/20 last:border-b-0"
               >
-                <AccordionTrigger className="text-left text-foreground font-medium text-base md:text-lg hover:text-primary hover:no-underline py-5">
+                <AccordionTrigger className="text-left text-foreground font-medium text-base md:text-lg hover:text-foreground hover:no-underline py-5">
                   {faq.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground text-sm md:text-base pb-5 leading-relaxed">

@@ -43,7 +43,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
         <div
           key={exercise.name}
           className={cn(
-            "rounded-lg border border-border/30 p-3 cursor-pointer transition-all hover:bg-primary/5 hover:border-primary/30 active:scale-[0.99]",
+            "rounded-lg border border-border/30 p-3 cursor-pointer transition-all hover:bg-foreground/5 hover:border-foreground/30 active:scale-[0.99]",
             exercise.completed && "opacity-60 bg-muted/30"
           )}
           onClick={() => onExerciseClick(exercise)}
@@ -53,7 +53,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {exercise.completed && (
-                  <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
                 )}
                 <span className={cn(
                   "font-medium text-sm text-foreground truncate",
@@ -63,7 +63,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
                 </span>
               </div>
               <button
-                className="w-8 h-8 rounded-full bg-primary/20 text-primary hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center shrink-0"
+                className="w-8 h-8 rounded-full bg-foreground/20 text-foreground hover:bg-foreground hover:text-foreground-foreground transition-colors flex items-center justify-center shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   onExerciseClick(exercise);
@@ -73,7 +73,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
               </button>
             </div>
             <div className="flex items-center gap-3 text-xs">
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary font-bold">
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-foreground/10 text-foreground font-bold">
                 {exercise.sets}x
               </span>
               <span className="text-foreground font-medium">{exercise.reps} reps</span>
@@ -85,7 +85,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
           <div className="hidden sm:grid sm:grid-cols-[1fr_60px_80px_70px_50px] gap-2 items-center">
             <div className="flex items-center gap-2 min-w-0">
               {exercise.completed && (
-                <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
               )}
               <span className={cn(
                 "font-medium text-foreground truncate",
@@ -95,7 +95,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
               </span>
             </div>
             <div className="text-center">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-foreground/10 text-foreground font-bold text-sm">
                 {exercise.sets}
               </span>
             </div>
@@ -107,7 +107,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
             </div>
             <div className="text-center">
               <button
-                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-foreground/20 text-foreground hover:bg-foreground hover:text-foreground-foreground transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   onExerciseClick(exercise);

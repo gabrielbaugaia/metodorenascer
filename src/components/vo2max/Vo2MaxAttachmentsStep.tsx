@@ -26,7 +26,7 @@ export function Vo2MaxAttachmentsStep({ onSave, onSkip, isSaving }: Props) {
   return (
     <Card className="p-5 space-y-5">
       <div className="text-center space-y-1">
-        <Sparkles className="h-8 w-8 mx-auto text-primary" />
+        <Sparkles className="h-8 w-8 mx-auto text-foreground" />
         <h3 className="font-semibold">Quer enriquecer este registro?</h3>
         <p className="text-xs text-muted-foreground">
           Anexos opcionais — ajudam a comparar com sessões futuras.

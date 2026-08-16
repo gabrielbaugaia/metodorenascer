@@ -477,7 +477,7 @@ export default function AdminClientes() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -491,14 +491,14 @@ export default function AdminClientes() {
         <div className="flex flex-col gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold uppercase">Clientes</h1>
-            <p className="text-muted-foreground text-sm">Gerencie todos os clientes do Método Renascer</p>
+            <p className="text-muted-foreground text-sm">Gerencie todos os clientes do GabrielBau Treinador</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm" onClick={exportCSV} className="w-full sm:w-auto">
               <Download className="h-4 w-4 mr-2" />
               <span className="text-xs sm:text-sm">Exportar CSV</span>
             </Button>
-            <Button variant="fire" size="sm" onClick={() => navigate("/admin/criar-cliente")} className="w-full sm:w-auto">
+            <Button variant="default" size="sm" onClick={() => navigate("/admin/criar-cliente")} className="w-full sm:w-auto">
               <UserPlus className="h-4 w-4 mr-2" />
               <span className="text-xs sm:text-sm">Novo Cliente</span>
             </Button>

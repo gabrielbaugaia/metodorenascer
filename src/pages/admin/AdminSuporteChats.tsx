@@ -256,7 +256,7 @@ export default function AdminSuporteChats() {
           role: "admin",
           content: adminMessage.trim(),
           timestamp: new Date().toISOString(),
-          admin_name: "Gabriel Baú"
+          admin_name: "GabrielBau"
         }
       ];
 
@@ -441,7 +441,7 @@ export default function AdminSuporteChats() {
         role: "admin",
         content: newDirectMessage.trim(),
         timestamp: new Date().toISOString(),
-        admin_name: "Gabriel Baú"
+        admin_name: "GabrielBau"
       };
 
       if (existing) {
@@ -516,7 +516,7 @@ export default function AdminSuporteChats() {
     return (
       <ClientLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
         </div>
       </ClientLayout>
     );
@@ -797,7 +797,7 @@ export default function AdminSuporteChats() {
                     <div
                       className={`relative max-w-[85%] md:max-w-[80%] rounded-lg p-3 ${
                         msg.role === "user"
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-foreground text-foreground-foreground"
                           : msg.role === "admin"
                           ? "bg-blue-500 text-white"
                           : "bg-muted"
@@ -877,7 +877,7 @@ export default function AdminSuporteChats() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Suas mensagens aparecerão como "Admin (Gabriel Baú)" para o cliente
+                Suas mensagens aparecerão como "Admin (GabrielBau)" para o cliente
               </p>
             </div>
           </DialogContent>

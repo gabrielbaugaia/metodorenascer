@@ -29,14 +29,14 @@ export function V2HeroSection() {
 
       <div className={`relative z-[2] max-w-[900px] md:pl-7 transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"}`}>
         {/* Badge */}
-        <div className="inline-flex items-center font-mono-v2 text-[10px] tracking-[3px] uppercase text-primary border border-primary/40 px-[18px] py-[7px] mb-11">
+        <div className="inline-flex items-center font-mono-v2 text-[10px] tracking-[3px] uppercase text-foreground border border-foreground/40 px-[18px] py-[7px] mb-11">
           Sistema Inteligente
         </div>
 
         <h1 className="font-display-v2 text-[clamp(72px,9vw,120px)] leading-[.92] tracking-[3px] text-foreground mb-1.5">
           SEU CORPO<br />
           FALA TODOS<br />
-          OS DIAS<span className="text-primary">.</span>
+          OS DIAS<span className="text-foreground">.</span>
         </h1>
 
         <p className="font-display-v2 text-[clamp(28px,3.5vw,46px)] tracking-[5px] text-muted-foreground mb-9">
@@ -44,7 +44,7 @@ export function V2HeroSection() {
         </p>
 
         <p className="font-body-v2 text-[17px] text-muted-foreground/80 font-light leading-[1.8] max-w-[560px] mb-[52px]">
-          O Método Renascer é o único sistema que cruza seus dados fisiológicos,
+          O GabrielBau Treinador é o único sistema que cruza seus dados fisiológicos,
           mentais e de treino diariamente — e adapta seu protocolo
           em <strong className="text-foreground font-medium">tempo real</strong>. Não é um app genérico. É inteligência aplicada ao seu corpo.
         </p>
@@ -52,13 +52,13 @@ export function V2HeroSection() {
         <div className="flex gap-4 items-center flex-wrap">
           <a
             href="#v2-preco"
-            className="font-mono-v2 text-[11px] tracking-[2.5px] uppercase bg-primary text-primary-foreground px-10 py-4 border border-primary hover:bg-transparent hover:text-primary transition-all duration-200 inline-block"
+            className="font-mono-v2 text-[11px] tracking-[2.5px] uppercase bg-foreground text-foreground-foreground px-10 py-4 border border-foreground hover:bg-transparent hover:text-foreground transition-all duration-200 inline-block"
           >
             Começar Agora
           </a>
           <a
             href="#v2-sistema"
-            className="font-mono-v2 text-[10px] tracking-[1px] uppercase bg-transparent text-muted-foreground px-8 sm:px-10 py-4 border border-border hover:border-primary hover:text-primary transition-all duration-200 inline-block whitespace-nowrap"
+            className="font-mono-v2 text-[10px] tracking-[1px] uppercase bg-transparent text-muted-foreground px-8 sm:px-10 py-4 border border-border hover:border-foreground hover:text-foreground transition-all duration-200 inline-block whitespace-nowrap"
           >
             Ver Como Funciona
           </a>
@@ -72,10 +72,10 @@ export function V2HeroSection() {
           { num: "6", label: "Índices Mentais", sub: "Psicologia aplicada" },
           { num: "30", label: "Dias de Contexto", sub: "Por prescrição" },
         ].map((m) => (
-          <div key={m.label} className="bg-card border border-border p-[18px_24px] min-w-[190px] relative overflow-hidden hover:border-primary transition-colors">
-            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary" />
+          <div key={m.label} className="bg-card border border-border p-[18px_24px] min-w-[190px] relative overflow-hidden hover:border-foreground transition-colors">
+            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-foreground" />
             <div className="font-display-v2 text-[46px] leading-none text-foreground tracking-[1px]">{m.num}</div>
-            <div className="font-mono-v2 text-[9px] tracking-[2px] uppercase text-primary mt-1">{m.label}</div>
+            <div className="font-mono-v2 text-[9px] tracking-[2px] uppercase text-foreground mt-1">{m.label}</div>
             <div className="font-body-v2 text-[11px] text-muted-foreground mt-0.5">{m.sub}</div>
           </div>
         ))}

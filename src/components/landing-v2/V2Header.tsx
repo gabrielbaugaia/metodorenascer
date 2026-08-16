@@ -47,11 +47,11 @@ export function V2Header() {
       >
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5" onClick={closeMobile}>
-          <div className="w-8 h-8 rounded-full border border-primary/40 flex items-center justify-center">
-            <Flame className="w-4 h-4 text-primary" />
+          <div className="w-8 h-8 rounded-full border border-foreground/40 flex items-center justify-center">
+            <Flame className="w-4 h-4 text-foreground" />
           </div>
           <span className="font-display-v2 text-[20px] tracking-[3px] text-foreground">
-            RENASCER<span className="text-primary">.</span>
+            GABRIEL BAÚ<span className="text-foreground">.</span>
           </span>
         </Link>
 
@@ -59,11 +59,11 @@ export function V2Header() {
         <div className="hidden md:flex gap-9">
           {navLinks.map((l) =>
             l.isRoute ? (
-              <Link key={l.label} to={l.href} className="font-mono-v2 text-[10px] tracking-[2.5px] uppercase text-muted-foreground hover:text-primary transition-colors">
+              <Link key={l.label} to={l.href} className="font-mono-v2 text-[10px] tracking-[2.5px] uppercase text-muted-foreground hover:text-foreground transition-colors">
                 {l.label}
               </Link>
             ) : (
-              <a key={l.label} href={l.href} className="font-mono-v2 text-[10px] tracking-[2.5px] uppercase text-muted-foreground hover:text-primary transition-colors">
+              <a key={l.label} href={l.href} className="font-mono-v2 text-[10px] tracking-[2.5px] uppercase text-muted-foreground hover:text-foreground transition-colors">
                 {l.label}
               </a>
             )
@@ -74,15 +74,15 @@ export function V2Header() {
         <div className="hidden md:flex items-center gap-4">
           {user ? (
             <>
-              <Link to="/dashboard" className="font-mono-v2 text-[10px] tracking-[2px] uppercase text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/dashboard" className="font-mono-v2 text-[10px] tracking-[2px] uppercase text-muted-foreground hover:text-foreground transition-colors">
                 Dashboard
               </Link>
-              <button onClick={handleLogout} className="font-mono-v2 text-[10px] tracking-[2px] uppercase bg-primary text-primary-foreground px-6 py-2.5 hover:bg-primary/80 transition-colors">
+              <button onClick={handleLogout} className="font-mono-v2 text-[10px] tracking-[2px] uppercase bg-foreground text-foreground-foreground px-6 py-2.5 hover:bg-foreground/80 transition-colors">
                 Sair
               </button>
             </>
           ) : (
-            <Link to="/auth" className="font-mono-v2 text-[10px] tracking-[2px] uppercase bg-primary text-primary-foreground px-6 py-2.5 hover:bg-primary/80 transition-colors">
+            <Link to="/auth" className="font-mono-v2 text-[10px] tracking-[2px] uppercase bg-foreground text-foreground-foreground px-6 py-2.5 hover:bg-foreground/80 transition-colors">
               Entrar
             </Link>
           )}
@@ -107,11 +107,11 @@ export function V2Header() {
             { label: "Blog", href: "/blog", isRoute: true },
           ].map((l) =>
             l.isRoute ? (
-              <Link key={l.label} to={l.href} onClick={closeMobile} className="font-mono-v2 text-[12px] tracking-[3px] uppercase text-muted-foreground hover:text-primary transition-colors py-3 border-b border-border">
+              <Link key={l.label} to={l.href} onClick={closeMobile} className="font-mono-v2 text-[12px] tracking-[3px] uppercase text-muted-foreground hover:text-foreground transition-colors py-3 border-b border-border">
                 {l.label}
               </Link>
             ) : (
-              <a key={l.label} href={l.href} onClick={closeMobile} className="font-mono-v2 text-[12px] tracking-[3px] uppercase text-muted-foreground hover:text-primary transition-colors py-3 border-b border-border">
+              <a key={l.label} href={l.href} onClick={closeMobile} className="font-mono-v2 text-[12px] tracking-[3px] uppercase text-muted-foreground hover:text-foreground transition-colors py-3 border-b border-border">
                 {l.label}
               </a>
             )
@@ -120,15 +120,15 @@ export function V2Header() {
           <div className="mt-4">
             {user ? (
               <div className="flex flex-col gap-3">
-                <Link to="/dashboard" onClick={closeMobile} className="font-mono-v2 text-[12px] tracking-[2px] uppercase text-center bg-primary text-primary-foreground py-4 hover:bg-primary/80 transition-colors">
+                <Link to="/dashboard" onClick={closeMobile} className="font-mono-v2 text-[12px] tracking-[2px] uppercase text-center bg-foreground text-foreground-foreground py-4 hover:bg-foreground/80 transition-colors">
                   Dashboard
                 </Link>
-                <button onClick={handleLogout} className="font-mono-v2 text-[12px] tracking-[2px] uppercase text-center border border-border text-muted-foreground py-4 hover:text-primary transition-colors">
+                <button onClick={handleLogout} className="font-mono-v2 text-[12px] tracking-[2px] uppercase text-center border border-border text-muted-foreground py-4 hover:text-foreground transition-colors">
                   Sair
                 </button>
               </div>
             ) : (
-              <Link to="/auth" onClick={closeMobile} className="block font-mono-v2 text-[12px] tracking-[2px] uppercase text-center bg-primary text-primary-foreground py-4 hover:bg-primary/80 transition-colors">
+              <Link to="/auth" onClick={closeMobile} className="block font-mono-v2 text-[12px] tracking-[2px] uppercase text-center bg-foreground text-foreground-foreground py-4 hover:bg-foreground/80 transition-colors">
                 Entrar
               </Link>
             )}

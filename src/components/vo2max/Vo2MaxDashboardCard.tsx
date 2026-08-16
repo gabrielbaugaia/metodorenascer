@@ -38,13 +38,13 @@ export function Vo2MaxDashboardCard() {
 
   return (
     <Card
-      className="p-4 cursor-pointer hover:border-primary/50 transition-colors"
+      className="p-4 cursor-pointer hover:border-foreground/50 transition-colors"
       onClick={() => navigate("/vo2max")}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <FlaskConical className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-full bg-foreground/10 flex items-center justify-center">
+            <FlaskConical className="h-5 w-5 text-foreground" />
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">VO2 Máx</p>

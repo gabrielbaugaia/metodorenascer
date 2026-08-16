@@ -270,7 +270,7 @@ export default function AdminCommercialPlans() {
                 className={`relative ${!plan.is_active ? 'opacity-60' : ''} ${plan.is_popular ? 'ring-2 ring-primary' : ''}`}
               >
                 {plan.is_popular && (
-                  <Badge className="absolute -top-2 -right-2 bg-primary">
+                  <Badge className="absolute -top-2 -right-2 bg-foreground">
                     <Star className="w-3 h-3 mr-1" /> Popular
                   </Badge>
                 )}
@@ -305,7 +305,7 @@ export default function AdminCommercialPlans() {
                           key={mod}
                           className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
                             hasAccess 
-                              ? 'bg-primary/10 text-primary' 
+                              ? 'bg-foreground/10 text-foreground' 
                               : 'bg-muted text-muted-foreground'
                           }`}
                         >
@@ -321,7 +321,7 @@ export default function AdminCommercialPlans() {
                   <ul className="text-sm text-muted-foreground space-y-1 mb-4">
                     {plan.features.slice(0, 3).map((f, i) => (
                       <li key={i} className="flex items-center gap-1">
-                        <Check className="w-3 h-3 text-primary" />
+                        <Check className="w-3 h-3 text-foreground" />
                         {f}
                       </li>
                     ))}
@@ -428,7 +428,7 @@ export default function AdminCommercialPlans() {
                       onClick={() => toggleModuleAccess(mod)}
                       className={`flex flex-col items-center gap-1 p-3 rounded-lg border transition-colors ${
                         hasAccess 
-                          ? 'bg-primary/10 border-primary text-primary' 
+                          ? 'bg-foreground/10 border-foreground text-foreground' 
                           : 'bg-muted border-muted-foreground/20 text-muted-foreground'
                       }`}
                     >

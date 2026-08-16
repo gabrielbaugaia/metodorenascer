@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
 import { StatusBadge } from "@/components/renascer/StatusBadge";
-import { useRenascerScore } from "@/hooks/useRenascerScore";
+import { useGabrielBauScore } from "@/hooks/useGabrielBauScore";
 import { computeBodyIndicators, type DayLog } from "@/lib/bodyIndicators";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
@@ -112,7 +112,7 @@ export default function Dashboard() {
   const { subscribed, loading: subLoading, createCheckout, openCustomerPortal, subscriptionEnd } = useSubscription();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const { streak } = useAchievements();
-  const renascer = useRenascerScore();
+  const gabrielBauData = useGabrielBauScore();
   useActivityTracker();
   const navigate = useNavigate();
   const [checkingAnamnese, setCheckingAnamnese] = useState(true);
@@ -343,10 +343,10 @@ export default function Dashboard() {
             <CardContent className="space-y-6">
               <div className="bg-muted/30 rounded-lg p-4 text-center">
                 <p className="text-sm text-muted-foreground mb-1">Plano selecionado</p>
-                <p className="text-lg font-semibold text-primary">{pendingPaymentInfo.planName}</p>
+                <p className="text-lg font-semibold text-foreground">{pendingPaymentInfo.planName}</p>
               </div>
               <p className="text-sm text-muted-foreground text-center">Complete o pagamento para desbloquear todas as funcionalidades.</p>
-              <Button onClick={handlePayNow} variant="fire" className="w-full" size="lg">
+              <Button onClick={handlePayNow} variant="default" className="w-full" size="lg">
                 <CreditCard className="mr-2 h-5 w-5" />
                 Pagar Agora
               </Button>
@@ -411,7 +411,7 @@ export default function Dashboard() {
                   <p className="text-xs text-foreground">{missingAnamneseFields.join(" • ")}</p>
                 </div>
               )}
-              <Button variant="fire" size="lg" className="w-full mt-2" onClick={() => navigate("/anamnese")}>
+              <Button variant="default" size="lg" className="w-full mt-2" onClick={() => navigate("/anamnese")}>
                 Preencher Anamnese Agora
               </Button>
             </CardContent>
@@ -426,20 +426,20 @@ export default function Dashboard() {
 
         {/* 1. Executive Status — ScoreRing */}
         <div className="flex flex-col items-center gap-4 py-4">
-          <ScoreRing score={renascer.score} classification={renascer.classification} emptyLabel={!renascer.todayLog ? "Registre seu dia" : undefined} />
-          <StatusBadge classification={renascer.classification} statusText={renascer.statusText} />
-          {renascer.recommendation.length > 0 && (
-            <p className="text-xs text-muted-foreground text-center max-w-xs">{renascer.recommendation[0]}</p>
+          <ScoreRing score={gabrielBauData.score} classification={gabrielBauData.classification} emptyLabel={!gabrielBauData.todayLog ? "Registre seu dia" : undefined} />
+          <StatusBadge classification={gabrielBauData.classification} statusText={gabrielBauData.statusText} />
+          {gabrielBauData.recommendation.length > 0 && (
+            <p className="text-xs text-muted-foreground text-center max-w-xs">{gabrielBauData.recommendation[0]}</p>
           )}
         </div>
 
         {/* 2. Ação do Dia */}
         <div
           onClick={dailyAction.action}
-          className="bg-card border border-border/50 hover:border-primary/30 transition-colors cursor-pointer rounded-lg p-4 flex items-center justify-between"
+          className="bg-card border border-border/50 hover:border-foreground/30 transition-colors cursor-pointer rounded-lg p-4 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
-            <dailyAction.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+            <dailyAction.icon className="h-5 w-5 text-foreground" strokeWidth={1.5} />
             <div>
               <p className="text-sm font-medium text-foreground">{dailyAction.label}</p>
               <p className="text-xs text-muted-foreground">{dailyAction.cta}</p>
@@ -452,21 +452,21 @@ export default function Dashboard() {
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-card border border-border/50 rounded-lg p-3 text-center">
             <p className="text-xs text-muted-foreground mb-1">Consistência</p>
-            <p className="text-lg font-semibold text-primary">
+            <p className="text-lg font-semibold text-foreground">
               {consistencyData?.hasEnoughData ? `${consistencyData.consistencyPercent}%` : "—"}
             </p>
             <p className="text-[10px] text-muted-foreground">últimos 7 dias</p>
           </div>
           <div className="bg-card border border-border/50 rounded-lg p-3 text-center">
             <p className="text-xs text-muted-foreground mb-1">Sequência</p>
-            <p className="text-lg font-semibold text-primary">
+            <p className="text-lg font-semibold text-foreground">
               {streak.current_streak > 0 ? `${streak.current_streak} dias` : "—"}
             </p>
             <p className="text-[10px] text-muted-foreground">atual</p>
           </div>
           <div className="bg-card border border-border/50 rounded-lg p-3 text-center">
             <p className="text-xs text-muted-foreground mb-1">Evolução</p>
-            <p className="text-lg font-semibold text-primary">
+            <p className="text-lg font-semibold text-foreground">
               {weightDelta != null ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg` : "—"}
             </p>
             <p className="text-[10px] text-muted-foreground">peso</p>
@@ -484,7 +484,7 @@ export default function Dashboard() {
                 className={`bg-card border rounded-lg p-4 flex items-center gap-3 transition-colors ${
                   isLocked
                     ? "border-border/30 opacity-50 cursor-not-allowed"
-                    : "border-border/50 hover:border-primary/30 cursor-pointer"
+                    : "border-border/50 hover:border-foreground/30 cursor-pointer"
                 }`}
               >
                 {isLocked ? (

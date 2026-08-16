@@ -158,7 +158,7 @@ export function AdminSupportNotifications() {
       case 'high':
         return 'bg-orange-500 text-white';
       default:
-        return 'bg-primary/20 text-primary';
+        return 'bg-foreground/20 text-foreground';
     }
   };
 
@@ -166,7 +166,7 @@ export function AdminSupportNotifications() {
     if (alert.urgency_level === 'urgent') {
       return <AlertTriangle className="h-4 w-4 text-red-500" />;
     }
-    return <MessageCircle className="h-4 w-4 text-primary" />;
+    return <MessageCircle className="h-4 w-4 text-foreground" />;
   };
 
   return (
@@ -180,7 +180,7 @@ export function AdminSupportNotifications() {
           {unreadCount > 0 && (
             <span className={cn(
               "absolute -top-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center text-xs font-bold",
-              urgentCount > 0 ? "bg-red-500 text-white" : "bg-primary text-primary-foreground"
+              urgentCount > 0 ? "bg-red-500 text-white" : "bg-foreground text-foreground-foreground"
             )}>
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
@@ -206,7 +206,7 @@ export function AdminSupportNotifications() {
         <ScrollArea className="h-[400px]">
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-foreground"></div>
             </div>
           ) : alerts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
@@ -221,7 +221,7 @@ export function AdminSupportNotifications() {
                   onClick={() => handleAlertClick(alert)}
                   className={cn(
                     "p-4 cursor-pointer hover:bg-muted/50 transition-colors",
-                    !alert.is_read && "bg-primary/5"
+                    !alert.is_read && "bg-foreground/5"
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -242,7 +242,7 @@ export function AdminSupportNotifications() {
                           </Badge>
                         )}
                         {!alert.is_read && (
-                          <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                          <span className="h-2 w-2 rounded-full bg-foreground shrink-0" />
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground truncate">

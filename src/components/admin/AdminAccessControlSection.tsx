@@ -184,10 +184,10 @@ export function AdminAccessControlSection({ clientId }: AdminAccessControlSectio
   }
 
   return (
-    <Card className="border-primary/30 bg-primary/5">
+    <Card className="border-foreground/30 bg-foreground/5">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
+          <Shield className="h-5 w-5 text-foreground" />
           Controle de Acesso
         </CardTitle>
       </CardHeader>
@@ -443,7 +443,7 @@ export function AdminAccessControlSection({ clientId }: AdminAccessControlSectio
                 Cancelar
               </Button>
               <Button
-                variant="fire"
+                variant="default"
                 onClick={handleSaveOverride}
                 disabled={savingOverride || !overrideExpires}
               >

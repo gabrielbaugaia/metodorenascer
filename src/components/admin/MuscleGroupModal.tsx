@@ -225,7 +225,7 @@ export function MuscleGroupModal({
             <div
               key={gif.id}
               className={`relative group rounded-lg border bg-card overflow-hidden transition-all ${
-                isEditing ? "ring-2 ring-primary" : "hover:border-primary/50"
+                isEditing ? "ring-2 ring-primary" : "hover:border-foreground/50"
               }`}
             >
               {/* GIF Preview */}
@@ -259,7 +259,7 @@ export function MuscleGroupModal({
                       </button>
                       <button
                         onClick={() => setChangingGifFor(gif)}
-                        className="p-2 bg-primary/80 rounded-full hover:bg-primary touch-manipulation"
+                        className="p-2 bg-foreground/80 rounded-full hover:bg-foreground touch-manipulation"
                         title="Trocar GIF"
                       >
                         <RefreshCw className="h-4 w-4 text-white" />

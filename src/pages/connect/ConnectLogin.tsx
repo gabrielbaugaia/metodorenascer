@@ -43,10 +43,10 @@ const ConnectLogin = () => {
       <div className="w-full max-w-sm space-y-8">
         {/* Logo */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 mx-auto">
-            <Heart className="h-8 w-8 text-primary" />
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-foreground/10 mx-auto">
+            <Heart className="h-8 w-8 text-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Renascer Connect</h1>
+          <h1 className="text-2xl font-bold text-foreground">GabrielBau Connect</h1>
           <p className="text-sm text-muted-foreground">
             Conecte seus dados de saúde
           </p>
@@ -90,7 +90,7 @@ const ConnectLogin = () => {
         </form>
 
         <p className="text-xs text-center text-muted-foreground">
-          Use as mesmas credenciais do Método Renascer
+          Use as mesmas credenciais do GabrielBau Treinador
         </p>
       </div>
     </div>

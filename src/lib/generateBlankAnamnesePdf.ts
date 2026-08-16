@@ -15,7 +15,7 @@ export function generateBlankAnamnesePdf(clientName?: string): void {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("MÉTODO RENASCER", margin, 18);
+    doc.text("MÉTODO GABRIEL BAÚ", margin, 18);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text("Ficha de Anamnese", margin, 25);
@@ -165,7 +165,7 @@ export function generateBlankAnamnesePdf(clientName?: string): void {
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      `Página ${i} de ${pageCount} — Método Renascer`,
+      `Página ${i} de ${pageCount} — GabrielBau Treinador`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: "center" }

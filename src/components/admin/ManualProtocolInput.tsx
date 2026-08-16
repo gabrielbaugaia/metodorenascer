@@ -97,11 +97,11 @@ export function ManualProtocolInput({ userId, onSuccess, onCancel }: ManualProto
   };
 
   return (
-    <Card className="border-primary/30 bg-card">
+    <Card className="border-foreground/30 bg-card">
       <CardContent className="pt-4 space-y-4">
         <div className="flex items-center justify-between">
           <h4 className="font-semibold text-sm flex items-center gap-2">
-            <FileText className="h-4 w-4 text-primary" />
+            <FileText className="h-4 w-4 text-foreground" />
             Entrada Manual de Protocolo
           </h4>
           <Button variant="ghost" size="icon" onClick={onCancel} className="h-7 w-7">
@@ -200,7 +200,7 @@ export function ManualProtocolInput({ userId, onSuccess, onCancel }: ManualProto
         <Button
           onClick={handleProcess}
           disabled={processing || (!protocolText && !selectedFile)}
-          variant="fire"
+          variant="default"
           className="w-full"
         >
           {processing ? (

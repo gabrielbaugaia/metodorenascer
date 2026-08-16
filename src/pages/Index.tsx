@@ -15,11 +15,11 @@ import { Footer } from "@/components/Footer";
 
 const Index = () => {
   useEffect(() => {
-    document.title = "Método Renascer | Sistema de Prescrição Física, Nutricional e Mental";
+    document.title = "GabrielBau Treinador | Sistema de Prescrição Física, Nutricional e Mental";
     
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'O Método Renascer é um sistema de prescrição física, nutricional e mental criado para transformar corpo, energia e disciplina de forma personalizada e sustentável.');
+      metaDescription.setAttribute('content', 'O GabrielBau Treinador é um sistema de prescrição física, nutricional e mental criado para transformar corpo, energia e disciplina de forma personalizada e sustentável.');
     }
   }, []);
 

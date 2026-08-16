@@ -154,11 +154,11 @@ export function BatchMuscleGroupEditor({
   }
 
   return (
-    <Card className="border-primary/30 bg-primary/5">
+    <Card className="border-foreground/30 bg-foreground/5">
       <CardHeader className="py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Dumbbell className="h-5 w-5 text-primary" />
+            <Dumbbell className="h-5 w-5 text-foreground" />
             <CardTitle className="text-base">Edição em Lote</CardTitle>
           </div>
           {hasSelection && (

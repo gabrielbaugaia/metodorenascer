@@ -1,6 +1,6 @@
 export function V2GuaranteeStrip() {
   return (
-    <div className="bg-primary/8 border-y border-primary/20 px-7 md:px-[60px] py-12 flex items-center justify-center gap-12 flex-wrap">
+    <div className="bg-foreground/8 border-y border-foreground/20 px-7 md:px-[60px] py-12 flex items-center justify-center gap-12 flex-wrap">
       <span className="text-[42px]">🛡️</span>
       <div>
         <h3 className="font-display-v2 text-[28px] tracking-[2px] text-foreground mb-1.5">

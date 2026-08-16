@@ -49,7 +49,7 @@ export function Vo2MaxCooperForm({ onSubmit, onBack }: Props) {
         <ul className="space-y-2">
           {INSTRUCTIONS.map((t, i) => (
             <li key={i} className="flex gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-4 w-4 text-foreground shrink-0 mt-0.5" />
               <span>{t}</span>
             </li>
           ))}

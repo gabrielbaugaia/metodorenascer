@@ -7,7 +7,7 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ classification, statusText }: StatusBadgeProps) {
   const styles: Record<string, string> = {
-    ELITE: "bg-primary/20 text-primary border-primary/40",
+    ELITE: "bg-foreground/20 text-foreground border-foreground/40",
     ALTO: "bg-green-500/20 text-green-400 border-green-500/40",
     MODERADO: "bg-yellow-500/20 text-yellow-400 border-yellow-500/40",
     RISCO: "bg-red-500/20 text-red-400 border-red-500/40",

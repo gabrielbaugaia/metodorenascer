@@ -13,7 +13,7 @@ export function TrainingPreferencesSection({ preferencias_treino, onChange }: Tr
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Dumbbell className="h-5 w-5 text-primary" />
+          <Dumbbell className="h-5 w-5 text-foreground" />
           Seus Desejos para o Treino
         </CardTitle>
       </CardHeader>
