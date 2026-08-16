@@ -68,10 +68,12 @@ export default function Auth() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <span className="font-display text-3xl text-gradient uppercase tracking-tighter">Gabriel Baú</span>
-            <span className="block text-[10px] uppercase tracking-[0.2em] text-muted-foreground -mt-1">Treinador</span>
-          </div>
+          <img
+            src={logoGb.url}
+            alt="Logo Gabriel Baú Treinador"
+            className="mx-auto mb-4 h-20 w-auto object-contain"
+          />
+
           <p className="text-muted-foreground">
             Entre na sua conta
           </p>
