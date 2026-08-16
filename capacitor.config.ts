@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.renascer.connect',
-  appName: 'Renascer Connect',
+  appName: 'Gabriel Baú Connect',
   webDir: 'dist',
   plugins: {
     SplashScreen: {

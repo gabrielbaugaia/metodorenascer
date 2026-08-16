@@ -157,7 +157,7 @@ self.addEventListener('push', function(event) {
   console.log('[SW] Push recebido:', event);
   
   let data = {
-    title: 'Método Renascer',
+    title: 'Método Gabriel Baú',
     body: 'Você tem uma nova notificação!',
     icon: '/favicon.ico',
     badge: '/favicon.ico',
