@@ -171,7 +171,7 @@ const TUTORIALS: Record<string, { title: string; steps: TutorialStep[] }> = {
     steps: [
       {
         title: "Registre dados do dia",
-        description: "Informe horas de sono, nível de estresse (1-10) e nível de energia/foco (1-10). Esses dados alimentam seu Score Renascer diário.",
+        description: "Informe horas de sono, nível de estresse (1-10) e nível de energia/foco (1-10). Esses dados alimentam seu Score Gabriel Baú diário.",
         icon: Heart,
       },
       {
@@ -190,7 +190,7 @@ const TUTORIALS: Record<string, { title: string; steps: TutorialStep[] }> = {
         icon: BarChart3,
       },
       {
-        title: "O que é o Score Renascer",
+        title: "O que é o Score Gabriel Baú",
         description: "É uma pontuação de 0-100 calculada com base em sono, estresse, energia, treino e atividade física. Quanto mais consistente, maior o score. Acima de 70 é ótimo!",
         icon: Trophy,
       },

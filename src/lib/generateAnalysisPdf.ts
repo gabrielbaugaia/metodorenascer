@@ -101,7 +101,7 @@ export async function generateAnalysisPdf(params: GenerateAnalysisPdfParams): Pr
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("MÉTODO RENASCER", margin, 18);
+    doc.text("MÉTODO GABRIEL BAÚ", margin, 18);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text("Análise de Evolução - Gabriel Baú", margin, 25);

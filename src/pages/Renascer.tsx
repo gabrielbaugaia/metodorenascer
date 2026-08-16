@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { capacitorStorage } from "@/lib/capacitor-storage";
 import { TransformationPhaseCard } from "@/components/renascer/TransformationPhaseCard";
 import { useAuth } from "@/hooks/useAuth";
-import { useRenascerScore } from "@/hooks/useRenascerScore";
+import { useGabriel BaúScore } from "@/hooks/useGabriel BaúScore";
 import { useSisScore } from "@/hooks/useSisScore";
 import { useBehaviorProfile } from "@/hooks/useBehaviorProfile";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,7 +37,7 @@ import { toast } from "sonner";
 import { ptBR } from "date-fns/locale";
 import { HealthService } from "@/services/healthService";
 
-export default function Renascer() {
+export default function Gabriel Baú() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [celebrating, setCelebrating] = useState(false);
@@ -49,7 +49,7 @@ export default function Renascer() {
   const [excelImportOpen, setExcelImportOpen] = useState(false);
 
   // Legacy score (kept for ManualInput compatibility)
-  const { todayLog, isLoading: legacyLoading } = useRenascerScore();
+  const { todayLog, isLoading: legacyLoading } = useGabriel BaúScore();
 
   // SIS score
   const sis = useSisScore();

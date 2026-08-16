@@ -47,7 +47,7 @@ export function ProblemSection() {
           {/* Bottom Message */}
           <div className="text-center mt-12">
             <p className="text-primary text-lg md:text-xl font-semibold">
-              O Método Renascer é o ultimato para mudar sua vida.
+              O Gabriel Baú Treinador é o ultimato para mudar sua vida.
             </p>
           </div>
         </div>

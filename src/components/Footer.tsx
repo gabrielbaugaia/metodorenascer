@@ -10,7 +10,7 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Flame className="w-5 h-5 text-primary" />
             </div>
-            <span className="font-display text-xl text-foreground tracking-wider">RENASCER</span>
+            <span className="font-display text-xl text-foreground tracking-wider">GABRIEL BAÚ</span>
           </div>
 
           {/* Creator */}
@@ -24,7 +24,7 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
         </div>
 
         <div className="mt-8 pt-8 border-t border-border text-center space-y-2">
-          <p className="text-muted-foreground text-sm">2026 Metodo Renascer. Todos os direitos reservados.
+          <p className="text-muted-foreground text-sm">2026 Metodo Gabriel Baú. Todos os direitos reservados.
 
         </p>
           <p className="text-muted-foreground/60 text-xs">

@@ -9,7 +9,7 @@ import { calcScore, classify, calculateTrend } from "@/lib/renascerScoreCalc";
 import { format, subDays } from "date-fns";
 import { Flame, Loader2 } from "lucide-react";
 
-interface AdminRenascerSectionProps {
+interface AdminGabriel BaúSectionProps {
   clientId: string;
 }
 
@@ -22,7 +22,7 @@ interface DayLog {
   rpe: number | null;
 }
 
-export function AdminRenascerSection({ clientId }: AdminRenascerSectionProps) {
+export function AdminGabriel BaúSection({ clientId }: AdminGabriel BaúSectionProps) {
   const { data: logs, isLoading } = useQuery({
     queryKey: ["admin-renascer-logs", clientId],
     queryFn: async () => {
@@ -42,7 +42,7 @@ export function AdminRenascerSection({ clientId }: AdminRenascerSectionProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Flame className="h-5 w-5 text-primary" /> Renascer Mode
+            <Flame className="h-5 w-5 text-primary" /> Gabriel Baú Mode
           </CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center py-8">
@@ -59,11 +59,11 @@ export function AdminRenascerSection({ clientId }: AdminRenascerSectionProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Flame className="h-5 w-5 text-primary" /> Renascer Mode
+            <Flame className="h-5 w-5 text-primary" /> Gabriel Baú Mode
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Cliente ainda não registrou dados no Renascer.</p>
+          <p className="text-sm text-muted-foreground">Cliente ainda não registrou dados no Gabriel Baú.</p>
         </CardContent>
       </Card>
     );
@@ -87,7 +87,7 @@ export function AdminRenascerSection({ clientId }: AdminRenascerSectionProps) {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <Flame className="h-5 w-5 text-primary" /> Renascer Mode
+          <Flame className="h-5 w-5 text-primary" /> Gabriel Baú Mode
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">

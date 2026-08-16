@@ -61,7 +61,7 @@ export default function BlogPost() {
 
   const updatePostMetaTags = (postData: BlogPostData) => {
     const baseUrl = window.location.origin;
-    const title = postData.meta_title || `${postData.title} | Método Renascer`;
+    const title = postData.meta_title || `${postData.title} | Gabriel Baú Treinador`;
     const description = postData.meta_description || postData.excerpt || '';
     const image = postData.cover_image_url || `${baseUrl}/og-blog.png`;
     const url = `${baseUrl}/blog/${postData.slug}`;
@@ -79,7 +79,7 @@ export default function BlogPost() {
       'og:title': title,
       'og:description': description,
       'og:image': image,
-      'og:site_name': 'Método Renascer'
+      'og:site_name': 'Gabriel Baú Treinador'
     };
 
     Object.entries(ogTags).forEach(([property, content]) => {
@@ -340,10 +340,10 @@ export default function BlogPost() {
           {/* CTA Section */}
           <div className="mt-16 glass-card p-10 md:p-14 text-center border-primary/20">
             <h3 className="font-display text-3xl md:text-4xl text-foreground mb-4">
-              PRONTO PARA <span className="text-primary">RENASCER</span>?
+              PRONTO PARA <span className="text-primary">GABRIEL BAÚ</span>?
             </h3>
             <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-              Conheça o Método Renascer e comece sua jornada de transformação física e mental.
+              Conheça o Gabriel Baú Treinador e comece sua jornada de transformação física e mental.
             </p>
             <Link 
               to="/#preco"

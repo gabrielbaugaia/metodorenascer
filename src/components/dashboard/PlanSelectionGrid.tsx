@@ -29,7 +29,7 @@ export function PlanSelectionGrid({ plans, onSelectPlan }: PlanSelectionGridProp
             </div>
             <h1 className="text-3xl font-bold mb-4">Escolha seu Plano</h1>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              Para acessar todo o conteúdo do Método Renascer, escolha o plano que melhor se adapta a você.
+              Para acessar todo o conteúdo do Gabriel Baú Treinador, escolha o plano que melhor se adapta a você.
             </p>
           </div>
 

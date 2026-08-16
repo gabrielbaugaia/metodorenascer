@@ -31,7 +31,7 @@ export function generateSisReportPdf(data: SisReportData): void {
     doc.text("SHAPE INTELLIGENCE SYSTEM™", margin, 18);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Método Renascer — Relatório Executivo", margin, 25);
+    doc.text("Gabriel Baú Treinador — Relatório Executivo", margin, 25);
     yPos = 42;
   };
 
@@ -40,7 +40,7 @@ export function generateSisReportPdf(data: SisReportData): void {
     doc.setTextColor(150, 150, 150);
     doc.setFont("helvetica", "normal");
     doc.text(`Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })} · Página ${pageNum}`, margin, pageHeight - 8);
-    doc.text("Método Renascer · Shape Intelligence System™", pageWidth - margin, pageHeight - 8, { align: "right" });
+    doc.text("Gabriel Baú Treinador · Shape Intelligence System™", pageWidth - margin, pageHeight - 8, { align: "right" });
   };
 
   const addSectionBar = (title: string) => {

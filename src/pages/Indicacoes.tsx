@@ -128,8 +128,8 @@ export default function Indicacoes() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Método Renascer",
-          text: "Junte-se a mim no Método Renascer e ganhe desconto!",
+          title: "Gabriel Baú Treinador",
+          text: "Junte-se a mim no Gabriel Baú Treinador e ganhe desconto!",
           url: referralLink,
         });
       } catch (error) {

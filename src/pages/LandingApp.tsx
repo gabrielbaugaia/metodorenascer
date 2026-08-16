@@ -16,7 +16,7 @@ const LandingApp = () => {
   const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.title = "Método Renascer | App de Prescrição Física, Nutricional e Mental";
+    document.title = "Gabriel Baú Treinador | App de Prescrição Física, Nutricional e Mental";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) {
       meta.setAttribute(

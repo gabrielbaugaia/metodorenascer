@@ -8,7 +8,7 @@ import { toast } from 'sonner';
  * HealthService — wrapper unificado iOS (HealthKit) + Android (Health Connect)
  * via @capgo/capacitor-health, mas a PERSISTÊNCIA é delegada ao pipeline
  * existente (`syncHealthData` → edge `health-sync` → tabela `health_daily`),
- * mantendo SIS, Renascer Score e dashboards alimentados pelos mesmos dados.
+ * mantendo SIS, Gabriel Baú Score e dashboards alimentados pelos mesmos dados.
  */
 
 const SYNC_THROTTLE_KEY = 'health_last_sync_ts';

@@ -41,7 +41,7 @@ export default function AcessoBloqueado() {
 
   const handleContactAdmin = () => {
     window.open(
-      "https://wa.me/5511999999999?text=Olá! Meu acesso ao Método Renascer expirou e gostaria de reativar.",
+      "https://wa.me/5511999999999?text=Olá! Meu acesso ao Gabriel Baú Treinador expirou e gostaria de reativar.",
       "_blank"
     );
   };
@@ -66,7 +66,7 @@ export default function AcessoBloqueado() {
           </CardTitle>
           <CardDescription className="text-base">
             {isFreeExpired
-              ? "Seu período gratuito de 30 dias expirou. Para continuar acessando o Método Renascer, escolha um plano."
+              ? "Seu período gratuito de 30 dias expirou. Para continuar acessando o Gabriel Baú Treinador, escolha um plano."
               : "Seu período de acesso gratuito de 7 dias expirou devido à inatividade no sistema."}
           </CardDescription>
         </CardHeader>

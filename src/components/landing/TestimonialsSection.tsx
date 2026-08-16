@@ -7,7 +7,7 @@ const testimonials = [
   {
     name: "Ana SP",
     result: "Perdi 18kg sem sair de casa",
-    content: "O Método Renascer mudou completamente minha relação com exercício. Com o acompanhamento via WhatsApp e os treinos personalizados, consegui perder 18kg treinando em casa. Nunca imaginei que seria possível."
+    content: "O Gabriel Baú Treinador mudou completamente minha relação com exercício. Com o acompanhamento via WhatsApp e os treinos personalizados, consegui perder 18kg treinando em casa. Nunca imaginei que seria possível."
   },
   {
     name: "João RJ",

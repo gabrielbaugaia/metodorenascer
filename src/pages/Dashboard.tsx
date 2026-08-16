@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
 import { StatusBadge } from "@/components/renascer/StatusBadge";
-import { useRenascerScore } from "@/hooks/useRenascerScore";
+import { useGabriel BaúScore } from "@/hooks/useGabriel BaúScore";
 import { computeBodyIndicators, type DayLog } from "@/lib/bodyIndicators";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
@@ -112,7 +112,7 @@ export default function Dashboard() {
   const { subscribed, loading: subLoading, createCheckout, openCustomerPortal, subscriptionEnd } = useSubscription();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const { streak } = useAchievements();
-  const renascer = useRenascerScore();
+  const renascer = useGabriel BaúScore();
   useActivityTracker();
   const navigate = useNavigate();
   const [checkingAnamnese, setCheckingAnamnese] = useState(true);

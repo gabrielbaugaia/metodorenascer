@@ -50,7 +50,7 @@ export function Header() {
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
               <Flame className="w-4 h-4 text-primary" />
             </div>
-            <span className="font-display text-lg md:text-xl text-foreground tracking-wider">RENASCER</span>
+            <span className="font-display text-lg md:text-xl text-foreground tracking-wider">GABRIEL BAÚ</span>
           </button>
 
           {/* Desktop Navigation */}

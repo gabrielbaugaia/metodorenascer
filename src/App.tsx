@@ -68,7 +68,7 @@ const AdminConectorMobileDocs = lazy(() => import("./pages/admin/AdminConectorMo
 const ConnectLogin = lazy(() => import("./pages/connect/ConnectLogin"));
 const ConnectDashboard = lazy(() => import("./pages/connect/ConnectDashboard"));
 const ConnectSync = lazy(() => import("./pages/connect/ConnectSync"));
-const Renascer = lazy(() => import("./pages/Renascer"));
+const Gabriel Baú = lazy(() => import("./pages/Gabriel Baú"));
 const NutricaoTracking = lazy(() => import("./pages/NutricaoTracking"));
 const Cardio = lazy(() => import("./pages/Cardio"));
 const Vo2Max = lazy(() => import("./pages/Vo2Max"));
@@ -159,7 +159,7 @@ const App = () => {
             <Route path="/assinatura" element={<SubscriptionGuard><Assinatura /></SubscriptionGuard>} />
             <Route path="/configuracoes" element={<SubscriptionGuard><Configuracoes /></SubscriptionGuard>} />
             <Route path="/dados-corpo" element={<SubscriptionGuard><DadosCorpo /></SubscriptionGuard>} />
-            <Route path="/renascer" element={<SubscriptionGuard><Renascer /></SubscriptionGuard>} />
+            <Route path="/renascer" element={<SubscriptionGuard><Gabriel Baú /></SubscriptionGuard>} />
             <Route path="/nutricao-diario" element={<SubscriptionGuard><NutricaoTracking /></SubscriptionGuard>} />
             <Route path="/cardio" element={<SubscriptionGuard><Cardio /></SubscriptionGuard>} />
             <Route path="/vo2max" element={<SubscriptionGuard><Vo2Max /></SubscriptionGuard>} />
@@ -190,7 +190,7 @@ const App = () => {
               <Route path="/mqo" element={<AdminGuard><Mqo /></AdminGuard>} />
               <Route path="/admin/docs/conector-mobile" element={<AdminGuard><AdminConectorMobileDocs /></AdminGuard>} />
 
-              {/* ROTAS RENASCER CONNECT (mobile) */}
+              {/* ROTAS GABRIEL BAÚ CONNECT (mobile) */}
               <Route path="/connect/login" element={<ConnectLogin />} />
               <Route path="/connect/dashboard" element={<ConnectDashboard />} />
               <Route path="/connect/sync" element={<ConnectSync />} />

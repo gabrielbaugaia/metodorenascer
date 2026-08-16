@@ -51,7 +51,7 @@ export function V2Header() {
             <Flame className="w-4 h-4 text-primary" />
           </div>
           <span className="font-display-v2 text-[20px] tracking-[3px] text-foreground">
-            RENASCER<span className="text-primary">.</span>
+            GABRIEL BAÚ<span className="text-primary">.</span>
           </span>
         </Link>
 

@@ -78,12 +78,12 @@ const Quiz = () => {
   });
 
   useEffect(() => {
-    document.title = "Diagnóstico Renascer | Descubra seu risco de Burnout";
+    document.title = "Diagnóstico Gabriel Baú | Descubra seu risco de Burnout";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) {
       meta.setAttribute(
         "content",
-        "Diagnóstico em 60s do Método Renascer: descubra seu risco de Burnout, Compulsão Alimentar e Queda de Motivação com base em sono, stress e comportamento."
+        "Diagnóstico em 60s do Gabriel Baú Treinador: descubra seu risco de Burnout, Compulsão Alimentar e Queda de Motivação com base em sono, stress e comportamento."
       );
     }
 
@@ -223,7 +223,7 @@ const Quiz = () => {
         >
           <span className="eyebrow mb-4 inline-flex items-center gap-2">
             <span className="inline-block h-px w-6 bg-primary" />
-            DIAGNÓSTICO RENASCER
+            DIAGNÓSTICO GABRIEL BAÚ
           </span>
           <h1 className="font-serif-display text-[clamp(2.2rem,6vw,4rem)] font-light leading-[0.95] tracking-tight mb-6">
             Descubra seu risco de<br />
@@ -253,7 +253,7 @@ const Quiz = () => {
         >
           <div className="w-full max-w-md">
             <div className="mb-2 flex items-center justify-between text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
-              <span>Diagnóstico Renascer</span>
+              <span>Diagnóstico Gabriel Baú</span>
               <span>{step} de 4</span>
             </div>
             <div className="mb-10 h-px w-full bg-border relative">
@@ -481,7 +481,7 @@ const Quiz = () => {
 
             <div className="border border-border bg-card p-6 rounded-sm mb-8">
               <p className="text-primary text-xs uppercase tracking-[0.3em] font-medium mb-3">
-                Bem-vindo ao Método Renascer
+                Bem-vindo ao Gabriel Baú Treinador
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Um método que integra Engenharia do Movimento, SIS e Behavior — sistemas que mapeiam suas variáveis diariamente para que seu progresso seja eficiente e ultra personalizado. Se algo muda no seu corpo ou rotina, sou notificado e já ajusto o protocolo.
@@ -514,7 +514,7 @@ const Quiz = () => {
               Seu corpo é o seu <em className="text-primary italic">principal ativo.</em>
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-              Para empreendedores e executivos, disciplina física é performance nos negócios. O Método Renascer garante que você não quebre no meio do caminho.
+              Para empreendedores e executivos, disciplina física é performance nos negócios. O Gabriel Baú Treinador garante que você não quebre no meio do caminho.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">

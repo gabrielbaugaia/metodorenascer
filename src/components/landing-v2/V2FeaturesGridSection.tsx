@@ -2,7 +2,7 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const features = [
   { ico: "📊", title: "Score Diário", tag: "Shape Intelligence Score™", desc: "Índice de 0 a 100 que consolida treino, sono, mente, consistência e nutrição num único número calculado todo dia." },
-  { ico: "🔋", title: "Prontidão", tag: "Renascer Score™", desc: "Determina o volume exato de treino para o dia — 100%, 80%, 50% ou recuperação ativa — com base em como você acordou." },
+  { ico: "🔋", title: "Prontidão", tag: "Gabriel Baú Score™", desc: "Determina o volume exato de treino para o dia — 100%, 80%, 50% ou recuperação ativa — com base em como você acordou." },
   { ico: "💓", title: "Fisiologia", tag: "Health Readiness", desc: "Seu wearable vira ferramenta clínica. VFC, FC de repouso e qualidade de sono cruzados com dados subjetivos." },
   { ico: "🧬", title: "Psicologia", tag: "Inteligência Mental", desc: "6 índices que detectam burnout, compulsão alimentar, queda de motivação e isolamento — antes de virar problema." },
   { ico: "🎭", title: "Comportamento", tag: "Perfil Adaptativo", desc: "4 perfis comportamentais identificados automaticamente. Cada um recebe desafios, comunicação e estratégias próprias." },

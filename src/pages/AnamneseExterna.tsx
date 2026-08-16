@@ -202,7 +202,7 @@ export default function AnamneseExterna() {
             </p>
             <div className="flex items-center justify-center gap-2 pt-4">
               <Flame className="h-5 w-5 text-primary" />
-              <span className="font-semibold">Método Renascer</span>
+              <span className="font-semibold">Gabriel Baú Treinador</span>
             </div>
           </CardContent>
         </Card>
@@ -221,7 +221,7 @@ export default function AnamneseExterna() {
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Flame className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">MÉTODO RENASCER</span>
+            <span className="text-2xl font-bold">MÉTODO GABRIEL BAÚ</span>
           </div>
           <h1 className="text-2xl font-bold mb-2">Olá, {clientName}!</h1>
           <p className="text-muted-foreground mb-4">

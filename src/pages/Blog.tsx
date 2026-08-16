@@ -33,8 +33,8 @@ const CATEGORIES = [
 
 const updateMetaTags = () => {
   const baseUrl = window.location.origin;
-  const title = "Blog | Método Renascer - Transformação Física e Mental";
-  const description = "Artigos sobre treino, nutrição e mindset para sua transformação. Conteúdo exclusivo do Método Renascer.";
+  const title = "Blog | Gabriel Baú Treinador - Transformação Física e Mental";
+  const description = "Artigos sobre treino, nutrição e mindset para sua transformação. Conteúdo exclusivo do Gabriel Baú Treinador.";
   const image = `${baseUrl}/og-blog.png`;
 
   document.title = title;
@@ -50,7 +50,7 @@ const updateMetaTags = () => {
     'og:title': title,
     'og:description': description,
     'og:image': image,
-    'og:site_name': 'Método Renascer'
+    'og:site_name': 'Gabriel Baú Treinador'
   };
 
   Object.entries(ogTags).forEach(([property, content]) => {
@@ -500,7 +500,7 @@ export default function Blog() {
         <div className="container mx-auto">
           <div className="max-w-3xl mx-auto text-center glass-card p-10 md:p-16">
             <h2 className="font-display text-3xl md:text-4xl text-foreground mb-4">
-              PRONTO PARA <span className="text-primary">RENASCER</span>?
+              PRONTO PARA <span className="text-primary">GABRIEL BAÚ</span>?
             </h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
               Transforme seu corpo e mente com acompanhamento personalizado, treino, nutrição e suporte 24h.

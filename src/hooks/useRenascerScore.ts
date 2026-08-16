@@ -13,7 +13,7 @@ interface DayLog {
   rpe: number | null;
 }
 
-export interface RenascerScore {
+export interface Gabriel BaúScore {
   score: number;
   classification: "ELITE" | "ALTO" | "MODERADO" | "RISCO";
   statusText: string;
@@ -25,7 +25,7 @@ export interface RenascerScore {
   isLoading: boolean;
 }
 
-export function useRenascerScore(): RenascerScore {
+export function useGabriel BaúScore(): Gabriel BaúScore {
   const { user } = useAuth();
 
   const { data, isLoading } = useQuery({
