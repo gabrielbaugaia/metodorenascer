@@ -74,10 +74,6 @@ export default function Auth() {
             alt="Logo Gabriel Baú Treinador"
             className="mx-auto mb-4 h-20 w-auto object-contain"
           />
-
-          <p className="text-muted-foreground">
-            Entre na sua conta
-          </p>
         </div>
 
         <Card variant="glass">
