@@ -125,11 +125,11 @@ const App = () => {
             <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* ROTAS PÚBLICAS */}
-            <Route path="/" element={<LandingPremium />} />
-            <Route path="/landing-app" element={<LandingApp />} />
-            <Route path="/quiz" element={<Quiz />} />
-            <Route path="/landing-classica" element={<Index />} />
-            <Route path="/v2" element={<LandingV2 />} />
+            <Route path="/" element={<Auth />} />
+            <Route path="/landing-app" element={<Auth />} />
+            <Route path="/quiz" element={<Auth />} />
+            <Route path="/landing-classica" element={<Auth />} />
+            <Route path="/v2" element={<Auth />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/entrar" element={<Auth />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
