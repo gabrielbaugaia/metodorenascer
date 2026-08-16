@@ -159,7 +159,7 @@ const App = () => {
             <Route path="/assinatura" element={<SubscriptionGuard><Assinatura /></SubscriptionGuard>} />
             <Route path="/configuracoes" element={<SubscriptionGuard><Configuracoes /></SubscriptionGuard>} />
             <Route path="/dados-corpo" element={<SubscriptionGuard><DadosCorpo /></SubscriptionGuard>} />
-            <Route path="/renascer" element={<SubscriptionGuard><GabrielBau /></SubscriptionGuard>} />
+            <Route path="/renascer" element={<SubscriptionGuard><GabrielBauComponent /></SubscriptionGuard>} />
             <Route path="/nutricao-diario" element={<SubscriptionGuard><NutricaoTracking /></SubscriptionGuard>} />
             <Route path="/cardio" element={<SubscriptionGuard><Cardio /></SubscriptionGuard>} />
             <Route path="/vo2max" element={<SubscriptionGuard><Vo2Max /></SubscriptionGuard>} />
