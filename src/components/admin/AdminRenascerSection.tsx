@@ -42,7 +42,7 @@ export function AdminGabrielBauSection({ clientId }: AdminGabrielBauSectionProps
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Flame className="h-5 w-5 text-primary" /> GabrielBau Mode
+            <Flame className="h-5 w-5 text-primary" /> Gabriel Baú
           </CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center py-8">
@@ -59,11 +59,11 @@ export function AdminGabrielBauSection({ clientId }: AdminGabrielBauSectionProps
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Flame className="h-5 w-5 text-primary" /> GabrielBau Mode
+            <Flame className="h-5 w-5 text-primary" /> Gabriel Baú
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Cliente ainda não registrou dados no GabrielBau.</p>
+          <p className="text-sm text-muted-foreground">Cliente ainda não registrou dados no sistema de Gabriel Baú.</p>
         </CardContent>
       </Card>
     );
@@ -87,7 +87,7 @@ export function AdminGabrielBauSection({ clientId }: AdminGabrielBauSectionProps
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <Flame className="h-5 w-5 text-primary" /> GabrielBau Mode
+          <Flame className="h-5 w-5 text-primary" /> Gabriel Baú
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">

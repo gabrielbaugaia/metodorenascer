@@ -165,7 +165,7 @@ export default function AdminCriarCliente() {
 
         <div>
           <h1 className="text-3xl font-display font-bold">Criar Novo Cliente</h1>
-          <p className="text-muted-foreground">Cadastre um novo cliente no GabrielBau Treinador</p>
+          <p className="text-muted-foreground">Cadastre um novo cliente no sistema de Gabriel Baú Treinador</p>
         </div>
 
         {createdUser && (

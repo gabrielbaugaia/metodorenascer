@@ -1651,7 +1651,7 @@ export default function AdminClienteDetalhes() {
           </Card>
         )}
 
-        {/* GabrielBau Mode */}
+        {/* Gabriel Baú */}
         {id && <AdminGabrielBauSection clientId={id} />}
 
         {/* Observações */}

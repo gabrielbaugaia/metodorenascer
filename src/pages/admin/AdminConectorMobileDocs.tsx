@@ -120,14 +120,14 @@ const AdminConectorMobileDocs = () => {
     → GabrielBau Connect (app mobile)
       → Edge Function health-sync
         → Banco de Dados
-          → Página /dados-corpo no GabrielBau`}</CodeBlock>
+          → Página /dados-corpo no sistema de Gabriel Baú`}</CodeBlock>
                   <p className="font-medium text-foreground">Fluxo Android:</p>
                   <CodeBlock>{`Android Watch
   → Health Connect
     → GabrielBau Connect (app mobile)
       → Edge Function health-sync
         → Banco de Dados
-          → Página /dados-corpo no GabrielBau`}</CodeBlock>
+          → Página /dados-corpo no sistema de Gabriel Baú`}</CodeBlock>
                   <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
                     ⚠ O app GabrielBau (Lovable/web) NÃO acessa HealthKit diretamente. O conector mobile é obrigatório.
                   </p>

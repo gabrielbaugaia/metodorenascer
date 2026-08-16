@@ -129,7 +129,7 @@ export default function Indicacoes() {
       try {
         await navigator.share({
           title: "GabrielBau Treinador",
-          text: "Junte-se a mim no GabrielBau Treinador e ganhe desconto!",
+          text: "Junte-se a mim no sistema de Gabriel Baú Treinador e ganhe desconto!",
           url: referralLink,
         });
       } catch (error) {

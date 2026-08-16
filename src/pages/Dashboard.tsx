@@ -112,7 +112,7 @@ export default function Dashboard() {
   const { subscribed, loading: subLoading, createCheckout, openCustomerPortal, subscriptionEnd } = useSubscription();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const { streak } = useAchievements();
-  const renascer = useGabrielBauScore();
+  const gabrielBauData = useGabrielBauScore();
   useActivityTracker();
   const navigate = useNavigate();
   const [checkingAnamnese, setCheckingAnamnese] = useState(true);

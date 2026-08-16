@@ -68,7 +68,7 @@ const AdminConectorMobileDocs = lazy(() => import("./pages/admin/AdminConectorMo
 const ConnectLogin = lazy(() => import("./pages/connect/ConnectLogin"));
 const ConnectDashboard = lazy(() => import("./pages/connect/ConnectDashboard"));
 const ConnectSync = lazy(() => import("./pages/connect/ConnectSync"));
-const GabrielBau = lazy(() => import("./pages/GabrielBau"));
+const GabrielBauComponent = lazy(() => import("./pages/GabrielBau"));
 const NutricaoTracking = lazy(() => import("./pages/NutricaoTracking"));
 const Cardio = lazy(() => import("./pages/Cardio"));
 const Vo2Max = lazy(() => import("./pages/Vo2Max"));

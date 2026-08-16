@@ -76,7 +76,7 @@ export function ReferralCampaignPopup() {
 
   const shareWhatsApp = () => {
     const text = encodeURIComponent(
-      `${campaign?.title || "Indique e Ganhe"} - Junte-se a mim no GabrielBau Treinador! ${referralLink}`
+      `${campaign?.title || "Indique e Ganhe"} - Junte-se a mim no sistema de Gabriel Baú Treinador! ${referralLink}`
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
