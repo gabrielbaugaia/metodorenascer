@@ -170,16 +170,16 @@ export function ClientSidebar() {
                       <NavLink
                         to={item.url}
                         className={cn(
-                          "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                          isActive(item.url)
-                            ? "bg-muted text-foreground"
-                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                        )}
-                      >
-                        {isActive(item.url) && (
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-foreground rounded-r" />
-                        )}
-                        <item.icon className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} />
+"group relative flex min-h-10 items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm transition-colors",
+                           isActive(item.url)
+                             ? "border-border bg-muted text-foreground"
+                             : "text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-foreground"
+                         )}
+                       >
+                         {isActive(item.url) && (
+                           <div className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r bg-foreground" />
+                         )}
+                         <item.icon className="h-4 w-4 shrink-0 text-current opacity-90" strokeWidth={ICON_STROKE} />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -204,16 +204,16 @@ export function ClientSidebar() {
                       <NavLink
                         to={item.url}
                         className={cn(
-                          "group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                          isActive(item.url)
-                            ? "bg-muted text-foreground"
-                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                        )}
-                      >
-                        {isActive(item.url) && (
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-foreground rounded-r" />
-                        )}
-                        <item.icon className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} />
+"group relative flex min-h-10 items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm transition-colors",
+                           isActive(item.url)
+                             ? "border-border bg-muted text-foreground"
+                             : "text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-foreground"
+                         )}
+                       >
+                         {isActive(item.url) && (
+                           <div className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r bg-foreground" />
+                         )}
+                         <item.icon className="h-4 w-4 shrink-0 text-current opacity-90" strokeWidth={ICON_STROKE} />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
