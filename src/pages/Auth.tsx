@@ -74,14 +74,11 @@ export default function Auth() {
             alt="Logo Gabriel Baú Treinador"
             className="mx-auto mb-4 h-20 w-auto object-contain"
           />
-          <p className="text-sm text-muted-foreground whitespace-pre-line">
-            {"'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n\n\nI have approved the plan"}
-          </p>
         </div>
 
         <Card variant="glass">
           <CardHeader>
-            <CardTitle className="text-center">Entrar</CardTitle>
+            <CardTitle className="text-center text-muted-foreground">Entrar</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -128,7 +125,7 @@ export default function Auth() {
                 </div>
               </div>
 
-              <Button type="submit" variant="default" className="w-full h-12 text-[11px] uppercase tracking-[2px] font-mono" disabled={loading}>
+              <Button type="submit" variant="default" className="w-full h-12 bg-background text-muted-foreground hover:bg-muted hover:text-foreground text-[11px] uppercase tracking-[2px] font-mono" disabled={loading}>
                 {loading ? "Carregando..." : "Entrar"}
               </Button>
             </form>
