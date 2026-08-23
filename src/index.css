@@ -205,6 +205,12 @@
     color: hsl(var(--primary-foreground));
   }
 
+  /* Gold identity accent for iconography and small visual markers. */
+  .lucide.text-primary,
+  svg.text-primary {
+    color: hsl(var(--brand-gold));
+  }
+
   .text-balance {
     text-wrap: balance;
   }
