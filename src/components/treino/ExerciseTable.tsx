@@ -53,7 +53,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {exercise.completed && (
-                  <CheckCircle2 className="w-4 h-4 text-[hsl(var(--brand-gold))] shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-brand-gold shrink-0" />
                 )}
                 <span className={cn(
                   "font-medium text-sm text-foreground truncate",
@@ -64,7 +64,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
               </div>
               <button
                 aria-label={`Ver vídeo de ${exercise.name}`}
-                className="w-8 h-8 rounded-full bg-[hsl(var(--brand-gold))] text-warning-foreground flex items-center justify-center shrink-0"
+                className="w-8 h-8 rounded-full bg-brand-gold text-warning-foreground flex items-center justify-center shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   onExerciseClick(exercise);
@@ -86,7 +86,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
           <div className="hidden sm:grid sm:grid-cols-[1fr_60px_80px_70px_50px] gap-2 items-center">
             <div className="flex items-center gap-2 min-w-0">
               {exercise.completed && (
-                <CheckCircle2 className="w-4 h-4 text-[hsl(var(--brand-gold))] shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-brand-gold shrink-0" />
               )}
               <span className={cn(
                 "font-medium text-foreground truncate",
@@ -109,7 +109,7 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
             <div className="text-center">
               <button
                 aria-label={`Ver vídeo de ${exercise.name}`}
-                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(var(--brand-gold))] text-warning-foreground"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-brand-gold text-warning-foreground"
                 onClick={(e) => {
                   e.stopPropagation();
                   onExerciseClick(exercise);

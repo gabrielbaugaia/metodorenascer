@@ -135,8 +135,8 @@ export function WorkoutCard({
                     className={cn(
                       "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center shrink-0",
                       completed
-                        ? "bg-[hsl(var(--brand-gold))] text-warning-foreground"
-                        : "bg-[hsl(var(--brand-gold))] text-warning-foreground"
+                        ? "bg-brand-gold text-warning-foreground"
+                        : "bg-brand-gold text-warning-foreground"
                     )}
                   >
                     {completed ? (

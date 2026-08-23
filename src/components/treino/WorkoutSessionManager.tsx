@@ -134,8 +134,8 @@ export function WorkoutSessionManager({
         </div>
 
         <Card className="p-6 text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary to-red-500 flex items-center justify-center">
-            <Clock className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 mx-auto rounded-full bg-brand-gold flex items-center justify-center">
+            <Clock className="w-8 h-8 text-warning-foreground" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-foreground">
