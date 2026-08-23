@@ -552,7 +552,7 @@ export default function AdminPlanos() {
                   variant="outline"
                   onClick={() => setCleanYouTubeDialog(true)}
                   disabled={cleaningYouTube}
-                  className="gap-2 border-amber-500/50 text-amber-600 hover:bg-amber-500/10"
+                  className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
                 >
                   {cleaningYouTube ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -677,7 +677,7 @@ export default function AdminPlanos() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                <AlertTriangle className="h-5 w-5 text-primary" />
                 Limpar URLs do YouTube
               </AlertDialogTitle>
               <AlertDialogDescription>
@@ -691,7 +691,7 @@ export default function AdminPlanos() {
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={handleCleanYouTubeUrls} 
-                className="bg-amber-600 text-white hover:bg-amber-700"
+                className="bg-primary text-white hover:bg-amber-700"
               >
                 Limpar YouTube
               </AlertDialogAction>

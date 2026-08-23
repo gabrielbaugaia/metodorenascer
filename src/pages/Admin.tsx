@@ -168,7 +168,7 @@ export default function Admin() {
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6 text-white" />
               </div>
               <h1 className="font-display text-4xl text-foreground">
@@ -221,8 +221,8 @@ export default function Admin() {
             <Card variant="glass">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                    <User className="w-6 h-6 text-orange-400" />
+                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <User className="w-6 h-6 text-primary" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">

@@ -61,8 +61,8 @@ export function BrokenUrlsModal({
 
         <div className="py-4">
           {/* Warning */}
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 mb-4">
-            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30 mb-4">
+            <AlertTriangle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
             <p className="text-sm text-amber-800">
               URLs do domínio <code className="bg-amber-200/50 px-1 rounded">v2.exercisedb.io</code> não estão mais acessíveis. 
               Recomendamos baixar novos GIFs para o Storage local.

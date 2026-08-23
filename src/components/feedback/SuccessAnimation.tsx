@@ -41,8 +41,8 @@ export function SuccessAnimation({
 
   const colors = {
     check: "text-green-500",
-    trophy: "text-yellow-500",
-    flame: "text-orange-500",
+    trophy: "text-primary",
+    flame: "text-primary",
     star: "text-foreground",
   };
 
@@ -97,7 +97,7 @@ export function SuccessAnimation({
               key={i}
               className={cn(
                 "absolute w-2 h-2 rounded-full animate-confetti",
-                i % 3 === 0 ? "bg-foreground" : i % 3 === 1 ? "bg-orange-500" : "bg-green-500"
+                i % 3 === 0 ? "bg-foreground" : i % 3 === 1 ? "bg-primary" : "bg-green-500"
               )}
               style={{
                 left: `${Math.random() * 100}%`,

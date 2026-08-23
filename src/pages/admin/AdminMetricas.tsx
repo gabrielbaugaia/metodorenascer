@@ -181,7 +181,7 @@ export default function AdminMetricas() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-yellow-500">
+              <p className="text-2xl font-bold text-primary">
                 {engagementStats.find(e => e.status_engagement === "em_risco")?.user_count || 0}
               </p>
             </CardContent>
@@ -299,7 +299,7 @@ export default function AdminMetricas() {
               {engagementStats.map(stat => (
                 <Card key={stat.status_engagement} className={
                   stat.status_engagement === "ativo" ? "border-green-500" :
-                  stat.status_engagement === "em_risco" ? "border-yellow-500" : "border-red-500"
+                  stat.status_engagement === "em_risco" ? "border-primary" : "border-red-500"
                 }>
                   <CardHeader>
                     <CardTitle className="capitalize">

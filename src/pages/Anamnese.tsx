@@ -470,9 +470,9 @@ export default function Anamnese() {
 
           {/* Banner de campos obrigatórios faltantes */}
           {profileLoaded && missingRequired.length > 0 && (
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-4 text-left">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-4 text-left">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 shrink-0" />
+                <AlertTriangle className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-foreground mb-1">
                     {missingRequired.length} campo{missingRequired.length > 1 ? "s" : ""} obrigatório{missingRequired.length > 1 ? "s" : ""} faltando

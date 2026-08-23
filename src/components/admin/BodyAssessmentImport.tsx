@@ -222,9 +222,9 @@ export function BodyAssessmentImport({ clientId, onAssessmentImported }: BodyAss
                           risk === "Baixo" || risk === "Low"
                             ? "bg-green-500/10 text-green-700"
                             : risk === "Leve" || risk === "Mild"
-                            ? "bg-yellow-500/10 text-yellow-700"
+                            ? "bg-primary/10 text-yellow-700"
                             : risk === "Moderado" || risk === "Moderate"
-                            ? "bg-orange-500/10 text-orange-700"
+                            ? "bg-primary/10 text-primary"
                             : "bg-red-500/10 text-red-700";
                         return (
                           <span key={key} className={`text-xs px-2 py-0.5 rounded-full ${color}`}>

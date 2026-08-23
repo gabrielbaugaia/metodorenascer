@@ -285,8 +285,8 @@ export default function AdminPlanosVenda() {
           <Card variant="glass">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-yellow-500/20">
-                  <Star className="h-5 w-5 text-yellow-500" />
+                <div className="p-2 rounded-lg bg-primary/20">
+                  <Star className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Plano Destaque</p>

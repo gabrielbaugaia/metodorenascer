@@ -655,7 +655,7 @@ export function LPPlans() {
                   {p.outcome}
                 </p>
                 <p className="lp-body lp-muted text-[14px] leading-[1.7] mb-12">{p.body}</p>
-                <div className={`lp-mono text-[10px] tracking-[2.5px] uppercase inline-block py-3 border-b ${p.featured ? "lp-accent" : "lp-text"}`} style={{ borderColor: p.featured ? "#FF5A1F" : "#A7A7A7" }}>
+                <div className={`lp-mono text-[10px] tracking-[2.5px] uppercase inline-block py-3 border-b ${p.featured ? "lp-accent" : "lp-text"}`} style={{ borderColor: p.featured ? "hsl(var(--primary))" : "#A7A7A7" }}>
                   {isLoading ? "Abrindo checkout…" : `${p.cta} →`}
                 </div>
               </button>

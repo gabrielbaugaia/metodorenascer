@@ -82,9 +82,9 @@ function MetricBadge({ label, value, variant = "default" }: { label: string; val
 export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
   if (analysis.error && !analysis.biotipo) {
     return (
-      <Card className="border-yellow-500/50 bg-yellow-500/10">
+      <Card className="border-primary/50 bg-primary/10">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-2 text-yellow-600">
+          <div className="flex items-center gap-2 text-primary">
             <AlertCircle className="h-5 w-5" />
             <p>{analysis.resumoGeral || "Análise temporariamente indisponível."}</p>
           </div>
@@ -212,9 +212,9 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-orange-500/30 bg-orange-500/5">
+          <Card className="border-primary/30 bg-primary/5">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base text-orange-600">
+              <CardTitle className="flex items-center gap-2 text-base text-primary">
                 <Dumbbell className="h-4 w-4" />
                 Áreas para Desenvolver
               </CardTitle>
@@ -222,7 +222,7 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {analysis.gruposMuscularesDestaque.pontosFracos?.map((ponto, i) => (
-                  <Badge key={i} variant="outline" className="border-orange-500/50 text-orange-600">
+                  <Badge key={i} variant="outline" className="border-primary/50 text-primary">
                     {ponto}
                   </Badge>
                 ))}

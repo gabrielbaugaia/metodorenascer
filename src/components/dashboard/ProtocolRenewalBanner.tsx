@@ -16,13 +16,13 @@ export function ProtocolRenewalBanner({ daysSinceLastProtocol, needsEvolutionPho
   const isExpired = daysSinceLastProtocol >= 60;
 
   return (
-    <Card className={`border ${isExpired ? "border-destructive/40 bg-destructive/5" : "border-yellow-500/40 bg-yellow-500/5"}`}>
+    <Card className={`border ${isExpired ? "border-destructive/40 bg-destructive/5" : "border-primary/40 bg-primary/5"}`}>
       <CardContent className="flex flex-col items-center gap-3 p-5 text-center">
-        <div className={`w-11 h-11 rounded-full flex items-center justify-center ${isExpired ? "bg-destructive/20" : "bg-yellow-500/20"}`}>
+        <div className={`w-11 h-11 rounded-full flex items-center justify-center ${isExpired ? "bg-destructive/20" : "bg-primary/20"}`}>
           {isExpired ? (
             <AlertTriangle className={`h-5 w-5 text-destructive`} />
           ) : (
-            <RefreshCw className={`h-5 w-5 text-yellow-500`} />
+            <RefreshCw className={`h-5 w-5 text-primary`} />
           )}
         </div>
 

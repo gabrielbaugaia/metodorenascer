@@ -403,9 +403,9 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
             </p>
 
             {hasInvalidDates && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-                <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
-                <p className="text-xs text-yellow-600 dark:text-yellow-400">
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
+                <AlertTriangle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <p className="text-xs text-primary dark:text-primary">
                   Algumas datas parecem incorretas (fora dos últimos 10 dias). Corrija antes de salvar.
                 </p>
               </div>
@@ -415,7 +415,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
               {extractedDays.map((day, idx) => {
                 const dateValid = isDateInWindow(day.date);
                 return (
-                  <div key={idx} className={`rounded-lg border p-3 space-y-2 ${!dateValid ? "border-yellow-500/50 bg-yellow-500/5" : "border-border/50"}`}>
+                  <div key={idx} className={`rounded-lg border p-3 space-y-2 ${!dateValid ? "border-primary/50 bg-primary/5" : "border-border/50"}`}>
                     <div className="flex items-center justify-between gap-2">
                       {day.dateEditing ? (
                         <Input
@@ -438,7 +438,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
                       )}
                       <div className="flex items-center gap-1.5">
                         {!dateValid && (
-                          <Badge variant="outline" className="text-[10px] border-yellow-500/50 text-yellow-600 dark:text-yellow-400">
+                          <Badge variant="outline" className="text-[10px] border-primary/50 text-primary dark:text-primary">
                             ⚠ Corrigir
                           </Badge>
                         )}
@@ -475,7 +475,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
                         <span>BPM médio: <span className="text-foreground font-medium">{day.avg_hr_bpm}</span></span>
                       )}
                       {!day.steps && !day.active_calories && !day.exercise_minutes && (
-                        <span className="col-span-2 text-yellow-500">Nenhum dado detectado</span>
+                        <span className="col-span-2 text-primary">Nenhum dado detectado</span>
                       )}
                     </div>
                   </div>

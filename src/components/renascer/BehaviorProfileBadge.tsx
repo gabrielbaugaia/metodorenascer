@@ -7,10 +7,10 @@ interface Props {
 }
 
 const PROFILE_CONFIG: Record<string, { label: string; icon: typeof Brain; color: string }> = {
-  consistent: { label: "Consistente", icon: Flame, color: "text-orange-500" },
+  consistent: { label: "Consistente", icon: Flame, color: "text-primary" },
   explorer: { label: "Explorador", icon: Brain, color: "text-blue-500" },
-  resistant: { label: "Em adaptação", icon: Zap, color: "text-yellow-500" },
-  executor: { label: "Executor", icon: Target, color: "text-emerald-500" },
+  resistant: { label: "Em adaptação", icon: Zap, color: "text-primary" },
+  executor: { label: "Executor", icon: Target, color: "text-primary" },
 };
 
 export function BehaviorProfileBadge({ profileType, confidence }: Props) {

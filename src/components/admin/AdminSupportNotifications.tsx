@@ -156,7 +156,7 @@ export function AdminSupportNotifications() {
       case 'urgent':
         return 'bg-red-500 text-white';
       case 'high':
-        return 'bg-orange-500 text-white';
+        return 'bg-primary text-white';
       default:
         return 'bg-foreground/20 text-foreground';
     }

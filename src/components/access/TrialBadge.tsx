@@ -29,7 +29,7 @@ export function TrialBadge({ module, className, showDaysOnly = false }: TrialBad
     return (
       <span className={cn(
         "text-sm font-medium",
-        isLastDay ? "text-destructive" : isExpiringSoon ? "text-amber-500" : "text-muted-foreground",
+        isLastDay ? "text-destructive" : isExpiringSoon ? "text-primary" : "text-muted-foreground",
         className
       )}>
         {trialDaysLeft} {trialDaysLeft === 1 ? 'dia' : 'dias'}
@@ -75,7 +75,7 @@ export function TrialBanner({ isTrialing, trialDaysLeft, onUpgradeClick, classNa
       isLastDay 
         ? "bg-destructive/10 border border-destructive/20" 
         : isExpiringSoon 
-          ? "bg-amber-500/10 border border-amber-500/20" 
+          ? "bg-primary/10 border border-primary/20" 
           : "bg-foreground/10 border border-foreground/20",
       className
     )}>

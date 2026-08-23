@@ -44,6 +44,7 @@
     --warning-foreground: 0 0% 10%;
     --error: 0 100% 65%;
     --error-foreground: 0 0% 100%;
+    --brand-gold: 43 72% 55%;
 
     /* Sidebar */
     --sidebar-background: 225 40% 2%;
@@ -202,6 +203,12 @@
   .bg-foreground .text-foreground-foreground,
   .bg-primary .text-foreground-foreground {
     color: hsl(var(--primary-foreground));
+  }
+
+  /* Gold identity accent for iconography and small visual markers. */
+  .lucide.text-primary,
+  svg.text-primary {
+    color: hsl(var(--brand-gold));
   }
 
   .text-balance {

@@ -128,7 +128,7 @@ const AdminConectorMobileDocs = () => {
       → Edge Function health-sync
         → Banco de Dados
           → Página /dados-corpo no sistema de Gabriel Baú`}</CodeBlock>
-                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                  <p className="text-xs text-primary dark:text-primary font-medium">
                     ⚠ O app GabrielBau (Lovable/web) NÃO acessa HealthKit diretamente. O conector mobile é obrigatório.
                   </p>
                 </CardContent>
@@ -426,8 +426,8 @@ npx cap open ios
 # ou
 npx cap run ios`}</CodeBlock>
                   <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2 text-xs">
-                    <p className="font-semibold text-amber-700 dark:text-amber-400">⚠ Observações importantes:</p>
-                    <ul className="list-disc list-inside space-y-1 text-amber-600 dark:text-amber-400">
+                    <p className="font-semibold text-amber-700 dark:text-primary">⚠ Observações importantes:</p>
+                    <ul className="list-disc list-inside space-y-1 text-primary dark:text-primary">
                       <li>Requer <strong>Mac + Xcode 15+</strong> para compilar e rodar no iOS.</li>
                       <li><code>server.url</code> no <code>capacitor.config.ts</code> aponta para o WebView do Lovable <strong>apenas para MVP</strong> (login + sync mock).</li>
                       <li>O bridge TS (<code>src/services/healthkit.ts</code>) já detecta HealthKit nativo e faz fallback automático para mock na web.</li>
@@ -449,8 +449,8 @@ npx cap run ios`}</CodeBlock>
               <Card className="border-0 shadow-none">
                 <CardContent className="pt-2 space-y-4 text-sm text-muted-foreground">
                   <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-xs">
-                    <p className="font-semibold text-amber-700 dark:text-amber-400 mb-1">⚠ Estes arquivos devem ser criados manualmente no Xcode após git pull</p>
-                    <p className="text-amber-600 dark:text-amber-400">O Lovable não pode criar arquivos nativos Swift. Copie o código abaixo para os caminhos indicados.</p>
+                    <p className="font-semibold text-amber-700 dark:text-primary mb-1">⚠ Estes arquivos devem ser criados manualmente no Xcode após git pull</p>
+                    <p className="text-primary dark:text-primary">O Lovable não pode criar arquivos nativos Swift. Copie o código abaixo para os caminhos indicados.</p>
                   </div>
 
                   <div>
@@ -760,7 +760,7 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Conector mobile</span>
-                    <Badge className="bg-amber-500 hover:bg-amber-500 text-white">🔄 MVP em validação</Badge>
+                    <Badge className="bg-primary hover:bg-primary text-white">🔄 MVP em validação</Badge>
                   </div>
                 </CardContent>
               </Card>

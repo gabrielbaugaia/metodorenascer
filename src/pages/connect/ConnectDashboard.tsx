@@ -252,7 +252,7 @@ function HealthPermissionCard({
 
         {status === "denied" && (
           <div className="flex items-center gap-3">
-            <XCircle className="h-5 w-5 text-amber-500 shrink-0" />
+            <XCircle className="h-5 w-5 text-primary shrink-0" />
             <div>
               <p className="text-sm font-medium text-foreground">Permissão negada</p>
               {deniedHint && (

@@ -10,7 +10,7 @@ export function CalorieGauge({ consumed, target, remaining }: CalorieGaugeProps)
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (pct / 100) * circumference;
 
-  const color = pct > 100 ? "text-red-400" : pct > 85 ? "text-yellow-500" : "text-foreground";
+  const color = pct > 100 ? "text-red-400" : pct > 85 ? "text-primary" : "text-foreground";
 
   return (
     <div className="flex flex-col items-center gap-2">

@@ -45,7 +45,7 @@ const METRIC_CONFIGS: Record<MetricKey, MetricConfig> = {
   active_calories: {
     label: "Calorias Ativas",
     unit: "kcal",
-    color: "text-orange-500",
+    color: "text-primary",
     chartColor: "hsl(25, 95%, 53%)",
     ranges: { low: 200, mid: 400, high: 99999 },
     rangeLabels: { low: "Baixo gasto", mid: "Moderado", high: "Alto gasto" },
@@ -127,7 +127,7 @@ const METRIC_CONFIGS: Record<MetricKey, MetricConfig> = {
   exercise_minutes: {
     label: "Exercício",
     unit: "min",
-    color: "text-emerald-500",
+    color: "text-primary",
     chartColor: "hsl(160, 84%, 39%)",
     ranges: { low: 15, mid: 30, high: 99999 },
     rangeLabels: { low: "Abaixo da meta", mid: "Bom", high: "Excelente" },
@@ -220,7 +220,7 @@ const METRIC_CONFIGS: Record<MetricKey, MetricConfig> = {
   sedentary_hr: {
     label: "BPM Sedentária",
     unit: "bpm",
-    color: "text-amber-500",
+    color: "text-primary",
     chartColor: "hsl(30, 80%, 55%)",
     ranges: { low: 65, mid: 80, high: 99999 },
     rangeLabels: { low: "Ótimo", mid: "Normal", high: "Elevado" },
@@ -239,11 +239,11 @@ function getStatusColor(metric: MetricKey, value: number): string {
   const cfg = METRIC_CONFIGS[metric];
   if (cfg.invertColor) {
     if (value <= cfg.ranges.low) return "text-green-400";
-    if (value <= cfg.ranges.mid) return "text-yellow-400";
+    if (value <= cfg.ranges.mid) return "text-primary";
     return "text-red-400";
   }
   if (value < cfg.ranges.low) return "text-red-400";
-  if (value < cfg.ranges.mid) return "text-yellow-400";
+  if (value < cfg.ranges.mid) return "text-primary";
   return "text-green-400";
 }
 

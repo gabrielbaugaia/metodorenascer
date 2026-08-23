@@ -19,8 +19,8 @@ interface WeeklyCheckinModalProps {
 const moodOptions = [
   { value: "great", icon: Smile, label: "Ótimo", color: "text-green-500" },
   { value: "good", icon: ThumbsUp, label: "Bom", color: "text-blue-500" },
-  { value: "neutral", icon: Meh, label: "Normal", color: "text-yellow-500" },
-  { value: "bad", icon: ThumbsDown, label: "Ruim", color: "text-orange-500" },
+  { value: "neutral", icon: Meh, label: "Normal", color: "text-primary" },
+  { value: "bad", icon: ThumbsDown, label: "Ruim", color: "text-primary" },
   { value: "terrible", icon: Frown, label: "Péssimo", color: "text-red-500" },
 ];
 

@@ -189,7 +189,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
               label="Calorias Ativas"
               value={displayData.active_calories}
               unit="kcal"
-              color="bg-orange-500/10 text-orange-500"
+              color="bg-primary/10 text-primary"
               emptyValue={calEmpty}
               source={calEmpty ? "indisponivel" : src}
               subtitle={calEmpty ? "Estimativa disponível após registrar treinos ou conectar dispositivo" : undefined}
@@ -228,7 +228,7 @@ export function HealthDashboardTab({ todayData, dailyData, formatSleep, onConnec
               <MetricCard icon={Heart} label="BPM Diário" value={displayData.avg_hr_bpm} unit="bpm" color="bg-pink-500/10 text-pink-500" source={src} onClick={() => setDrawerMetric("avg_hr_bpm")} />
             )}
             {(displayData as any).exercise_minutes != null && (displayData as any).exercise_minutes > 0 && (
-              <MetricCard icon={Timer} label="Exercício" value={(displayData as any).exercise_minutes} unit="min" color="bg-emerald-500/10 text-emerald-500" source={src} onClick={() => setDrawerMetric("exercise_minutes")} />
+              <MetricCard icon={Timer} label="Exercício" value={(displayData as any).exercise_minutes} unit="min" color="bg-primary/10 text-primary" source={src} onClick={() => setDrawerMetric("exercise_minutes")} />
             )}
             {(displayData as any).distance_km != null && (displayData as any).distance_km > 0 && (
               <MetricCard icon={Route} label="Distância" value={Number((displayData as any).distance_km).toFixed(1)} unit="km" color="bg-cyan-500/10 text-cyan-500" source={src} onClick={() => setDrawerMetric("distance_km")} />

@@ -76,9 +76,9 @@ export function PhotoStandardGuide({ compact = false }: PhotoStandardGuideProps)
   }
 
   return (
-    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+    <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
       <div className="flex items-start gap-3">
-        <HelpCircle className="h-6 w-6 text-amber-500 flex-shrink-0" />
+        <HelpCircle className="h-6 w-6 text-primary flex-shrink-0" />
         <div className="flex-1">
           <h4 className="font-semibold text-foreground mb-2">
             📸 Modelo Padrão para Fotos (Obrigatório)

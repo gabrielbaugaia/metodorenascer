@@ -456,7 +456,7 @@ export default function AdminClientes() {
     const totalProtocols = client.protocolCount.treino + client.protocolCount.nutricao + client.protocolCount.mindset;
     if (totalProtocols === 0) {
       badges.push(
-        <Badge key="noproto" variant="outline" className="text-[10px] border-amber-500/50 text-amber-600">
+        <Badge key="noproto" variant="outline" className="text-[10px] border-primary/50 text-primary">
           Sem protocolos
         </Badge>
       );
@@ -758,7 +758,7 @@ export default function AdminClientes() {
                     <div className="flex items-center gap-2">
                       <p className="font-medium truncate">{client.full_name}</p>
                       {client.subscription?.status === "pending_payment" && (
-                        <Badge variant="secondary" className="text-[10px] bg-amber-500/20 text-amber-600 border-amber-500/30 shrink-0">
+                        <Badge variant="secondary" className="text-[10px] bg-primary/20 text-primary border-primary/30 shrink-0">
                           Pgto Pendente
                         </Badge>
                       )}
@@ -925,7 +925,7 @@ export default function AdminClientes() {
                                 {PLAN_NAMES[client.subscription.plan_type] || client.subscription.plan_type}
                               </Badge>
                               {client.subscription.status === "pending_payment" && (
-                                <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-600 border-amber-500/30 w-fit">
+                                <Badge variant="secondary" className="text-xs bg-primary/20 text-primary border-primary/30 w-fit">
                                   Aguardando Pagamento
                                 </Badge>
                               )}
