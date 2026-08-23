@@ -118,12 +118,12 @@ export function ExerciseSetTracker({
               >
                 {completedSets.length}/{totalSets}
               </Badge>
-              <ChevronDown
-                className={cn(
-                  "w-4 h-4 text-muted-foreground transition-transform",
-                  isOpen && "rotate-180"
-                )}
-              />
+               <ChevronDown
+                 className={cn(
+                   "w-4 h-4 text-brand-gold",
+                   isOpen && "rotate-180"
+                 )}
+               />
             </div>
           </div>
         </CollapsibleTrigger>
@@ -156,7 +156,7 @@ export function ExerciseSetTracker({
                     key={setNum}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg bg-foreground/10 border border-foreground/20"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-brand-gold shrink-0" />
                     <span className="text-xs text-muted-foreground w-12">
                       Série {setNum}
                     </span>

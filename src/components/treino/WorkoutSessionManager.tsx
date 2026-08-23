@@ -200,8 +200,8 @@ export function WorkoutSessionManager({
           </div>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-foreground/10 border border-foreground/20">
-          <Clock className="w-4 h-4 text-foreground" />
-          <span className="text-sm font-bold text-foreground tabular-nums">
+           <Clock className="w-4 h-4 text-brand-gold" />
+           <span className="text-sm font-bold text-foreground tabular-nums">
             {formatElapsed(session.elapsedSeconds)}
           </span>
         </div>

@@ -158,11 +158,11 @@ export function WorkoutCard({
                     </CardTitle>
                     <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-brand-gold" />
                         {duration}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
+                        <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-brand-gold" />
                         ~{calories} kcal
                       </span>
                     </div>
@@ -179,12 +179,12 @@ export function WorkoutCard({
                   >
                     {safeExercises.length} exercícios
                   </Badge>
-                  <ChevronDown
-                    className={cn(
-                      "w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground transition-transform",
-                      isOpen && "rotate-180"
-                    )}
-                  />
+                   <ChevronDown
+                     className={cn(
+                       "w-4 h-4 sm:w-5 sm:h-5 text-brand-gold",
+                       isOpen && "rotate-180"
+                     )}
+                   />
                 </div>
               </div>
 
