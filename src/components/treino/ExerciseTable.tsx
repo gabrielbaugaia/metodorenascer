@@ -108,7 +108,8 @@ export function ExerciseTable({ exercises, onExerciseClick }: ExerciseTableProps
             </div>
             <div className="text-center">
               <button
-                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-foreground/20 text-foreground hover:bg-foreground hover:text-foreground-foreground transition-colors"
+                aria-label={`Ver vídeo de ${exercise.name}`}
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(var(--brand-gold))] text-warning-foreground"
                 onClick={(e) => {
                   e.stopPropagation();
                   onExerciseClick(exercise);
