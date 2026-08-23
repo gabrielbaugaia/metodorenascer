@@ -78,7 +78,7 @@ export default function Auth() {
 
         <Card variant="glass">
           <CardHeader>
-            <CardTitle className="text-center">Entrar</CardTitle>
+            <CardTitle className="text-center text-muted-foreground">Entrar</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
