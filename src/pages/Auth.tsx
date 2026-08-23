@@ -74,9 +74,6 @@ export default function Auth() {
             alt="Logo Gabriel Baú Treinador"
             className="mx-auto mb-4 h-20 w-auto object-contain"
           />
-          <p className="text-sm text-muted-foreground whitespace-pre-line">
-            {"'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n\n\nI have approved the plan"}
-          </p>
         </div>
 
         <Card variant="glass">
