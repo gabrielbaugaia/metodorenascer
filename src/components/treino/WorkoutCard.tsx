@@ -135,15 +135,15 @@ export function WorkoutCard({
                     className={cn(
                       "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center shrink-0",
                       completed
-                        ? "bg-foreground text-foreground-foreground"
-                        : "bg-gradient-to-br from-primary to-red-500 text-white"
+                        ? "bg-brand-gold text-warning-foreground"
+                        : "bg-brand-gold text-warning-foreground"
                     )}
                   >
                     {completed ? (
                       <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                     ) : (
                       <>
-                        <span className="text-[8px] sm:text-[10px] uppercase font-medium opacity-80">
+                        <span className="text-[8px] sm:text-[10px] uppercase font-medium">
                           {day.slice(0, 3)}
                         </span>
                         <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -158,11 +158,11 @@ export function WorkoutCard({
                     </CardTitle>
                     <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-brand-gold" />
                         {duration}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
+                        <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-brand-gold" />
                         ~{calories} kcal
                       </span>
                     </div>
@@ -179,12 +179,12 @@ export function WorkoutCard({
                   >
                     {safeExercises.length} exercícios
                   </Badge>
-                  <ChevronDown
-                    className={cn(
-                      "w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground transition-transform",
-                      isOpen && "rotate-180"
-                    )}
-                  />
+                   <ChevronDown
+                     className={cn(
+                       "w-4 h-4 sm:w-5 sm:h-5 text-brand-gold",
+                       isOpen && "rotate-180"
+                     )}
+                   />
                 </div>
               </div>
 
