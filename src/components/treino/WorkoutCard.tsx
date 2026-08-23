@@ -135,15 +135,15 @@ export function WorkoutCard({
                     className={cn(
                       "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center shrink-0",
                       completed
-                        ? "bg-foreground text-foreground-foreground"
-                        : "bg-gradient-to-br from-primary to-red-500 text-white"
+                        ? "bg-[hsl(var(--brand-gold))] text-warning-foreground"
+                        : "bg-[hsl(var(--brand-gold))] text-warning-foreground"
                     )}
                   >
                     {completed ? (
                       <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                     ) : (
                       <>
-                        <span className="text-[8px] sm:text-[10px] uppercase font-medium opacity-80">
+                        <span className="text-[8px] sm:text-[10px] uppercase font-medium">
                           {day.slice(0, 3)}
                         </span>
                         <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5" />

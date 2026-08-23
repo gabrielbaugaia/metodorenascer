@@ -95,9 +95,9 @@ export function ExerciseSetTracker({
           <div className="flex items-center justify-between p-3 cursor-pointer select-none" onClick={(e) => { if (onExerciseClick) { e.stopPropagation(); onExerciseClick(exerciseName); } }}>
             <div className="flex items-center gap-2 min-w-0">
               {allDone ? (
-                <CheckCircle2 className="w-5 h-5 text-foreground shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-[hsl(var(--brand-gold))] shrink-0" />
               ) : (
-                <Dumbbell className="w-5 h-5 text-muted-foreground shrink-0" />
+                <Dumbbell className="w-5 h-5 text-[hsl(var(--brand-gold))] shrink-0" />
               )}
               <span
                 className={cn(
