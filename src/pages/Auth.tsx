@@ -125,7 +125,7 @@ export default function Auth() {
                 </div>
               </div>
 
-              <Button type="submit" variant="default" className="w-full h-12 text-[11px] uppercase tracking-[2px] font-mono" disabled={loading}>
+              <Button type="submit" variant="default" className="w-full h-12 bg-background text-muted-foreground hover:bg-muted hover:text-foreground text-[11px] uppercase tracking-[2px] font-mono" disabled={loading}>
                 {loading ? "Carregando..." : "Entrar"}
               </Button>
             </form>
