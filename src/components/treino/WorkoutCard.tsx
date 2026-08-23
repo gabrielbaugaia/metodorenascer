@@ -136,7 +136,7 @@ export function WorkoutCard({
                       "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center shrink-0",
                       completed
                         ? "bg-foreground text-foreground-foreground"
-                        : "bg-gradient-to-br from-orange-500 to-red-500 text-white"
+                        : "bg-gradient-to-br from-primary to-red-500 text-white"
                     )}
                   >
                     {completed ? (
@@ -162,7 +162,7 @@ export function WorkoutCard({
                         {duration}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-500" />
+                        <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
                         ~{calories} kcal
                       </span>
                     </div>

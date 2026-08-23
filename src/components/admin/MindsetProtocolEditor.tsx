@@ -256,7 +256,7 @@ export function MindsetProtocolEditor({
       <Card className="bg-muted/30">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <Sun className="h-4 w-4 text-yellow-500" />
+            <Sun className="h-4 w-4 text-primary" />
             Rotina da Manhã
           </CardTitle>
         </CardHeader>

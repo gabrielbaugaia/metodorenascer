@@ -332,10 +332,10 @@ export default function Dashboard() {
     return (
       <ClientLayout>
         <div className="container mx-auto max-w-lg py-12">
-          <Card className="border-yellow-500/30 bg-yellow-500/5">
+          <Card className="border-primary/30 bg-primary/5">
             <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mb-4">
-                <Lock className="w-8 h-8 text-yellow-500" />
+              <div className="mx-auto w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
+                <Lock className="w-8 h-8 text-primary" />
               </div>
               <CardTitle className="text-2xl">Pagamento Pendente</CardTitle>
               <CardDescription>Seu acesso está aguardando a confirmação do pagamento</CardDescription>
@@ -396,10 +396,10 @@ export default function Dashboard() {
       <div className="container mx-auto max-w-xl space-y-6">
         {/* Alerta de Anamnese Pendente */}
         {anamneseIncomplete && (
-          <Card className="border-yellow-500/40 bg-yellow-500/5">
+          <Card className="border-primary/40 bg-primary/5">
             <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
-              <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                <AlertTriangle className="h-6 w-6 text-yellow-500" />
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-primary" />
               </div>
               <CardTitle className="text-lg">Anamnese Pendente</CardTitle>
               <p className="text-sm text-muted-foreground max-w-sm">

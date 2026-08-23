@@ -129,7 +129,7 @@ const getStatusColorClasses = (color: ConversationStatus['color']) => {
     case 'green':
       return 'bg-green-500/20 text-green-500 border-green-500/30';
     case 'yellow':
-      return 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30';
+      return 'bg-primary/20 text-primary border-primary/30';
     case 'red':
       return 'bg-red-500/20 text-red-500 border-red-500/30';
     case 'blue':
@@ -577,8 +577,8 @@ export default function AdminSuporteChats() {
                   <p className="text-xs md:text-sm text-muted-foreground">Aguardando</p>
                   <p className="text-xl md:text-2xl font-bold">{statusCounts.awaiting}</p>
                 </div>
-                <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                  <Clock className="h-4 w-4 md:h-5 md:w-5 text-yellow-500" />
+                <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Clock className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 </div>
               </div>
             </CardContent>
@@ -633,7 +633,7 @@ export default function AdminSuporteChats() {
                         <div className="flex items-center gap-2 mb-1">
                           <div className={`h-2 w-2 rounded-full ${
                             status.color === 'green' ? 'bg-green-500' :
-                            status.color === 'yellow' ? 'bg-yellow-500' :
+                            status.color === 'yellow' ? 'bg-primary' :
                             status.color === 'red' ? 'bg-red-500' :
                             status.color === 'blue' ? 'bg-blue-500' :
                             'bg-muted-foreground'

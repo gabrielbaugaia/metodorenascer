@@ -143,7 +143,7 @@ export function ClientAnamneseCard({ profile, currentWeight }: ClientAnamneseCar
                   <div className="flex items-center gap-1">
                     <p className="font-medium text-foreground">{currentWeight} kg</p>
                     {weightChange !== null && weightChange !== 0 && (
-                      <Badge variant="outline" className={`text-xs ${weightChange < 0 ? "text-green-500 border-green-500/50" : "text-orange-500 border-orange-500/50"}`}>
+                      <Badge variant="outline" className={`text-xs ${weightChange < 0 ? "text-green-500 border-green-500/50" : "text-primary border-primary/50"}`}>
                         {weightChange > 0 ? "+" : ""}{weightChange.toFixed(1)}
                       </Badge>
                     )}
@@ -253,10 +253,10 @@ export function ClientAnamneseCard({ profile, currentWeight }: ClientAnamneseCar
             )}
             {(profile.injuries || profile.restricoes_medicas) && (
               <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5" />
+                <AlertCircle className="h-4 w-4 text-primary mt-0.5" />
                 <div>
                   <p className="text-xs text-muted-foreground">Lesões/Limitações</p>
-                  <p className="text-sm text-orange-500">{profile.injuries || profile.restricoes_medicas}</p>
+                  <p className="text-sm text-primary">{profile.injuries || profile.restricoes_medicas}</p>
                 </div>
               </div>
             )}

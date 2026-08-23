@@ -302,8 +302,8 @@ export default function CheckoutSuccess() {
               </p>
             </div>
           ) : (
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
-              <p className="text-sm text-yellow-600">
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+              <p className="text-sm text-primary">
                 Aguarde alguns segundos para ativação...
               </p>
             </div>

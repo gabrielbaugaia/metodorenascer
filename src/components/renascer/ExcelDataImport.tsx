@@ -445,7 +445,7 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
             </div>
 
             {existingDates.size > 0 && !overwrite && (
-              <p className="text-xs text-yellow-500 flex items-center gap-1">
+              <p className="text-xs text-primary flex items-center gap-1">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 {existingDates.size} dia(s) já possuem dados e serão ignorados
               </p>

@@ -38,7 +38,7 @@ const steps: Step[] = [
     title: "Seu Treino Personalizado",
     description:
       "Acesse treinos criados exclusivamente para você, com vídeos demonstrativos de cada exercício.",
-    color: "from-orange-500 to-red-500",
+    color: "from-primary to-red-500",
     tip: "Clique em qualquer exercício para ver o vídeo de execução correta!",
   },
   {
@@ -46,7 +46,7 @@ const steps: Step[] = [
     title: "Plano Nutricional",
     description:
       "Cardápio completo com refeições balanceadas e macros calculados para seus objetivos.",
-    color: "from-green-500 to-emerald-500",
+    color: "from-green-500 to-primary",
     tip: "Baixe seu plano em PDF para consultar offline!",
   },
   {
@@ -70,7 +70,7 @@ const steps: Step[] = [
     title: "Fale com seu Mentor",
     description:
       "Tire dúvidas 24h por dia com nosso mentor virtual inteligente.",
-    color: "from-primary to-orange-600",
+    color: "from-primary to-primary",
     tip: "Não hesite em perguntar - estou aqui para ajudar!",
   },
 ];

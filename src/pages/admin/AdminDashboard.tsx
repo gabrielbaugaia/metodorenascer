@@ -428,7 +428,7 @@ export default function AdminDashboard() {
                   <div className="grid lg:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       {planDistribution.map((plan, idx) => {
-                        const colors = ["bg-foreground", "bg-green-500", "bg-blue-500", "bg-purple-500", "bg-yellow-500"];
+                        const colors = ["bg-foreground", "bg-green-500", "bg-blue-500", "bg-purple-500", "bg-primary"];
                         return (
                           <div key={plan.plan} className="flex items-center justify-between p-2.5 bg-muted/30 rounded-lg">
                             <div className="flex items-center gap-2 min-w-0">

@@ -121,7 +121,7 @@ export function Vo2MaxLiveBruce({ onFinish, onBack }: Props) {
         </div>
 
         {!isWakeLockSupported() && (
-          <div className="flex items-start gap-2 text-xs text-amber-500 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-left">
+          <div className="flex items-start gap-2 text-xs text-primary bg-primary/10 border border-primary/30 rounded-lg p-3 text-left">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>
               Seu navegador pode apagar a tela durante o teste. Mantenha o app aberto

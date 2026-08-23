@@ -234,7 +234,7 @@ export default function Mindset() {
           <Card>
             <CardContent className="py-6">
               <div className="flex items-center gap-2 mb-4">
-                <Zap className="h-5 w-5 text-yellow-500" />
+                <Zap className="h-5 w-5 text-primary" />
                 <span className="text-sm font-semibold uppercase">
                   Mentalidade Necessária
                 </span>
@@ -258,7 +258,7 @@ export default function Mindset() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Sun className="h-5 w-5 text-yellow-500" />
+                  <Sun className="h-5 w-5 text-primary" />
                   ROTINA DA MANHÃ
                 </CardTitle>
                 <Badge variant="secondary" className="text-foreground">

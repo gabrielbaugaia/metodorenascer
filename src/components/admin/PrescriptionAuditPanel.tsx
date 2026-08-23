@@ -87,7 +87,7 @@ const MINDSET_CRITERIA_LABELS: Record<string, string> = {
 function getScoreColor(score: number): string {
   if (score >= 95) return "text-green-600";
   if (score >= 85) return "text-blue-600";
-  if (score >= 75) return "text-yellow-600";
+  if (score >= 75) return "text-primary";
   return "text-red-600";
 }
 
@@ -126,7 +126,7 @@ export function PrescriptionAuditPanel({ auditResult, tipo }: Props) {
 
       {auditResult.warning && (
         <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-          <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 shrink-0" />
+          <AlertTriangle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
           <p className="text-sm text-yellow-800">{auditResult.warning}</p>
         </div>
       )}

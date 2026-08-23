@@ -20,8 +20,8 @@ interface WellnessScore {
 
 function getRiskColor(value: number) {
   if (value >= 70) return "text-red-500";
-  if (value >= 40) return "text-yellow-500";
-  return "text-emerald-500";
+  if (value >= 40) return "text-primary";
+  return "text-primary";
 }
 
 function getRiskBadge(value: number) {

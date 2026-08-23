@@ -47,12 +47,12 @@ export function AchievementsGrid({ achievements, userAchievements, totalPoints }
       {/* Points summary */}
       <div className="flex items-center justify-between bg-card/50 backdrop-blur-sm border border-border/50 rounded-xl p-4">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
-            <Trophy className="h-5 w-5 text-yellow-500" />
+          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+            <Trophy className="h-5 w-5 text-primary" />
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Total de pontos</p>
-            <p className="text-xl font-bold text-yellow-500">{totalPoints}</p>
+            <p className="text-xl font-bold text-primary">{totalPoints}</p>
           </div>
         </div>
         <div className="text-right">

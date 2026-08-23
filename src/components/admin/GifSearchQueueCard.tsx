@@ -198,11 +198,11 @@ export function GifSearchQueueCard({
         {/* Queue Status */}
         {queueStatus && queueStatus.total > 0 && (
           <div className="grid grid-cols-4 gap-3 text-center">
-            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-              <div className="flex items-center justify-center gap-1 text-yellow-600 mb-1">
+            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+              <div className="flex items-center justify-center gap-1 text-primary mb-1">
                 <Clock className="h-4 w-4" />
               </div>
-              <p className="text-xl font-bold text-yellow-600">{queueStatus.pending}</p>
+              <p className="text-xl font-bold text-primary">{queueStatus.pending}</p>
               <p className="text-xs text-muted-foreground">Pendentes</p>
             </div>
             <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">

@@ -208,9 +208,9 @@ export default function AdminConvites() {
         </div>
 
         {inviteResult && (
-          <Card className={inviteResult.requiresPayment ? "border-yellow-500/50 bg-yellow-500/10" : "border-green-500/50 bg-green-500/10"}>
+          <Card className={inviteResult.requiresPayment ? "border-primary/50 bg-primary/10" : "border-green-500/50 bg-green-500/10"}>
             <CardHeader>
-              <CardTitle className={`flex items-center gap-2 ${inviteResult.requiresPayment ? "text-yellow-400" : "text-green-400"}`}>
+              <CardTitle className={`flex items-center gap-2 ${inviteResult.requiresPayment ? "text-primary" : "text-green-400"}`}>
                 {inviteResult.requiresPayment ? (
                   <>
                     <CreditCard className="h-5 w-5" />
@@ -361,9 +361,9 @@ export default function AdminConvites() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       {formData.requires_payment ? (
-                        <CreditCard className="h-4 w-4 text-amber-500" />
+                        <CreditCard className="h-4 w-4 text-primary" />
                       ) : (
-                        <Gift className="h-4 w-4 text-emerald-500" />
+                        <Gift className="h-4 w-4 text-primary" />
                       )}
                       <Label htmlFor="requires_payment" className="font-medium cursor-pointer">
                         {formData.requires_payment ? "Exigir pagamento Stripe" : "Liberar acesso direto"}

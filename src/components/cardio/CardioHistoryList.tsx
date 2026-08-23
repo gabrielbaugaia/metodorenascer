@@ -58,7 +58,7 @@ export function CardioHistoryList({ sessions, onDelete, isDeleting }: Props) {
                   {format(new Date(s.session_date + "T12:00:00"), "dd MMM yyyy", { locale: ptBR })}
                 </span>
                 {s.fasting && (
-                  <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-600">
+                  <Badge variant="outline" className="text-[10px] border-primary text-primary">
                     <Moon className="h-3 w-3 mr-1" /> Jejum
                   </Badge>
                 )}

@@ -167,7 +167,7 @@ export default function GabrielBau() {
               />
               {sis.currentStreak > 0 && (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Flame className="h-3.5 w-3.5 text-orange-500" />
+                  <Flame className="h-3.5 w-3.5 text-primary" />
                   <span>{sis.currentStreak} dias consecutivos</span>
                   {sis.bestStreak > sis.currentStreak && (
                     <span className="text-muted-foreground/60">· recorde {sis.bestStreak}</span>

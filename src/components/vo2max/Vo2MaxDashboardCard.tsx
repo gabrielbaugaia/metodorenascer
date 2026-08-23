@@ -31,9 +31,9 @@ export function Vo2MaxDashboardCard() {
 
   const isGood = ["Bom", "Excelente", "Superior"].includes(test.classificacao);
   const badgeClass = isGood
-    ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/40"
+    ? "bg-primary/15 text-primary border-primary/40"
     : test.classificacao === "Regular"
-    ? "bg-amber-500/15 text-amber-500 border-amber-500/40"
+    ? "bg-primary/15 text-primary border-primary/40"
     : "bg-destructive/15 text-destructive border-destructive/40";
 
   return (

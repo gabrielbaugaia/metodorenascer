@@ -293,8 +293,8 @@ export default function Indicacoes() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-yellow-500/10 rounded-lg">
-                  <Clock className="h-6 w-6 text-yellow-500" />
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Clock className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{pendingDiscounts}</p>

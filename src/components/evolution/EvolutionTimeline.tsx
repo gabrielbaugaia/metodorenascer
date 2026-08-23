@@ -190,7 +190,7 @@ export function EvolutionTimeline({
                                   {weightChange !== null && weightChange !== 0 && (
                                     <Badge 
                                       variant="outline" 
-                                      className={`text-[10px] sm:text-xs px-1 ${weightChange < 0 ? "text-green-500 border-green-500/50" : "text-orange-500 border-orange-500/50"}`}
+                                      className={`text-[10px] sm:text-xs px-1 ${weightChange < 0 ? "text-green-500 border-green-500/50" : "text-primary border-primary/50"}`}
                                     >
                                       {weightChange > 0 ? "+" : ""}{weightChange.toFixed(1)}
                                     </Badge>

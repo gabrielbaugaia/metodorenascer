@@ -19,7 +19,7 @@ export function MicroWinsCard({ wins }: Props) {
         {wins.map((win) => (
           <div key={win.type} className="flex items-center gap-1.5">
             {win.done ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <CheckCircle2 className="h-4 w-4 text-primary" />
             ) : (
               <Circle className="h-4 w-4 text-muted-foreground/40" />
             )}

@@ -149,7 +149,7 @@ export function EvolutionAnalysisResult({
   }
 
   const score = analysis.pontuacaoEvolucao?.nota || 0;
-  const scoreColor = score >= 8 ? "text-green-500" : score >= 6 ? "text-yellow-500" : "text-orange-500";
+  const scoreColor = score >= 8 ? "text-green-500" : score >= 6 ? "text-primary" : "text-primary";
 
   const handleDownloadPdf = async () => {
     setGeneratingPdf(true);
@@ -417,7 +417,7 @@ export function EvolutionAnalysisResult({
                   )}
                   {data.areasAtencao?.length > 0 && (
                     <div>
-                      <p className="text-[10px] sm:text-xs text-orange-500 mb-0.5 sm:mb-1 flex items-center gap-1">
+                      <p className="text-[10px] sm:text-xs text-primary mb-0.5 sm:mb-1 flex items-center gap-1">
                         <AlertCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Atenção
                       </p>
                       <ul className="space-y-0.5">
@@ -495,9 +495,9 @@ export function EvolutionAnalysisResult({
 
       {/* Ajustes de Dieta */}
       {analysis.ajustesDieta && (
-        <Card className="border-orange-500/30 bg-orange-500/5">
+        <Card className="border-primary/30 bg-primary/5">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base text-orange-400">
+            <CardTitle className="flex items-center gap-2 text-base text-primary">
               <Utensils className="h-4 w-4" />
               Ajustes na Dieta
             </CardTitle>

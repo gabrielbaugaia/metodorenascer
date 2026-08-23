@@ -39,7 +39,7 @@ export function HealthConnectTab({ lastSync }: HealthConnectTabProps) {
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-yellow-500" />
+              <AlertCircle className="h-5 w-5 text-primary" />
               <p className="text-sm text-muted-foreground">Nenhuma sincronização encontrada</p>
             </div>
           )}

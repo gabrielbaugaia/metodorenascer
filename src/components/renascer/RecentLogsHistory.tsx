@@ -77,7 +77,7 @@ export function RecentLogsHistory() {
           const classColors: Record<string, string> = {
             ELITE: "bg-green-500/15 text-green-400",
             ALTO: "bg-blue-500/15 text-blue-400",
-            MODERADO: "bg-yellow-500/15 text-yellow-400",
+            MODERADO: "bg-primary/15 text-primary",
             RISCO: "bg-red-500/15 text-red-400",
           };
           const hasScreenshots = log.fitness_screenshot_path || log.fitness_screenshot_path_2 || log.fitness_screenshot_path_3;

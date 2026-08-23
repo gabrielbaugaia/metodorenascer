@@ -9,8 +9,8 @@ interface StreakDisplayProps {
 
 export function StreakDisplay({ currentStreak, longestStreak, compact = false }: StreakDisplayProps) {
   const getStreakColor = (streak: number) => {
-    if (streak >= 30) return "text-yellow-400";
-    if (streak >= 14) return "text-orange-400";
+    if (streak >= 30) return "text-primary";
+    if (streak >= 14) return "text-primary";
     if (streak >= 7) return "text-foreground";
     return "text-muted-foreground";
   };
@@ -55,7 +55,7 @@ export function StreakDisplay({ currentStreak, longestStreak, compact = false }:
         </div>
 
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Trophy className="h-4 w-4 text-yellow-500" />
+          <Trophy className="h-4 w-4 text-primary" />
           <span className="text-sm">Recorde: {longestStreak}</span>
         </div>
       </div>
@@ -95,7 +95,7 @@ function StreakProgress({ current }: { current: number }) {
       </div>
       <div className="h-2 bg-muted rounded-full overflow-hidden">
         <div 
-          className="h-full bg-gradient-to-r from-primary to-orange-500 transition-all duration-500"
+          className="h-full bg-gradient-to-r from-primary to-primary transition-all duration-500"
           style={{ width: `${Math.min(progress, 100)}%` }}
         />
       </div>

@@ -149,7 +149,7 @@ export function AdminAlertsPanel() {
   const getSeverityColor = (severity: Alert["severity"]) => {
     switch (severity) {
       case "high": return "border-red-500/50 bg-red-500/10";
-      case "medium": return "border-yellow-500/50 bg-yellow-500/10";
+      case "medium": return "border-primary/50 bg-primary/10";
       case "low": return "border-blue-500/50 bg-blue-500/10";
     }
   };
@@ -157,7 +157,7 @@ export function AdminAlertsPanel() {
   const getSeverityBadge = (severity: Alert["severity"]) => {
     switch (severity) {
       case "high": return <Badge variant="destructive">Urgente</Badge>;
-      case "medium": return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-500">Atenção</Badge>;
+      case "medium": return <Badge variant="secondary" className="bg-primary/20 text-primary">Atenção</Badge>;
       case "low": return <Badge variant="outline">Info</Badge>;
     }
   };

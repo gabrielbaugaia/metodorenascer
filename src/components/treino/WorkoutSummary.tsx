@@ -43,8 +43,8 @@ export function WorkoutSummary({
             </p>
             <p className="text-xs text-muted-foreground">Duração</p>
           </div>
-          <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-center">
-            <Dumbbell className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+          <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center">
+            <Dumbbell className="w-5 h-5 text-primary mx-auto mb-1" />
             <p className="text-lg font-bold text-foreground">
               {summary.totalSets}
             </p>

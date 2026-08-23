@@ -61,7 +61,7 @@ interface SisSubScoreCardsProps {
 }
 
 function ScoreBar({ value }: { value: number }) {
-  const color = value >= 70 ? "bg-green-500" : value >= 50 ? "bg-yellow-500" : "bg-red-400";
+  const color = value >= 70 ? "bg-green-500" : value >= 50 ? "bg-primary" : "bg-red-400";
   return (
     <div className="w-full h-1.5 rounded-full bg-muted mt-1">
       <div className={`h-full rounded-full transition-all duration-500 ${color}`} style={{ width: `${Math.min(value, 100)}%` }} />
@@ -83,7 +83,7 @@ function PillarDetailDrawer({
   chartData: { value: number }[];
 }) {
   const scoreColor = card.value !== null
-    ? card.value >= 70 ? "text-green-400" : card.value >= 50 ? "text-yellow-400" : "text-red-400"
+    ? card.value >= 70 ? "text-green-400" : card.value >= 50 ? "text-primary" : "text-red-400"
     : "text-muted-foreground";
 
   return (
@@ -135,7 +135,7 @@ function PillarDetailDrawer({
           {/* How to improve */}
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-2">
             <div className="flex items-center gap-2 text-foreground">
-              <Lightbulb className="h-4 w-4 text-yellow-400" />
+              <Lightbulb className="h-4 w-4 text-primary" />
               <h4 className="text-sm font-semibold">Como melhorar</h4>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">{pillarInfo.howToImprove}</p>

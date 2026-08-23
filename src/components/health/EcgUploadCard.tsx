@@ -85,7 +85,7 @@ export function EcgUploadCard() {
   const classificationColors: Record<string, string> = {
     normal: "bg-green-500/10 text-green-500",
     afib: "bg-red-500/10 text-red-500",
-    inconclusive: "bg-yellow-500/10 text-yellow-500",
+    inconclusive: "bg-primary/10 text-primary",
   };
 
   return (

@@ -99,7 +99,7 @@ export default function Oferta() {
           </p>
           <Button
             onClick={handleCheckout}
-            className="bg-orange-500 hover:bg-orange-600 text-white text-lg px-8 py-6 h-auto font-bold rounded-lg"
+            className="bg-primary hover:bg-primary text-white text-lg px-8 py-6 h-auto font-bold rounded-lg"
           >
             Começar meus 7 dias grátis
           </Button>
@@ -134,7 +134,7 @@ export default function Oferta() {
           <ul className="space-y-4">
             {included.map((item, index) => (
               <li key={index} className="flex items-start gap-3">
-                <Check className="w-6 h-6 text-orange-500 flex-shrink-0 mt-0.5" />
+                <Check className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
                 <span className="text-gray-200 text-lg">{item}</span>
               </li>
             ))}
@@ -147,11 +147,11 @@ export default function Oferta() {
         <div className="max-w-4xl mx-auto">
           <div className="grid md:grid-cols-2 gap-8 md:gap-12">
             <div>
-              <h3 className="text-xl font-bold mb-6 text-orange-500">PARA QUEM É</h3>
+              <h3 className="text-xl font-bold mb-6 text-primary">PARA QUEM É</h3>
               <ul className="space-y-3">
                 {forWho.map((item, index) => (
                   <li key={index} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                    <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                     <span className="text-gray-300">{item}</span>
                   </li>
                 ))}
@@ -181,7 +181,7 @@ export default function Oferta() {
           <div className="space-y-8">
             {steps.map((step) => (
               <div key={step.number} className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold text-lg flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-lg flex-shrink-0">
                   {step.number}
                 </div>
                 <div>
@@ -198,11 +198,11 @@ export default function Oferta() {
       <section className="py-16 px-4 border-t border-gray-800">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-4">
-            <span className="inline-block bg-orange-500 text-white text-sm font-bold px-4 py-1 rounded-full uppercase tracking-wider">
+            <span className="inline-block bg-primary text-white text-sm font-bold px-4 py-1 rounded-full uppercase tracking-wider">
               Grátis
             </span>
           </div>
-          <div className="border-2 border-orange-500 rounded-xl p-8 text-center">
+          <div className="border-2 border-primary rounded-xl p-8 text-center">
             <h3 className="text-xl font-bold mb-2">7 Dias Grátis</h3>
             <div className="mb-2">
               <span className="text-4xl md:text-5xl font-black">R$0</span>
@@ -211,7 +211,7 @@ export default function Oferta() {
             <p className="text-sm text-gray-400 mb-6">Depois R$49,90/mês</p>
             <Button
               onClick={handleCheckout}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white text-lg py-6 h-auto font-bold rounded-lg"
+              className="w-full bg-primary hover:bg-primary text-white text-lg py-6 h-auto font-bold rounded-lg"
             >
               Ativar meus 7 dias grátis
             </Button>
@@ -258,7 +258,7 @@ export default function Oferta() {
           </p>
           <Button
             onClick={handleCheckout}
-            className="bg-orange-500 hover:bg-orange-600 text-white text-lg px-8 py-6 h-auto font-bold rounded-lg"
+            className="bg-primary hover:bg-primary text-white text-lg px-8 py-6 h-auto font-bold rounded-lg"
           >
             Quero meus 7 dias grátis
           </Button>

@@ -212,11 +212,11 @@ export function AdminAccessControlSection({ clientId }: AdminAccessControlSectio
 
         {/* Override info */}
         {entitlement?.override_level && entitlement?.override_expires_at && (
-          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+          <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium flex items-center gap-1">
-                  <Crown className="h-4 w-4 text-amber-500" />
+                  <Crown className="h-4 w-4 text-primary" />
                   Override ativo: {LEVEL_LABELS[entitlement.override_level]?.label || entitlement.override_level}
                 </p>
                 <p className="text-xs text-muted-foreground">

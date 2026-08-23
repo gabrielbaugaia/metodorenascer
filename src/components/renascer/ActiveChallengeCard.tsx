@@ -14,7 +14,7 @@ export function ActiveChallengeCard({ challengeLabel, targetDays, currentStreak 
   return (
     <div className="rounded-xl border border-border/50 bg-card p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Trophy className="h-4 w-4 text-amber-500" />
+        <Trophy className="h-4 w-4 text-primary" />
         <h3 className="text-sm font-semibold">{challengeLabel}</h3>
       </div>
       <Progress value={progress} className="h-2 mb-2" />
@@ -23,7 +23,7 @@ export function ActiveChallengeCard({ challengeLabel, targetDays, currentStreak 
         {daysLeft > 0 ? (
           <span>{daysLeft} dias restantes</span>
         ) : (
-          <span className="text-emerald-500 font-medium">Completo! 🎉</span>
+          <span className="text-primary font-medium">Completo! 🎉</span>
         )}
       </div>
     </div>

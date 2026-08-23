@@ -445,7 +445,7 @@ const MUSCLE_GROUPS = [
 
 const STATUS_OPTIONS = [
   { value: "active", label: "Ativo", color: "bg-green-500" },
-  { value: "pending", label: "Pendente", color: "bg-yellow-500" },
+  { value: "pending", label: "Pendente", color: "bg-primary" },
   { value: "missing", label: "Faltando", color: "bg-red-500" },
 ];
 
@@ -1938,7 +1938,7 @@ export default function AdminExerciseGifs() {
       case "active":
         return <Badge className="bg-green-500/20 text-green-600 border-green-500/30"><CheckCircle className="h-3 w-3 mr-1" />Ativo</Badge>;
       case "pending":
-        return <Badge className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
+        return <Badge className="bg-primary/20 text-primary border-primary/30"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>;
       case "missing":
         return <Badge className="bg-red-500/20 text-red-600 border-red-500/30"><XCircle className="h-3 w-3 mr-1" />Faltando</Badge>;
       default:
@@ -2006,11 +2006,11 @@ export default function AdminExerciseGifs() {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-yellow-500/30">
+          <Card className="border-primary/30">
             <CardContent className="flex items-center gap-3 py-4">
-              <Clock className="h-8 w-8 text-yellow-500" />
+              <Clock className="h-8 w-8 text-primary" />
               <div>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                <p className="text-2xl font-bold text-primary">{stats.pending}</p>
                 <p className="text-sm text-muted-foreground">Pendentes</p>
               </div>
             </CardContent>
@@ -2125,11 +2125,11 @@ export default function AdminExerciseGifs() {
                   progressColor = "bg-green-500";
                   textColor = "text-green-600";
                 } else if (coverage >= 50) {
-                  progressColor = "bg-yellow-500";
-                  textColor = "text-yellow-600";
+                  progressColor = "bg-primary";
+                  textColor = "text-primary";
                 } else if (coverage >= 25) {
-                  progressColor = "bg-orange-500";
-                  textColor = "text-orange-600";
+                  progressColor = "bg-primary";
+                  textColor = "text-primary";
                 }
 
                 return (
@@ -2161,7 +2161,7 @@ export default function AdminExerciseGifs() {
                           {activeGroup}
                         </span>
                         <span className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                          <div className="w-2 h-2 rounded-full bg-primary" />
                           {pendingGroup}
                         </span>
                         <span className="flex items-center gap-1">
@@ -2183,7 +2183,7 @@ export default function AdminExerciseGifs() {
                 <span>Ativo (GIF cadastrado)</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <div className="w-3 h-3 rounded-full bg-primary" />
                 <span>Pendente (aguardando GIF)</span>
               </div>
               <div className="flex items-center gap-2">
@@ -2276,7 +2276,7 @@ export default function AdminExerciseGifs() {
             variant="outline"
             onClick={handleBatchSearchOnline}
             disabled={batchSearchingOnline || pendingWithoutUrlCount === 0}
-            className="border-emerald-500/50 text-emerald-600 hover:bg-emerald-500/10"
+            className="border-primary/50 text-primary hover:bg-primary/10"
             title="Buscar GIFs na internet para exercícios pendentes"
           >
             {batchSearchingOnline ? (
@@ -2444,7 +2444,7 @@ export default function AdminExerciseGifs() {
                       .map((gif) => (
                         <SelectItem key={gif.id} value={gif.id}>
                           <span className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${gif.status === "pending" ? "bg-yellow-500" : "bg-red-500"}`} />
+                            <span className={`w-2 h-2 rounded-full ${gif.status === "pending" ? "bg-primary" : "bg-red-500"}`} />
                             {gif.exercise_name_pt}
                           </span>
                         </SelectItem>
@@ -2786,7 +2786,7 @@ export default function AdminExerciseGifs() {
                                 onChange={(e) => handleInlineUpdate(gif.id, 'exercise_name_pt', e.target.value)}
                                 className={`h-9 text-sm transition-colors flex-1 ${
                                   editingFields[`${gif.id}-exercise_name_pt`] 
-                                    ? 'border-yellow-400' 
+                                    ? 'border-primary' 
                                     : savingInline === gif.id 
                                       ? 'border-green-500' 
                                       : ''
@@ -2971,7 +2971,7 @@ export default function AdminExerciseGifs() {
           <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                <AlertTriangle className="h-5 w-5 text-primary" />
                 Exercícios Sem GIF ({missingExercises.length})
               </DialogTitle>
             </DialogHeader>

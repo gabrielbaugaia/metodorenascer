@@ -14,8 +14,8 @@ function ScoreCircle({ score }: { score: number }) {
 
   const color =
     score >= 80 ? "text-green-500" :
-    score >= 60 ? "text-yellow-500" :
-    score >= 40 ? "text-orange-500" :
+    score >= 60 ? "text-primary" :
+    score >= 40 ? "text-primary" :
     "text-red-500";
 
   const strokeColor =

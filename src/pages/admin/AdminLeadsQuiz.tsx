@@ -92,7 +92,7 @@ const STATUS_VARIANT: Record<LeadStatus, "secondary" | "outline" | "default"> = 
 
 function riskBadge(score: number) {
   if (score >= 70) return { label: "Alto", className: "bg-destructive/15 text-destructive border-destructive/30" };
-  if (score >= 40) return { label: "Médio", className: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30" };
+  if (score >= 40) return { label: "Médio", className: "bg-primary/15 text-yellow-700 dark:text-primary border-primary/30" };
   return { label: "Baixo", className: "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30" };
 }
 
@@ -316,7 +316,7 @@ export default function AdminLeadsQuiz() {
             label="Clicaram Checkout"
             value={funnel.clicked}
             pct={funnel.completed ? Math.round((funnel.clicked / funnel.completed) * 100) : 0}
-            color="text-yellow-500"
+            color="text-primary"
           />
           <FunnelCard
             icon={CheckCircle2}

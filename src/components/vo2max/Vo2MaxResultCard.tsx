@@ -35,9 +35,9 @@ export function Vo2MaxResultCard({ protocolo, vo2, classification, testDate, loc
 
   const badgeClass =
     classification.color === "success"
-      ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/40"
+      ? "bg-primary/15 text-primary border-primary/40"
       : classification.color === "warning"
-      ? "bg-amber-500/15 text-amber-500 border-amber-500/40"
+      ? "bg-primary/15 text-primary border-primary/40"
       : "bg-destructive/15 text-destructive border-destructive/40";
 
   return (
