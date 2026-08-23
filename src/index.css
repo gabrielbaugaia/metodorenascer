@@ -181,12 +181,11 @@
   }
 
   .bg-white .text-white,
-  .bg-white.text-white {
-    color: hsl(var(--card-foreground));
-  }
-
+  .bg-white.text-white,
   .bg-white .text-black,
-  .bg-white.text-black {
+  .bg-white.text-black,
+  .text-white.bg-white,
+  .text-black.bg-white {
     color: hsl(var(--card-foreground));
   }
 
@@ -195,9 +194,14 @@
     border-color: hsl(var(--border));
   }
 
-  .text-white.bg-white,
-  .text-black.bg-white {
-    color: hsl(var(--card-foreground));
+  /* Legacy typo kept visually safe across older screens. */
+  .text-foreground-foreground {
+    color: hsl(var(--primary-foreground));
+  }
+
+  .bg-foreground .text-foreground-foreground,
+  .bg-primary .text-foreground-foreground {
+    color: hsl(var(--primary-foreground));
   }
 
   .text-balance {
