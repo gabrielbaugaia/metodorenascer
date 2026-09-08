@@ -20,8 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
 import { useGabrielBauScore } from "@/hooks/useGabrielBauScore";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, subDays } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionHeader } from "@/components/ui/premium";
@@ -556,7 +556,7 @@ export default function Dashboard() {
               onSaveSuccess={() => {
                 trackCheckinCompleted("diario");
                 queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
-                queryClient.invalidateQueries({ queryKey: ["dashboard-consistency"] });
+                queryClient.invalidateQueries({ queryKey: ["weekly-consistency"] });
                 setShowDailyLog(false);
               }}
             />
