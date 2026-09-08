@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { PageLoadingState } from "@/components/ui/page-states";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -72,6 +74,7 @@ type SignedCheckinPhotos = Partial<SignedPhotos> & { single?: string | null };
 export default function Evolucao() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { trackEvolutionViewed, trackEvolutionPhotoUploaded } = useAnalytics();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [checkins, setCheckins] = useState<CheckIn[]>([]);
   const [loading, setLoading] = useState(true);
@@ -371,6 +374,7 @@ export default function Evolucao() {
         );
 
       toast.success("Evolução enviada com sucesso!");
+      trackEvolutionPhotoUploaded(Object.values(uploadedPaths).filter(Boolean).length);
 
       // Now run AI analysis (needs accessible URLs)
       setAnalyzing(true);
@@ -522,9 +526,7 @@ export default function Evolucao() {
   if (authLoading || loading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 animate-spin text-foreground" />
-        </div>
+        <PageLoadingState message="Carregando sua evolução..." />
       </ClientLayout>
     );
   }
