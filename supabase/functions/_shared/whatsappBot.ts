@@ -129,7 +129,7 @@ async function handleGetWorkout(sb: SB, userId: string): Promise<string> {
   const t = treinos[idx];
 
   const lines: string[] = [];
-  lines.push(`🏋️ Treino ${t.letra ?? String.fromCharCode(65 + idx)} — ${t.foco ?? "Treino do dia"}`);
+  lines.push(`Treino ${t.letra ?? String.fromCharCode(65 + idx)} — ${t.foco ?? "Treino do dia"}`);
   lines.push("");
   const exs = Array.isArray(t.exercicios) ? t.exercicios : [];
   exs.slice(0, 12).forEach((ex: any, i: number) => {
@@ -172,7 +172,7 @@ async function handleLogDone(sb: SB, userId: string): Promise<string> {
   const streak = (streakRow as { current_streak?: number } | null)?.current_streak ?? null;
 
   const suffix = streak ? ` Streak: ${streak} dias.` : "";
-  return `✅ Treino de hoje registrado.${suffix}`;
+  return `Treino de hoje registrado.${suffix}`;
 }
 
 async function handleStartCheckin(sb: SB, userId: string): Promise<string> {
@@ -214,7 +214,7 @@ async function handleCheckinValues(
   }
 
   await clearSession(sb, userId);
-  return `✅ Registrado. Energia ${energia} · Sono ${sono}h · Estresse ${estresse}.`;
+  return `Registrado. Energia ${energia} · Sono ${sono}h · Estresse ${estresse}.`;
 }
 
 // ---------- router ----------

@@ -117,23 +117,23 @@ serve(async (req) => {
     if (!notificationTitle || !notificationBody) {
       switch (notification_type) {
         case "workout_reminder":
-          notificationTitle = "🏋️ Hora de treinar!";
-          notificationBody = "Seu treino está esperando. Vamos conquistar mais um dia!";
+          notificationTitle = "Treino previsto para hoje";
+          notificationBody = "Seu treino do ciclo está disponível no app.";
           break;
         case "checkin_reminder":
-          notificationTitle = "📸 Check-in disponível!";
-          notificationBody = "Já se passaram 30 dias. Registre sua evolução com novas fotos!";
+          notificationTitle = "Check-in de evolução liberado";
+          notificationBody = "Completaram-se 30 dias. Envie as fotos e o peso do período.";
           break;
         case "inactivity":
-          notificationTitle = "👋 Sentimos sua falta!";
-          notificationBody = "Faz alguns dias que você não aparece. Tudo bem por aí?";
+          notificationTitle = "Faz alguns dias sem registro";
+          notificationBody = "Retomar agora custa menos do que recomeçar depois.";
           break;
         case "workout_completed":
-          notificationTitle = "🏆 Parabéns, guerreiro!";
-          notificationBody = "Treino concluído! Continue assim e os resultados virão.";
+          notificationTitle = "Treino concluído";
+          notificationBody = "Sessão registrada. Isso entra na sua consistência da semana.";
           break;
         default:
-          notificationTitle = notificationTitle || "Método Renascer";
+          notificationTitle = notificationTitle || "Gabriel Baú Consultoria";
           notificationBody = notificationBody || "Você tem uma nova notificação";
       }
     }

@@ -191,7 +191,7 @@ async function blockUser(
   // Add notification to user's conversation
   const blockMessage = {
     role: "system",
-    content: `⚠️ ${reason}`,
+    content: reason,
     timestamp: now,
   };
 
