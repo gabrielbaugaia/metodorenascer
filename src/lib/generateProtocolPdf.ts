@@ -406,59 +406,151 @@ function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
 }
 
 // Helper: render a meal block (used for both treino and descanso day plans)
-function renderMealBlock(refeicao: any, helpers: any) {
-  const { addSubsectionTitle, addText, addBoldText, checkNewPage } = helpers;
+function renderMealBlock(doc: jsPDF, refeicao: any, helpers: any) {
   if (!refeicao) return;
 
-  const subtitle = [
+  const { margin, contentWidth, bottomLimit, newPage } = helpers;
+  let y: number = helpers.yPos();
+
+  const LINE_FOOD = 4.4;
+  const LINE_SUB = 4.2;
+
+  const ensure = (needed: number) => {
+    if (y + needed > bottomLimit) {
+      newPage();
+      y = helpers.yPos();
+    }
+  };
+
+  // Normalize content (presentation only — no data changes)
+  const title = [
     refeicao.nome,
     refeicao.horario ? `(${refeicao.horario})` : null,
     refeicao.calorias_aproximadas ? `~${refeicao.calorias_aproximadas} kcal` : null,
     refeicao.calorias ? `~${refeicao.calorias} kcal` : null,
   ].filter(Boolean).join(" — ");
 
-  checkNewPage(25);
-  addSubsectionTitle(subtitle);
-
-  // Alimentos
-  const alimentos = refeicao.alimentos || refeicao.opcoes || [];
-  alimentos.forEach((alimento: any) => {
-    if (typeof alimento === "string") {
-      addText(`• ${alimento}`, 5);
-    } else {
-      const name = alimento.item || alimento.nome || alimento.alimento || "";
-      const qty = alimento.quantidade || alimento.porcao || "";
-      const kcal = alimento.calorias || "";
-      addText(`• ${name}${qty ? ` — ${qty}` : ""}${kcal ? ` (${kcal} kcal)` : ""}`, 5);
-    }
+  const alimentos: string[] = (refeicao.alimentos || refeicao.opcoes || []).map((alimento: any) => {
+    if (typeof alimento === "string") return alimento;
+    const name = alimento.item || alimento.nome || alimento.alimento || "";
+    const qty = alimento.quantidade || alimento.porcao || "";
+    const kcal = alimento.calorias || "";
+    return `${name}${qty ? ` — ${qty}` : ""}${kcal ? ` (${kcal} kcal)` : ""}`;
   });
 
-  // Macros da refeição
+  let macroLine = "";
   if (refeicao.macros) {
     const m = refeicao.macros;
-    const macroLine = [
+    macroLine = [
       m.proteina || m.proteinas ? `P: ${m.proteina || m.proteinas}g` : null,
       m.carboidrato || m.carboidratos ? `C: ${m.carboidrato || m.carboidratos}g` : null,
       m.gordura || m.gorduras ? `G: ${m.gordura || m.gorduras}g` : null,
-    ].filter(Boolean).join(" | ");
-    if (macroLine) addText(`  ${macroLine}`, 8);
+    ].filter(Boolean).join("  ·  ");
   }
 
-  // Substituições inline
-  const subs = refeicao.substituicoes || refeicao.alternativas || [];
-  if (subs.length > 0) {
-    addText("  Substituições:", 5);
-    subs.forEach((sub: any) => {
-      const subText = typeof sub === "string" ? sub : `${sub.original || ""} - ${sub.substituto || sub.opcao || ""}`;
-      addText(`    • ${subText}`, 10);
+  const subs: string[] = (refeicao.substituicoes || refeicao.alternativas || []).map((sub: any) => {
+    if (typeof sub === "string") return sub;
+    const de = sub.original || "";
+    const para = sub.substituto || sub.opcao || "";
+    return de && para ? `${de} — ${para}` : `${de}${para}`;
+  }).filter(Boolean);
+
+  const obs = refeicao.observacao || refeicao.nota || "";
+
+  // Page break: title + at least 2 food lines (+ substitution label when present)
+  const minBlock = 12 + Math.min(alimentos.length, 2) * LINE_FOOD + (subs.length > 0 ? 8 : 0);
+  ensure(minBlock);
+
+  // Title + hairline divider
+  doc.setCharSpace(0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.8);
+  setText(doc, PDF_COLORS.text);
+  const titleLines = doc.splitTextToSize(title, contentWidth);
+  doc.text(titleLines, margin, y);
+  y += titleLines.length * 4.8 + 1.6;
+  setFill(doc, PDF_COLORS.hairline);
+  doc.rect(margin, y, contentWidth, 0.3, "F");
+  y += 4.4;
+
+  // Foods
+  doc.setCharSpace(0);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.8);
+  setText(doc, PDF_COLORS.text);
+  for (const alimento of alimentos) {
+    const lines = doc.splitTextToSize(alimento, contentWidth - 10);
+    lines.forEach((line: string, idx: number) => {
+      ensure(LINE_FOOD + 2);
+      doc.setCharSpace(0);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.8);
+      setText(doc, PDF_COLORS.text);
+      if (idx === 0) doc.text("•", margin + 2, y);
+      doc.text(line, margin + 6, y);
+      y += LINE_FOOD;
     });
   }
 
-  // Observação da refeição
-  if (refeicao.observacao || refeicao.nota) {
-    addText(`  Obs: ${refeicao.observacao || refeicao.nota}`, 5);
+  // Macros
+  if (macroLine) {
+    ensure(LINE_SUB + 2);
+    y += 1.2;
+    doc.setCharSpace(0);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.8);
+    setText(doc, PDF_COLORS.muted);
+    doc.text(macroLine, margin + 6, y);
+    y += LINE_SUB;
   }
+
+  // Substituições
+  if (subs.length > 0) {
+    ensure(10);
+    y += 2.4;
+    doc.setCharSpace(0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.2);
+    setText(doc, PDF_COLORS.bronze);
+    doc.text("SUBSTITUIÇÕES", margin + 6, y);
+    y += 4.2;
+
+    for (const sub of subs) {
+      const lines = doc.splitTextToSize(sub, contentWidth - 16);
+      lines.forEach((line: string, idx: number) => {
+        ensure(LINE_SUB + 2);
+        doc.setCharSpace(0);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.2);
+        setText(doc, PDF_COLORS.muted);
+        if (idx === 0) doc.text("•", margin + 8, y);
+        doc.text(line, margin + 12, y);
+        y += LINE_SUB;
+      });
+    }
+  }
+
+  // Observação
+  if (obs) {
+    const lines = doc.splitTextToSize(`Obs: ${obs}`, contentWidth - 10);
+    lines.forEach((line: string) => {
+      ensure(LINE_SUB + 2);
+      y += 0.6;
+      doc.setCharSpace(0);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(8);
+      setText(doc, PDF_COLORS.muted);
+      doc.text(line, margin + 6, y);
+      y += LINE_SUB;
+    });
+  }
+
+  // Breathing room before the next meal
+  y += 5.5;
+  doc.setCharSpace(0);
+  helpers.setYPos(y);
 }
+
 
 function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
   const { addSectionTitle, addSubsectionTitle, addText, addBoldText, checkNewPage, margin, contentWidth } = helpers;
@@ -520,7 +612,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
       addSectionTitle("Plano — Dia de Treino");
       if (pdt.nota || pdt.descricao) addText(pdt.nota || pdt.descricao);
       const refeicoesT = pdt.refeicoes || [];
-      refeicoesT.forEach((r: any) => renderMealBlock(r, helpers));
+      refeicoesT.forEach((r: any) => renderMealBlock(doc, r, helpers));
     }
 
     // 3. Plano Dia de Descanso
@@ -529,7 +621,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
       addSectionTitle("Plano — Dia de Descanso");
       if (pdd.nota || pdd.descricao || pdd.nota_ajuste) addText(pdd.nota || pdd.descricao || pdd.nota_ajuste);
       const refeicoesD = pdd.refeicoes || [];
-      refeicoesD.forEach((r: any) => renderMealBlock(r, helpers));
+      refeicoesD.forEach((r: any) => renderMealBlock(doc, r, helpers));
     }
 
     // 4. Refeição Pré-Sono
@@ -697,7 +789,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
   if (conteudo?.refeicoes) {
     addSectionTitle("Plano de Refeições");
     conteudo.refeicoes.forEach((refeicao: any) => {
-      renderMealBlock(refeicao, helpers);
+      renderMealBlock(doc, refeicao, helpers);
     });
   }
 
