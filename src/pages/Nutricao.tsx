@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { 
   Utensils, Loader2, Apple, Download, Lock, Droplets, 
   ShoppingCart, ArrowLeftRight, Moon, ChevronDown, ChevronUp,
-  Dumbbell, BedDouble 
+  Dumbbell, BedDouble, Check, PlusCircle, NotebookPen, AlertTriangle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TrialBanner } from "@/components/access/TrialBadge";
