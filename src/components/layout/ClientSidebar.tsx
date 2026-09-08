@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -40,12 +41,15 @@ import {
   Play,
   NotebookPen,
   Activity,
+  ChevronDown,
+  MoreHorizontal,
 } from "lucide-react";
 import { ENABLE_HEALTH_METRICS } from "@/lib/healthConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { cn } from "@/lib/utils";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 const ICON_STROKE = 1.4;
 
@@ -132,6 +136,12 @@ export function ClientSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin } = useAdminCheck();
+  const { trackContentHubOpened, trackMoreMenuOpened } = useAnalytics();
+
+  const contentActive = clientContentItems.some((i) => i.url === location.pathname);
+  const moreActive = clientMoreItems.some((i) => i.url === location.pathname);
+  const [contentOpen, setContentOpen] = useState(contentActive);
+  const [moreOpen, setMoreOpen] = useState(moreActive);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
