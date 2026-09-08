@@ -477,9 +477,9 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
       let tableY = helpers.yPos ? helpers.yPos() : 0;
       const colWidth = contentWidth / 5;
 
-      doc.setFillColor(50, 50, 50);
+      setFill(doc, PDF_COLORS.graphite);
       doc.rect(margin, tableY, contentWidth, 7, "F");
-      doc.setTextColor(255, 255, 255);
+      setText(doc, PDF_COLORS.offWhite);
       doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
 
@@ -491,9 +491,9 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
       });
       tableY += 7;
 
-      doc.setFillColor(255, 245, 230);
+      setFill(doc, PDF_COLORS.surface);
       doc.rect(margin, tableY, contentWidth, 10, "F");
-      doc.setTextColor(50, 50, 50);
+      setText(doc, PDF_COLORS.text);
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
 
@@ -656,9 +656,9 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     
     let tableY = helpers.yPos ? helpers.yPos() : 0;
     
-    doc.setFillColor(50, 50, 50);
+    setFill(doc, PDF_COLORS.graphite);
     doc.rect(margin, tableY, contentWidth, 7, "F");
-    doc.setTextColor(255, 255, 255);
+    setText(doc, PDF_COLORS.offWhite);
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     
@@ -671,9 +671,9 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     });
     tableY += 7;
 
-    doc.setFillColor(255, 245, 230);
+    setFill(doc, PDF_COLORS.surface);
     doc.rect(margin, tableY, contentWidth, 10, "F");
-    doc.setTextColor(50, 50, 50);
+    setText(doc, PDF_COLORS.text);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     
@@ -763,10 +763,10 @@ function generateMindsetPdf(doc: jsPDF, conteudo: any, helpers: any) {
     addText(conteudo.mentalidade_necessaria.descricao || "");
     if (conteudo.mentalidade_necessaria.reflexao) {
       checkNewPage(15);
-      doc.setFillColor(255, 245, 230);
+      setFill(doc, PDF_COLORS.surface);
       const lines = doc.splitTextToSize(`"${conteudo.mentalidade_necessaria.reflexao}"`, contentWidth - 10);
       doc.rect(margin, helpers.yPos() - 3, contentWidth, lines.length * 4 + 8, "F");
-      doc.setTextColor(100, 60, 0);
+      setText(doc, PDF_COLORS.text);
       doc.setFontSize(8);
       doc.setFont("helvetica", "italic");
       doc.text(lines, margin + 5, helpers.yPos() + 2);
@@ -812,7 +812,7 @@ function generateMindsetPdf(doc: jsPDF, conteudo: any, helpers: any) {
   if (conteudo?.habitos_semanais && conteudo.habitos_semanais.length > 0) {
     addSectionTitle("Hábitos Semanais");
     conteudo.habitos_semanais.forEach((habito: string) => {
-      addText(`☐ ${habito}`, 5);
+      addText(`•  ${habito}`, 5);
     });
   }
 
