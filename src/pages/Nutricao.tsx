@@ -202,12 +202,35 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false }
   );
 }
 
+/** Mapeia o nome/horário da refeição para o tipo usado no diário. */
+function inferMealType(refeicao: Refeicao): string {
+  const nome = (refeicao.nome || "").toLowerCase();
+  if (refeicao.tipo === "pre_sono") return "snack";
+  if (/café|cafe|manhã|manha|desjejum/.test(nome)) return "breakfast";
+  if (/almoço|almoco/.test(nome)) return "lunch";
+  if (/jantar|ceia|noite/.test(nome)) return "dinner";
+  if (/lanche|colação|colacao|pré|pre|pós|pos/.test(nome)) return "snack";
+  const hour = Number((refeicao.horario || "").split(":")[0]);
+  if (!Number.isNaN(hour)) {
+    if (hour < 10) return "breakfast";
+    if (hour < 15) return "lunch";
+    if (hour < 19) return "snack";
+    return "dinner";
+  }
+  return "snack";
+}
+
 export default function Nutricao() {
   const navigate = useNavigate();
-  const { protocol, loading } = useProtocol("nutricao");
+  const { protocol, loading, error, refetch } = useProtocol("nutricao");
   const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
+  const { addMultipleFoods } = useNutritionTracking();
+  const { trackMealRegistrationStarted, trackMealRegistered } = useAnalytics();
   const [downloading, setDownloading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [registeringMeal, setRegisteringMeal] = useState<string | null>(null);
+  const [registeredMeals, setRegisteredMeals] = useState<Record<string, string>>({});
+
 
   const conteudo = (protocol?.conteudo as NutritionContent) || {};
   const expanded = isExpandedFormat(conteudo);
