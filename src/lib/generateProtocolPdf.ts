@@ -548,6 +548,45 @@ function renderMealBlock(doc: jsPDF, refeicao: any, helpers: any) {
 
 function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
   const { addSectionTitle, addSubsectionTitle, addText, addBoldText, checkNewPage, margin, contentWidth } = helpers;
+  const nutritionSection = (text: unknown) => addSectionTitle(sanitizeNutritionText(text));
+  const nutritionSubsection = (text: unknown) => addSubsectionTitle(sanitizeNutritionText(text));
+  const nutritionText = (text: unknown, indent = 0, bold = false) => {
+    const clean = sanitizeNutritionText(text);
+    if (!clean) return;
+    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFontSize(8.8);
+    const lines = doc.splitTextToSize(clean, contentWidth - indent);
+    for (const line of lines) {
+      checkNewPage(5.5);
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(8.8);
+      setText(doc, PDF_COLORS.text);
+      doc.text(line, margin + indent, helpers.yPos());
+      helpers.setYPos(helpers.yPos() + 4.7);
+    }
+    helpers.setYPos(helpers.yPos() + 1.5);
+  };
+  const nutritionListItem = (text: unknown, indent = 5) => {
+    const clean = sanitizeNutritionText(text);
+    if (!clean) return;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.8);
+    const lines = doc.splitTextToSize(clean, contentWidth - indent - 6);
+    lines.forEach((line: string, index: number) => {
+      checkNewPage(5.5);
+      const lineY = helpers.yPos();
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.8);
+      setText(doc, PDF_COLORS.text);
+      if (index === 0) {
+        setFill(doc, PDF_COLORS.text);
+        doc.circle(margin + indent, lineY - 1, 0.55, "F");
+      }
+      doc.text(line, margin + indent + 4, lineY);
+      helpers.setYPos(lineY + 4.7);
+    });
+    helpers.setYPos(helpers.yPos() + 1.2);
+  };
 
   // Detect expanded format
   const isExpanded = !!(conteudo?.plano_dia_treino || conteudo?.macros_diarios || conteudo?.plano_dia_descanso);
@@ -558,7 +597,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     // 1. Resumo Macros Diários
     if (conteudo?.macros_diarios) {
       const md = conteudo.macros_diarios;
-      addSectionTitle("Resumo de Macros Diários");
+      nutritionSection("Resumo de Macros Diários");
 
       let tableY = helpers.yPos ? helpers.yPos() : 0;
       const colWidth = contentWidth / 5;
@@ -593,7 +632,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
 
       xPos = margin;
       macroValues.forEach(v => {
-        doc.text(v, xPos + colWidth / 2, tableY + 7, { align: "center" });
+        doc.text(sanitizeNutritionText(v), xPos + colWidth / 2, tableY + 7, { align: "center" });
         xPos += colWidth;
       });
 
@@ -603,8 +642,8 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     // 2. Plano Dia de Treino
     if (conteudo?.plano_dia_treino) {
       const pdt = conteudo.plano_dia_treino;
-      addSectionTitle("Plano — Dia de Treino");
-      if (pdt.nota || pdt.descricao) addText(pdt.nota || pdt.descricao);
+      nutritionSection("Plano - Dia de Treino");
+      if (pdt.nota || pdt.descricao) nutritionText(pdt.nota || pdt.descricao);
       const refeicoesT = pdt.refeicoes || [];
       refeicoesT.forEach((r: any) => renderMealBlock(doc, r, helpers));
     }
@@ -612,8 +651,8 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     // 3. Plano Dia de Descanso
     if (conteudo?.plano_dia_descanso) {
       const pdd = conteudo.plano_dia_descanso;
-      addSectionTitle("Plano — Dia de Descanso");
-      if (pdd.nota || pdd.descricao || pdd.nota_ajuste) addText(pdd.nota || pdd.descricao || pdd.nota_ajuste);
+      nutritionSection("Plano - Dia de Descanso");
+      if (pdd.nota || pdd.descricao || pdd.nota_ajuste) nutritionText(pdd.nota || pdd.descricao || pdd.nota_ajuste);
       const refeicoesD = pdd.refeicoes || [];
       refeicoesD.forEach((r: any) => renderMealBlock(doc, r, helpers));
     }
@@ -621,17 +660,17 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     // 4. Refeição Pré-Sono
     if (conteudo?.refeicao_pre_sono) {
       const rps = conteudo.refeicao_pre_sono;
-      addSectionTitle("Refeição Pré-Sono");
-      if (rps.descricao || rps.nota) addText(rps.descricao || rps.nota);
+      nutritionSection("Refeição Pré-Sono");
+      if (rps.descricao || rps.nota) nutritionText(rps.descricao || rps.nota);
       const opcoes = rps.opcoes || [];
       opcoes.forEach((opcao: any, idx: number) => {
         checkNewPage(20);
-        addSubsectionTitle(`Opção ${idx + 1}${opcao.nome ? ` — ${opcao.nome}` : ""}`);
+        nutritionSubsection(`Opção ${idx + 1}${opcao.nome ? ` - ${opcao.nome}` : ""}`);
         const als = opcao.alimentos || [];
         als.forEach((al: any) => {
           const name = typeof al === "string" ? al : (al.item || al.nome || al.alimento || "");
           const qty = typeof al === "object" ? (al.quantidade || al.porcao || "") : "";
-          addText(`• ${name}${qty ? ` — ${qty}` : ""}`, 5);
+          nutritionListItem(`${name}${qty ? ` - ${qty}` : ""}`);
         });
         if (opcao.macros) {
           const m = opcao.macros;
@@ -641,7 +680,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
             m.gordura || m.gorduras ? `G: ${m.gordura || m.gorduras}g` : null,
             m.calorias ? `${m.calorias} kcal` : null,
           ].filter(Boolean).join(" | ");
-          if (line) addText(`  ${line}`, 8);
+          if (line) nutritionText(line, 8);
         }
       });
     }
@@ -649,26 +688,26 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     // 5. Hidratação (expandida)
     if (conteudo?.hidratacao && typeof conteudo.hidratacao === "object") {
       const h = conteudo.hidratacao;
-      addSectionTitle("Hidratação");
-      if (h.calculo) addBoldText(h.calculo);
-      if (h.litros_dia) addText(`Total diário: ${h.litros_dia}`);
+      nutritionSection("Hidratação");
+      if (h.calculo) nutritionText(h.calculo, 0, true);
+      if (h.litros_dia) nutritionText(`Total diário: ${h.litros_dia}`);
       const dist = h.distribuicao || h.dicas || [];
       dist.forEach((item: any) => {
         const text = typeof item === "string" ? item : `${item.horario || item.momento || ""}: ${item.quantidade || item.descricao || ""}`;
-        addText(`• ${text}`, 5);
+        nutritionListItem(text);
       });
     } else if (conteudo?.hidratacao && typeof conteudo.hidratacao === "string") {
       const ht = conteudo.hidratacao.trim();
       if (ht && !ht.includes("[object Object]")) {
-        addSectionTitle("Hidratação");
-        addBoldText(ht);
+        nutritionSection("Hidratação");
+        nutritionText(ht, 0, true);
       }
     }
 
     // 6. Lista de Compras Semanal
     if (conteudo?.lista_compras_semanal) {
       const lc = conteudo.lista_compras_semanal;
-      addSectionTitle("Lista de Compras Semanal");
+      nutritionSection("Lista de Compras Semanal");
       const categorias: Record<string, string> = {
         proteinas: "Proteínas",
         carboidratos: "Carboidratos",
@@ -681,30 +720,30 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
         const items = lc[key];
         if (!items || (Array.isArray(items) && items.length === 0)) return;
         checkNewPage(15);
-        addSubsectionTitle(label);
+        nutritionSubsection(label);
         const list = Array.isArray(items) ? items : [items];
         list.forEach((item: any) => {
           const text = typeof item === "string" ? item : (item.nome || item.item || item.alimento || JSON.stringify(item));
-          addText(`• ${text}`, 5);
+          nutritionListItem(text);
         });
       });
     }
 
     // 7. Substituições
     if (conteudo?.substituicoes && conteudo.substituicoes.length > 0) {
-      addSectionTitle("Substituições");
+      nutritionSection("Substituições");
       conteudo.substituicoes.forEach((cat: any) => {
         if (cat.categoria) {
           checkNewPage(12);
-          addSubsectionTitle(cat.categoria);
+          nutritionSubsection(cat.categoria);
         }
         const items = cat.opcoes || cat.equivalencias || cat.items || (Array.isArray(cat) ? cat : []);
         items.forEach((item: any) => {
           if (typeof item === "string") {
-            addText(`• ${item}`, 5);
+            nutritionListItem(item);
           } else {
             const text = `${item.original || item.de || ""} - ${item.substituto || item.para || item.opcao || ""}`;
-            addText(`• ${text}`, 5);
+            nutritionListItem(text);
           }
         });
       });
@@ -713,24 +752,24 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     // 8. Estratégia Anti-Compulsão
     if (conteudo?.estrategia_anti_compulsao) {
       const eac = conteudo.estrategia_anti_compulsao;
-      addSectionTitle("Estratégia Anti-Compulsão");
+      nutritionSection("Estratégia Anti-Compulsão");
       if (typeof eac === "string") {
-        addText(eac);
+        nutritionText(eac);
       } else {
-        if (eac.descricao || eac.texto) addText(eac.descricao || eac.texto);
+        if (eac.descricao || eac.texto) nutritionText(eac.descricao || eac.texto);
         const orientacoes = eac.orientacoes || eac.dicas || [];
         orientacoes.forEach((o: any) => {
           const text = typeof o === "string" ? o : (o.descricao || o.titulo || "");
-          if (text) addText(`• ${text}`, 5);
+          if (text) nutritionListItem(text);
         });
       }
     }
 
     // 9. Suplementação (reutilizar lógica abaixo)
-    renderSuplementacao(conteudo?.suplementacao, helpers);
+    renderSuplementacao(conteudo?.suplementacao, helpers, nutritionListItem, nutritionSection);
 
     // 10. Dicas
-    renderDicas(conteudo, helpers);
+    renderDicas(conteudo, helpers, nutritionListItem, nutritionSection, nutritionText);
 
     return; // done with expanded format
   }
@@ -738,7 +777,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
   // ── LEGACY FORMAT ─────────────────────────────────────────────────────────
   // Macros em tabela
   if (conteudo?.calorias_diarias || conteudo?.macros) {
-    addSectionTitle("Resumo Nutricional Diário");
+    nutritionSection("Resumo Nutricional Diário");
     
     let tableY = helpers.yPos ? helpers.yPos() : 0;
     
@@ -772,7 +811,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
     
     xPos = margin;
     macroValues.forEach(value => {
-      doc.text(value, xPos + colWidth/2, tableY + 7, { align: "center" });
+      doc.text(sanitizeNutritionText(value), xPos + colWidth/2, tableY + 7, { align: "center" });
       xPos += colWidth;
     });
     
@@ -781,7 +820,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
 
   // Refeições legadas
   if (conteudo?.refeicoes) {
-    addSectionTitle("Plano de Refeições");
+    nutritionSection("Plano de Refeições");
     conteudo.refeicoes.forEach((refeicao: any) => {
       renderMealBlock(doc, refeicao, helpers);
     });
@@ -794,17 +833,21 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
       : conteudo.hidratacao?.quantidade || conteudo.hidratacao?.recomendacao || null;
     
     if (hidratacaoText && hidratacaoText.trim() && !hidratacaoText.includes('[object Object]')) {
-      addSectionTitle("Hidratação");
-      addBoldText(hidratacaoText);
+      nutritionSection("Hidratação");
+      nutritionText(hidratacaoText, 0, true);
     }
   }
 
-  renderSuplementacao(conteudo?.suplementacao, helpers);
-  renderDicas(conteudo, helpers);
+  renderSuplementacao(conteudo?.suplementacao, helpers, nutritionListItem, nutritionSection);
+  renderDicas(conteudo, helpers, nutritionListItem, nutritionSection, nutritionText);
 }
 
-function renderSuplementacao(suplementacao: any, helpers: any) {
-  const { addSectionTitle, addText } = helpers;
+function renderSuplementacao(
+  suplementacao: any,
+  helpers: any,
+  renderItem: (text: unknown) => void,
+  renderSection: (text: unknown) => void,
+) {
   if (!suplementacao || !Array.isArray(suplementacao) || suplementacao.length === 0) return;
 
   const validSupl = suplementacao.filter((supl: any) => {
@@ -818,24 +861,29 @@ function renderSuplementacao(suplementacao: any, helpers: any) {
 
   if (validSupl.length === 0) return;
 
-  addSectionTitle("Suplementação");
+  renderSection("Suplementação");
   validSupl.forEach((supl: any) => {
     const suplText = typeof supl === 'string'
       ? supl
-      : `${supl.nome || supl.suplemento || supl.item}${supl.dosagem ? ` — ${supl.dosagem}` : ''}${supl.horario ? ` (${supl.horario})` : ''}${supl.observacao ? ` · ${supl.observacao}` : ''}`;
-    addText(`• ${suplText}`, 5);
+      : `${supl.nome || supl.suplemento || supl.item}${supl.dosagem ? ` - ${supl.dosagem}` : ''}${supl.horario ? ` (${supl.horario})` : ''}${supl.observacao ? ` | ${supl.observacao}` : ''}`;
+    renderItem(suplText);
   });
 }
 
-function renderDicas(conteudo: any, helpers: any) {
-  const { addSectionTitle, addText } = helpers;
+function renderDicas(
+  conteudo: any,
+  helpers: any,
+  renderItem: (text: unknown) => void,
+  renderSection: (text: unknown) => void,
+  renderText: (text: unknown) => void,
+) {
   const dicas = conteudo?.dicas_gerais || conteudo?.dicas;
   if (!dicas) return;
-  addSectionTitle("Dicas Importantes");
+  renderSection("Dicas Importantes");
   if (Array.isArray(dicas)) {
-    dicas.forEach((dica: string) => addText(`• ${dica}`, 5));
+    dicas.forEach((dica: string) => renderItem(dica));
   } else {
-    addText(dicas);
+    renderText(dicas);
   }
 }
 
