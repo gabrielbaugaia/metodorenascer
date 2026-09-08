@@ -131,7 +131,7 @@ serve(async (req) => {
     // Email content varies based on payment requirement
     const paymentMessage = shouldRequirePayment
       ? `<p style="color: #FFB800; font-size: 16px; line-height: 1.6; margin-top: 16px;">
-          <strong>⚠️ Importante:</strong> Após fazer login, você precisará completar o pagamento para acessar todas as funcionalidades.
+          <strong>Importante:</strong> Após fazer login, você precisará completar o pagamento para acessar todas as funcionalidades.
         </p>`
       : `<p style="color: #cccccc; font-size: 16px; line-height: 1.6;">
           Seu plano <strong style="color: #FF4500;">${plan.name}</strong> já está ativo e aguardando você.

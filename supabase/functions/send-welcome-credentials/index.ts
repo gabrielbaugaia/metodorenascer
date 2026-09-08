@@ -53,7 +53,7 @@ serve(async (req) => {
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     <div style="background:#111;border-radius:12px;padding:40px;border:1px solid #222;">
       <h1 style="color:#d4af37;margin:0 0 8px;font-size:24px;text-align:center;">
-        🎉 Bem-vindo ao Método Renascer!
+        Bem-vindo à consultoria
       </h1>
       <p style="color:#999;text-align:center;margin:0 0 32px;font-size:14px;">
         ${plan_name ? `Plano: ${plan_name}` : "Sua assinatura foi ativada com sucesso"}
@@ -99,7 +99,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "Método Renascer <noreply@renascerapp.com.br>",
         to: [email],
-        subject: "🔑 Suas credenciais de acesso — Método Renascer",
+        subject: "Suas credenciais de acesso — Gabriel Baú Consultoria",
         html: htmlContent,
       }),
     });
