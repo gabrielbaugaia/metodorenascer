@@ -184,7 +184,7 @@ export default function Mindset() {
 
   return (
     <ClientLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-10">
         {/* Access blocked - auto open modal */}
         {!entLoading && isBlocked && (
           <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />
@@ -205,12 +205,10 @@ export default function Mindset() {
           <div className="absolute right-0 top-0">
             <PageTutorial pageId="mindset" />
           </div>
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Brain className="h-10 w-10 text-foreground" />
-            <h1 className="text-3xl font-bold uppercase text-foreground">MINDSET</h1>
-          </div>
-          <p className="text-muted-foreground uppercase text-sm">
-            Reprogramação Mental para Transformação
+          <p className="eyebrow-label">Acompanhamento mental</p>
+          <h1 className="display-title mt-2">Mindset</h1>
+          <p className="text-sm text-muted-foreground mt-3 max-w-xl">
+            Clareza, disciplina e direção — práticas objetivas aplicadas à sua rotina.
           </p>
         </div>
 

@@ -94,8 +94,9 @@ export default function Reels() {
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-display tracking-tight">Vídeos</h1>
-            <p className="text-sm text-muted-foreground">Execuções, dicas e explicativos</p>
+            <p className="eyebrow-label">Biblioteca da consultoria</p>
+            <h1 className="display-title mt-2">Vídeos</h1>
+            <p className="text-sm text-muted-foreground mt-2">Execuções, dicas e explicativos</p>
           </div>
           <Button
             variant="outline"

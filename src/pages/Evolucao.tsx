@@ -531,7 +531,7 @@ export default function Evolucao() {
 
   return (
     <ClientLayout>
-      <div className="max-w-2xl mx-auto space-y-4 px-3 sm:px-0 pb-20 sm:pb-0 overflow-x-hidden">
+      <div className="max-w-3xl mx-auto space-y-8 px-3 sm:px-0 pb-20 sm:pb-0 overflow-x-hidden">
         <PageHeader title="Evolução" subtitle="Acompanhe seu progresso e envie suas fotos" actions={<PageTutorial pageId="evolucao" />} />
         <PageTutorialBanner pageId="evolucao" />
 
