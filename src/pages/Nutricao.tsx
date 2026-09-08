@@ -219,11 +219,12 @@ export default function Nutricao() {
 
   return (
     <ClientLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-8">
         {/* Header — flat */}
         <PageHeader
+          eyebrow="Consultoria nutricional"
           title="Plano Nutricional"
-          subtitle={hasContent ? "Seu cardápio estratégico para máxima performance" : "Seu protocolo será gerado em breve"}
+          subtitle={hasContent ? "Seu cardápio, metas e orientações organizados para a rotina." : "Seu protocolo será gerado em breve"}
           actions={
             <div className="flex items-center gap-1">
               <PageTutorial pageId="nutricao" />
@@ -259,7 +260,7 @@ export default function Nutricao() {
           <>
             {/* Macros Overview — cores neutras */}
             {isFull && (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[var(--shadow-soft)] md:grid-cols-5">
                 <MacroCard label="kcal/dia" value={macrosDiarios?.calorias || conteudo.calorias_diarias || macros?.calorias_diarias || "--"} />
                 <MacroCard label="Proteínas" value={macrosDiarios?.proteina_g || macros?.proteinas_g || "--"} unit="g" />
                 <MacroCard label="Carboidratos" value={macrosDiarios?.carboidrato_g || macros?.carboidratos_g || "--"} unit="g" />
@@ -270,9 +271,9 @@ export default function Nutricao() {
 
             {/* Hydration — neutro */}
             {isFull && hidratacao && (hidratacao.distribuicao || hidratacao.dicas) && (
-              <Card className="p-4 border-border/50">
+              <Card className="p-5 md:p-6 border-border/80">
                 <div className="flex items-center gap-2 mb-3">
-                  <Droplets className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+                  <Droplets className="w-5 h-5 text-primary" strokeWidth={1.5} />
                   <span className="font-semibold text-sm">Hidratação</span>
                   {hidratacao.calculo && <Badge variant="outline" className="text-xs">{hidratacao.calculo}</Badge>}
                 </div>

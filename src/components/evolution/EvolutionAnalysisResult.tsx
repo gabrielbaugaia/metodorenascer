@@ -97,10 +97,10 @@ interface EvolutionAnalysisResultProps {
 function TrendIcon({ trend }: { trend: string }) {
   const trendLower = trend.toLowerCase();
   if (trendLower.includes("aument") || trendLower.includes("positiv") || trendLower.includes("melhor")) {
-    return <TrendingUp className="h-4 w-4 text-green-500" />;
+    return <TrendingUp className="h-4 w-4 text-success" />;
   }
   if (trendLower.includes("diminu") || trendLower.includes("negativ") || trendLower.includes("pior") || trendLower.includes("reduz")) {
-    return <TrendingDown className="h-4 w-4 text-red-500" />;
+    return <TrendingDown className="h-4 w-4 text-destructive" />;
   }
   return <Minus className="h-4 w-4 text-muted-foreground" />;
 }
@@ -112,10 +112,10 @@ function MacroBadge({ label, value }: { label: string; value: string }) {
   
   if (valueLower.includes("aumentar")) {
     variant = "default";
-    color = "bg-green-500/20 text-green-400 border-green-500/30";
+    color = "bg-success/10 text-success border-success/30";
   } else if (valueLower.includes("reduzir")) {
     variant = "secondary";
-    color = "bg-red-500/20 text-red-400 border-red-500/30";
+    color = "bg-destructive/10 text-destructive border-destructive/30";
   }
   
   return (
@@ -140,7 +140,7 @@ export function EvolutionAnalysisResult({
     return (
       <Card>
         <CardContent className="pt-6">
-          <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
+           <div className="prose prose-sm max-w-none whitespace-pre-wrap prose-headings:text-foreground prose-strong:text-foreground">
             {analysis}
           </div>
         </CardContent>
@@ -149,7 +149,7 @@ export function EvolutionAnalysisResult({
   }
 
   const score = analysis.pontuacaoEvolucao?.nota || 0;
-  const scoreColor = score >= 8 ? "text-green-500" : score >= 6 ? "text-primary" : "text-primary";
+  const scoreColor = score >= 8 ? "text-success" : "text-primary";
 
   const handleDownloadPdf = async () => {
     setGeneratingPdf(true);
@@ -176,7 +176,7 @@ export function EvolutionAnalysisResult({
     <div className="space-y-3 sm:space-y-4 min-w-0 w-full overflow-hidden">
       {/* Photo Comparison - Before/After Side by Side */}
       {showPhotoComparison && hasPhotos && (
-        <Card className="border-foreground/30">
+        <Card className="border-primary/25">
           <CardHeader className="pb-2 px-3 sm:px-6">
             <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
               <MoveRight className="h-4 w-4 sm:h-5 sm:w-5 text-foreground shrink-0" />
@@ -200,14 +200,14 @@ export function EvolutionAnalysisResult({
                         <span className="text-[9px] sm:text-xs font-medium">ANTES</span>
                       </div>
                     </div>
-                    <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted border-2 border-foreground/30">
+                    <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted border-2 border-primary/30">
                       {photos.currentFrente ? (
                         <img src={photos.currentFrente} alt="Depois - Frente" className="w-full h-full object-cover" />
                       ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground text-[10px] sm:text-sm">N/A</div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-foreground/80 py-0.5 sm:p-1 text-center">
-                        <span className="text-[9px] sm:text-xs font-medium text-foreground-foreground">DEPOIS</span>
+                       <div className="absolute bottom-0 left-0 right-0 bg-primary/90 py-0.5 sm:p-1 text-center">
+                         <span className="text-[9px] sm:text-xs font-medium text-primary-foreground">DEPOIS</span>
                       </div>
                     </div>
                   </div>
@@ -229,14 +229,14 @@ export function EvolutionAnalysisResult({
                         <span className="text-[9px] sm:text-xs font-medium">ANTES</span>
                       </div>
                     </div>
-                    <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted border-2 border-foreground/30">
+                     <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted border-2 border-primary/30">
                       {photos.currentLado ? (
                         <img src={photos.currentLado} alt="Depois - Lado" className="w-full h-full object-cover" />
                       ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground text-[10px] sm:text-sm">N/A</div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-foreground/80 py-0.5 sm:p-1 text-center">
-                        <span className="text-[9px] sm:text-xs font-medium text-foreground-foreground">DEPOIS</span>
+                       <div className="absolute bottom-0 left-0 right-0 bg-primary/90 py-0.5 sm:p-1 text-center">
+                         <span className="text-[9px] sm:text-xs font-medium text-primary-foreground">DEPOIS</span>
                       </div>
                     </div>
                   </div>
@@ -258,14 +258,14 @@ export function EvolutionAnalysisResult({
                         <span className="text-[9px] sm:text-xs font-medium">ANTES</span>
                       </div>
                     </div>
-                    <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted border-2 border-foreground/30">
+                     <div className="relative aspect-[3/4] rounded-md sm:rounded-lg overflow-hidden bg-muted border-2 border-primary/30">
                       {photos.currentCostas ? (
                         <img src={photos.currentCostas} alt="Depois - Costas" className="w-full h-full object-cover" />
                       ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground text-[10px] sm:text-sm">N/A</div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-foreground/80 py-0.5 sm:p-1 text-center">
-                        <span className="text-[9px] sm:text-xs font-medium text-foreground-foreground">DEPOIS</span>
+                       <div className="absolute bottom-0 left-0 right-0 bg-primary/90 py-0.5 sm:p-1 text-center">
+                         <span className="text-[9px] sm:text-xs font-medium text-primary-foreground">DEPOIS</span>
                       </div>
                     </div>
                   </div>
@@ -277,7 +277,7 @@ export function EvolutionAnalysisResult({
       )}
 
       {/* Pontuação e Resumo */}
-      <Card className="border-foreground/30 bg-gradient-to-br from-primary/10 to-transparent">
+      <Card className="border-primary/25 bg-primary/5">
         <CardHeader className="pb-2 px-3 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
@@ -337,7 +337,7 @@ export function EvolutionAnalysisResult({
               </Badge>
               <Badge 
                 variant={analysis.analisePeso.tendencia === "positiva" ? "default" : "secondary"}
-                className={`text-xs sm:text-sm ${analysis.analisePeso.tendencia === "positiva" ? "bg-green-500/20 text-green-400" : ""}`}
+                className={`text-xs sm:text-sm ${analysis.analisePeso.tendencia === "positiva" ? "bg-success/10 text-success border-success/30" : ""}`}
               >
                 {analysis.analisePeso.tendencia}
               </Badge>

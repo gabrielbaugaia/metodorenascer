@@ -184,7 +184,7 @@ export default function Mindset() {
 
   return (
     <ClientLayout>
-      <div className="max-w-3xl mx-auto space-y-10">
+      <div className="max-w-5xl mx-auto space-y-8 md:space-y-10">
         {/* Access blocked - auto open modal */}
         {!entLoading && isBlocked && (
           <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />
@@ -201,13 +201,13 @@ export default function Mindset() {
         {!isBlocked && (
           <>
         {/* Header */}
-        <div className="text-center mb-8 relative">
+        <div className="border-b border-border/70 pb-8 relative">
           <div className="absolute right-0 top-0">
             <PageTutorial pageId="mindset" />
           </div>
           <p className="eyebrow-label">Acompanhamento mental</p>
           <h1 className="display-title mt-2">Mindset</h1>
-          <p className="text-sm text-muted-foreground mt-3 max-w-xl">
+          <p className="text-[15px] text-muted-foreground mt-3 max-w-2xl leading-relaxed">
             Clareza, disciplina e direção — práticas objetivas aplicadas à sua rotina.
           </p>
         </div>
@@ -229,21 +229,21 @@ export default function Mindset() {
 
         {/* Mentalidade Necessária */}
         {content.mentalidade_necessaria && (
-          <Card>
-            <CardContent className="py-6">
+           <Card className="surface-dark">
+             <CardContent className="py-7 md:py-8">
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="h-5 w-5 text-primary" />
-                <span className="text-sm font-semibold uppercase">
+                 <span className="text-sm font-semibold uppercase text-sidebar-foreground">
                   Mentalidade Necessária
                 </span>
               </div>
-              <p className="text-lg mb-2">
-                <span className="text-foreground font-medium">
+               <p className="text-lg mb-2 text-sidebar-foreground/75">
+                 <span className="text-sidebar-foreground font-semibold">
                   {content.mentalidade_necessaria.titulo}.
                 </span>{" "}
                 {content.mentalidade_necessaria.descricao}
               </p>
-              <p className="text-sm text-muted-foreground">
+               <p className="text-sm text-sidebar-foreground/55">
                 {content.mentalidade_necessaria.reflexao}
               </p>
             </CardContent>
