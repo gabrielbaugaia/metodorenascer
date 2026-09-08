@@ -89,6 +89,41 @@ async function hashPayload(input: string): Promise<string> {
     .join("");
 }
 
+// Verifica a assinatura HMAC-SHA256 enviada pela Meta (X-Hub-Signature-256).
+function timingSafeEqualHex(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function verifyMetaSignature(req: Request, rawBody: string): Promise<boolean> {
+  const appSecret = Deno.env.get("WHATSAPP_APP_SECRET");
+  if (!appSecret) {
+    log("hmac_missing_app_secret");
+    return false;
+  }
+  const header = req.headers.get("x-hub-signature-256") ?? "";
+  if (!header.startsWith("sha256=")) return false;
+  const provided = header.slice("sha256=".length).trim().toLowerCase();
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(appSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
+  const expected = Array.from(new Uint8Array(sigBuf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  return timingSafeEqualHex(provided, expected);
+}
+
+
+
 // Procura profile pelo telefone (campos `whatsapp` ou `telefone`).
 async function findUserIdByPhone(
   supabase: ReturnType<typeof createClient>,
@@ -253,6 +288,18 @@ Deno.serve(async (req) => {
   let payload: any;
   try {
     rawBody = await req.text();
+  } catch (e) {
+    log("body_read_error", { error: (e as Error).message });
+    return new Response("bad request", { status: 400, headers: corsHeaders });
+  }
+
+  // Assinatura da Meta obrigatória (fail-closed).
+  if (!(await verifyMetaSignature(req, rawBody))) {
+    log("hmac_invalid");
+    return new Response("forbidden", { status: 403, headers: corsHeaders });
+  }
+
+  try {
     payload = JSON.parse(rawBody);
   } catch (e) {
     log("invalid_json", { error: (e as Error).message });
@@ -261,6 +308,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
 
   // 1. Salvar evento bruto com deduplicação
   try {
