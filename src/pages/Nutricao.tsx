@@ -228,7 +228,7 @@ export default function Nutricao() {
   const { protocol, loading, error, refetch } = useProtocol("nutricao");
   const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
   const { addMultipleFoods } = useNutritionTracking();
-  const { trackMealRegistrationStarted, trackMealRegistered } = useAnalytics();
+  const { trackMealRegistrationStarted, trackMealRegistered, trackMealPlanViewed } = useAnalytics();
   const [downloading, setDownloading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [registeringMeal, setRegisteringMeal] = useState<string | null>(null);
@@ -251,6 +251,11 @@ export default function Nutricao() {
 
   const hasContent = expanded ? !!(planoDiaTreino?.refeicoes?.length) : legacyRefeicoes.length > 0;
   const maxMealsVisible = isTrialing ? 2 : Infinity;
+
+  useEffect(() => {
+    if (hasContent) trackMealPlanViewed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasContent]);
 
   useEffect(() => {
     if (isTrialing && !trialUsage.used_diet && hasContent) {

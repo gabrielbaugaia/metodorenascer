@@ -81,6 +81,11 @@ export default function Evolucao() {
   const [submitting, setSubmitting] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
 
+  useEffect(() => {
+    trackEvolutionViewed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Form state
   const [newWeight, setNewWeight] = useState("");
   const [notes, setNotes] = useState("");

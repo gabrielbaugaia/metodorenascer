@@ -25,6 +25,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProtocol } from "@/hooks/useProtocol";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { TrialBanner } from "@/components/access/TrialBadge";
 import { UpgradeModal } from "@/components/access/UpgradeModal";
@@ -72,6 +73,7 @@ export default function Mindset() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { protocol: protocolData, loading } = useProtocol("mindset");
+  const { trackMindsetTaskCompleted } = useAnalytics();
   const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -135,6 +137,9 @@ export default function Mindset() {
     const newChecked = { ...checkedItems, [key]: !checkedItems[key] };
     setCheckedItems(newChecked);
     saveCheckedItems(newChecked);
+    if (newChecked[key]) {
+      trackMindsetTaskCompleted(key.startsWith("noite") ? "rotina_noite" : "rotina_manha");
+    }
   };
 
   const content = protocolData?.conteudo as unknown as MindsetProtocol | null;
