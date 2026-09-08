@@ -5,22 +5,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-[13px] font-medium tracking-[0.01em] ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-border bg-transparent text-foreground hover:border-primary/50 hover:bg-secondary/40",
+        outline: "border border-border bg-card text-foreground hover:border-primary/50 hover:bg-secondary/60",
         secondary: "bg-secondary text-secondary-foreground border border-border/60 hover:bg-secondary/70",
         ghost: "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
         link: "text-foreground underline-offset-4 hover:underline",
         fire: "bg-primary text-primary-foreground hover:bg-primary/90 font-medium uppercase tracking-[0.14em] text-[11px]",
-        dark: "bg-card border border-border text-foreground hover:border-primary/40",
+        dark: "bg-sidebar border border-sidebar-border text-sidebar-foreground hover:border-primary/40",
       },
       size: {
-        default: "h-10 px-5 py-2",
-        sm: "h-9 rounded-lg px-3.5",
+        default: "h-11 px-5 py-2",
+        sm: "h-9 rounded-lg px-3.5 text-xs",
         lg: "h-12 px-8 text-sm",
         xl: "h-14 px-10 text-base",
         icon: "h-10 w-10",

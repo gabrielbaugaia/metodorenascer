@@ -43,14 +43,14 @@ export function ClientLayout({ children }: ClientLayoutProps) {
         <ClientSidebar />
         <main className="flex-1 overflow-x-hidden overflow-y-auto min-w-0">
           {/* Mobile Header */}
-          <header className="md:hidden sticky top-0 z-40 flex h-[calc(3.25rem+env(safe-area-inset-top))] items-center justify-between border-b border-border/60 bg-background/95 backdrop-blur px-4 pt-[env(safe-area-inset-top)]">
+          <header className="md:hidden sticky top-0 z-40 flex h-[calc(3.75rem+env(safe-area-inset-top))] items-center justify-between border-b border-sidebar-border bg-sidebar text-sidebar-foreground px-4 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="h-8 w-8 text-muted-foreground">
+              <SidebarTrigger className="h-9 w-9 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent">
                 <Menu className="h-4 w-4" strokeWidth={1.4} />
               </SidebarTrigger>
               <div className="flex items-center gap-2">
                 <img src={logoGb.url} alt="Gabriel Baú" className="h-5 w-5 object-contain" />
-                <span className="font-display text-[15px] text-foreground">Gabriel Baú</span>
+                <span className="text-sm font-bold tracking-[0.08em] text-sidebar-foreground">GABRIEL BAÚ</span>
               </div>
             </div>
             {isAdmin && <AdminSupportNotifications />}
@@ -61,7 +61,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
               <AdminSupportNotifications />
             </div>
           )}
-          <div className="px-5 py-6 md:px-10 md:py-10 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-12 max-w-[1180px] mx-auto w-full">
+          <div className="px-5 py-7 md:px-12 md:py-12 lg:px-16 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-16 max-w-[1280px] mx-auto w-full">
             {children}
           </div>
 

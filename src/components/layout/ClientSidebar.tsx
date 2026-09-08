@@ -49,9 +49,9 @@ import logoGb from "@/assets/logo-gb.png.asset.json";
 const ICON_STROKE = 1.4;
 
 const navItemClass =
-  "group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-[13px] tracking-[0.01em] transition-colors duration-300";
-const navActive = "bg-secondary/70 text-foreground";
-const navIdle = "text-muted-foreground hover:bg-secondary/40 hover:text-foreground";
+  "group relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-200";
+const navActive = "bg-sidebar-accent text-sidebar-foreground";
+const navIdle = "text-sidebar-foreground/60 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground";
 
 
 const clientMenuItems = [
@@ -136,36 +136,34 @@ export function ClientSidebar() {
   return (
     <Sidebar
       className={cn(
-        "border-r border-border/60 bg-sidebar transition-all duration-300",
+        "border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300",
         collapsed ? "w-16" : "w-[264px]"
       )}
       collapsible="icon"
     >
       {/* Desktop header */}
-      <div className="hidden md:flex h-20 items-center justify-between border-b border-border/50 px-5">
+      <div className="hidden md:flex h-24 items-center justify-between border-b border-sidebar-border px-5">
         {!collapsed && (
           <div className="flex items-center gap-3 min-w-0">
             <img src={logoGb.url} alt="Gabriel Baú" className="h-7 w-7 object-contain shrink-0" />
             <span className="flex flex-col min-w-0">
-              <span className="font-display text-[15px] leading-tight text-foreground truncate">
-                {isAdmin ? "Painel" : "Gabriel Baú"}
+              <span className="text-[15px] font-bold tracking-[0.08em] leading-tight text-sidebar-foreground truncate">
+                {isAdmin ? "PAINEL" : "GABRIEL BAÚ"}
               </span>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                {isAdmin ? "Administração" : "Consultoria"}
+              <span className="text-[10px] uppercase tracking-[0.18em] text-sidebar-foreground/50">
+                {isAdmin ? "ADMINISTRAÇÃO" : "CONSULTORIA"}
               </span>
             </span>
           </div>
         )}
-        <SidebarTrigger className="ml-auto text-muted-foreground hover:text-foreground" />
+        <SidebarTrigger className="ml-auto text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent" />
       </div>
 
       {/* Mobile header inside sheet */}
-      <div className="md:hidden flex h-16 items-center border-b border-border/50 px-5">
+      <div className="md:hidden flex h-16 items-center border-b border-sidebar-border px-5">
         <div className="flex items-center gap-3">
           <img src={logoGb.url} alt="Gabriel Baú" className="h-6 w-6 object-contain" />
-          <span className="font-display text-sm text-foreground">
-            {isAdmin ? "Painel" : "Gabriel Baú"}
-          </span>
+          <span className="text-sm font-bold tracking-[0.08em] text-sidebar-foreground">{isAdmin ? "PAINEL" : "GABRIEL BAÚ"}</span>
         </div>
       </div>
 
@@ -173,11 +171,11 @@ export function ClientSidebar() {
         {/* Client menu */}
         {!isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel className={cn("eyebrow-label px-2 mb-2", collapsed && "sr-only")}>
+            <SidebarGroupLabel className={cn("px-2 mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40", collapsed && "sr-only")}>
               Acompanhamento
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
+              <SidebarMenu className="gap-1">
                 {clientMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
@@ -202,7 +200,7 @@ export function ClientSidebar() {
         {/* Admin menu with sections */}
         {isAdmin && adminSections.map((section) => (
           <SidebarGroup key={section.label}>
-            <SidebarGroupLabel className={cn("eyebrow-label px-2 mb-2 mt-3", collapsed && "sr-only")}>
+            <SidebarGroupLabel className={cn("px-2 mb-2 mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40", collapsed && "sr-only")}>
               {section.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -229,13 +227,13 @@ export function ClientSidebar() {
         ))}
 
         {/* Logout */}
-        <div className="mt-auto pt-4 border-t border-border/50">
+        <div className="mt-auto pt-4 border-t border-sidebar-border">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={handleLogout}
                 tooltip="Sair"
-                className="min-h-10 px-3 text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg"
+                className="min-h-11 px-3 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-xl"
               >
                 <LogOut className="h-[17px] w-[17px] shrink-0 opacity-70" strokeWidth={ICON_STROKE} />
                 {!collapsed && <span className="text-[13px]">Sair</span>}
