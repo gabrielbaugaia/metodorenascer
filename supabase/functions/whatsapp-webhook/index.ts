@@ -288,6 +288,18 @@ Deno.serve(async (req) => {
   let payload: any;
   try {
     rawBody = await req.text();
+  } catch (e) {
+    log("body_read_error", { error: (e as Error).message });
+    return new Response("bad request", { status: 400, headers: corsHeaders });
+  }
+
+  // Assinatura da Meta obrigatória (fail-closed).
+  if (!(await verifyMetaSignature(req, rawBody))) {
+    log("hmac_invalid");
+    return new Response("forbidden", { status: 403, headers: corsHeaders });
+  }
+
+  try {
     payload = JSON.parse(rawBody);
   } catch (e) {
     log("invalid_json", { error: (e as Error).message });
@@ -296,6 +308,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
 
   // 1. Salvar evento bruto com deduplicação
   try {
