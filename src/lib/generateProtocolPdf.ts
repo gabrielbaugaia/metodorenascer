@@ -612,7 +612,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
       addSectionTitle("Plano — Dia de Treino");
       if (pdt.nota || pdt.descricao) addText(pdt.nota || pdt.descricao);
       const refeicoesT = pdt.refeicoes || [];
-      refeicoesT.forEach((r: any) => renderMealBlock(r, helpers));
+      refeicoesT.forEach((r: any) => renderMealBlock(doc, r, helpers));
     }
 
     // 3. Plano Dia de Descanso
@@ -621,7 +621,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
       addSectionTitle("Plano — Dia de Descanso");
       if (pdd.nota || pdd.descricao || pdd.nota_ajuste) addText(pdd.nota || pdd.descricao || pdd.nota_ajuste);
       const refeicoesD = pdd.refeicoes || [];
-      refeicoesD.forEach((r: any) => renderMealBlock(r, helpers));
+      refeicoesD.forEach((r: any) => renderMealBlock(doc, r, helpers));
     }
 
     // 4. Refeição Pré-Sono
@@ -789,7 +789,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
   if (conteudo?.refeicoes) {
     addSectionTitle("Plano de Refeições");
     conteudo.refeicoes.forEach((refeicao: any) => {
-      renderMealBlock(refeicao, helpers);
+      renderMealBlock(doc, refeicao, helpers);
     });
   }
 
