@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
-import { StatusBadge } from "@/components/renascer/StatusBadge";
 import { useGabrielBauScore } from "@/hooks/useGabrielBauScore";
 import { computeBodyIndicators, type DayLog } from "@/lib/bodyIndicators";
 import { useQuery } from "@tanstack/react-query";
