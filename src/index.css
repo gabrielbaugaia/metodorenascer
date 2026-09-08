@@ -540,8 +540,18 @@
   }
 
   .surface-hover {
-    @apply transition-colors duration-300 hover:border-primary/35;
+    @apply transition-colors duration-200 ease-out hover:border-primary/35;
   }
+
+  /* Microinterações discretas: 180-250ms, sem glow/bounce */
+  .interactive-soft {
+    @apply transition-all duration-200 ease-out hover:border-primary/30 hover:bg-secondary/40;
+  }
+
+  .progress-smooth {
+    transition: width 220ms cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
 
   .section-block {
     @apply space-y-4 md:space-y-5;
