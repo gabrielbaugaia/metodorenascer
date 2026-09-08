@@ -129,8 +129,9 @@ export function generateProtocolPdf(protocol: Protocol, includeAudit: boolean = 
 
   const addObservation = (text: string) => {
     doc.setFontSize(8.5);
-    doc.setFont("helvetica", "italic");
-    const lines = doc.splitTextToSize(String(text), contentWidth - 14);
+    doc.setFont("helvetica", protocol.tipo === "nutricao" ? "normal" : "italic");
+    const observationText = protocol.tipo === "nutricao" ? sanitizeNutritionText(text) : String(text);
+    const lines = doc.splitTextToSize(observationText, contentWidth - 14);
     const boxHeight = lines.length * 4.4 + 9;
     checkNewPage(boxHeight + 4);
     setFill(doc, PDF_COLORS.surface);
@@ -139,7 +140,7 @@ export function generateProtocolPdf(protocol: Protocol, includeAudit: boolean = 
     doc.rect(margin, yPos - 3, 1.4, boxHeight, "F");
     setText(doc, PDF_COLORS.text);
     doc.setFontSize(8.5);
-    doc.setFont("helvetica", "italic");
+    doc.setFont("helvetica", protocol.tipo === "nutricao" ? "normal" : "italic");
     doc.text(lines, margin + 8, yPos + 3);
     yPos += boxHeight + 5;
   };
@@ -405,66 +406,64 @@ function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
   }
 }
 
-// Helper: render a meal block (used for both treino and descanso day plans)
+// Nutrition strings are normalized before both measurement and drawing.
+export function sanitizeNutritionText(value: unknown): string {
+  return String(value ?? "")
+    .replace(/(?:â(?:†|€|€™|€˜|€")+[’'\u0092]?|!+[’'\u0092]+|[→↳]|=>|->|[—–])/gi, " - ")
+    .replace(/•/g, " ")
+    .replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060\uFEFF�]/g, "")
+    .replace(/\s*-\s*-+\s*/g, " - ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+([,.;:)])/g, "$1")
+    .trim();
+}
+
 function renderMealBlock(doc: jsPDF, refeicao: any, helpers: any) {
   if (!refeicao) return;
-
   const { margin, contentWidth, bottomLimit, newPage } = helpers;
   let y: number = helpers.yPos();
-
-  const LINE_FOOD = 4.4;
-  const LINE_SUB = 4.2;
-
-  const ensure = (needed: number) => {
-    if (y + needed > bottomLimit) {
+  const foodLineHeight = 4.7;
+  const substitutionLineHeight = 4.5;
+  const ensure = (height: number) => {
+    if (y + height > bottomLimit) {
       newPage();
       y = helpers.yPos();
     }
   };
 
-  // Normalize content (presentation only — no data changes)
-  const title = [
+  const title = sanitizeNutritionText([
     refeicao.nome,
     refeicao.horario ? `(${refeicao.horario})` : null,
     refeicao.calorias_aproximadas ? `~${refeicao.calorias_aproximadas} kcal` : null,
     refeicao.calorias ? `~${refeicao.calorias} kcal` : null,
-  ].filter(Boolean).join(" — ");
-
+  ].filter(Boolean).join(" "));
   const alimentos: string[] = (refeicao.alimentos || refeicao.opcoes || []).map((alimento: any) => {
-    if (typeof alimento === "string") return alimento;
+    if (typeof alimento === "string") return sanitizeNutritionText(alimento);
     const name = alimento.item || alimento.nome || alimento.alimento || "";
     const qty = alimento.quantidade || alimento.porcao || "";
     const kcal = alimento.calorias || "";
-    return `${name}${qty ? ` — ${qty}` : ""}${kcal ? ` (${kcal} kcal)` : ""}`;
-  });
-
+    return sanitizeNutritionText(`${name}${qty ? ` - ${qty}` : ""}${kcal ? ` (${kcal} kcal)` : ""}`);
+  }).filter(Boolean);
   let macroLine = "";
   if (refeicao.macros) {
     const m = refeicao.macros;
-    macroLine = [
+    macroLine = sanitizeNutritionText([
       m.proteina || m.proteinas ? `P: ${m.proteina || m.proteinas}g` : null,
       m.carboidrato || m.carboidratos ? `C: ${m.carboidrato || m.carboidratos}g` : null,
       m.gordura || m.gorduras ? `G: ${m.gordura || m.gorduras}g` : null,
-    ].filter(Boolean).join("  ·  ");
+    ].filter(Boolean).join(" | "));
   }
-
   const subs: string[] = (refeicao.substituicoes || refeicao.alternativas || []).map((sub: any) => {
-    if (typeof sub === "string") return sub;
-    const de = sub.original || "";
-    const para = sub.substituto || sub.opcao || "";
-    return de && para ? `${de} — ${para}` : `${de}${para}`;
+    if (typeof sub === "string") return sanitizeNutritionText(sub);
+    const from = sub.original || sub.de || "";
+    const to = sub.substituto || sub.para || sub.opcao || "";
+    return sanitizeNutritionText(from && to ? `${from} - ${to}` : `${from}${to}`);
   }).filter(Boolean);
+  const observation = sanitizeNutritionText(refeicao.observacao || refeicao.nota || "");
 
-  const obs = refeicao.observacao || refeicao.nota || "";
-
-  // Page break: title + at least 2 food lines (+ substitution label when present)
-  const minBlock = 12 + Math.min(alimentos.length, 2) * LINE_FOOD + (subs.length > 0 ? 8 : 0);
-  ensure(minBlock);
-
-  // Title + hairline divider
-  doc.setCharSpace(0);
+  ensure(12 + Math.min(alimentos.length, 2) * foodLineHeight + (subs.length ? 9 : 0));
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.8);
+  doc.setFontSize(10);
   setText(doc, PDF_COLORS.text);
   const titleLines = doc.splitTextToSize(title, contentWidth);
   doc.text(titleLines, margin, y);
@@ -473,82 +472,77 @@ function renderMealBlock(doc: jsPDF, refeicao: any, helpers: any) {
   doc.rect(margin, y, contentWidth, 0.3, "F");
   y += 4.4;
 
-  // Foods
-  doc.setCharSpace(0);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.8);
-  setText(doc, PDF_COLORS.text);
-  for (const alimento of alimentos) {
-    const lines = doc.splitTextToSize(alimento, contentWidth - 10);
-    lines.forEach((line: string, idx: number) => {
-      ensure(LINE_FOOD + 2);
-      doc.setCharSpace(0);
+  for (const food of alimentos) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.8);
+    const lines = doc.splitTextToSize(food, contentWidth - 10);
+    lines.forEach((line: string, index: number) => {
+      ensure(foodLineHeight + 2);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.8);
-      setText(doc, PDF_COLORS.text);
-      if (idx === 0) doc.text("•", margin + 2, y);
+      setText(doc, [34, 34, 34]);
+      if (index === 0) {
+        setFill(doc, [34, 34, 34]);
+        doc.circle(margin + 2.2, y - 1, 0.55, "F");
+      }
       doc.text(line, margin + 6, y);
-      y += LINE_FOOD;
+      y += foodLineHeight;
     });
   }
 
-  // Macros
   if (macroLine) {
-    ensure(LINE_SUB + 2);
+    ensure(substitutionLineHeight + 3);
     y += 1.2;
-    doc.setCharSpace(0);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.8);
     setText(doc, PDF_COLORS.muted);
     doc.text(macroLine, margin + 6, y);
-    y += LINE_SUB;
+    y += substitutionLineHeight;
   }
 
-  // Substituições
-  if (subs.length > 0) {
-    ensure(10);
-    y += 2.4;
-    doc.setCharSpace(0);
+  if (subs.length) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.4);
+    const firstLines = doc.splitTextToSize(subs[0], contentWidth - 16).length;
+    ensure(6.8 + Math.min(firstLines, 2) * substitutionLineHeight);
+    y += 2.6;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.2);
+    doc.setFontSize(8);
     setText(doc, PDF_COLORS.bronze);
     doc.text("SUBSTITUIÇÕES", margin + 6, y);
-    y += 4.2;
-
-    for (const sub of subs) {
-      const lines = doc.splitTextToSize(sub, contentWidth - 16);
-      lines.forEach((line: string, idx: number) => {
-        ensure(LINE_SUB + 2);
-        doc.setCharSpace(0);
+    y += 4.4;
+    for (const substitution of subs) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.4);
+      const lines = doc.splitTextToSize(substitution, contentWidth - 16);
+      lines.forEach((line: string, index: number) => {
+        ensure(substitutionLineHeight + 2);
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(8.2);
-        setText(doc, PDF_COLORS.muted);
-        if (idx === 0) doc.text("•", margin + 8, y);
+        doc.setFontSize(8.4);
+        setText(doc, [95, 99, 104]);
+        if (index === 0) {
+          setFill(doc, [95, 99, 104]);
+          doc.circle(margin + 8.2, y - 0.9, 0.5, "F");
+        }
         doc.text(line, margin + 12, y);
-        y += LINE_SUB;
+        y += substitutionLineHeight;
       });
     }
   }
 
-  // Observação
-  if (obs) {
-    const lines = doc.splitTextToSize(`Obs: ${obs}`, contentWidth - 10);
+  if (observation) {
+    const lines = doc.splitTextToSize(`Obs: ${observation}`, contentWidth - 10);
     lines.forEach((line: string) => {
-      ensure(LINE_SUB + 2);
+      ensure(substitutionLineHeight + 2);
       y += 0.6;
-      doc.setCharSpace(0);
-      doc.setFont("helvetica", "italic");
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       setText(doc, PDF_COLORS.muted);
       doc.text(line, margin + 6, y);
-      y += LINE_SUB;
+      y += substitutionLineHeight;
     });
   }
-
-  // Breathing room before the next meal
-  y += 5.5;
-  doc.setCharSpace(0);
-  helpers.setYPos(y);
+  helpers.setYPos(y + 5.5);
 }
 
 
