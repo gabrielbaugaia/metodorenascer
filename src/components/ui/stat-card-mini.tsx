@@ -15,15 +15,15 @@ export function StatCardMini({ label, value, icon: Icon, onClick, className }: S
     <Comp
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2.5 rounded-xl border border-border/50 bg-card p-3 text-left transition-colors",
-        onClick && "cursor-pointer hover:border-foreground/30",
+        "flex items-center gap-3 rounded-2xl border border-border/80 bg-card p-4 text-left shadow-[var(--shadow-soft)] transition-colors",
+        onClick && "cursor-pointer hover:border-primary/35",
         className
       )}
     >
-      <Icon className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
+      <Icon className="h-4 w-4 text-primary shrink-0" strokeWidth={1.5} />
       <div className="min-w-0">
-        <p className="text-lg font-semibold text-foreground leading-tight">{value}</p>
-        <p className="text-[10px] text-muted-foreground truncate">{label}</p>
+        <p className="text-xl font-bold text-foreground leading-tight">{value}</p>
+        <p className="mt-1 text-xs text-muted-foreground truncate">{label}</p>
       </div>
     </Comp>
   );

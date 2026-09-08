@@ -132,10 +132,13 @@ export function CardioLogForm({ onSubmit, isSubmitting, userId }: Props) {
     setForm((prev) => ({ ...prev, [field]: value }));
 
   return (
-    <Card className="p-4 space-y-4">
-      <h3 className="font-semibold text-foreground">Registrar sessão aeróbica</h3>
+    <Card className="space-y-6 p-5 md:p-6">
+      <div>
+        <p className="eyebrow-label">Novo registro</p>
+        <h3 className="mt-2 text-xl font-semibold text-foreground">Registrar sessão aeróbica</h3>
+      </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label className="text-xs">Tipo</Label>
           <Select value={form.cardio_type} onValueChange={(v) => update("cardio_type", v)}>
@@ -153,7 +156,7 @@ export function CardioLogForm({ onSubmit, isSubmitting, userId }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="space-y-1.5">
           <Label className="text-xs">Duração (min)</Label>
           <Input type="number" placeholder="30" value={form.duration_minutes} onChange={(e) => update("duration_minutes", e.target.value)} />
@@ -172,7 +175,7 @@ export function CardioLogForm({ onSubmit, isSubmitting, userId }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label className="text-xs">FC máx (bpm)</Label>
           <Input type="number" placeholder="170" value={form.max_hr_bpm} onChange={(e) => update("max_hr_bpm", e.target.value)} />
@@ -187,7 +190,7 @@ export function CardioLogForm({ onSubmit, isSubmitting, userId }: Props) {
         placeholder="Observações (opcional)"
         value={form.notes}
         onChange={(e) => update("notes", e.target.value)}
-        className="min-h-[60px]"
+        className="min-h-[96px]"
       />
 
       {/* Screenshot */}
@@ -198,7 +201,7 @@ export function CardioLogForm({ onSubmit, isSubmitting, userId }: Props) {
           {isExtracting ? "Extraindo..." : "Anexar print"}
         </Button>
         {screenshotPreview && (
-          <img src={screenshotPreview} alt="preview" className="h-10 w-10 rounded object-cover border" />
+          <img src={screenshotPreview} alt="Prévia do registro" className="h-12 w-12 rounded-xl object-cover border border-border" />
         )}
       </div>
 

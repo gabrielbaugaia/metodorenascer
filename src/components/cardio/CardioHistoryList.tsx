@@ -37,7 +37,7 @@ interface Props {
 export function CardioHistoryList({ sessions, onDelete, isDeleting }: Props) {
   if (sessions.length === 0) {
     return (
-      <Card className="p-8 text-center">
+      <Card className="p-10 text-center">
         <p className="text-muted-foreground">Nenhuma sessão de aeróbico registrada ainda.</p>
         <p className="text-sm text-muted-foreground mt-1">Registre sua primeira sessão acima!</p>
       </Card>
@@ -45,9 +45,11 @@ export function CardioHistoryList({ sessions, onDelete, isDeleting }: Props) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="relative space-y-0 border-l border-border pl-5 md:pl-7">
       {sessions.map((s) => (
-        <Card key={s.id} className="p-4">
+        <div key={s.id} className="relative pb-5">
+          <span className="absolute -left-[1.55rem] top-6 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-background md:-left-[1.95rem]" />
+        <Card className="p-5 md:p-6">
           <div className="flex items-start justify-between">
             <div className="space-y-2 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
@@ -98,6 +100,7 @@ export function CardioHistoryList({ sessions, onDelete, isDeleting }: Props) {
             </Button>
           </div>
         </Card>
+        </div>
       ))}
     </div>
   );

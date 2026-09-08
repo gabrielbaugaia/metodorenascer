@@ -118,25 +118,22 @@ export function WorkoutCard({
     <>
       <Card
         className={cn(
-          "animate-fade-in overflow-hidden transition-all",
+          "animate-fade-in overflow-hidden transition-colors",
           completed
-            ? "border-foreground/40 bg-foreground/5"
-            : "border-border/50 hover:border-foreground/30"
+            ? "border-primary/35 bg-primary/5"
+            : "border-border/80 hover:border-primary/35"
         )}
         style={{ animationDelay: `${index * 0.1}s` }}
       >
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer select-none">
+            <CardHeader className="cursor-pointer select-none p-5 md:p-6">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                   {/* Day badge */}
                   <div
                     className={cn(
-                      "w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center shrink-0",
-                      completed
-                        ? "bg-brand-gold text-warning-foreground"
-                        : "bg-brand-gold text-warning-foreground"
+                      "w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center shrink-0 bg-primary/10 text-primary border border-primary/20"
                     )}
                   >
                     {completed ? (
@@ -153,7 +150,7 @@ export function WorkoutCard({
 
                   {/* Info */}
                   <div className="min-w-0">
-                    <CardTitle className="text-sm sm:text-lg mb-0.5 sm:mb-1 uppercase truncate">
+                    <CardTitle className="text-base sm:text-xl mb-1 truncate">
                       {focus}
                     </CardTitle>
                     <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
@@ -174,7 +171,7 @@ export function WorkoutCard({
                     variant={completed ? "default" : "outline"}
                     className={cn(
                       "text-[10px] sm:text-xs px-1.5 sm:px-2.5",
-                      completed && "bg-foreground/20 text-foreground border-foreground/30"
+                       completed && "bg-primary/10 text-primary border-primary/25"
                     )}
                   >
                     {safeExercises.length} exercícios
@@ -199,7 +196,7 @@ export function WorkoutCard({
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-foreground rounded-full transition-all"
+                      className="h-full bg-primary rounded-full transition-all"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
@@ -244,8 +241,8 @@ export function WorkoutCard({
                 </div>
               )}
               {todayCompleted && !completed && (
-                <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-center">
-                  <p className="text-sm text-green-500 font-medium flex items-center justify-center gap-2">
+                <div className="mt-4 p-3 rounded-xl bg-success/10 border border-success/20 text-center">
+                  <p className="text-sm text-success font-medium flex items-center justify-center gap-2">
                     <CheckCircle className="w-4 h-4" />
                     Treino de hoje já foi registrado!
                   </p>

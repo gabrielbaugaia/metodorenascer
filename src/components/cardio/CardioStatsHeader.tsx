@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { Flame, Clock, MapPin, Calendar } from "lucide-react";
 
 interface CardioStats {
@@ -17,20 +16,20 @@ export function CardioStatsHeader({ stats }: { stats: CardioStats }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[var(--shadow-soft)] md:grid-cols-4">
       {kpis.map((kpi) => (
-        <Card key={kpi.label} className="p-3 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-foreground/10">
-            <kpi.icon className="h-4 w-4 text-foreground" />
+        <div key={kpi.label} className="flex min-w-0 items-center gap-3 border-b border-r border-border/70 p-4 last:border-r-0 md:p-5">
+          <div className="rounded-xl bg-primary/10 p-2.5">
+            <kpi.icon className="h-4 w-4 text-primary" strokeWidth={1.5} />
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">{kpi.label}</p>
-            <p className="text-lg font-bold text-foreground">
+          <div className="min-w-0">
+            <p className="metric-label truncate">{kpi.label}</p>
+            <p className="mt-1 text-xl font-bold text-foreground tabular-nums">
               {kpi.value}
               {kpi.suffix && <span className="text-xs font-normal text-muted-foreground ml-1">{kpi.suffix}</span>}
             </p>
           </div>
-        </Card>
+        </div>
       ))}
     </div>
   );
