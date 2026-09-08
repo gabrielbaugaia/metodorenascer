@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -218,10 +218,4 @@ export function EvolutionOverview({ weightSeries, currentWeight, period, onPerio
       </div>
     </section>
   );
-}
-
-export function useEvolutionPeriod() {
-  const [period, setPeriod] = useState<EvolutionPeriod>("90d");
-  useEffect(() => {}, []);
-  return { period, setPeriod };
 }
