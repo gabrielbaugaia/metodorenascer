@@ -166,7 +166,7 @@ export function ExerciseVideoModal({
           {/* Loading state */}
           {loading && (
             <div className="space-y-3">
-              <div className="relative aspect-square max-h-[300px] rounded-xl overflow-hidden bg-gradient-to-br from-muted to-muted/50">
+              <div className="relative aspect-square max-h-[300px] rounded-xl overflow-hidden bg-muted/60">
                 <Skeleton className="w-full h-full animate-pulse" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                   <div className="w-12 h-12 rounded-full border-2 border-foreground/30 border-t-primary animate-spin" />
@@ -178,7 +178,7 @@ export function ExerciseVideoModal({
 
           {/* GIF Animation */}
           {!loading && gifUrl && (
-            <div className="relative aspect-square max-h-[300px] rounded-xl overflow-hidden bg-gradient-to-br from-muted to-muted/30">
+            <div className="relative aspect-square max-h-[300px] rounded-xl overflow-hidden bg-muted/40">
               {!imageLoaded && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10">
                   <div className="w-10 h-10 rounded-full border-2 border-foreground/30 border-t-primary animate-spin" />

@@ -7,7 +7,6 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { AdminSupportNotifications } from "@/components/admin/AdminSupportNotifications";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Loader2, Menu } from "lucide-react";
-import logoGb from "@/assets/logo-gb.png.asset.json";
 
 
 interface ClientLayoutProps {
@@ -49,7 +48,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
                 <Menu className="h-4 w-4" strokeWidth={1.4} />
               </SidebarTrigger>
               <div className="flex items-center gap-2">
-                <img src={logoGb.url} alt="Gabriel Baú" className="h-5 w-5 object-contain" />
+                <img src="/favicon.png" alt="Gabriel Baú" className="h-5 w-5 object-contain" />
                 <span className="text-sm font-bold tracking-[0.08em] text-sidebar-foreground">GABRIEL BAÚ</span>
               </div>
             </div>

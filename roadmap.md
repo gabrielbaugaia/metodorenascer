@@ -7,4 +7,4 @@
 - [x] Propagar visual para Nutrição, Diário Nutricional e Receitas
 - [x] Propagar visual para Vídeos, Mindset, Meu Perfil e Configurações
 - [x] Remover emojis e resíduos visuais antigos no escopo
-- [ ] Validar funções preservadas, desktop e mobile
+- [x] Validar funções preservadas, desktop e mobile
