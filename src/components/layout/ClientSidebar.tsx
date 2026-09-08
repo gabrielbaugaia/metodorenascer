@@ -55,23 +55,28 @@ const navActive = "bg-sidebar-accent text-sidebar-foreground";
 const navIdle = "text-sidebar-foreground/60 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground";
 
 
-const clientMenuItems = [
+const clientPrimaryItems = [
   { title: "Hoje", url: "/dashboard", icon: Flame },
   { title: "Treino", url: "/treino", icon: Dumbbell },
   { title: "Nutrição", url: "/nutricao", icon: Apple },
   { title: "Evolução", url: "/evolucao", icon: Camera },
-  { title: "Diário", url: "/nutricao-diario", icon: NotebookPen },
   { title: "Aeróbico", url: "/cardio", icon: HeartPulse },
+];
+
+const clientContentItems = [
   { title: "Receitas", url: "/receitas", icon: ChefHat },
   { title: "Vídeos", url: "/videos", icon: Play },
   { title: "Mindset", url: "/mindset", icon: Brain },
-  { title: "Painel", url: "/renascer", icon: Activity },
+];
+
+const clientMoreItems = [
+  { title: "Diário nutricional", url: "/nutricao-diario", icon: NotebookPen },
+  { title: "Painel de dados", url: "/renascer", icon: Activity },
   { title: "Meu Perfil", url: "/meu-perfil", icon: User },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
   { title: "Suporte", url: "/suporte", icon: MessageCircle },
   { title: "Assinatura", url: "/assinatura", icon: CreditCard },
 ];
-
 
 interface AdminSection {
   label: string;
