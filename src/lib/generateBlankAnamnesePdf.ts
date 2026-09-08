@@ -10,12 +10,12 @@ export function generateBlankAnamnesePdf(clientName?: string): void {
   let yPos = 20;
 
   const addHeader = () => {
-    doc.setFillColor(255, 69, 0);
+    doc.setFillColor(8, 10, 13);
     doc.rect(0, 0, pageWidth, 30, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("MÉTODO GABRIEL BAÚ", margin, 18);
+    doc.text("GABRIEL BAÚ", margin, 18);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text("Ficha de Anamnese", margin, 25);
@@ -31,7 +31,7 @@ export function generateBlankAnamnesePdf(clientName?: string): void {
 
   const addSectionTitle = (title: string) => {
     checkNewPage(12);
-    doc.setFillColor(255, 69, 0);
+    doc.setFillColor(8, 10, 13);
     doc.rect(margin, yPos - 4, contentWidth, 8, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
@@ -165,7 +165,7 @@ export function generateBlankAnamnesePdf(clientName?: string): void {
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      `Página ${i} de ${pageCount} — GabrielBau Treinador`,
+      `Página ${i} de ${pageCount} — Gabriel Baú Consultoria`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: "center" }

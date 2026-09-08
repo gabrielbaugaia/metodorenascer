@@ -62,15 +62,15 @@ export async function generateAnamnesePdf(
 
   // Helper functions
   const addHeader = () => {
-    doc.setFillColor(255, 69, 0);
+    doc.setFillColor(8, 10, 13);
     doc.rect(0, 0, pageWidth, 30, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("MÉTODO GABRIEL BAÚ", margin, 18);
+    doc.text("GABRIEL BAÚ", margin, 18);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Anamnese do Cliente - GabrielBau", margin, 25);
+    doc.text("CONSULTORIA · Anamnese do Cliente", margin, 25);
     yPos = 42;
   };
 
@@ -108,7 +108,7 @@ export async function generateAnamnesePdf(
 
   const addSectionTitle = (title: string) => {
     checkNewPage(12);
-    doc.setFillColor(255, 69, 0);
+    doc.setFillColor(8, 10, 13);
     doc.rect(margin, yPos - 4, contentWidth, 8, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
