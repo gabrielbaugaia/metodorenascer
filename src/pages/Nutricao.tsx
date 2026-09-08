@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTutorial, PageTutorialBanner } from "@/components/onboarding/PageTutorial";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageLoadingState, PageErrorState } from "@/components/ui/page-states";
 import { 
   Utensils, Loader2, Apple, Download, Lock, Droplets, 
   ShoppingCart, ArrowLeftRight, Moon, ChevronDown, ChevronUp,
