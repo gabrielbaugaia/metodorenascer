@@ -44,8 +44,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { cn } from "@/lib/utils";
+import logoGb from "@/assets/logo-gb.png.asset.json";
 
-const ICON_STROKE = 1.5;
+const ICON_STROKE = 1.4;
+
+const navItemClass =
+  "group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-[13px] tracking-[0.01em] transition-colors duration-300";
+const navActive = "bg-secondary/70 text-foreground";
+const navIdle = "text-muted-foreground hover:bg-secondary/40 hover:text-foreground";
+
 
 const clientMenuItems = [
   { title: "Hoje", url: "/dashboard", icon: Flame },
@@ -129,58 +136,60 @@ export function ClientSidebar() {
   return (
     <Sidebar
       className={cn(
-        "border-r border-border bg-background transition-all duration-200",
-        collapsed ? "w-16" : "w-[260px]"
+        "border-r border-border/60 bg-sidebar transition-all duration-300",
+        collapsed ? "w-16" : "w-[264px]"
       )}
       collapsible="icon"
     >
       {/* Desktop header */}
-      <div className="hidden md:flex h-14 items-center justify-between border-b border-border px-4">
+      <div className="hidden md:flex h-20 items-center justify-between border-b border-border/50 px-5">
         {!collapsed && (
-          <div className="flex items-center gap-2.5">
-            <span className="font-display text-sm tracking-widest text-foreground uppercase">
-              {isAdmin ? "Painel Admin" : "Gabriel Baú"}
+          <div className="flex items-center gap-3 min-w-0">
+            <img src={logoGb.url} alt="Gabriel Baú" className="h-7 w-7 object-contain shrink-0" />
+            <span className="flex flex-col min-w-0">
+              <span className="font-display text-[15px] leading-tight text-foreground truncate">
+                {isAdmin ? "Painel" : "Gabriel Baú"}
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                {isAdmin ? "Administração" : "Consultoria"}
+              </span>
             </span>
           </div>
         )}
-        <SidebarTrigger className="ml-auto" />
+        <SidebarTrigger className="ml-auto text-muted-foreground hover:text-foreground" />
       </div>
 
       {/* Mobile header inside sheet */}
-      <div className="md:hidden flex h-14 items-center border-b border-border px-4">
-        <div className="flex items-center gap-2.5">
-          <span className="font-display text-sm tracking-widest text-foreground uppercase">
-            {isAdmin ? "Painel Admin" : "Gabriel Baú"}
+      <div className="md:hidden flex h-16 items-center border-b border-border/50 px-5">
+        <div className="flex items-center gap-3">
+          <img src={logoGb.url} alt="Gabriel Baú" className="h-6 w-6 object-contain" />
+          <span className="font-display text-sm text-foreground">
+            {isAdmin ? "Painel" : "Gabriel Baú"}
           </span>
         </div>
       </div>
 
-      <SidebarContent className="px-2 py-3">
+      <SidebarContent className="px-3 py-5">
         {/* Client menu */}
         {!isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel className={cn("text-[10px] tracking-widest text-muted-foreground font-medium", collapsed && "sr-only")}>
-              MENU
+            <SidebarGroupLabel className={cn("eyebrow-label px-2 mb-2", collapsed && "sr-only")}>
+              Acompanhamento
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0.5">
                 {clientMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-                      <NavLink
-                        to={item.url}
-                        className={cn(
-"group relative flex min-h-10 items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm transition-colors",
-                           isActive(item.url)
-                             ? "border-border bg-muted text-foreground"
-                             : "text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-foreground"
-                         )}
-                       >
-                         {isActive(item.url) && (
-                           <div className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r bg-foreground" />
-                         )}
-                         <item.icon className="h-4 w-4 shrink-0 text-current opacity-90" strokeWidth={ICON_STROKE} />
-                        {!collapsed && <span>{item.title}</span>}
+                      <NavLink to={item.url} className={cn(navItemClass, isActive(item.url) ? navActive : navIdle)}>
+                        {isActive(item.url) && (
+                          <span className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-r bg-primary" />
+                        )}
+                        <item.icon
+                          className={cn("h-[17px] w-[17px] shrink-0", isActive(item.url) ? "text-primary" : "text-current opacity-70")}
+                          strokeWidth={ICON_STROKE}
+                        />
+                        {!collapsed && <span className="truncate">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -193,28 +202,23 @@ export function ClientSidebar() {
         {/* Admin menu with sections */}
         {isAdmin && adminSections.map((section) => (
           <SidebarGroup key={section.label}>
-            <SidebarGroupLabel className={cn("text-[10px] tracking-widest text-muted-foreground font-medium mt-2", collapsed && "sr-only")}>
+            <SidebarGroupLabel className={cn("eyebrow-label px-2 mb-2 mt-3", collapsed && "sr-only")}>
               {section.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0.5">
                 {section.items.map((item) => (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-                      <NavLink
-                        to={item.url}
-                        className={cn(
-"group relative flex min-h-10 items-center gap-3 rounded-md border border-transparent px-3 py-2 text-sm transition-colors",
-                           isActive(item.url)
-                             ? "border-border bg-muted text-foreground"
-                             : "text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-foreground"
-                         )}
-                       >
-                         {isActive(item.url) && (
-                           <div className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r bg-foreground" />
-                         )}
-                         <item.icon className="h-4 w-4 shrink-0 text-current opacity-90" strokeWidth={ICON_STROKE} />
-                        {!collapsed && <span>{item.title}</span>}
+                      <NavLink to={item.url} className={cn(navItemClass, isActive(item.url) ? navActive : navIdle)}>
+                        {isActive(item.url) && (
+                          <span className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-r bg-primary" />
+                        )}
+                        <item.icon
+                          className={cn("h-[17px] w-[17px] shrink-0", isActive(item.url) ? "text-primary" : "text-current opacity-70")}
+                          strokeWidth={ICON_STROKE}
+                        />
+                        {!collapsed && <span className="truncate">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -225,16 +229,16 @@ export function ClientSidebar() {
         ))}
 
         {/* Logout */}
-        <div className="mt-auto pt-3 border-t border-border">
+        <div className="mt-auto pt-4 border-t border-border/50">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={handleLogout}
                 tooltip="Sair"
-                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                className="min-h-10 px-3 text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-lg"
               >
-                <LogOut className="h-4 w-4 shrink-0" strokeWidth={ICON_STROKE} />
-                {!collapsed && <span className="text-sm">Sair</span>}
+                <LogOut className="h-[17px] w-[17px] shrink-0 opacity-70" strokeWidth={ICON_STROKE} />
+                {!collapsed && <span className="text-[13px]">Sair</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -243,3 +247,4 @@ export function ClientSidebar() {
     </Sidebar>
   );
 }
+
