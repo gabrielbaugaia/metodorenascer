@@ -8,7 +8,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { CardioStatsHeader } from "@/components/cardio/CardioStatsHeader";
 import { CardioLogForm } from "@/components/cardio/CardioLogForm";
 import { CardioHistoryList } from "@/components/cardio/CardioHistoryList";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { PageLoadingState, PageErrorState } from "@/components/ui/page-states";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { Vo2MaxEntryButton } from "@/components/vo2max/Vo2MaxEntryButton";
 
 import { startOfMonth, format } from "date-fns";
@@ -18,7 +19,9 @@ export default function Cardio() {
   const queryClient = useQueryClient();
   const monthStart = format(startOfMonth(new Date()), "yyyy-MM-dd");
 
-  const { data: sessions = [], isLoading } = useQuery({
+  const { trackCardioRegistered } = useAnalytics();
+
+  const { data: sessions = [], isLoading, error, refetch } = useQuery({
     queryKey: ["cardio-sessions", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -100,7 +103,10 @@ export default function Cardio() {
         calories_burned: row.calories_burned || null,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      trackCardioRegistered(
+        variables?.formData?.duration_minutes ? Number(variables.formData.duration_minutes) : undefined,
+      );
       queryClient.invalidateQueries({ queryKey: ["cardio-sessions"] });
       queryClient.invalidateQueries({ queryKey: ["health-daily"] });
       queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
@@ -123,8 +129,20 @@ export default function Cardio() {
   if (isLoading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner size="lg" />
+        <PageLoadingState message="Carregando suas sessões..." />
+      </ClientLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <ClientLayout>
+        <div className="py-10">
+          <PageErrorState
+            title="Não foi possível carregar o aeróbico"
+            description="Verifique sua conexão e tente novamente."
+            onRetry={() => refetch()}
+          />
         </div>
       </ClientLayout>
     );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { capacitorStorage } from "@/lib/capacitor-storage";
+import { PageLoadingState, PageEmptyState } from "@/components/ui/page-states";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProtocol } from "@/hooks/useProtocol";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { TrialBanner } from "@/components/access/TrialBadge";
 import { UpgradeModal } from "@/components/access/UpgradeModal";
@@ -71,6 +73,7 @@ export default function Mindset() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { protocol: protocolData, loading } = useProtocol("mindset");
+  const { trackMindsetTaskCompleted } = useAnalytics();
   const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -134,6 +137,9 @@ export default function Mindset() {
     const newChecked = { ...checkedItems, [key]: !checkedItems[key] };
     setCheckedItems(newChecked);
     saveCheckedItems(newChecked);
+    if (newChecked[key]) {
+      trackMindsetTaskCompleted(key.startsWith("noite") ? "rotina_noite" : "rotina_manha");
+    }
   };
 
   const content = protocolData?.conteudo as unknown as MindsetProtocol | null;
@@ -155,9 +161,7 @@ export default function Mindset() {
   if (loading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-foreground" />
-        </div>
+        <PageLoadingState message="Carregando seu protocolo de mentalidade..." />
       </ClientLayout>
     );
   }
@@ -165,18 +169,14 @@ export default function Mindset() {
   if (!protocolData || !content) {
     return (
       <ClientLayout>
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center py-16">
-            <Brain className="h-16 w-16 text-foreground mx-auto mb-4" />
-            <h1 className="text-3xl font-display font-bold mb-2">Protocolo de Mindset</h1>
-            <p className="text-muted-foreground mb-8">
-              Seu protocolo de mentalidade ainda não foi gerado. Fale com seu mentor para solicitar ajustes.
-            </p>
-            <Button onClick={() => navigate("/suporte")} variant="default" size="lg">
-              <MessageCircle className="h-5 w-5 mr-2" />
-              Falar com Mentor
-            </Button>
-          </div>
+        <div className="py-10">
+          <PageEmptyState
+            icon={Brain}
+            title="Protocolo de mentalidade a caminho"
+            description="Seu protocolo ainda não foi gerado. Fale com seu mentor para solicitar."
+            ctaLabel="Falar com Mentor"
+            ctaAction={() => navigate("/suporte")}
+          />
         </div>
       </ClientLayout>
     );

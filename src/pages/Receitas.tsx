@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClientLayout } from "@/components/layout/ClientLayout";
+import { PageLoadingState, PageEmptyState } from "@/components/ui/page-states";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -431,23 +432,15 @@ export default function Receitas() {
           {/* Tab: Receitas Salvas */}
           <TabsContent value="saved" className="space-y-4">
             {loadingRecipes ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-foreground" />
-              </div>
+              <PageLoadingState message="Carregando suas receitas..." />
             ) : savedRecipes.length === 0 ? (
-              <Card variant="dashboard" className="p-8 text-center">
-                <Bookmark className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  Você ainda não salvou nenhuma receita.
-                </p>
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => setActiveTab("generate")}
-                >
-                  Gerar primeira receita
-                </Button>
-              </Card>
+              <PageEmptyState
+                icon={Bookmark}
+                title="Nenhuma receita salva"
+                description="Gere uma receita com os alimentos do seu plano e salve para reutilizar."
+                ctaLabel="Gerar primeira receita"
+                ctaAction={() => setActiveTab("generate")}
+              />
             ) : (
               savedRecipes.map((savedRecipe) => (
                 <RecipeCard

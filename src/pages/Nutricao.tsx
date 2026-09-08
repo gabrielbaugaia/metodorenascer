@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useProtocol } from "@/hooks/useProtocol";
+import { useNutritionTracking } from "@/hooks/useNutritionTracking";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,10 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTutorial, PageTutorialBanner } from "@/components/onboarding/PageTutorial";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageLoadingState, PageErrorState } from "@/components/ui/page-states";
 import { 
   Utensils, Loader2, Apple, Download, Lock, Droplets, 
   ShoppingCart, ArrowLeftRight, Moon, ChevronDown, ChevronUp,
-  Dumbbell, BedDouble 
+  Dumbbell, BedDouble, Check, PlusCircle, NotebookPen, AlertTriangle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TrialBanner } from "@/components/access/TrialBadge";
@@ -108,7 +111,19 @@ function MealMacrosBar({ macros }: { macros?: MacrosRefeicao }) {
   );
 }
 
-function MealCard({ refeicao, index }: { refeicao: Refeicao; index: number }) {
+function MealCard({
+  refeicao,
+  index,
+  onRegister,
+  registeredAt,
+  registering,
+}: {
+  refeicao: Refeicao;
+  index: number;
+  onRegister?: (refeicao: Refeicao) => void;
+  registeredAt?: string | null;
+  registering?: boolean;
+}) {
   return (
     <Card key={index} className="border border-border/80">
       <CardHeader className="pb-2">
@@ -143,10 +158,36 @@ function MealCard({ refeicao, index }: { refeicao: Refeicao; index: number }) {
             ))}
           </div>
         )}
+        {onRegister && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border/30 pt-3">
+            {registeredAt ? (
+              <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Check className="h-3.5 w-3.5 text-primary" strokeWidth={1.8} />
+                Registrado hoje às {registeredAt}
+              </p>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                className="min-h-11"
+                disabled={registering}
+                onClick={() => onRegister(refeicao)}
+              >
+                {registering ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <PlusCircle className="mr-2 h-4 w-4" strokeWidth={1.6} />
+                )}
+                Registrar refeição
+              </Button>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
+
 
 function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false }: { title: string; icon: any; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -164,12 +205,35 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false }
   );
 }
 
+/** Mapeia o nome/horário da refeição para o tipo usado no diário. */
+function inferMealType(refeicao: Refeicao): string {
+  const nome = (refeicao.nome || "").toLowerCase();
+  if (refeicao.tipo === "pre_sono") return "snack";
+  if (/café|cafe|manhã|manha|desjejum/.test(nome)) return "breakfast";
+  if (/almoço|almoco/.test(nome)) return "lunch";
+  if (/jantar|ceia|noite/.test(nome)) return "dinner";
+  if (/lanche|colação|colacao|pré|pre|pós|pos/.test(nome)) return "snack";
+  const hour = Number((refeicao.horario || "").split(":")[0]);
+  if (!Number.isNaN(hour)) {
+    if (hour < 10) return "breakfast";
+    if (hour < 15) return "lunch";
+    if (hour < 19) return "snack";
+    return "dinner";
+  }
+  return "snack";
+}
+
 export default function Nutricao() {
   const navigate = useNavigate();
-  const { protocol, loading } = useProtocol("nutricao");
+  const { protocol, loading, error, refetch } = useProtocol("nutricao");
   const { isFull, isTrialing, isBlocked, trialUsage, markUsed, loading: entLoading } = useEntitlements();
+  const { addMultipleFoods } = useNutritionTracking();
+  const { trackMealRegistrationStarted, trackMealRegistered, trackMealPlanViewed } = useAnalytics();
   const [downloading, setDownloading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [registeringMeal, setRegisteringMeal] = useState<string | null>(null);
+  const [registeredMeals, setRegisteredMeals] = useState<Record<string, string>>({});
+
 
   const conteudo = (protocol?.conteudo as NutritionContent) || {};
   const expanded = isExpandedFormat(conteudo);
@@ -187,6 +251,11 @@ export default function Nutricao() {
 
   const hasContent = expanded ? !!(planoDiaTreino?.refeicoes?.length) : legacyRefeicoes.length > 0;
   const maxMealsVisible = isTrialing ? 2 : Infinity;
+
+  useEffect(() => {
+    if (hasContent) trackMealPlanViewed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasContent]);
 
   useEffect(() => {
     if (isTrialing && !trialUsage.used_diet && hasContent) {
@@ -207,15 +276,85 @@ export default function Nutricao() {
     }
   };
 
+  const handleRegisterMeal = async (refeicao: Refeicao) => {
+    const key = `${refeicao.nome}-${refeicao.horario ?? ""}`;
+    const alimentos = refeicao.alimentos ?? [];
+    if (alimentos.length === 0) {
+      toast.error("Esta refeição não tem alimentos listados.");
+      return;
+    }
+
+    trackMealRegistrationStarted("plano");
+    setRegisteringMeal(key);
+
+    const mealType = inferMealType(refeicao);
+    const m = refeicao.macros_refeicao;
+    const totalCalories =
+      m?.calorias || refeicao.calorias_aproximadas || refeicao.calorias_total || 0;
+    const perItem = alimentos.length > 0 ? Math.round(totalCalories / alimentos.length) : 0;
+
+    const foods = alimentos.map((alimento, i) => {
+      const isString = typeof alimento === "string";
+      const nome = isString ? alimento : alimento.item;
+      const cal = !isString && alimento.calorias ? alimento.calorias : perItem;
+      const first = i === 0;
+      return {
+        food_name: nome,
+        calories: cal,
+        protein_g: first ? Number(m?.proteinas_g ?? 0) : 0,
+        carbs_g: first ? Number(m?.carboidratos_g ?? 0) : 0,
+        fat_g: first ? Number(m?.gorduras_g ?? 0) : 0,
+        portion_size: refeicao.nome,
+        meal_type: mealType,
+      };
+    });
+
+    try {
+      await addMultipleFoods(foods);
+      const now = new Date();
+      const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      setRegisteredMeals((prev) => ({ ...prev, [key]: hhmm }));
+      trackMealRegistered("plano", foods.length);
+    } catch {
+      toast.error("Não foi possível registrar. Tente novamente.");
+    } finally {
+      setRegisteringMeal(null);
+    }
+  };
+
+  const mealCardProps = (refeicao: Refeicao) => {
+    const key = `${refeicao.nome}-${refeicao.horario ?? ""}`;
+    return {
+      onRegister: isFull ? handleRegisterMeal : undefined,
+      registeredAt: registeredMeals[key] ?? null,
+      registering: registeringMeal === key,
+    };
+  };
+
   if (loading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-foreground" />
+        <PageLoadingState message="Carregando seu plano nutricional..." />
+      </ClientLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <ClientLayout>
+        <div className="py-10">
+          <PageErrorState
+            title="Não foi possível carregar seu plano"
+            description="Verifique sua conexão e tente novamente. Se persistir, fale com o mentor."
+            onRetry={() => refetch()}
+            secondaryLabel="Falar com Mentor"
+            secondaryAction={() => navigate("/suporte")}
+          />
         </div>
       </ClientLayout>
     );
   }
+
 
   return (
     <ClientLayout>
@@ -288,6 +427,28 @@ export default function Nutricao() {
               </Card>
             )}
 
+            {/* Continuação: diário nutricional */}
+            {isFull && (
+              <Card className="flex flex-col gap-3 border-border/80 p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Diário de hoje</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    Cada refeição registrada aqui entra direto no seu diário e nos totais do dia.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="min-h-11 shrink-0"
+                  onClick={() => navigate("/nutricao-diario")}
+                >
+                  <NotebookPen className="mr-2 h-4 w-4" strokeWidth={1.6} />
+                  Abrir diário
+                </Button>
+              </Card>
+            )}
+
+
             {/* Meal Plans */}
             {expanded && planoDiaTreino && planoDiaDescanso ? (
               <Tabs defaultValue="treino" className="w-full">
@@ -304,7 +465,7 @@ export default function Nutricao() {
                     <Badge variant="outline" className="text-xs">Total: {planoDiaTreino.calorias_totais} kcal</Badge>
                   )}
                   {planoDiaTreino.refeicoes.slice(0, maxMealsVisible).map((ref, i) => (
-                    <MealCard key={i} refeicao={ref} index={i} />
+                    <MealCard key={i} refeicao={ref} index={i} {...mealCardProps(ref)} />
                   ))}
                   {isTrialing && planoDiaTreino.refeicoes.length > maxMealsVisible && (
                     <div className="text-center py-2">
@@ -324,14 +485,14 @@ export default function Nutricao() {
                     <Badge variant="outline" className="text-xs">Total: {planoDiaDescanso.calorias_totais} kcal</Badge>
                   )}
                   {planoDiaDescanso.refeicoes.slice(0, maxMealsVisible).map((ref, i) => (
-                    <MealCard key={i} refeicao={ref} index={i} />
+                    <MealCard key={i} refeicao={ref} index={i} {...mealCardProps(ref)} />
                   ))}
                 </TabsContent>
               </Tabs>
             ) : (
               <div className="space-y-4">
                 {legacyRefeicoes.slice(0, maxMealsVisible).map((refeicao, index) => (
-                  <MealCard key={index} refeicao={refeicao} index={index} />
+                  <MealCard key={index} refeicao={refeicao} index={index} {...mealCardProps(refeicao)} />
                 ))}
                 {isTrialing && legacyRefeicoes.length > maxMealsVisible && (
                   <div className="text-center py-2">

@@ -22,11 +22,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
 import { useGabrielBauScore } from "@/hooks/useGabrielBauScore";
 import { computeBodyIndicators, type DayLog } from "@/lib/bodyIndicators";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PageHeader } from "@/components/ui/page-header";
 import { MetricStrip, SectionHeader } from "@/components/ui/premium";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ManualInput } from "@/components/renascer/ManualInput";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 
 function DashboardSkeleton() {
@@ -126,8 +129,11 @@ export default function Dashboard() {
   const gabrielBauData = useGabrielBauScore();
   useActivityTracker();
   const navigate = useNavigate();
+  const { trackCheckinStarted, trackCheckinCompleted } = useAnalytics();
+  const queryClient = useQueryClient();
   const [checkingAnamnese, setCheckingAnamnese] = useState(true);
   const [showWeeklyCheckin, setShowWeeklyCheckin] = useState(false);
+  const [showDailyLog, setShowDailyLog] = useState(false);
   const [canDoWeeklyCheckin, setCanDoWeeklyCheckin] = useState(false);
   const [pendingPaymentInfo, setPendingPaymentInfo] = useState<{ planType: string; planName: string; priceId?: string } | null>(null);
   const [checkingPayment, setCheckingPayment] = useState(true);
@@ -381,26 +387,52 @@ export default function Dashboard() {
     );
   }
 
-  // Determine daily action
+  // Determine the single daily action (CTA única e contextual)
   const getDailyAction = () => {
+    if (!gabrielBauData.todayLog) {
+      return {
+        label: "Registro do dia",
+        hint: "Leva menos de um minuto e é o que ajusta seu protocolo.",
+        cta: "Registrar meu dia",
+        icon: ClipboardCheck,
+        action: () => {
+          trackCheckinStarted("diario");
+          setShowDailyLog(true);
+        },
+      };
+    }
     if (canDoWeeklyCheckin) {
-      return { label: "Check-in pendente", cta: "Registrar hoje", icon: ClipboardCheck, action: () => setShowWeeklyCheckin(true) };
+      return {
+        label: "Check-in da semana",
+        hint: "Fechamento semanal com peso e percepção geral.",
+        cta: "Fazer check-in",
+        icon: ClipboardCheck,
+        action: () => {
+          trackCheckinStarted("semanal");
+          setShowWeeklyCheckin(true);
+        },
+      };
     }
     if (needsEvolutionPhotos) {
-      return { label: "Fotos de evolução", cta: "Enviar fotos", icon: Camera, action: () => navigate("/evolucao") };
+      return {
+        label: "Fotos de evolução",
+        hint: "As fotos liberam o próximo ciclo do seu protocolo.",
+        cta: "Enviar fotos",
+        icon: Camera,
+        action: () => navigate("/evolucao"),
+      };
     }
-    return { label: "Treino disponível", cta: "Iniciar treino", icon: Dumbbell, action: () => navigate("/treino") };
+    return {
+      label: "Treino disponível",
+      hint: "Dia registrado. Agora é executar o treino do ciclo.",
+      cta: "Iniciar treino",
+      icon: Dumbbell,
+      action: () => navigate("/treino"),
+    };
   };
 
   const dailyAction = getDailyAction();
 
-  const quickAccess = [
-    { label: "Treino", icon: Dumbbell, href: "/treino" },
-    { label: "Nutrição", icon: Utensils, href: "/nutricao" },
-    { label: "Receitas", icon: ChefHat, href: "/receitas" },
-    { label: "Evolução", icon: TrendingUp, href: "/evolucao" },
-    { label: "Dados do Corpo", icon: Heart, href: "/dados-corpo" },
-  ];
 
   const pillars = [
     { label: "Treino", desc: "Plano prescrito do ciclo", icon: Dumbbell, href: "/treino" },
@@ -457,23 +489,18 @@ export default function Dashboard() {
               <div>
                 <p className="eyebrow-label">Foco do dia</p>
                  <h2 className="mt-3 text-[1.75rem] font-bold leading-tight text-sidebar-foreground md:text-[2.25rem]">{dailyAction.label}</h2>
-                {gabrielBauData.recommendation.length > 0 && (
-                   <p className="text-sm text-sidebar-foreground/60 mt-4 max-w-md leading-relaxed">
-                    {gabrielBauData.recommendation[0]}
-                  </p>
-                )}
+                 <p className="text-sm text-sidebar-foreground/60 mt-4 max-w-md leading-relaxed">
+                  {dailyAction.hint}
+                </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <Button size="lg" onClick={dailyAction.action} className="gap-2">
+                <Button size="lg" onClick={dailyAction.action} className="gap-2 min-h-11">
                   <dailyAction.icon className="h-4 w-4" strokeWidth={1.4} />
                   {dailyAction.cta}
                 </Button>
-                 <Button variant="ghost" size="lg" onClick={() => navigate("/renascer")} className="gap-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground">
-                  Registrar o dia
-                  <ArrowRight className="h-4 w-4" strokeWidth={1.4} />
-                </Button>
               </div>
             </div>
+
             <div className="border-t md:border-t-0 md:border-l border-sidebar-border bg-sidebar-accent/40 px-6 py-9 md:px-8 md:py-10 flex flex-col items-center justify-center gap-6">
               <ScoreRing
                 score={gabrielBauData.score}
@@ -561,12 +588,49 @@ export default function Dashboard() {
         </section>
       </div>
 
+      {/* Registro do dia — dentro da própria tela Hoje */}
+      <Sheet open={showDailyLog} onOpenChange={setShowDailyLog}>
+        <SheetContent side="bottom" className="max-h-[92dvh] overflow-y-auto">
+          <SheetHeader className="text-left">
+            <SheetTitle>Registro do dia</SheetTitle>
+            <SheetDescription>
+              Sono, energia, estresse e treino de hoje. É o que alimenta seu score.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-5 pb-8">
+            <ManualInput
+              dataMode="manual"
+              todayLog={
+                gabrielBauData.todayLog
+                  ? {
+                      sleep_hours: gabrielBauData.todayLog.sleep_hours ?? null,
+                      stress_level: gabrielBauData.todayLog.stress_level ?? null,
+                      energy_focus: gabrielBauData.todayLog.energy_focus ?? null,
+                      trained_today: gabrielBauData.todayLog.trained_today ?? null,
+                      rpe: (gabrielBauData.todayLog as { rpe?: number | null }).rpe ?? null,
+                    }
+                  : null
+              }
+              onSaveSuccess={() => {
+                trackCheckinCompleted("diario");
+                queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
+                queryClient.invalidateQueries({ queryKey: ["dashboard-consistency"] });
+                setShowDailyLog(false);
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <WeeklyCheckinModal
         open={showWeeklyCheckin}
         onOpenChange={setShowWeeklyCheckin}
-        onComplete={() => setCanDoWeeklyCheckin(false)}
+        onComplete={() => {
+          setCanDoWeeklyCheckin(false);
+          trackCheckinCompleted("semanal");
+        }}
       />
+
     </ClientLayout>
   );
 }

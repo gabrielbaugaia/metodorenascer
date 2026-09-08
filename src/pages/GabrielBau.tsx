@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { capacitorStorage } from "@/lib/capacitor-storage";
 import { TransformationPhaseCard } from "@/components/renascer/TransformationPhaseCard";
 import { useAuth } from "@/hooks/useAuth";
@@ -114,6 +114,7 @@ export default function GabrielBau() {
 
   const dataMode = profile?.data_mode ?? "manual";
   const firstName = profile?.full_name?.split(" ")[0] ?? "";
+  const navigate = useNavigate();
 
   const toggleModeMutation = useMutation({
     mutationFn: async (newMode: string) => {
@@ -139,32 +140,34 @@ export default function GabrielBau() {
     <ClientLayout>
       <div className="max-w-3xl mx-auto space-y-8 pb-24 md:pb-6">
         <PageHeader
-          title={`Olá, ${firstName}`}
-          subtitle={`Hoje — ${todayFormatted}`}
+          eyebrow="Painel avançado"
+          title="Seus registros"
+          subtitle={`Complemento da tela Hoje — ${todayFormatted}`}
           actions={<PageTutorial pageId="renascer" />}
         />
 
         <PageTutorialBanner pageId="renascer" />
 
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 min-h-11"
+          onClick={() => navigate("/dashboard")}
+        >
+          Voltar para Hoje
+        </Button>
+
         <Tabs defaultValue="hoje" className="mt-4">
           <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="hoje">Hoje</TabsTrigger>
+            <TabsTrigger value="hoje">Registro</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
             <TabsTrigger value="perfil">Perfil Mental</TabsTrigger>
           </TabsList>
 
-          {/* ── TAB 1: HOJE ─────────────────────────────────────────── */}
+          {/* ── TAB 1: REGISTRO ─────────────────────────────────────── */}
           <TabsContent value="hoje" className="space-y-6">
-            {/* SIS Score Ring */}
-            <div className="rounded-xl border border-border/50 bg-card p-6 flex flex-col items-center gap-4 relative">
+            <div className="relative">
               <MiniConfetti active={showConfetti} />
-              <SisScoreRing
-                score={sis.score}
-                classification={sis.classification}
-                label={sis.label}
-                delta7vs30={sis.delta7vs30}
-                hasTodayScore={sis.hasTodayScore}
-              />
               {sis.currentStreak > 0 && (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Flame className="h-3.5 w-3.5 text-primary" />
@@ -180,6 +183,7 @@ export default function GabrielBau() {
                 </p>
               )}
             </div>
+
 
             {/* Alerts */}
             <SisAlerts alerts={sis.alerts} />

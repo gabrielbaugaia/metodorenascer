@@ -1,17 +1,24 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 import { CalorieGauge } from "@/components/nutrition/CalorieGauge";
 import { MacroDonutChart } from "@/components/nutrition/MacroDonutChart";
 import { MealSection } from "@/components/nutrition/MealSection";
 import { FoodSearchModal } from "@/components/nutrition/FoodSearchModal";
 import { useNutritionTracking, type FoodItem } from "@/hooks/useNutritionTracking";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { PageLoadingState } from "@/components/ui/page-states";
+import { Apple } from "lucide-react";
 
 const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 
 export default function NutricaoTracking() {
-  const { byMeal, consumed, remaining, targets, isLoading, addFood, addMultipleFoods, removeFood } = useNutritionTracking();
+  const { byMeal, consumed, remaining, targets, isLoading, addFood, addMultipleFoods, removeFood, logs } =
+    useNutritionTracking();
+  const { trackMealRegistrationStarted, trackMealRegistered } = useAnalytics();
+  const navigate = useNavigate();
   const [modalMeal, setModalMeal] = useState<string | null>(null);
 
   const handleSelectFood = async (food: FoodItem) => {
@@ -25,22 +32,40 @@ export default function NutricaoTracking() {
       portion_size: food.portion_size,
       meal_type: modalMeal,
     });
+    trackMealRegistered("diario", 1);
   };
 
   if (isLoading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner size="lg" />
-        </div>
+        <PageLoadingState message="Carregando seu diário de hoje..." />
       </ClientLayout>
     );
   }
 
+  const isEmptyDay = logs.length === 0;
+
   return (
     <ClientLayout>
       <div className="max-w-4xl mx-auto space-y-8 pb-24 md:pb-6">
-        <PageHeader eyebrow="Acompanhamento diário" title="Diário Nutricional" subtitle="Registre suas refeições e acompanhe o que falta para completar o plano de hoje." />
+        <PageHeader
+          eyebrow="Continuação do plano nutricional"
+          title="Diário de hoje"
+          subtitle="O que você já comeu hoje e o que ainda falta para fechar o plano."
+          actions={
+            <Button variant="outline" size="sm" className="min-h-11" onClick={() => navigate("/nutricao")}>
+              <Apple className="mr-2 h-4 w-4" strokeWidth={1.6} />
+              Ver plano
+            </Button>
+          }
+        />
+
+        {isEmptyDay && (
+          <div className="rounded-2xl border border-border/70 bg-card p-5 text-sm leading-relaxed text-muted-foreground md:p-6">
+            Nenhuma refeição registrada hoje. Você pode registrar direto pelo seu plano nutricional ou
+            adicionar um alimento abaixo.
+          </div>
+        )}
 
         {/* Calorie Gauge */}
         <div className="premium-card p-6 md:p-8">
@@ -67,7 +92,10 @@ export default function NutricaoTracking() {
             key={meal}
             mealType={meal}
             foods={byMeal[meal]}
-            onAddFood={() => setModalMeal(meal)}
+            onAddFood={() => {
+              trackMealRegistrationStarted("diario");
+              setModalMeal(meal);
+            }}
             onRemoveFood={(id) => removeFood(id)}
           />
         ))}
@@ -78,7 +106,10 @@ export default function NutricaoTracking() {
           onClose={() => setModalMeal(null)}
           mealType={modalMeal ?? "snack"}
           onSelectFood={handleSelectFood}
-          onAddMultipleFoods={addMultipleFoods}
+          onAddMultipleFoods={async (foods) => {
+            await addMultipleFoods(foods);
+            trackMealRegistered("diario", foods.length);
+          }}
         />
       </div>
     </ClientLayout>

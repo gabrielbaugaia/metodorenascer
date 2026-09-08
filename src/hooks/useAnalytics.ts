@@ -223,6 +223,56 @@ export function useAnalytics() {
     [trackEvent]
   );
 
+  // Check-in events (registro diário na tela Hoje)
+  const trackCheckinStarted = useCallback(
+    (checkinType: "diario" | "semanal") => {
+      trackEvent("checkin_started", "hoje", { checkin_type: checkinType });
+    },
+    [trackEvent]
+  );
+
+  const trackCheckinCompleted = useCallback(
+    (checkinType: "diario" | "semanal") => {
+      trackEvent("checkin_completed", "hoje", { checkin_type: checkinType });
+    },
+    [trackEvent]
+  );
+
+  // Nutrition — registro de refeição a partir do plano
+  const trackMealRegistrationStarted = useCallback(
+    (source: "plano" | "diario") => {
+      trackEvent("meal_registration_started", "nutricao", { source });
+    },
+    [trackEvent]
+  );
+
+  const trackMealRegistered = useCallback(
+    (source: "plano" | "diario", itemsCount: number) => {
+      trackEvent("meal_registered", "nutricao", { source, items_count: itemsCount });
+    },
+    [trackEvent]
+  );
+
+  // Cardio
+  const trackCardioRegistered = useCallback(
+    (durationMinutes?: number) => {
+      trackEvent("cardio_registered", "cardio", { duration_minutes: durationMinutes ?? null });
+    },
+    [trackEvent]
+  );
+
+  // Evolution
+  const trackEvolutionViewed = useCallback(() => {
+    trackEvent("evolution_viewed", "evolucao");
+  }, [trackEvent]);
+
+  const trackEvolutionPhotoUploaded = useCallback(
+    (photosCount: number) => {
+      trackEvent("evolution_photo_uploaded", "evolucao", { photos_count: photosCount });
+    },
+    [trackEvent]
+  );
+
   // Photo events
   const trackPhotoCheckinUploaded = useCallback(() => {
     trackEvent("photo_checkin_uploaded", "checkin");
@@ -232,6 +282,7 @@ export function useAnalytics() {
   const trackSupportMessageSent = useCallback(() => {
     trackEvent("support_message_sent", "suporte");
   }, [trackEvent]);
+
 
   // Churn events
   const trackCancelIntent = useCallback(() => {
@@ -290,12 +341,23 @@ export function useAnalytics() {
     // Nutrition
     trackMealPlanViewed,
     trackMealChecked,
+    trackMealRegistrationStarted,
+    trackMealRegistered,
+    // Check-in
+    trackCheckinStarted,
+    trackCheckinCompleted,
+    // Cardio
+    trackCardioRegistered,
+    // Evolution
+    trackEvolutionViewed,
+    trackEvolutionPhotoUploaded,
     // Mindset
     trackMindsetTaskCompleted,
     // Photos
     trackPhotoCheckinUploaded,
     // Support
     trackSupportMessageSent,
+
     // Churn
     trackCancelIntent,
     trackSubscriptionCanceled,

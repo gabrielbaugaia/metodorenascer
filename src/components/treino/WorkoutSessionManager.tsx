@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Clock, ArrowLeft, CheckCircle, Loader2, RotateCcw } from "lucide-react";
@@ -59,6 +60,8 @@ export function WorkoutSessionManager({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const { trackWorkoutStarted } = useAnalytics();
+
   const handleExerciseClick = (exerciseName: string) => {
     const ex = exercises.find((e) => e.name === exerciseName);
     if (ex) {
@@ -68,6 +71,7 @@ export function WorkoutSessionManager({
   };
 
   const handleStart = async () => {
+    trackWorkoutStarted(workoutName);
     await session.startSession(workoutName);
     setStarted(true);
   };
