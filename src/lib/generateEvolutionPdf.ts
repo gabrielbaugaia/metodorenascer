@@ -38,7 +38,8 @@ const C = {
   body: [40, 40, 40] as [number, number, number],
   label: [51, 51, 51] as [number, number, number],
   secondary: [136, 136, 136] as [number, number, number],
-  orange: [255, 69, 0] as [number, number, number],
+  orange: [176, 138, 87] as [number, number, number],
+  graphite: [8, 10, 13] as [number, number, number],
   white: [255, 255, 255] as [number, number, number],
   lineSep: [210, 210, 210] as [number, number, number],
   bgLight: [245, 245, 245] as [number, number, number],
@@ -112,13 +113,13 @@ export async function generateEvolutionPdf(data: EvolutionPdfData): Promise<void
   };
 
   const addHeader = () => {
-    doc.setFillColor(...C.orange);
+    doc.setFillColor(...C.graphite);
     doc.rect(0, 0, pageWidth, 22, "F");
     doc.setTextColor(...C.white);
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.setCharSpace(0.3);
-    doc.text("MÉTODO GABRIEL BAÚ", margin, 14);
+    doc.text("GABRIEL BAÚ", margin, 14);
     doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
     doc.setCharSpace(0.1);

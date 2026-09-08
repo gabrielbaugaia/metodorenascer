@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
-import { StatusBadge } from "@/components/renascer/StatusBadge";
 import { useGabrielBauScore } from "@/hooks/useGabrielBauScore";
 import { computeBodyIndicators, type DayLog } from "@/lib/bodyIndicators";
 import { useQuery } from "@tanstack/react-query";
@@ -33,15 +32,23 @@ import { MetricStrip, SectionHeader } from "@/components/ui/premium";
 function DashboardSkeleton() {
   return (
     <div className="container mx-auto max-w-xl space-y-6 animate-pulse">
-      {/* Score ring skeleton */}
-      <div className="flex flex-col items-center gap-4 py-4">
-        <Skeleton className="w-36 h-36 rounded-full" />
-        <Skeleton className="h-5 w-28 rounded-full" />
-        <Skeleton className="h-3 w-48" />
+      {/* Hero: foco do dia + score */}
+      <div className="grid md:grid-cols-[minmax(0,1fr)_252px] gap-6 rounded-2xl border border-border/60 p-6">
+        <div className="space-y-4">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-3 w-2/3" />
+          <div className="flex gap-3 pt-4">
+            <Skeleton className="h-11 w-40 rounded-xl" />
+            <Skeleton className="h-11 w-32 rounded-xl" />
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center gap-4">
+          <Skeleton className="h-[138px] w-[138px] rounded-full" />
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-32" />
+        </div>
       </div>
-
-      {/* Daily action skeleton */}
-      <Skeleton className="h-16 w-full rounded-lg" />
 
       {/* 3 indicator cards skeleton */}
       <div className="grid grid-cols-3 gap-3">
@@ -445,7 +452,7 @@ export default function Dashboard() {
 
         {/* Bloco principal do dia */}
         <section className="surface-dark overflow-hidden shadow-[var(--shadow-elevated)]">
-          <div className="grid md:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="grid md:grid-cols-[minmax(0,1fr)_252px]">
             <div className="p-7 md:p-10 flex flex-col justify-between gap-8">
               <div>
                 <p className="eyebrow-label">Foco do dia</p>
@@ -467,13 +474,20 @@ export default function Dashboard() {
                 </Button>
               </div>
             </div>
-             <div className="border-t md:border-t-0 md:border-l border-sidebar-border bg-sidebar-accent/60 p-7 md:p-8 flex flex-col items-center justify-center gap-4">
+            <div className="border-t md:border-t-0 md:border-l border-sidebar-border bg-sidebar-accent/40 px-6 py-9 md:px-8 md:py-10 flex flex-col items-center justify-center gap-6">
               <ScoreRing
                 score={gabrielBauData.score}
                 classification={gabrielBauData.classification}
-                emptyLabel={!gabrielBauData.todayLog ? "Registre seu dia" : undefined}
+                emptyLabel={!gabrielBauData.todayLog ? "empty" : undefined}
               />
-              <StatusBadge classification={gabrielBauData.classification} statusText={gabrielBauData.statusText} />
+              <div className="text-center">
+                <p className="text-[0.68rem] uppercase tracking-[0.18em] text-sidebar-foreground/45">
+                  {gabrielBauData.classification}
+                </p>
+                <p className="mt-1.5 text-sm text-sidebar-foreground/75 leading-relaxed">
+                  {gabrielBauData.statusText}
+                </p>
+              </div>
             </div>
           </div>
         </section>

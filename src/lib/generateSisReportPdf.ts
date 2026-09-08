@@ -23,15 +23,15 @@ export function generateSisReportPdf(data: SisReportData): void {
   let yPos = 20;
 
   const addHeader = () => {
-    doc.setFillColor(255, 69, 0);
+    doc.setFillColor(8, 10, 13);
     doc.rect(0, 0, pageWidth, 30, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("SHAPE INTELLIGENCE SYSTEM™", margin, 18);
+    doc.text("GABRIEL BAÚ", margin, 18);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Gabriel Baú Treinador — Relatório Executivo", margin, 25);
+    doc.text("CONSULTORIA  ·  Relatório Shape Intelligence", margin, 25);
     yPos = 42;
   };
 
@@ -40,11 +40,11 @@ export function generateSisReportPdf(data: SisReportData): void {
     doc.setTextColor(150, 150, 150);
     doc.setFont("helvetica", "normal");
     doc.text(`Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })} · Página ${pageNum}`, margin, pageHeight - 8);
-    doc.text("Gabriel Baú Treinador · Shape Intelligence System™", pageWidth - margin, pageHeight - 8, { align: "right" });
+    doc.text("Gabriel Baú Consultoria", pageWidth - margin, pageHeight - 8, { align: "right" });
   };
 
   const addSectionBar = (title: string) => {
-    doc.setFillColor(255, 69, 0);
+    doc.setFillColor(8, 10, 13);
     doc.rect(margin, yPos - 4, contentWidth, 7, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
@@ -88,7 +88,7 @@ export function generateSisReportPdf(data: SisReportData): void {
 
   doc.setFontSize(36);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 69, 0);
+  doc.setTextColor(176, 138, 87);
   doc.text(`${Math.round(latestScore)}`, margin + 5, yPos + 12);
 
   doc.setFontSize(14);
@@ -116,7 +116,7 @@ export function generateSisReportPdf(data: SisReportData): void {
   if (data.currentStreak > 0) {
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text(`🔥 Streak: ${data.currentStreak} dias consecutivos (recorde: ${data.bestStreak})`, margin, yPos);
+    doc.text(`Streak: ${data.currentStreak} dias consecutivos (recorde: ${data.bestStreak})`, margin, yPos);
     yPos += 8;
   }
 
@@ -200,7 +200,7 @@ export function generateSisReportPdf(data: SisReportData): void {
     { label: "Classe", width: 35 },
   ];
 
-  doc.setFillColor(255, 69, 0);
+  doc.setFillColor(8, 10, 13);
   doc.rect(margin, yPos - 4, contentWidth, 7, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(7);
@@ -327,7 +327,7 @@ export function generateSisReportPdf(data: SisReportData): void {
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
-    doc.setTextColor(255, 69, 0);
+    doc.setTextColor(176, 138, 87);
     const insight = mod.insight(mod.score ?? null);
     doc.text(insight, margin + 3, yPos + 17);
 

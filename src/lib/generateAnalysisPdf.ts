@@ -96,15 +96,15 @@ export async function generateAnalysisPdf(params: GenerateAnalysisPdfParams): Pr
 
   // Helper functions
   const addHeader = () => {
-    doc.setFillColor(255, 69, 0);
+    doc.setFillColor(8, 10, 13);
     doc.rect(0, 0, pageWidth, 30, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("MÉTODO GABRIEL BAÚ", margin, 18);
+    doc.text("GABRIEL BAÚ", margin, 18);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Análise de Evolução - GabrielBau", margin, 25);
+    doc.text("CONSULTORIA  ·  Análise de Evolução", margin, 25);
     yPos = 42;
   };
 
@@ -117,7 +117,7 @@ export async function generateAnalysisPdf(params: GenerateAnalysisPdfParams): Pr
 
   const addSectionTitle = (title: string) => {
     checkNewPage(12);
-    doc.setFillColor(255, 69, 0);
+    doc.setFillColor(8, 10, 13);
     doc.rect(margin, yPos - 4, contentWidth, 8, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
@@ -162,7 +162,7 @@ export async function generateAnalysisPdf(params: GenerateAnalysisPdfParams): Pr
 
   const addSubTitle = (title: string) => {
     checkNewPage(12);
-    doc.setTextColor(255, 69, 0);
+    doc.setTextColor(176, 138, 87);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.text("▸ " + title, margin, yPos);
@@ -292,7 +292,7 @@ export async function generateAnalysisPdf(params: GenerateAnalysisPdfParams): Pr
         
         // Arrow
         const arrowY = startY + photoHeight / 2;
-        doc.setDrawColor(255, 69, 0);
+        doc.setDrawColor(176, 138, 87);
         doc.setLineWidth(1);
         doc.line(leftX + photoWidth + 3, arrowY, rightX - 3, arrowY);
         doc.line(rightX - 8, arrowY - 3, rightX - 3, arrowY);
@@ -447,7 +447,7 @@ export async function generateAnalysisPdf(params: GenerateAnalysisPdfParams): Pr
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 100, 100);
-    doc.text("— GabrielBau, seu mentor", margin, yPos);
+    doc.text("— Gabriel Baú", margin, yPos);
   }
 
   // Footer

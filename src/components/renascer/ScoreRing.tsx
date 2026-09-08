@@ -5,25 +5,20 @@ interface ScoreRingProps {
   classification: string;
   celebrate?: boolean;
   emptyLabel?: string;
+  size?: number;
 }
 
-export function ScoreRing({ score, classification, celebrate, emptyLabel }: ScoreRingProps) {
-  const radius = 80;
-  const stroke = 10;
+export function ScoreRing({ score, celebrate, emptyLabel, size = 138 }: ScoreRingProps) {
+  const radius = size / 2;
+  const stroke = 7.5;
   const normalizedRadius = radius - stroke / 2;
   const circumference = normalizedRadius * 2 * Math.PI;
-  const progress = Math.min(score / 100, 1);
+  const progress = Math.min(Math.max(score, 0) / 100, 1);
   const strokeDashoffset = circumference - progress * circumference;
 
-  const colorMap: Record<string, string> = {
-    ELITE: "hsl(var(--primary))",
-    ALTO: "hsl(120 60% 50%)",
-    MODERADO: "hsl(45 100% 50%)",
-    RISCO: "hsl(0 80% 55%)",
-  };
-  const color = colorMap[classification] ?? "hsl(var(--primary))";
+  // Anel sempre em bronze — estados de risco ficam no texto de status.
+  const color = "hsl(33 35% 51%)";
 
-  // Animated number count
   const [displayScore, setDisplayScore] = useState(score);
   const prevScoreRef = useRef(score);
 
@@ -41,9 +36,7 @@ export function ScoreRing({ score, classification, celebrate, emptyLabel }: Scor
     const start = performance.now();
 
     function tick(now: number) {
-      const elapsed = now - start;
-      const t = Math.min(elapsed / duration, 1);
-      // ease-out quad
+      const t = Math.min((now - start) / duration, 1);
       const eased = 1 - (1 - t) * (1 - t);
       setDisplayScore(Math.round(from + (to - from) * eased));
       if (t < 1) requestAnimationFrame(tick);
@@ -52,29 +45,25 @@ export function ScoreRing({ score, classification, celebrate, emptyLabel }: Scor
     requestAnimationFrame(tick);
   }, [score]);
 
-  // Pulse glow state
-  const [glowing, setGlowing] = useState(false);
+  const [pulse, setPulse] = useState(false);
   useEffect(() => {
     if (celebrate) {
-      setGlowing(true);
-      const timer = setTimeout(() => setGlowing(false), 800);
+      setPulse(true);
+      const timer = setTimeout(() => setPulse(false), 700);
       return () => clearTimeout(timer);
     }
   }, [celebrate]);
 
   return (
-    <div className="flex flex-col items-center gap-3 relative">
-      <div
-        className={glowing ? "animate-scoreGlow" : ""}
-        style={glowing ? { "--glow-color": color } as React.CSSProperties : undefined}
-      >
-        <svg width={radius * 2} height={radius * 2} className="transform -rotate-90">
+    <div className="flex flex-col items-center gap-3">
+      <div className={pulse ? "transition-transform duration-500 scale-[1.03]" : "transition-transform duration-500"}>
+        <svg width={size} height={size} className="-rotate-90">
           <circle
             cx={radius}
             cy={radius}
             r={normalizedRadius}
             fill="transparent"
-            stroke="hsl(var(--muted))"
+            stroke="hsl(216 12% 24%)"
             strokeWidth={stroke}
           />
           <circle
@@ -88,48 +77,42 @@ export function ScoreRing({ score, classification, celebrate, emptyLabel }: Scor
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             className="transition-all duration-700 ease-out"
-            style={{ filter: `drop-shadow(0 0 8px ${color})` }}
           />
-          {score === 0 && emptyLabel ? (
-            <text
-              x={radius}
-              y={radius}
-              textAnchor="middle"
-              dominantBaseline="central"
-              className="fill-muted-foreground"
-              fontSize="13"
-              transform={`rotate(90 ${radius} ${radius})`}
-            >
-              <tspan x={radius} dy="-8">Registre</tspan>
-              <tspan x={radius} dy="17">seu dia</tspan>
-            </text>
-          ) : (
-            <>
-              <text
-                x={radius}
-                y={radius - 8}
-                textAnchor="middle"
-                dominantBaseline="central"
-                className="fill-foreground font-bold"
-                fontSize="36"
-                transform={`rotate(90 ${radius} ${radius})`}
-              >
-                {displayScore}
-              </text>
-              <text
-                x={radius}
-                y={radius + 20}
-                textAnchor="middle"
-                dominantBaseline="central"
-                className="fill-muted-foreground"
-                fontSize="12"
-                transform={`rotate(90 ${radius} ${radius})`}
-              >
-                / 100
-              </text>
-            </>
-          )}
+          <text
+            x={radius}
+            y={radius - 4}
+            textAnchor="middle"
+            dominantBaseline="central"
+            className="fill-sidebar-foreground"
+            fontSize={size > 130 ? 38 : 32}
+            fontWeight={700}
+            transform={`rotate(90 ${radius} ${radius})`}
+          >
+            {displayScore}
+          </text>
+          <text
+            x={radius}
+            y={radius + 22}
+            textAnchor="middle"
+            dominantBaseline="central"
+            className="fill-sidebar-foreground/50"
+            fontSize="11"
+            transform={`rotate(90 ${radius} ${radius})`}
+          >
+            / 100
+          </text>
         </svg>
+      </div>
+
+      <div className="text-center">
+        <p className="text-[0.68rem] uppercase tracking-[0.18em] text-sidebar-foreground/50">
+          Score do dia
+        </p>
+        {emptyLabel && (
+          <p className="mt-1 text-[0.7rem] text-sidebar-foreground/40">
+            Registre o check-in para calcular
+          </p>
+        )}
       </div>
     </div>
   );
