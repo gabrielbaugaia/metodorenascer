@@ -422,6 +422,28 @@ export default function Nutricao() {
               </Card>
             )}
 
+            {/* Continuação: diário nutricional */}
+            {isFull && (
+              <Card className="flex flex-col gap-3 border-border/80 p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Diário de hoje</p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    Cada refeição registrada aqui entra direto no seu diário e nos totais do dia.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="min-h-11 shrink-0"
+                  onClick={() => navigate("/nutricao-diario")}
+                >
+                  <NotebookPen className="mr-2 h-4 w-4" strokeWidth={1.6} />
+                  Abrir diário
+                </Button>
+              </Card>
+            )}
+
+
             {/* Meal Plans */}
             {expanded && planoDiaTreino && planoDiaDescanso ? (
               <Tabs defaultValue="treino" className="w-full">
