@@ -82,14 +82,12 @@ export default function Configuracoes() {
 
   return (
     <ClientLayout>
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold uppercase flex items-center gap-2">
-            <Settings className="h-6 w-6 sm:h-7 sm:w-7" />
-            Configurações
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Personalize suas preferências do aplicativo
+          <p className="eyebrow-label">Preferências</p>
+          <h1 className="display-title mt-2">Configurações</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Ajuste o funcionamento do aplicativo
           </p>
         </div>
 

@@ -6,7 +6,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { AdminSupportNotifications } from "@/components/admin/AdminSupportNotifications";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { Loader2, Menu, Flame } from "lucide-react";
+import { Loader2, Menu } from "lucide-react";
+import logoGb from "@/assets/logo-gb.png.asset.json";
+
 
 interface ClientLayoutProps {
   children: ReactNode;
@@ -41,27 +43,28 @@ export function ClientLayout({ children }: ClientLayoutProps) {
         <ClientSidebar />
         <main className="flex-1 overflow-x-hidden overflow-y-auto min-w-0">
           {/* Mobile Header */}
-          <header className="md:hidden sticky top-0 z-40 flex h-[calc(3rem+env(safe-area-inset-top))] items-center justify-between border-b border-border bg-background px-4 pt-[env(safe-area-inset-top)]">
+          <header className="md:hidden sticky top-0 z-40 flex h-[calc(3.25rem+env(safe-area-inset-top))] items-center justify-between border-b border-border/60 bg-background/95 backdrop-blur px-4 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="h-8 w-8">
-                <Menu className="h-4 w-4" strokeWidth={1.5} />
+              <SidebarTrigger className="h-8 w-8 text-muted-foreground">
+                <Menu className="h-4 w-4" strokeWidth={1.4} />
               </SidebarTrigger>
               <div className="flex items-center gap-2">
-                <Flame className="h-4 w-4 text-foreground" strokeWidth={1.5} />
-                <span className="font-display text-sm text-foreground">GABRIEL BAÚ</span>
+                <img src={logoGb.url} alt="Gabriel Baú" className="h-5 w-5 object-contain" />
+                <span className="font-display text-[15px] text-foreground">Gabriel Baú</span>
               </div>
             </div>
             {isAdmin && <AdminSupportNotifications />}
           </header>
           {/* Desktop admin notifications */}
           {isAdmin && (
-            <div className="hidden md:flex absolute top-3 right-5 z-50">
+            <div className="hidden md:flex absolute top-5 right-8 z-50">
               <AdminSupportNotifications />
             </div>
           )}
-          <div className="p-4 md:p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6 max-w-full">
+          <div className="px-5 py-6 md:px-10 md:py-10 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-12 max-w-[1180px] mx-auto w-full">
             {children}
           </div>
+
         </main>
         {!isAdmin && <BottomNav />}
       </div>

@@ -137,7 +137,7 @@ export default function GabrielBau() {
 
   return (
     <ClientLayout>
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24 md:pb-6">
+      <div className="max-w-3xl mx-auto space-y-8 pb-24 md:pb-6">
         <PageHeader
           title={`Olá, ${firstName}`}
           subtitle={`Hoje — ${todayFormatted}`}

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600&family=Inter+Tight:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,77 +6,82 @@
 
 @layer base {
   :root {
-    /* Ultra Minimalist Premium — Método Renascer */
-    --background: 225 40% 2%;
-    --foreground: 216 33% 97%;
+    /* Gabriel Baú Consultoria — Premium Editorial Dark */
+    --background: 220 30% 4%;        /* #07090D */
+    --foreground: 40 27% 93%;        /* #F2EFE8 */
 
-    --card: 222 26% 8%;
-    --card-foreground: 216 33% 97%;
+    --card: 220 34% 10%;             /* #111722 */
+    --card-foreground: 40 27% 93%;
 
-    --popover: 222 26% 8%;
-    --popover-foreground: 216 33% 97%;
+    --popover: 220 32% 9%;
+    --popover-foreground: 40 27% 93%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 225 40% 2%;
+    /* Bronze / champagne accent */
+    --primary: 33 35% 51%;           /* #B08A57 */
+    --primary-foreground: 220 30% 4%;
 
-    --secondary: 222 26% 12%;
-    --secondary-foreground: 216 33% 97%;
+    --secondary: 219 28% 13%;        /* #141B26 */
+    --secondary-foreground: 40 27% 93%;
 
-    --muted: 222 26% 12%;
-    --muted-foreground: 217 22% 70%;
+    --muted: 219 28% 13%;
+    --muted-foreground: 217 15% 71%; /* #AAB2BF */
 
-    --accent: 0 0% 100%;
-    --accent-foreground: 225 40% 2%;
+    --accent: 33 40% 59%;            /* #C29B6B */
+    --accent-foreground: 220 30% 4%;
 
-    --destructive: 0 100% 65%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 4 62% 52%;
+    --destructive-foreground: 40 27% 96%;
 
-    --border: 218 24% 15%;
-    --input: 222 26% 12%;
-    --ring: 0 0% 100%;
+    --border: 220 24% 16%;           /* #1F2633 */
+    --input: 219 28% 13%;
+    --ring: 33 35% 51%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
     /* Semantic status tokens */
-    --success: 152 72% 50%;
-    --success-foreground: 0 0% 100%;
-    --warning: 40 100% 67%;
-    --warning-foreground: 0 0% 10%;
-    --error: 0 100% 65%;
-    --error-foreground: 0 0% 100%;
-    --brand-gold: 43 72% 55%;
+    --success: 158 40% 45%;
+    --success-foreground: 220 30% 4%;
+    --warning: 38 55% 58%;
+    --warning-foreground: 220 30% 4%;
+    --error: 4 62% 52%;
+    --error-foreground: 40 27% 96%;
+    --brand-gold: 33 40% 59%;
+
+    /* Elevation */
+    --shadow-soft: 0 1px 2px hsl(220 40% 2% / 0.6);
+    --shadow-elevated: 0 24px 60px -32px hsl(220 40% 1% / 0.9);
 
     /* Sidebar */
-    --sidebar-background: 225 40% 2%;
-    --sidebar-foreground: 216 33% 97%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 26% 12%;
-    --sidebar-accent-foreground: 216 33% 97%;
-    --sidebar-border: 218 24% 15%;
-    --sidebar-ring: 0 0% 100%;
+    --sidebar-background: 220 32% 5%;
+    --sidebar-foreground: 40 20% 88%;
+    --sidebar-primary: 33 35% 51%;
+    --sidebar-primary-foreground: 220 30% 4%;
+    --sidebar-accent: 219 28% 12%;
+    --sidebar-accent-foreground: 40 27% 93%;
+    --sidebar-border: 220 24% 14%;
+    --sidebar-ring: 33 35% 51%;
   }
 
   .dark {
-    --background: 225 40% 2%;
-    --foreground: 216 33% 97%;
-    --card: 222 26% 8%;
-    --card-foreground: 216 33% 97%;
-    --popover: 222 26% 8%;
-    --popover-foreground: 216 33% 97%;
-    --primary: 0 0% 100%;
-    --primary-foreground: 225 40% 2%;
-    --secondary: 222 26% 12%;
-    --secondary-foreground: 216 33% 97%;
-    --muted: 222 26% 12%;
-    --muted-foreground: 217 22% 70%;
-    --accent: 0 0% 100%;
-    --accent-foreground: 225 40% 2%;
-    --destructive: 0 100% 65%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 218 24% 15%;
-    --input: 222 26% 12%;
-    --ring: 0 0% 100%;
+    --background: 220 30% 4%;
+    --foreground: 40 27% 93%;
+    --card: 220 34% 10%;
+    --card-foreground: 40 27% 93%;
+    --popover: 220 32% 9%;
+    --popover-foreground: 40 27% 93%;
+    --primary: 33 35% 51%;
+    --primary-foreground: 220 30% 4%;
+    --secondary: 219 28% 13%;
+    --secondary-foreground: 40 27% 93%;
+    --muted: 219 28% 13%;
+    --muted-foreground: 217 15% 71%;
+    --accent: 33 40% 59%;
+    --accent-foreground: 220 30% 4%;
+    --destructive: 4 62% 52%;
+    --destructive-foreground: 40 27% 96%;
+    --border: 220 24% 16%;
+    --input: 219 28% 13%;
+    --ring: 33 35% 51%;
   }
 }
 
@@ -91,16 +96,24 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter Tight', 'Inter', system-ui, sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.011em;
     overflow-x: hidden;
     max-width: 100vw;
   }
 
   h1, h2, h3, h4, h5, h6, .font-display {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
   }
+
+  h1 { @apply text-3xl md:text-4xl leading-tight; }
+  h2 { @apply text-2xl md:text-[1.75rem] leading-snug; }
+  h3 { @apply text-lg md:text-xl leading-snug; }
 }
+
 
 @layer components {
   /* Minimal progress bar */
@@ -482,4 +495,58 @@
   background: none !important;
   -webkit-text-fill-color: currentColor !important;
   color: inherit !important;
+}
+
+/* ============================================================
+ * GABRIEL BAÚ CONSULTORIA — Design System (app interno)
+ * Superfícies discretas, respiro amplo, acento bronze sutil.
+ * ============================================================ */
+@layer components {
+  .eyebrow-label {
+    @apply text-[11px] uppercase tracking-[0.22em] text-muted-foreground font-medium;
+  }
+
+  .display-title {
+    font-family: 'Fraunces', serif;
+    @apply text-3xl md:text-[2.5rem] leading-[1.1] tracking-tight text-foreground font-normal;
+  }
+
+  .surface {
+    @apply rounded-xl border border-border/70 bg-card;
+  }
+
+  .surface-quiet {
+    @apply rounded-xl border border-border/50 bg-secondary/40;
+  }
+
+  .surface-hover {
+    @apply transition-colors duration-300 hover:border-primary/35;
+  }
+
+  .section-block {
+    @apply space-y-4 md:space-y-5;
+  }
+
+  .section-title {
+    font-family: 'Fraunces', serif;
+    @apply text-xl md:text-2xl text-foreground font-normal tracking-tight;
+  }
+
+  .hairline {
+    @apply h-px w-full bg-border/70;
+  }
+
+  .metric-value {
+    font-family: 'Fraunces', serif;
+    @apply text-2xl md:text-3xl text-foreground font-normal tabular-nums;
+  }
+
+  .metric-label {
+    @apply text-[11px] uppercase tracking-[0.18em] text-muted-foreground;
+  }
+}
+
+@layer utilities {
+  .text-accent-bronze { color: hsl(var(--brand-gold)); }
+  .border-bronze { border-color: hsl(var(--brand-gold) / 0.35); }
 }

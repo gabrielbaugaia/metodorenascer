@@ -233,7 +233,7 @@ export default function Receitas() {
 
   return (
     <ClientLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-8">
         {/* Access blocked - auto open modal */}
         {!entLoading && isBlocked && (
           <UpgradeModal open={true} onClose={() => setShowUpgradeModal(false)} />
@@ -250,14 +250,10 @@ export default function Receitas() {
         {!isBlocked && (
         <>
         {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-            <ChefHat className="w-6 h-6 text-white" />
-          </div>
+        <div className="pb-6 mb-2 border-b border-border/60">
           <div>
-            <h1 className="text-3xl font-bold uppercase text-foreground">
-              Gerador de <span className="text-foreground">Receitas</span>
-            </h1>
+            <p className="eyebrow-label">Nutrição aplicada</p>
+            <h1 className="display-title mt-2">Receitas</h1>
             <p className="text-muted-foreground text-sm">
               {isTrialing 
                 ? `${trialUsage.used_recipe_count}/1 receita usada no período de teste`

@@ -25,6 +25,9 @@ import { useGabrielBauScore } from "@/hooks/useGabrielBauScore";
 import { computeBodyIndicators, type DayLog } from "@/lib/bodyIndicators";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { PageHeader } from "@/components/ui/page-header";
+
 
 function DashboardSkeleton() {
   return (
@@ -123,6 +126,8 @@ export default function Dashboard() {
   const [needsEvolutionPhotos, setNeedsEvolutionPhotos] = useState(false);
   const [daysSinceLastProtocol, setDaysSinceLastProtocol] = useState(0);
   const [anamneseIncomplete, setAnamneseIncomplete] = useState(false);
+  const [firstName, setFirstName] = useState("");
+
 
   // Fetch consistency data
   const { data: consistencyData } = useQuery({
@@ -275,6 +280,8 @@ export default function Dashboard() {
           .eq("id", user.id)
           .single();
         const hasEssentialData = !!(data?.age && data?.weight && data?.height && (data?.goals || data?.objetivo_principal));
+        if (data?.full_name) setFirstName(data.full_name.split(" ")[0]);
+
         const anamneseComplete = data?.anamnese_completa === true || hasEssentialData;
         if (!anamneseComplete && !isAdmin) {
           setAnamneseIncomplete(true);
@@ -387,117 +394,167 @@ export default function Dashboard() {
     { label: "Dados do Corpo", icon: Heart, href: "/dados-corpo" },
   ];
 
+  const pillars = [
+    { label: "Treino", desc: "Plano prescrito do ciclo", icon: Dumbbell, href: "/treino" },
+    { label: "Nutrição", desc: "Plano alimentar e macros", icon: Utensils, href: "/nutricao" },
+    { label: "Aeróbico", desc: "Sessões e condicionamento", icon: Heart, href: "/cardio" },
+    { label: "Mindset", desc: "Rotina e disciplina", icon: Target, href: "/mindset" },
+  ];
+
+  const hourNow = new Date().getHours();
+  const greeting = hourNow < 12 ? "Bom dia" : hourNow < 18 ? "Boa tarde" : "Boa noite";
+  const todayLabel = format(new Date(), "dd 'de' MMMM", { locale: ptBR });
+
   return (
     <ClientLayout>
       <OnboardingTour />
       <ReferralCampaignPopup />
       <ProtocolRenewalPopup daysSinceLastProtocol={daysSinceLastProtocol} />
 
-      <div className="container mx-auto max-w-xl space-y-6">
-        {/* Alerta de Anamnese Pendente */}
+      <div className="space-y-10 md:space-y-14">
+        <PageHeader
+          eyebrow={`Hoje · ${todayLabel}`}
+          title={firstName ? `${greeting}, ${firstName}` : greeting}
+          subtitle="Seu acompanhamento de hoje, organizado por prioridade. Uma ação principal, o restante como apoio."
+        />
+
+        {/* Anamnese pendente */}
         {anamneseIncomplete && (
-          <Card className="border-primary/40 bg-primary/5">
-            <CardContent className="flex flex-col items-center gap-3 p-6 text-center">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <AlertTriangle className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle className="text-lg">Anamnese Pendente</CardTitle>
-              <p className="text-sm text-muted-foreground max-w-sm">
-                Preencha sua anamnese para que possamos gerar seus protocolos de treino, dieta e mentalidade personalizados.
+          <section className="surface p-6 md:p-8 border-primary/30">
+            <p className="eyebrow-label text-primary">Pendência</p>
+            <h2 className="section-title mt-2">Anamnese incompleta</h2>
+            <p className="text-sm text-muted-foreground mt-3 max-w-lg leading-relaxed">
+              Preciso desses dados para prescrever treino, nutrição e mentalidade com precisão.
+            </p>
+            {missingAnamneseFields.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-4 leading-relaxed">
+                Faltando: <span className="text-foreground">{missingAnamneseFields.join(" · ")}</span>
               </p>
-              {missingAnamneseFields.length > 0 && (
-                <div className="w-full bg-muted/30 rounded-lg p-3 text-left">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Campos faltando:</p>
-                  <p className="text-xs text-foreground">{missingAnamneseFields.join(" • ")}</p>
-                </div>
-              )}
-              <Button variant="default" size="lg" className="w-full mt-2" onClick={() => navigate("/anamnese")}>
-                Preencher Anamnese Agora
-              </Button>
-            </CardContent>
-          </Card>
+            )}
+            <Button className="mt-6" onClick={() => navigate("/anamnese")}>
+              Preencher anamnese
+            </Button>
+          </section>
         )}
 
-        {/* Protocol Renewal Banner */}
         <ProtocolRenewalBanner
           daysSinceLastProtocol={daysSinceLastProtocol}
           needsEvolutionPhotos={needsEvolutionPhotos}
         />
 
-        {/* 1. Executive Status — ScoreRing */}
-        <div className="flex flex-col items-center gap-4 py-4">
-          <ScoreRing score={gabrielBauData.score} classification={gabrielBauData.classification} emptyLabel={!gabrielBauData.todayLog ? "Registre seu dia" : undefined} />
-          <StatusBadge classification={gabrielBauData.classification} statusText={gabrielBauData.statusText} />
-          {gabrielBauData.recommendation.length > 0 && (
-            <p className="text-xs text-muted-foreground text-center max-w-xs">{gabrielBauData.recommendation[0]}</p>
-          )}
-        </div>
-
-        {/* 2. Ação do Dia */}
-        <div
-          onClick={dailyAction.action}
-          className="bg-card border border-border/50 hover:border-foreground/30 transition-colors cursor-pointer rounded-lg p-4 flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
-            <dailyAction.icon className="h-5 w-5 text-foreground" strokeWidth={1.5} />
-            <div>
-              <p className="text-sm font-medium text-foreground">{dailyAction.label}</p>
-              <p className="text-xs text-muted-foreground">{dailyAction.cta}</p>
+        {/* Bloco principal do dia */}
+        <section className="surface overflow-hidden">
+          <div className="grid md:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="p-7 md:p-10 flex flex-col justify-between gap-8">
+              <div>
+                <p className="eyebrow-label">Foco do dia</p>
+                <h2 className="display-title mt-3 text-[1.75rem] md:text-[2rem]">{dailyAction.label}</h2>
+                {gabrielBauData.recommendation.length > 0 && (
+                  <p className="text-sm text-muted-foreground mt-4 max-w-md leading-relaxed">
+                    {gabrielBauData.recommendation[0]}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button size="lg" onClick={dailyAction.action} className="gap-2">
+                  <dailyAction.icon className="h-4 w-4" strokeWidth={1.4} />
+                  {dailyAction.cta}
+                </Button>
+                <Button variant="ghost" size="lg" onClick={() => navigate("/renascer")} className="gap-2">
+                  Registrar o dia
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.4} />
+                </Button>
+              </div>
+            </div>
+            <div className="border-t md:border-t-0 md:border-l border-border/60 bg-secondary/20 p-7 md:p-8 flex flex-col items-center justify-center gap-4">
+              <ScoreRing
+                score={gabrielBauData.score}
+                classification={gabrielBauData.classification}
+                emptyLabel={!gabrielBauData.todayLog ? "Registre seu dia" : undefined}
+              />
+              <StatusBadge classification={gabrielBauData.classification} statusText={gabrielBauData.statusText} />
             </div>
           </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-        </div>
+        </section>
 
-        {/* 3. Progresso — 3 indicadores */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-card border border-border/50 rounded-lg p-3 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Consistência</p>
-            <p className="text-lg font-semibold text-foreground">
-              {consistencyData?.hasEnoughData ? `${consistencyData.consistencyPercent}%` : "—"}
-            </p>
-            <p className="text-[10px] text-muted-foreground">últimos 7 dias</p>
+        {/* Progresso da semana */}
+        <section className="section-block">
+          <div className="flex items-end justify-between">
+            <h2 className="section-title">Progresso da semana</h2>
+            <button
+              onClick={() => navigate("/evolucao")}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Ver evolução
+            </button>
           </div>
-          <div className="bg-card border border-border/50 rounded-lg p-3 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Sequência</p>
-            <p className="text-lg font-semibold text-foreground">
-              {streak.current_streak > 0 ? `${streak.current_streak} dias` : "—"}
-            </p>
-            <p className="text-[10px] text-muted-foreground">atual</p>
-          </div>
-          <div className="bg-card border border-border/50 rounded-lg p-3 text-center">
-            <p className="text-xs text-muted-foreground mb-1">Evolução</p>
-            <p className="text-lg font-semibold text-foreground">
-              {weightDelta != null ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg` : "—"}
-            </p>
-            <p className="text-[10px] text-muted-foreground">peso</p>
-          </div>
-        </div>
-
-        {/* 4. Quick Access */}
-        <div className="grid grid-cols-2 gap-3">
-          {quickAccess.map((item) => {
-            const isLocked = anamneseIncomplete;
-            return (
-              <div
-                key={item.label}
-                onClick={() => !isLocked && navigate(item.href)}
-                className={`bg-card border rounded-lg p-4 flex items-center gap-3 transition-colors ${
-                  isLocked
-                    ? "border-border/30 opacity-50 cursor-not-allowed"
-                    : "border-border/50 hover:border-foreground/30 cursor-pointer"
-                }`}
-              >
-                {isLocked ? (
-                  <Lock className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-                ) : (
-                  <item.icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
-                )}
-                <span className="text-sm font-medium text-foreground">{item.label}</span>
+          <div className="surface divide-y md:divide-y-0 md:divide-x divide-border/60 grid md:grid-cols-3">
+            {[
+              {
+                label: "Consistência",
+                value: consistencyData?.hasEnoughData ? `${consistencyData.consistencyPercent}%` : "—",
+                hint: "últimos 7 dias",
+              },
+              {
+                label: "Sequência",
+                value: streak.current_streak > 0 ? `${streak.current_streak}` : "—",
+                hint: streak.current_streak > 0 ? "dias consecutivos" : "sem registro",
+              },
+              {
+                label: "Peso",
+                value: weightDelta != null ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg` : "—",
+                hint: "variação recente",
+              },
+            ].map((m) => (
+              <div key={m.label} className="p-6 md:p-7 space-y-2">
+                <p className="metric-label">{m.label}</p>
+                <p className="metric-value">{m.value}</p>
+                <p className="text-xs text-muted-foreground">{m.hint}</p>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Pilares do acompanhamento */}
+        <section className="section-block">
+          <h2 className="section-title">Pilares do acompanhamento</h2>
+          <div className="surface divide-y divide-border/60">
+            {pillars.map((item) => {
+              const isLocked = anamneseIncomplete;
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => !isLocked && navigate(item.href)}
+                  disabled={isLocked}
+                  className="w-full flex items-center gap-5 px-6 md:px-8 py-5 text-left transition-colors hover:bg-secondary/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isLocked ? (
+                    <Lock className="h-[18px] w-[18px] text-muted-foreground shrink-0" strokeWidth={1.4} />
+                  ) : (
+                    <item.icon className="h-[18px] w-[18px] text-primary shrink-0" strokeWidth={1.4} />
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] text-foreground">{item.label}</span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">{item.desc}</span>
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={1.4} />
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Orientação do treinador */}
+        <section className="surface-quiet p-7 md:p-9">
+          <p className="eyebrow-label">Orientação do treinador</p>
+          <p className="font-display text-lg md:text-xl text-foreground mt-3 leading-snug max-w-2xl">
+            {gabrielBauData.recommendation[1] ??
+              "Constância vale mais que intensidade isolada. Cumpra o plano de hoje e registre o dia — é assim que eu ajusto seu protocolo."}
+          </p>
+          <p className="text-xs text-muted-foreground mt-4">Gabriel Baú · Consultoria</p>
+        </section>
       </div>
+
 
       <WeeklyCheckinModal
         open={showWeeklyCheckin}

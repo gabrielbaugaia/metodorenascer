@@ -236,14 +236,15 @@ export default function MeuPerfil() {
 
   return (
     <ClientLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-8">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/area-cliente")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Meu Perfil</h1>
-            <p className="text-muted-foreground">Edite suas informações pessoais</p>
+            <p className="eyebrow-label">Sua conta</p>
+            <h1 className="display-title mt-2">Meu perfil</h1>
+            <p className="text-sm text-muted-foreground mt-2">Dados pessoais, objetivos e preferências</p>
           </div>
         </div>
 

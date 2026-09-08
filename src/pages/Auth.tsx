@@ -78,7 +78,7 @@ export default function Auth() {
 
         <Card variant="glass">
           <CardHeader>
-            <CardTitle className="text-center text-muted-foreground">Entrar</CardTitle>
+            <CardTitle className="text-center text-foreground font-normal">Entrar</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -125,7 +125,7 @@ export default function Auth() {
                 </div>
               </div>
 
-              <Button type="submit" variant="default" className="w-full h-12 bg-background text-muted-foreground hover:bg-muted hover:text-foreground text-[11px] uppercase tracking-[2px] font-mono" disabled={loading}>
+              <Button type="submit" variant="default" className="w-full h-12 text-[11px] uppercase tracking-[0.2em]" disabled={loading}>
                 {loading ? "Carregando..." : "Entrar"}
               </Button>
             </form>
