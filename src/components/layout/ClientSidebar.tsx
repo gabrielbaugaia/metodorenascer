@@ -184,7 +184,7 @@ export function ClientSidebar() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-1">
-                {clientMenuItems.map((item) => (
+                {clientPrimaryItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
                       <NavLink to={item.url} className={cn(navItemClass, isActive(item.url) ? navActive : navIdle)}>
@@ -200,10 +200,99 @@ export function ClientSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+
+                {/* Conteúdos */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => {
+                      const next = !contentOpen;
+                      setContentOpen(next);
+                      if (next) trackContentHubOpened("desktop");
+                    }}
+                    isActive={contentActive}
+                    tooltip="Conteúdos"
+                    aria-expanded={contentOpen}
+                    className={cn(navItemClass, contentActive ? navActive : navIdle, "w-full")}
+                  >
+                    <BookOpen className="h-[17px] w-[17px] shrink-0 opacity-70" strokeWidth={ICON_STROKE} />
+                    {!collapsed && (
+                      <>
+                        <span className="truncate">Conteúdos</span>
+                        <ChevronDown
+                          className={cn("ml-auto h-3.5 w-3.5 transition-transform duration-200", contentOpen && "rotate-180")}
+                          strokeWidth={ICON_STROKE}
+                          aria-hidden="true"
+                        />
+                      </>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {(contentOpen || collapsed) &&
+                  clientContentItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                        <NavLink
+                          to={item.url}
+                          className={cn(navItemClass, collapsed ? "" : "pl-9", isActive(item.url) ? navActive : navIdle)}
+                        >
+                          <item.icon
+                            className={cn("h-[15px] w-[15px] shrink-0", isActive(item.url) ? "text-primary" : "text-current opacity-70")}
+                            strokeWidth={ICON_STROKE}
+                          />
+                          {!collapsed && <span className="truncate text-[13px]">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+
+                {/* Mais */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => {
+                      const next = !moreOpen;
+                      setMoreOpen(next);
+                      if (next) trackMoreMenuOpened("desktop");
+                    }}
+                    isActive={moreActive}
+                    tooltip="Mais"
+                    aria-expanded={moreOpen}
+                    className={cn(navItemClass, moreActive ? navActive : navIdle, "w-full")}
+                  >
+                    <MoreHorizontal className="h-[17px] w-[17px] shrink-0 opacity-70" strokeWidth={ICON_STROKE} />
+                    {!collapsed && (
+                      <>
+                        <span className="truncate">Mais</span>
+                        <ChevronDown
+                          className={cn("ml-auto h-3.5 w-3.5 transition-transform duration-200", moreOpen && "rotate-180")}
+                          strokeWidth={ICON_STROKE}
+                          aria-hidden="true"
+                        />
+                      </>
+                    )}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {(moreOpen || collapsed) &&
+                  clientMoreItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                        <NavLink
+                          to={item.url}
+                          className={cn(navItemClass, collapsed ? "" : "pl-9", isActive(item.url) ? navActive : navIdle)}
+                        >
+                          <item.icon
+                            className={cn("h-[15px] w-[15px] shrink-0", isActive(item.url) ? "text-primary" : "text-current opacity-70")}
+                            strokeWidth={ICON_STROKE}
+                          />
+                          {!collapsed && <span className="truncate text-[13px]">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
 
         {/* Admin menu with sections */}
         {isAdmin && adminSections.map((section) => (
