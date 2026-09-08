@@ -108,7 +108,19 @@ function MealMacrosBar({ macros }: { macros?: MacrosRefeicao }) {
   );
 }
 
-function MealCard({ refeicao, index }: { refeicao: Refeicao; index: number }) {
+function MealCard({
+  refeicao,
+  index,
+  onRegister,
+  registeredAt,
+  registering,
+}: {
+  refeicao: Refeicao;
+  index: number;
+  onRegister?: (refeicao: Refeicao) => void;
+  registeredAt?: string | null;
+  registering?: boolean;
+}) {
   return (
     <Card key={index} className="border border-border/80">
       <CardHeader className="pb-2">
@@ -143,10 +155,36 @@ function MealCard({ refeicao, index }: { refeicao: Refeicao; index: number }) {
             ))}
           </div>
         )}
+        {onRegister && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border/30 pt-3">
+            {registeredAt ? (
+              <p className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Check className="h-3.5 w-3.5 text-primary" strokeWidth={1.8} />
+                Registrado hoje às {registeredAt}
+              </p>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                className="min-h-11"
+                disabled={registering}
+                onClick={() => onRegister(refeicao)}
+              >
+                {registering ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <PlusCircle className="mr-2 h-4 w-4" strokeWidth={1.6} />
+                )}
+                Registrar refeição
+              </Button>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
+
 
 function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false }: { title: string; icon: any; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
