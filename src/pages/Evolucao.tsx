@@ -680,6 +680,15 @@ export default function Evolucao() {
                     <div key={key} className="space-y-1 sm:space-y-2">
                       <div
                         className={`relative aspect-[3/4] rounded-md sm:rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-foreground/50 transition-colors ${!canSubmitNew || isValidating ? "pointer-events-none" : ""} ${!canSubmitNew ? "opacity-50" : ""}`}
+                        role="button"
+                        tabIndex={canSubmitNew && !isValidating ? 0 : -1}
+                        aria-label={`Adicionar foto de ${label.toLowerCase()}`}
+                        onKeyDown={(e) => {
+                          if ((e.key === "Enter" || e.key === " ") && canSubmitNew && !isValidating) {
+                            e.preventDefault();
+                            fileInputRefs[key].current?.click();
+                          }
+                        }}
                         onClick={() => canSubmitNew && !isValidating && fileInputRefs[key].current?.click()}
                       >
                         {photoPreviews[key] ? (
@@ -701,6 +710,7 @@ export default function Evolucao() {
                             {!isValidating && (
                               <button
                                 type="button"
+                                aria-label={`Remover foto de ${label.toLowerCase()}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   removePhoto(key);

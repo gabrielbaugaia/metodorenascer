@@ -164,7 +164,7 @@ export default function AnamneseExterna() {
 
   if (pageState === "loading") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-dvh bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-10 w-10 animate-spin text-foreground mx-auto" />
           <p className="text-muted-foreground">Validando link...</p>
@@ -175,7 +175,7 @@ export default function AnamneseExterna() {
 
   if (pageState === "error") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="min-h-dvh bg-background flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
             <XCircle className="h-16 w-16 text-destructive mx-auto" />
@@ -192,7 +192,7 @@ export default function AnamneseExterna() {
 
   if (pageState === "success") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="min-h-dvh bg-background flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
             <CheckCircle2 className="h-16 w-16 text-foreground mx-auto" />
@@ -215,7 +215,7 @@ export default function AnamneseExterna() {
   const progress = Math.round((filledFields / totalFields) * 100);
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
+    <div className="min-h-dvh bg-background py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">

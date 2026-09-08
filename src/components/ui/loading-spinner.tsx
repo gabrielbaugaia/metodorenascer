@@ -39,7 +39,7 @@ interface FullPageLoaderProps {
 
 export function FullPageLoader({ text = "Carregando..." }: FullPageLoaderProps) {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="min-h-dvh bg-background flex items-center justify-center">
       <LoadingSpinner size="lg" text={text} />
     </div>
   );

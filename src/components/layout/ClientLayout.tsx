@@ -26,7 +26,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-dvh bg-background flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -38,7 +38,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
+      <div className="min-h-dvh flex w-full bg-background overflow-x-hidden">
         <ClientSidebar />
         <main className="flex-1 overflow-x-hidden overflow-y-auto min-w-0">
           {/* Mobile Header */}

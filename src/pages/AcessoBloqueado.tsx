@@ -28,7 +28,7 @@ export default function AcessoBloqueado() {
   // Enquanto checa auth/admin, mostra loader (evita flash da tela vermelha)
   if (authLoading || adminLoading || isAdmin) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-dvh bg-background flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -55,7 +55,7 @@ export default function AcessoBloqueado() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-destructive/50">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center">

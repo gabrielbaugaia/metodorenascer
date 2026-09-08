@@ -444,7 +444,7 @@ export default function Anamnese() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-dvh bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-foreground" />
       </div>
     );
@@ -455,7 +455,7 @@ export default function Anamnese() {
   const progress = (filledFields / totalFields) * 100;
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
+    <div className="min-h-dvh bg-background py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6">
