@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useProtocol } from "@/hooks/useProtocol";
+import { useNutritionTracking } from "@/hooks/useNutritionTracking";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
