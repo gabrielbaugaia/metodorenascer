@@ -30,6 +30,7 @@ import { MetricStrip, SectionHeader } from "@/components/ui/premium";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ManualInput } from "@/components/renascer/ManualInput";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { WeeklyConsistencyBlock } from "@/components/progress/WeeklyConsistencyBlock";
 
 
 function DashboardSkeleton() {
@@ -519,33 +520,22 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Progresso da semana */}
+        {/* Consistência da semana — mesma fonte usada em Evolução */}
         <section className="section-block">
-           <SectionHeader title="Progresso da semana" action={<Button
-               variant="ghost"
-               size="sm"
-              onClick={() => navigate("/evolucao")}
-               className="text-muted-foreground"
-            >
-              Ver evolução
-             </Button>} />
-           <MetricStrip items={[
-              {
-                label: "Consistência",
-                value: consistencyData?.hasEnoughData ? `${consistencyData.consistencyPercent}%` : "—",
-                hint: "últimos 7 dias",
-              },
-              {
-                label: "Sequência",
-                value: streak.current_streak > 0 ? `${streak.current_streak}` : "—",
-                hint: streak.current_streak > 0 ? "dias consecutivos" : "sem registro",
-              },
-              {
-                label: "Peso",
-                value: weightDelta != null ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg` : "—",
-                hint: "variação recente",
-              },
-             ]} />
+          <SectionHeader
+            title="Progresso da semana"
+            action={
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/evolucao")}
+                className="min-h-11 text-muted-foreground"
+              >
+                Ver evolução
+              </Button>
+            }
+          />
+          <WeeklyConsistencyBlock context="hoje" />
         </section>
 
         {/* Pilares do acompanhamento */}
