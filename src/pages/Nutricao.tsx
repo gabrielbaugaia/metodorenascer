@@ -438,7 +438,7 @@ export default function Nutricao() {
                     <Badge variant="outline" className="text-xs">Total: {planoDiaTreino.calorias_totais} kcal</Badge>
                   )}
                   {planoDiaTreino.refeicoes.slice(0, maxMealsVisible).map((ref, i) => (
-                    <MealCard key={i} refeicao={ref} index={i} />
+                    <MealCard key={i} refeicao={ref} index={i} {...mealCardProps(ref)} />
                   ))}
                   {isTrialing && planoDiaTreino.refeicoes.length > maxMealsVisible && (
                     <div className="text-center py-2">
@@ -458,14 +458,14 @@ export default function Nutricao() {
                     <Badge variant="outline" className="text-xs">Total: {planoDiaDescanso.calorias_totais} kcal</Badge>
                   )}
                   {planoDiaDescanso.refeicoes.slice(0, maxMealsVisible).map((ref, i) => (
-                    <MealCard key={i} refeicao={ref} index={i} />
+                    <MealCard key={i} refeicao={ref} index={i} {...mealCardProps(ref)} />
                   ))}
                 </TabsContent>
               </Tabs>
             ) : (
               <div className="space-y-4">
                 {legacyRefeicoes.slice(0, maxMealsVisible).map((refeicao, index) => (
-                  <MealCard key={index} refeicao={refeicao} index={index} />
+                  <MealCard key={index} refeicao={refeicao} index={index} {...mealCardProps(refeicao)} />
                 ))}
                 {isTrialing && legacyRefeicoes.length > maxMealsVisible && (
                   <div className="text-center py-2">
