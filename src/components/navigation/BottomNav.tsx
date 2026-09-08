@@ -110,6 +110,8 @@ export function BottomNav() {
             </div>
           ))}
         </div>
+      </div>
+
       {/* Bottom bar */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar text-sidebar-foreground border-t border-sidebar-border pb-[env(safe-area-inset-bottom)]"
