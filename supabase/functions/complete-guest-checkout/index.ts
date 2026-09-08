@@ -27,11 +27,41 @@ serve(async (req) => {
 
     const { session_id } = await req.json();
 
-    if (!session_id || typeof session_id !== "string") {
+    if (!session_id || typeof session_id !== "string" || !/^cs_[A-Za-z0-9_]+$/.test(session_id)) {
       return createErrorResponse(req, "session_id is required", 400);
     }
 
+    // Bind the claim to a real, paid Stripe checkout session before releasing
+    // any credentials. Random/forged session ids are rejected here.
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      logStep("Missing STRIPE_SECRET_KEY");
+      return createErrorResponse(req, "internal_error", 500);
+    }
+
+    let stripeEmail: string | null = null;
+    try {
+      const stripeRes = await fetch(
+        `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(session_id)}`,
+        { headers: { Authorization: `Bearer ${stripeKey}` } },
+      );
+      if (!stripeRes.ok) {
+        logStep("Stripe session lookup failed", { status: stripeRes.status });
+        return createErrorResponse(req, "invalid_or_expired", 410);
+      }
+      const stripeSession = await stripeRes.json();
+      if (stripeSession?.payment_status !== "paid") {
+        logStep("Stripe session not paid", { paymentStatus: stripeSession?.payment_status });
+        return createErrorResponse(req, "invalid_or_expired", 410);
+      }
+      stripeEmail = stripeSession?.customer_details?.email ?? stripeSession?.customer_email ?? null;
+    } catch (e) {
+      logStep("Stripe verification error", { error: e instanceof Error ? e.message : String(e) });
+      return createErrorResponse(req, "internal_error", 500);
+    }
+
     logStep("Looking up pending login", { session_id });
+
 
     // Atomic claim: only return the row if it hasn't been used yet AND is still valid.
     // We update used_at in the same statement to prevent race conditions and
