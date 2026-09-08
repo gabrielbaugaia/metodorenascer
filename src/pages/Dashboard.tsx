@@ -467,13 +467,20 @@ export default function Dashboard() {
                 </Button>
               </div>
             </div>
-             <div className="border-t md:border-t-0 md:border-l border-sidebar-border bg-sidebar-accent/60 p-7 md:p-8 flex flex-col items-center justify-center gap-4">
+            <div className="border-t md:border-t-0 md:border-l border-sidebar-border bg-sidebar-accent/40 px-6 py-9 md:px-8 md:py-10 flex flex-col items-center justify-center gap-6">
               <ScoreRing
                 score={gabrielBauData.score}
                 classification={gabrielBauData.classification}
-                emptyLabel={!gabrielBauData.todayLog ? "Registre seu dia" : undefined}
+                emptyLabel={!gabrielBauData.todayLog ? "empty" : undefined}
               />
-              <StatusBadge classification={gabrielBauData.classification} statusText={gabrielBauData.statusText} />
+              <div className="text-center">
+                <p className="text-[0.68rem] uppercase tracking-[0.18em] text-sidebar-foreground/45">
+                  {gabrielBauData.classification}
+                </p>
+                <p className="mt-1.5 text-sm text-sidebar-foreground/75 leading-relaxed">
+                  {gabrielBauData.statusText}
+                </p>
+              </div>
             </div>
           </div>
         </section>
