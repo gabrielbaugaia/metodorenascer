@@ -533,6 +533,8 @@ function RecipeCard({
               variant="ghost"
               size="icon"
               onClick={() => onToggleFavorite(recipe.id, recipe.is_favorite)}
+              aria-label={recipe.is_favorite ? "Remover dos favoritos" : "Salvar nos favoritos"}
+              aria-pressed={recipe.is_favorite}
                className={recipe.is_favorite ? "text-primary" : "text-muted-foreground"}
             >
               <Heart className={`h-4 w-4 ${recipe.is_favorite ? "fill-current" : ""}`} />
@@ -541,6 +543,7 @@ function RecipeCard({
               variant="ghost"
               size="icon"
               onClick={() => onDelete(recipe.id)}
+              aria-label="Excluir receita"
               className="text-muted-foreground hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" />

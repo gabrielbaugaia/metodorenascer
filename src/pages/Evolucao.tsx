@@ -565,7 +565,7 @@ export default function Evolucao() {
                   <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-foreground shrink-0" />
                   Análise Comparativa
                 </CardTitle>
-                <Button variant="ghost" size="icon" onClick={() => setShowAnalysis(false)}>
+                <Button variant="ghost" size="icon" aria-label="Fechar análise" onClick={() => setShowAnalysis(false)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>

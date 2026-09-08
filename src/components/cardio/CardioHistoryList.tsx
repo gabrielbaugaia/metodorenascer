@@ -94,6 +94,7 @@ export function CardioHistoryList({ sessions, onDelete, isDeleting }: Props) {
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-destructive"
               onClick={() => onDelete(s.id)}
+              aria-label="Excluir sessão de aeróbico"
               disabled={isDeleting}
             >
               <Trash2 className="h-4 w-4" />
