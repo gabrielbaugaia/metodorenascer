@@ -1,6 +1,16 @@
 import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  PDF_COLORS,
+  PDF_MARGIN,
+  drawContinuationHeader,
+  drawFooters,
+  drawHeader,
+  setDraw,
+  setFill,
+  setText,
+} from "./pdfTheme";
 
 interface Protocol {
   id: string;
@@ -19,115 +29,175 @@ export function trackPdfDownloadEvent(tipo: string, trackFn: (pdfType: "treino" 
   }
 }
 
+function formatDate(value: string) {
+  try {
+    return format(new Date(value), "dd/MM/yyyy", { locale: ptBR });
+  } catch {
+    return "";
+  }
+}
+
 export function generateProtocolPdf(protocol: Protocol, includeAudit: boolean = false): void {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 15;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = PDF_MARGIN;
   const contentWidth = pageWidth - margin * 2;
-  let yPos = 20;
+  const bottomLimit = pageHeight - 22;
 
-  // Helper functions
-  const addHeader = () => {
-    doc.setFillColor(255, 69, 0);
-    doc.rect(0, 0, pageWidth, 30, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("MÉTODO GABRIEL BAÚ", margin, 18);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text("Transformação Elite - GabrielBau", margin, 25);
-    yPos = 42;
-  };
+  const typeLabel =
+    protocol.tipo === "treino" ? "Protocolo de Treino"
+      : protocol.tipo === "nutricao" ? "Plano Nutricional"
+      : protocol.tipo === "mindset" ? "Protocolo de Mentalidade"
+      : "Protocolo";
 
-  const addTitle = (title: string) => {
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text(title, margin, yPos);
-    yPos += 6;
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 100, 100);
-    doc.text(
-      `Gerado em ${format(new Date(protocol.data_geracao), "dd/MM/yyyy", { locale: ptBR })}`,
-      margin,
-      yPos
-    );
-    
-    // Duração do plano
-    if (protocol.conteudo?.duracao_semanas) {
-      doc.text(` | Duração: ${protocol.conteudo.duracao_semanas} semanas`, margin + 60, yPos);
-    }
-    yPos += 10;
+  const metaItems: string[] = [formatDate(protocol.data_geracao)];
+  if (protocol.conteudo?.duracao_semanas) metaItems.push(`${protocol.conteudo.duracao_semanas} semanas`);
+
+  let yPos = drawHeader(doc, {
+    title: protocol.titulo || typeLabel,
+    subtitle: typeLabel,
+    meta: metaItems,
+  });
+
+  const newPage = () => {
+    doc.addPage();
+    yPos = drawContinuationHeader(doc, typeLabel);
   };
 
   const checkNewPage = (height: number = 15) => {
-    if (yPos + height > doc.internal.pageSize.getHeight() - 20) {
-      doc.addPage();
-      yPos = 20;
-    }
+    if (yPos + height > bottomLimit) newPage();
   };
 
   const addSectionTitle = (title: string) => {
-    checkNewPage(12);
-    doc.setFillColor(255, 69, 0);
-    doc.rect(margin, yPos - 4, contentWidth, 8, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
+    checkNewPage(22);
+    yPos += 3;
+    setFill(doc, PDF_COLORS.bronze);
+    doc.rect(margin, yPos - 3.2, 14, 0.9, "F");
+    yPos += 3;
+    setText(doc, PDF_COLORS.text);
+    doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text(title.toUpperCase(), margin + 3, yPos + 1);
-    yPos += 12;
-  };
-
-  const addSubsectionTitle = (title: string) => {
-    checkNewPage(10);
-    doc.setFillColor(240, 240, 240);
-    doc.rect(margin, yPos - 3, contentWidth, 7, "F");
-    doc.setTextColor(50, 50, 50);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text(title, margin + 3, yPos + 1);
+    doc.text(title.toUpperCase(), margin, yPos + 2);
     yPos += 10;
   };
 
+  const addSubsectionTitle = (title: string) => {
+    checkNewPage(16);
+    setText(doc, PDF_COLORS.text);
+    doc.setFontSize(9.5);
+    doc.setFont("helvetica", "bold");
+    const lines = doc.splitTextToSize(title, contentWidth);
+    doc.text(lines, margin, yPos);
+    yPos += lines.length * 4.6 + 1.5;
+    setFill(doc, PDF_COLORS.hairline);
+    doc.rect(margin, yPos, contentWidth, 0.3, "F");
+    yPos += 5;
+  };
+
   const addText = (text: string, indent: number = 0) => {
-    checkNewPage();
-    doc.setTextColor(60, 60, 60);
+    if (!text) return;
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    const lines = doc.splitTextToSize(text, contentWidth - indent);
-    doc.text(lines, margin + indent, yPos);
-    yPos += lines.length * 4 + 2;
+    const lines = doc.splitTextToSize(String(text), contentWidth - indent);
+    for (const line of lines) {
+      checkNewPage(6);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      setText(doc, PDF_COLORS.text);
+      doc.text(line, margin + indent, yPos);
+      yPos += 4.6;
+    }
+    yPos += 1.5;
   };
 
   const addBoldText = (text: string, indent: number = 0) => {
-    checkNewPage();
-    doc.setTextColor(30, 30, 30);
+    if (!text) return;
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    const lines = doc.splitTextToSize(text, contentWidth - indent);
-    doc.text(lines, margin + indent, yPos);
-    yPos += lines.length * 4 + 2;
+    const lines = doc.splitTextToSize(String(text), contentWidth - indent);
+    for (const line of lines) {
+      checkNewPage(6);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      setText(doc, PDF_COLORS.text);
+      doc.text(line, margin + indent, yPos);
+      yPos += 4.6;
+    }
+    yPos += 1.5;
   };
 
   const addObservation = (text: string) => {
-    checkNewPage(15);
-    doc.setFillColor(255, 245, 230);
-    const lines = doc.splitTextToSize(text, contentWidth - 10);
-    doc.rect(margin, yPos - 3, contentWidth, lines.length * 4 + 8, "F");
-    doc.setDrawColor(255, 69, 0);
-    doc.rect(margin, yPos - 3, contentWidth, lines.length * 4 + 8, "S");
-    doc.setTextColor(100, 60, 0);
-    doc.setFontSize(8);
+    doc.setFontSize(8.5);
     doc.setFont("helvetica", "italic");
-    doc.text(lines, margin + 5, yPos + 2);
-    yPos += lines.length * 4 + 12;
+    const lines = doc.splitTextToSize(String(text), contentWidth - 14);
+    const boxHeight = lines.length * 4.4 + 9;
+    checkNewPage(boxHeight + 4);
+    setFill(doc, PDF_COLORS.surface);
+    doc.rect(margin, yPos - 3, contentWidth, boxHeight, "F");
+    setFill(doc, PDF_COLORS.bronze);
+    doc.rect(margin, yPos - 3, 1.4, boxHeight, "F");
+    setText(doc, PDF_COLORS.text);
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "italic");
+    doc.text(lines, margin + 8, yPos + 3);
+    yPos += boxHeight + 5;
   };
 
-  // Generate PDF based on protocol type
-  addHeader();
-  addTitle(protocol.titulo);
+  const helpersBase = {
+    addSectionTitle,
+    addSubsectionTitle,
+    addText,
+    addBoldText,
+    addObservation,
+    checkNewPage,
+    newPage,
+    margin,
+    contentWidth,
+    bottomLimit,
+    yPos: () => yPos,
+    setYPos: (v: number) => { yPos = v; },
+  };
+
+  // Resumo do protocolo (primeira página)
+  const resumoItems: { label: string; value: string }[] = [];
+  const c = protocol.conteudo || {};
+  if (c.nivel) resumoItems.push({ label: "Nível", value: String(c.nivel) });
+  if (c.objetivo) resumoItems.push({ label: "Objetivo", value: String(c.objetivo) });
+  if (c.frequencia_semanal) resumoItems.push({ label: "Frequência", value: `${c.frequencia_semanal}x / semana` });
+  if (c.duracao_semanas) resumoItems.push({ label: "Duração", value: `${c.duracao_semanas} semanas` });
+  if (c.calorias_diarias) resumoItems.push({ label: "Calorias", value: `${c.calorias_diarias} kcal` });
+  resumoItems.push({ label: "Emissão", value: formatDate(protocol.data_geracao) });
+
+  {
+    const cols = 3;
+    const rows = Math.ceil(resumoItems.length / cols);
+    const cellW = contentWidth / cols;
+    const cellH = 15;
+    const boxH = rows * cellH + 6;
+    checkNewPage(boxH + 6);
+    setFill(doc, PDF_COLORS.surface);
+    doc.rect(margin, yPos, contentWidth, boxH, "F");
+    setDraw(doc, PDF_COLORS.hairline);
+    doc.setLineWidth(0.3);
+    doc.rect(margin, yPos, contentWidth, boxH, "S");
+    resumoItems.forEach((item, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = margin + col * cellW + 6;
+      const y = yPos + 4 + row * cellH;
+      setText(doc, PDF_COLORS.muted);
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "bold");
+      doc.text(item.label.toUpperCase(), x, y + 4);
+      setText(doc, PDF_COLORS.text);
+      doc.setFontSize(9.5);
+      doc.setFont("helvetica", "bold");
+      const val = doc.splitTextToSize(item.value, cellW - 10)[0];
+      doc.text(val, x, y + 10);
+    });
+    yPos += boxH + 8;
+  }
 
   // Add adjustment observation if exists
   if (protocol.conteudo?.observacao_ajustes) {
@@ -135,21 +205,20 @@ export function generateProtocolPdf(protocol: Protocol, includeAudit: boolean = 
   }
 
   if (protocol.tipo === "treino") {
-    generateTreinoPdf(doc, protocol.conteudo, { addSectionTitle, addSubsectionTitle, addText, addBoldText, checkNewPage, margin, contentWidth, addObservation, yPos: () => yPos, setYPos: (v: number) => yPos = v });
+    generateTreinoPdf(doc, protocol.conteudo, helpersBase);
   } else if (protocol.tipo === "nutricao") {
-    generateNutricaoPdf(doc, protocol.conteudo, { addSectionTitle, addSubsectionTitle, addText, addBoldText, checkNewPage, margin, contentWidth, yPos: () => yPos, setYPos: (v: number) => yPos = v });
+    generateNutricaoPdf(doc, protocol.conteudo, helpersBase);
   } else if (protocol.tipo === "mindset") {
-    generateMindsetPdf(doc, protocol.conteudo, { addSectionTitle, addSubsectionTitle, addText, addBoldText, checkNewPage, margin, contentWidth, yPos: () => yPos, setYPos: (v: number) => yPos = v });
+    generateMindsetPdf(doc, protocol.conteudo, helpersBase);
   }
 
   // Audit section (admin only)
   if (includeAudit && protocol.audit_result) {
     const audit = protocol.audit_result;
-    doc.addPage();
-    yPos = 20;
-    
-    addSectionTitle("AUDITORIA INTERNA DE QUALIDADE");
-    
+    newPage();
+
+    addSectionTitle("Auditoria interna de qualidade");
+
     const criteriaLabels: Record<string, string> = {
       coherence_anamnese: "Coerência com anamnese",
       coherence_objective: "Coerência com objetivo",
@@ -164,39 +233,24 @@ export function generateProtocolPdf(protocol: Protocol, includeAudit: boolean = 
 
     for (const [key, label] of Object.entries(criteriaLabels)) {
       const passed = audit[key] === true;
-      addText(`${passed ? "✅" : "❌"} ${label}: ${passed ? "Passou" : "Falhou"}`);
+      addText(`${label}: ${passed ? "Aprovado" : "Reprovado"}`);
     }
 
-    checkNewPage(15);
     addBoldText(`Score final de qualidade: ${audit.final_score || 0}/100`);
     addText(`Classificação: ${audit.classification || "N/A"}`);
 
     if (audit.issues?.length > 0) {
-      checkNewPage(10);
-      addSubsectionTitle("Problemas Detectados");
+      addSubsectionTitle("Problemas detectados");
       audit.issues.forEach((issue: string) => addText(`• ${issue}`, 5));
     }
 
     if (audit.corrections_applied?.length > 0) {
-      checkNewPage(10);
-      addSubsectionTitle("Correções Aplicadas");
+      addSubsectionTitle("Correções aplicadas");
       audit.corrections_applied.forEach((corr: string) => addText(`• ${corr}`, 5));
     }
   }
 
-  // Footer on all pages
-  const pageCount = doc.internal.pages.length - 1;
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setTextColor(150, 150, 150);
-    doc.setFontSize(7);
-    doc.text(
-      `GabrielBau Treinador - GabrielBau | Página ${i} de ${pageCount}`,
-      pageWidth / 2,
-      doc.internal.pageSize.getHeight() - 8,
-      { align: "center" }
-    );
-  }
+  drawFooters(doc);
 
   // Save
   const fileName = `protocolo-${protocol.tipo}-${format(new Date(), "yyyy-MM-dd")}.pdf`;
