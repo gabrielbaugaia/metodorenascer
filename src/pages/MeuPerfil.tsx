@@ -237,7 +237,7 @@ export default function MeuPerfil() {
   return (
     <ClientLayout>
       <div className="max-w-3xl mx-auto space-y-8">
-        <div className="flex items-center gap-4">
+        <div className="flex items-start gap-4 border-b border-border/70 pb-8">
           <Button variant="ghost" size="icon" onClick={() => navigate("/area-cliente")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -263,7 +263,7 @@ export default function MeuPerfil() {
                   src={avatarSrc || undefined}
                   alt={`Foto de perfil de ${profile.full_name}`}
                 />
-                <AvatarFallback className="text-2xl bg-foreground/20 text-foreground">
+                 <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                   {getInitials(profile.full_name)}
                 </AvatarFallback>
               </Avatar>
@@ -328,7 +328,7 @@ export default function MeuPerfil() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="newPassword">Nova Senha</Label>
-              <div className="relative">
+               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="newPassword"
@@ -338,13 +338,16 @@ export default function MeuPerfil() {
                   placeholder="Mínimo 6 caracteres"
                   className="pl-10 pr-10"
                 />
-                <button
+                 <Button
                   type="button"
+                   variant="ghost"
+                   size="icon"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                   className="absolute right-1.5 top-1/2 h-9 w-9 -translate-y-1/2 text-muted-foreground"
+                   aria-label={showNewPassword ? "Ocultar nova senha" : "Mostrar nova senha"}
                 >
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                 </Button>
               </div>
             </div>
 
@@ -360,13 +363,16 @@ export default function MeuPerfil() {
                   placeholder="Repita a senha"
                   className="pl-10 pr-10"
                 />
-                <button
+                 <Button
                   type="button"
+                   variant="ghost"
+                   size="icon"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                   className="absolute right-1.5 top-1/2 h-9 w-9 -translate-y-1/2 text-muted-foreground"
+                   aria-label={showConfirmPassword ? "Ocultar confirmação" : "Mostrar confirmação"}
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                 </Button>
               </div>
             </div>
 

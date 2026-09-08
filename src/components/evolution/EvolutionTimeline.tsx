@@ -103,7 +103,7 @@ export function EvolutionTimeline({
   // Calculate weight progression
   const weightData = checkins
     .filter(c => c.peso_atual)
-    .map(c => ({ date: new Date(c.created_at), weight: c.peso_atual! }))
+    .map(c => ({ date: new Date(c.created_at), weight: c.peso_atual ?? 0 }))
     .reverse();
 
   const totalWeightChange = weightData.length > 1 
@@ -127,7 +127,7 @@ export function EvolutionTimeline({
               {totalWeightChange !== 0 && (
                 <Badge 
                   variant={totalWeightChange < 0 ? "default" : "secondary"}
-                  className={`text-xs ${totalWeightChange < 0 ? "bg-green-500/20 text-green-400" : ""}`}
+                  className={`text-xs ${totalWeightChange < 0 ? "bg-success/10 text-success border-success/30" : ""}`}
                 >
                   <TrendingUp className="h-3 w-3 mr-1" />
                   {totalWeightChange > 0 ? "+" : ""}{totalWeightChange.toFixed(1)} kg
@@ -159,7 +159,7 @@ export function EvolutionTimeline({
               return (
                 <div key={checkin.id} className="relative pl-8 min-w-0 overflow-hidden">
                   {/* Timeline dot */}
-                  <div className="absolute left-1.5 top-2 w-3 h-3 rounded-full bg-foreground ring-4 ring-background" />
+                   <div className="absolute left-1.5 top-2 w-3 h-3 rounded-full bg-primary ring-4 ring-background" />
 
                   <Collapsible open={isExpanded} onOpenChange={() => toggleExpand(checkin.id)}>
                     <div className="py-2 px-3 rounded-lg bg-muted/30 border border-border/50 hover:border-foreground/30 transition-colors">
@@ -169,7 +169,7 @@ export function EvolutionTimeline({
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div className="flex flex-wrap items-center gap-2">
                               <div className="flex items-center gap-1.5 sm:gap-2">
-                                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500 shrink-0" />
+                                 <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success shrink-0" />
                                 <span className="font-medium text-sm sm:text-base">
                                   {format(new Date(checkin.created_at), "dd/MM/yyyy", { locale: ptBR })}
                                 </span>
@@ -190,7 +190,7 @@ export function EvolutionTimeline({
                                   {weightChange !== null && weightChange !== 0 && (
                                     <Badge 
                                       variant="outline" 
-                                      className={`text-[10px] sm:text-xs px-1 ${weightChange < 0 ? "text-green-500 border-green-500/50" : "text-primary border-primary/50"}`}
+                                       className={`text-[10px] sm:text-xs px-1 ${weightChange < 0 ? "text-success border-success/40" : "text-primary border-primary/50"}`}
                                     >
                                       {weightChange > 0 ? "+" : ""}{weightChange.toFixed(1)}
                                     </Badge>

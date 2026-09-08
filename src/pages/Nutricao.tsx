@@ -83,10 +83,10 @@ function isExpandedFormat(conteudo: NutritionContent): boolean {
 /* MacroCard — neutro, sem cores vividas */
 function MacroCard({ label, value, unit }: { label: string; value: number | string; unit?: string; color?: string }) {
   return (
-    <Card className="p-3 sm:p-4 text-center border-border/50">
-      <p className="text-xl md:text-2xl font-bold text-foreground">{value}{unit || ''}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-    </Card>
+    <div className="min-w-0 border-b border-r border-border/70 p-4 text-center md:p-5">
+      <p className="text-xl md:text-2xl font-bold text-foreground tabular-nums">{value}{unit || ''}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{label}</p>
+    </div>
   );
 }
 
@@ -110,11 +110,11 @@ function MealMacrosBar({ macros }: { macros?: MacrosRefeicao }) {
 
 function MealCard({ refeicao, index }: { refeicao: Refeicao; index: number }) {
   return (
-    <Card key={index} className="border border-border/50">
+    <Card key={index} className="border border-border/80">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-3 text-sm sm:text-base">
-            <Apple className="w-4 h-4 sm:w-5 sm:h-5 text-foreground shrink-0" strokeWidth={1.5} />
+             <Apple className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" strokeWidth={1.5} />
             <span>{refeicao.nome}</span>
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -219,11 +219,12 @@ export default function Nutricao() {
 
   return (
     <ClientLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-8">
         {/* Header — flat */}
         <PageHeader
+          eyebrow="Consultoria nutricional"
           title="Plano Nutricional"
-          subtitle={hasContent ? "Seu cardápio estratégico para máxima performance" : "Seu protocolo será gerado em breve"}
+          subtitle={hasContent ? "Seu cardápio, metas e orientações organizados para a rotina." : "Seu protocolo será gerado em breve"}
           actions={
             <div className="flex items-center gap-1">
               <PageTutorial pageId="nutricao" />
@@ -259,7 +260,7 @@ export default function Nutricao() {
           <>
             {/* Macros Overview — cores neutras */}
             {isFull && (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[var(--shadow-soft)] md:grid-cols-5">
                 <MacroCard label="kcal/dia" value={macrosDiarios?.calorias || conteudo.calorias_diarias || macros?.calorias_diarias || "--"} />
                 <MacroCard label="Proteínas" value={macrosDiarios?.proteina_g || macros?.proteinas_g || "--"} unit="g" />
                 <MacroCard label="Carboidratos" value={macrosDiarios?.carboidrato_g || macros?.carboidratos_g || "--"} unit="g" />
@@ -270,9 +271,9 @@ export default function Nutricao() {
 
             {/* Hydration — neutro */}
             {isFull && hidratacao && (hidratacao.distribuicao || hidratacao.dicas) && (
-              <Card className="p-4 border-border/50">
+              <Card className="p-5 md:p-6 border-border/80">
                 <div className="flex items-center gap-2 mb-3">
-                  <Droplets className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+                  <Droplets className="w-5 h-5 text-primary" strokeWidth={1.5} />
                   <span className="font-semibold text-sm">Hidratação</span>
                   {hidratacao.calculo && <Badge variant="outline" className="text-xs">{hidratacao.calculo}</Badge>}
                 </div>

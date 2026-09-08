@@ -91,12 +91,12 @@ export default function Reels() {
 
   return (
     <ClientLayout>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
+      <div className="space-y-8">
+        <div className="flex items-end justify-between gap-3 border-b border-border/70 pb-8">
           <div>
             <p className="eyebrow-label">Biblioteca da consultoria</p>
             <h1 className="display-title mt-2">Vídeos</h1>
-            <p className="text-sm text-muted-foreground mt-2">Execuções, dicas e explicativos</p>
+            <p className="text-[15px] text-muted-foreground mt-2">Execuções, orientações e explicativos organizados por categoria.</p>
           </div>
           <Button
             variant="outline"
@@ -109,7 +109,7 @@ export default function Reels() {
         </div>
 
         {/* Sticky filters */}
-        <div className="sticky top-12 z-30 -mx-4 sm:mx-0 px-4 sm:px-0 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 space-y-2">
+        <div className="sticky top-14 z-30 -mx-5 border-y border-border/70 bg-background/95 px-5 py-4 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:px-4 space-y-3">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -117,11 +117,11 @@ export default function Reels() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por nome, descrição ou grupo…"
-                className="pl-8 h-9"
+                className="pl-9"
               />
             </div>
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-[140px] h-9">
+              <SelectTrigger className="w-[150px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -174,7 +174,7 @@ export default function Reels() {
             </Button>
           </Card>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
             {filtered.map((reel, idx) => (
               <ReelTile
                 key={reel.id}
@@ -294,7 +294,7 @@ function ReelTile({ reel, muted, onOpen }: { reel: Reel; muted: boolean; onOpen:
   }, [muted, inView]);
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden group/card">
       <div
         ref={containerRef}
         className="relative aspect-[9/16] bg-muted cursor-pointer group"
@@ -350,8 +350,8 @@ function ReelTile({ reel, muted, onOpen }: { reel: Reel; muted: boolean; onOpen:
           </button>
         )}
       </div>
-      <div className="p-2">
-        <p className="text-xs font-medium line-clamp-2 leading-tight">{reel.title}</p>
+      <div className="p-4">
+        <p className="text-sm font-semibold line-clamp-2 leading-snug">{reel.title}</p>
         {groups.length > 0 && (
           <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
             {groups.join(" • ")}

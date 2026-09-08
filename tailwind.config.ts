@@ -76,8 +76,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        display: ["Montserrat", "sans-serif"],
-        sans: ["Inter", "sans-serif"],
+        display: ["Manrope", "Inter", "sans-serif"],
+        sans: ["Manrope", "Inter", "sans-serif"],
         "display-v2": ["Bebas Neue", "sans-serif"],
         "body-v2": ["DM Sans", "sans-serif"],
         "mono-v2": ["Space Mono", "monospace"],

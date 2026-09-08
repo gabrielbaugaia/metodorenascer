@@ -132,10 +132,11 @@ export default function Cardio() {
 
   return (
     <ClientLayout>
-      <div className="space-y-6 max-w-3xl mx-auto pb-24">
+      <div className="space-y-8 max-w-5xl mx-auto pb-24">
         <PageHeader
+          eyebrow="Condicionamento"
           title="Aeróbico"
-          subtitle="Registre e acompanhe seus treinos de cardio"
+          subtitle="Registre suas sessões e acompanhe a evolução do condicionamento."
         />
 
         <CardioStatsHeader stats={stats} />
@@ -148,8 +149,11 @@ export default function Cardio() {
 
         <Vo2MaxEntryButton />
 
-        <div>
-          <h3 className="font-semibold text-foreground mb-3">Histórico</h3>
+        <div className="section-block">
+          <div>
+            <p className="eyebrow-label">Registros</p>
+            <h2 className="section-title mt-2">Histórico</h2>
+          </div>
           <CardioHistoryList
             sessions={sessions as any}
             onDelete={(id) => deleteMutation.mutate(id)}

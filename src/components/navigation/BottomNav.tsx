@@ -45,7 +45,7 @@ export function BottomNav() {
       {/* Overlay */}
       {moreOpen && (
         <div
-          className="md:hidden fixed inset-0 z-40 bg-black/40"
+          className="md:hidden fixed inset-0 z-40 bg-sidebar/45"
           onClick={() => setMoreOpen(false)}
         />
       )}
@@ -53,7 +53,7 @@ export function BottomNav() {
       {/* "Mais" drawer — slides up from above the nav bar */}
       <div
         className={cn(
-          "md:hidden fixed left-0 right-0 z-50 bg-background border-t border-border rounded-t-2xl shadow-xl transition-transform duration-200",
+          "md:hidden fixed left-0 right-0 z-50 bg-card border-t border-border rounded-t-2xl shadow-xl transition-transform duration-200",
           moreOpen ? "translate-y-0" : "translate-y-full pointer-events-none",
         )}
         style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
@@ -87,7 +87,7 @@ export function BottomNav() {
       </div>
 
       {/* Bottom bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border pb-[env(safe-area-inset-bottom)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar text-sidebar-foreground border-t border-sidebar-border pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-around h-16 px-2">
           {primaryNav.map((item) => {
             const isActive = location.pathname === item.href;
@@ -98,7 +98,7 @@ export function BottomNav() {
                 onClick={() => moreOpen && setMoreOpen(false)}
                 className={cn(
                   "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
-                  isActive ? "text-foreground" : "text-muted-foreground",
+                  isActive ? "text-primary" : "text-sidebar-foreground/55",
                 )}
               >
                 <item.icon className="h-5 w-5" strokeWidth={ICON_STROKE} />
@@ -112,7 +112,7 @@ export function BottomNav() {
             onClick={() => setMoreOpen((prev) => !prev)}
             className={cn(
               "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
-              moreOpen || isMoreActive ? "text-foreground" : "text-muted-foreground",
+              moreOpen || isMoreActive ? "text-primary" : "text-sidebar-foreground/55",
             )}
           >
             {moreOpen ? (

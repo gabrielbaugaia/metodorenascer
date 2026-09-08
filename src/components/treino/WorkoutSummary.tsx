@@ -25,8 +25,8 @@ export function WorkoutSummary({
       <Card className="w-full max-w-md p-6 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 mx-auto rounded-full bg-foreground/20 flex items-center justify-center">
-            <Trophy className="w-8 h-8 text-foreground" />
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Trophy className="w-8 h-8 text-primary" />
           </div>
           <h2 className="text-xl font-bold text-foreground uppercase">
             Treino Concluído!
@@ -36,8 +36,8 @@ export function WorkoutSummary({
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-xl bg-foreground/10 border border-foreground/20 text-center">
-            <Clock className="w-5 h-5 text-foreground mx-auto mb-1" />
+           <div className="p-3 rounded-xl bg-secondary/60 border border-border text-center">
+             <Clock className="w-5 h-5 text-primary mx-auto mb-1" />
             <p className="text-lg font-bold text-foreground tabular-nums">
               {formatDuration(summary.totalDurationSeconds)}
             </p>
@@ -50,15 +50,15 @@ export function WorkoutSummary({
             </p>
             <p className="text-xs text-muted-foreground">Séries</p>
           </div>
-          <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-center">
-            <Flame className="w-5 h-5 text-green-500 mx-auto mb-1" />
+           <div className="p-3 rounded-xl bg-success/10 border border-success/20 text-center">
+             <Flame className="w-5 h-5 text-success mx-auto mb-1" />
             <p className="text-lg font-bold text-foreground">
               {Math.round(summary.totalVolume).toLocaleString()} kg
             </p>
             <p className="text-xs text-muted-foreground">Volume Total</p>
           </div>
-          <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-center">
-            <CheckCircle className="w-5 h-5 text-purple-500 mx-auto mb-1" />
+           <div className="p-3 rounded-xl bg-secondary/60 border border-border text-center">
+             <CheckCircle className="w-5 h-5 text-primary mx-auto mb-1" />
             <p className="text-lg font-bold text-foreground">
               {summary.exercisesCompleted}
             </p>

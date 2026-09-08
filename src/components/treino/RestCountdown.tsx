@@ -10,7 +10,7 @@ interface RestCountdownProps {
 
 const MOTIVATIONAL = [
   "Respire fundo...",
-  "Recupere-se para a próxima série 💪",
+  "Recupere-se para a próxima série.",
   "Descanso é parte do treino!",
   "Foco no objetivo!",
   "Você está evoluindo!",
@@ -71,7 +71,7 @@ export function RestCountdown({
         "fixed top-0 left-0 right-0 z-50 px-4 py-2 flex items-center gap-3 animate-fade-in transition-colors duration-300",
         isUrgent
           ? "bg-destructive/95 backdrop-blur-sm"
-          : "bg-foreground/95 backdrop-blur-sm"
+           : "bg-sidebar/95 backdrop-blur-sm"
       )}
     >
       {/* Mini circular progress */}
@@ -89,7 +89,7 @@ export function RestCountdown({
       <div className="flex-1 min-w-0">
         {isUrgent ? (
           <p className="text-xs font-bold text-white animate-pulse">
-            ⚡ Volte para o foco agora!
+             Volte para o foco agora.
           </p>
         ) : (
           <p className="text-xs font-medium text-white/90 truncate">

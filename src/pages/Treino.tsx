@@ -254,11 +254,12 @@ export default function Treino() {
   return (
     <ClientLayout>
       <SuccessAnimation show={showSuccess} onComplete={() => setShowSuccess(false)} type="trophy" message="Treino Concluído!" subMessage="Você está cada vez mais perto do seu objetivo!" />
-      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
         {/* Header — flat, sem gradiente */}
         <PageHeader
           title="Treino"
-          subtitle={workouts.length > 0 ? "Clique em um exercício para ver o vídeo" : "Seu protocolo será gerado em breve"}
+          eyebrow="Prescrição de treino"
+          subtitle={workouts.length > 0 ? "Seu ciclo atual, exercícios, cargas e orientações em um só lugar." : "Seu protocolo será gerado em breve"}
           actions={
             <div className="flex items-center gap-1">
               <PageTutorial pageId="treino" />
@@ -306,7 +307,7 @@ export default function Treino() {
         ) : !isBlocked ? (
           <>
             {/* Stats — flat, sem gradientes coloridos */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <StatCardMini icon={Calendar} label="Esta semana" value={weeklyCount} />
               <StatCardMini icon={Flame} label="Dias seguidos" value={currentStreak} />
               <StatCardMini icon={Trophy} label="Treinos feitos" value={totalCount} />
@@ -319,10 +320,10 @@ export default function Treino() {
 
             {/* Week phase */}
             {protocol?.conteudo?.fase && (
-              <Card className="p-3 sm:p-4 border-border/50">
+              <Card className="p-5 md:p-6 border-border/80">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <Trophy className="w-4 h-4 text-foreground shrink-0" strokeWidth={1.5} />
+                    <Trophy className="w-5 h-5 text-primary shrink-0" strokeWidth={1.5} />
                     <div className="min-w-0">
                       <p className="font-semibold text-sm text-foreground truncate">{protocol.conteudo.fase}</p>
                       <p className="text-xs text-muted-foreground truncate">{protocol.conteudo.descricao || "Fase do seu protocolo"}</p>
@@ -335,7 +336,7 @@ export default function Treino() {
                       </p>
                       <div className="w-16 sm:w-24 h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
                         <div
-                          className="h-full bg-foreground rounded-full"
+                          className="h-full bg-primary rounded-full"
                           style={{ width: `${((protocol.conteudo.semana_atual || 1) / protocol.conteudo.total_semanas) * 100}%` }}
                         />
                       </div>
