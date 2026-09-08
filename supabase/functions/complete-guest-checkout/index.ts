@@ -99,7 +99,17 @@ serve(async (req) => {
       return createErrorResponse(req, "profile_not_found", 404);
     }
 
+    // The credentials must belong to the buyer of this Stripe session.
+    if (
+      stripeEmail &&
+      stripeEmail.trim().toLowerCase() !== String(profile.email).trim().toLowerCase()
+    ) {
+      logStep("Email mismatch between Stripe session and profile");
+      return createErrorResponse(req, "invalid_or_expired", 410);
+    }
+
     const tempPassword = claimed.temp_password;
+
 
     // Immediately wipe the plaintext password from the database so it can
     // never be retrieved again, even by an attacker with DB read access.
