@@ -39,11 +39,11 @@ export default function NutricaoTracking() {
 
   return (
     <ClientLayout>
-      <div className="max-w-3xl mx-auto space-y-8 pb-24 md:pb-6">
-        <PageHeader title="Diário Nutricional" subtitle="Registre suas refeições de hoje" />
+      <div className="max-w-4xl mx-auto space-y-8 pb-24 md:pb-6">
+        <PageHeader eyebrow="Acompanhamento diário" title="Diário Nutricional" subtitle="Registre suas refeições e acompanhe o que falta para completar o plano de hoje." />
 
         {/* Calorie Gauge */}
-        <div className="rounded-xl border border-border/50 bg-card p-6">
+        <div className="premium-card p-6 md:p-8">
           <CalorieGauge
             consumed={consumed.calories}
             target={targets.calories_target}
@@ -52,8 +52,9 @@ export default function NutricaoTracking() {
         </div>
 
         {/* Macro Donuts */}
-        <div className="rounded-xl border border-border/50 bg-card p-4">
-          <div className="flex justify-around">
+        <div className="premium-card p-5 md:p-6">
+          <p className="eyebrow-label mb-5">Macronutrientes</p>
+          <div className="grid gap-5 sm:grid-cols-3">
             <MacroDonutChart label="Proteína" consumed={consumed.protein} target={targets.protein_target_g} color="hsl(var(--primary))" />
             <MacroDonutChart label="Carboidratos" consumed={consumed.carbs} target={targets.carbs_target_g} color="hsl(45, 93%, 47%)" />
             <MacroDonutChart label="Gordura" consumed={consumed.fat} target={targets.fat_target_g} color="hsl(0, 84%, 60%)" />

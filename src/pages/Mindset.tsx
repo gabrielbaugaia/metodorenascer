@@ -256,8 +256,8 @@ export default function Mindset() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Sun className="h-5 w-5 text-primary" />
-                  ROTINA DA MANHÃ
+                   <Sun className="h-5 w-5 text-primary" />
+                   Rotina da manhã
                 </CardTitle>
                 <Badge variant="secondary" className="text-foreground">
                   {content.rotina_manha.duracao || content.rotina_manha.duracao_total}
@@ -268,12 +268,12 @@ export default function Mindset() {
               {content.rotina_manha.praticas?.map((pratica, index) => (
                 <div
                   key={`manha-${index}`}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                     className="flex items-center gap-3 p-4 rounded-xl bg-secondary/55 hover:bg-secondary transition-colors cursor-pointer"
                   onClick={() => toggleItem(`manha-${index}`)}
                 >
                   <Checkbox
                     checked={checkedItems[`manha-${index}`] || false}
-                    className="data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
+                     className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
                   <div className="flex-1">
                     <span className={checkedItems[`manha-${index}`] ? "line-through text-muted-foreground" : ""}>
@@ -293,8 +293,8 @@ export default function Mindset() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Moon className="h-5 w-5 text-indigo-400" />
-                    ROTINA DA NOITE
+                     <Moon className="h-5 w-5 text-primary" />
+                     Rotina da noite
                   </CardTitle>
                   <Badge variant="secondary" className="text-foreground">
                     {content.rotina_noite.duracao || content.rotina_noite.duracao_total}
@@ -305,12 +305,12 @@ export default function Mindset() {
                 {content.rotina_noite.praticas?.map((pratica, index) => (
                   <div
                     key={`noite-${index}`}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                     className="flex items-center gap-3 p-4 rounded-xl bg-secondary/55 hover:bg-secondary transition-colors cursor-pointer"
                     onClick={() => toggleItem(`noite-${index}`)}
                   >
                     <Checkbox
                       checked={checkedItems[`noite-${index}`] || false}
-                      className="data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
+                       className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
                     <div className="flex-1">
                       <span className={checkedItems[`noite-${index}`] ? "line-through text-muted-foreground" : ""}>
@@ -355,9 +355,9 @@ export default function Mindset() {
                     const acao = item.acao || item.acao_pratica || "";
                     return (
                       <AccordionItem key={index} value={`crenca-${index}`} className="border-none">
-                        <AccordionTrigger className="py-3 px-4 bg-muted/30 rounded-lg hover:bg-muted/50 hover:no-underline">
+                         <AccordionTrigger className="py-4 px-4 bg-secondary/55 rounded-xl hover:bg-secondary hover:no-underline">
                           <div className="flex items-center gap-3">
-                            <X className="h-4 w-4 text-red-500" />
+                             <X className="h-4 w-4 text-destructive" />
                             <span className="text-left">"{crenca}"</span>
                           </div>
                         </AccordionTrigger>
@@ -365,7 +365,7 @@ export default function Mindset() {
                           <div className="space-y-3 pl-7">
                             <div>
                               <p className="text-xs text-muted-foreground uppercase mb-1">Reformulação</p>
-                              <p className="text-sm text-green-500">{item.reformulacao}</p>
+                               <p className="text-sm text-success">{item.reformulacao}</p>
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground uppercase mb-1">Ação</p>

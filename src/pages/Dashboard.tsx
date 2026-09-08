@@ -27,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PageHeader } from "@/components/ui/page-header";
+import { MetricStrip, SectionHeader } from "@/components/ui/premium";
 
 
 function DashboardSkeleton() {
@@ -443,14 +444,14 @@ export default function Dashboard() {
         />
 
         {/* Bloco principal do dia */}
-        <section className="surface overflow-hidden">
+        <section className="surface-dark overflow-hidden shadow-[var(--shadow-elevated)]">
           <div className="grid md:grid-cols-[minmax(0,1fr)_280px]">
             <div className="p-7 md:p-10 flex flex-col justify-between gap-8">
               <div>
                 <p className="eyebrow-label">Foco do dia</p>
-                <h2 className="display-title mt-3 text-[1.75rem] md:text-[2rem]">{dailyAction.label}</h2>
+                 <h2 className="mt-3 text-[1.75rem] font-bold leading-tight text-sidebar-foreground md:text-[2.25rem]">{dailyAction.label}</h2>
                 {gabrielBauData.recommendation.length > 0 && (
-                  <p className="text-sm text-muted-foreground mt-4 max-w-md leading-relaxed">
+                   <p className="text-sm text-sidebar-foreground/60 mt-4 max-w-md leading-relaxed">
                     {gabrielBauData.recommendation[0]}
                   </p>
                 )}
@@ -460,13 +461,13 @@ export default function Dashboard() {
                   <dailyAction.icon className="h-4 w-4" strokeWidth={1.4} />
                   {dailyAction.cta}
                 </Button>
-                <Button variant="ghost" size="lg" onClick={() => navigate("/renascer")} className="gap-2">
+                 <Button variant="ghost" size="lg" onClick={() => navigate("/renascer")} className="gap-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground">
                   Registrar o dia
                   <ArrowRight className="h-4 w-4" strokeWidth={1.4} />
                 </Button>
               </div>
             </div>
-            <div className="border-t md:border-t-0 md:border-l border-border/60 bg-secondary/20 p-7 md:p-8 flex flex-col items-center justify-center gap-4">
+             <div className="border-t md:border-t-0 md:border-l border-sidebar-border bg-sidebar-accent/60 p-7 md:p-8 flex flex-col items-center justify-center gap-4">
               <ScoreRing
                 score={gabrielBauData.score}
                 classification={gabrielBauData.classification}
@@ -479,17 +480,15 @@ export default function Dashboard() {
 
         {/* Progresso da semana */}
         <section className="section-block">
-          <div className="flex items-end justify-between">
-            <h2 className="section-title">Progresso da semana</h2>
-            <button
+           <SectionHeader title="Progresso da semana" action={<Button
+               variant="ghost"
+               size="sm"
               onClick={() => navigate("/evolucao")}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+               className="text-muted-foreground"
             >
               Ver evolução
-            </button>
-          </div>
-          <div className="surface divide-y md:divide-y-0 md:divide-x divide-border/60 grid md:grid-cols-3">
-            {[
+             </Button>} />
+           <MetricStrip items={[
               {
                 label: "Consistência",
                 value: consistencyData?.hasEnoughData ? `${consistencyData.consistencyPercent}%` : "—",
@@ -505,19 +504,12 @@ export default function Dashboard() {
                 value: weightDelta != null ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg` : "—",
                 hint: "variação recente",
               },
-            ].map((m) => (
-              <div key={m.label} className="p-6 md:p-7 space-y-2">
-                <p className="metric-label">{m.label}</p>
-                <p className="metric-value">{m.value}</p>
-                <p className="text-xs text-muted-foreground">{m.hint}</p>
-              </div>
-            ))}
-          </div>
+             ]} />
         </section>
 
         {/* Pilares do acompanhamento */}
         <section className="section-block">
-          <h2 className="section-title">Pilares do acompanhamento</h2>
+          <SectionHeader title="Seus pilares" description="Os quatro eixos do seu acompanhamento, organizados para consulta rápida." />
           <div className="surface divide-y divide-border/60">
             {pillars.map((item) => {
               const isLocked = anamneseIncomplete;
@@ -534,7 +526,7 @@ export default function Dashboard() {
                     <item.icon className="h-[18px] w-[18px] text-primary shrink-0" strokeWidth={1.4} />
                   )}
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[15px] text-foreground">{item.label}</span>
+                     <span className="block text-base font-semibold text-foreground">{item.label}</span>
                     <span className="block text-xs text-muted-foreground mt-0.5">{item.desc}</span>
                   </span>
                   <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" strokeWidth={1.4} />

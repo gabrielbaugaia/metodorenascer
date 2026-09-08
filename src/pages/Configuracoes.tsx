@@ -14,12 +14,6 @@ import { APP_VERSION, getSWVersion, forceAppUpdate } from "@/lib/appVersion";
 import { toast } from "@/hooks/use-toast";
 import { HealthService } from "@/services/healthService";
 
-const languages = [
-  { value: "pt-BR", label: "Português (Brasil)", flag: "🇧🇷" },
-  { value: "en", label: "English", flag: "🇺🇸" },
-  { value: "es", label: "Español", flag: "🇪🇸" },
-];
-
 export default function Configuracoes() {
   const [language, setLanguage] = useState("pt-BR");
   const { theme, setTheme } = useTheme();
@@ -83,7 +77,7 @@ export default function Configuracoes() {
   return (
     <ClientLayout>
       <div className="max-w-3xl mx-auto space-y-8">
-        <div>
+         <div className="border-b border-border/70 pb-8">
           <p className="eyebrow-label">Preferências</p>
           <h1 className="display-title mt-2">Configurações</h1>
           <p className="text-sm text-muted-foreground mt-2">
@@ -103,9 +97,9 @@ export default function Configuracoes() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+             <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/60">
               {healthConnected ? (
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                 <CheckCircle2 className="h-5 w-5 text-success" />
               ) : (
                 <WifiOff className="h-5 w-5 text-muted-foreground" />
               )}
@@ -115,7 +109,7 @@ export default function Configuracoes() {
                   {healthConnected ? "Dispositivo sincronizado" : "Nenhum dispositivo conectado"}
                 </p>
               </div>
-              <Badge variant={healthConnected ? "default" : "outline"} className={`text-xs ${healthConnected ? "bg-green-500 hover:bg-green-600" : "text-muted-foreground"}`}>
+               <Badge variant={healthConnected ? "default" : "outline"} className={healthConnected ? "text-success border-success/30 bg-success/10" : "text-muted-foreground"}>
                 {healthConnected ? "Conectado" : "Não conectado"}
               </Badge>
             </div>
@@ -208,10 +202,10 @@ export default function Configuracoes() {
             >
               <Label
                 htmlFor="theme-light"
-                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border cursor-pointer transition-all ${
                   theme === "light"
-                    ? "border-foreground bg-foreground/10"
-                    : "border-border hover:border-foreground/50"
+                     ? "border-primary bg-primary/10 text-primary"
+                     : "border-border hover:border-primary/50"
                 }`}
               >
                 <RadioGroupItem value="light" id="theme-light" className="sr-only" />
@@ -221,10 +215,10 @@ export default function Configuracoes() {
 
               <Label
                 htmlFor="theme-dark"
-                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border cursor-pointer transition-all ${
                   theme === "dark"
-                    ? "border-foreground bg-foreground/10"
-                    : "border-border hover:border-foreground/50"
+                     ? "border-primary bg-primary/10 text-primary"
+                     : "border-border hover:border-primary/50"
                 }`}
               >
                 <RadioGroupItem value="dark" id="theme-dark" className="sr-only" />
@@ -234,10 +228,10 @@ export default function Configuracoes() {
 
               <Label
                 htmlFor="theme-system"
-                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                 className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border cursor-pointer transition-all ${
                   theme === "system"
-                    ? "border-foreground bg-foreground/10"
-                    : "border-border hover:border-foreground/50"
+                     ? "border-primary bg-primary/10 text-primary"
+                     : "border-border hover:border-primary/50"
                 }`}
               >
                 <RadioGroupItem value="system" id="theme-system" className="sr-only" />
@@ -246,7 +240,7 @@ export default function Configuracoes() {
               </Label>
             </RadioGroup>
             <p className="text-xs text-muted-foreground mt-3">
-              O modo Claro está disponível em telas internas (Configurações, Perfil, Admin). Algumas áreas com identidade visual fixa (Início, Treino, Landing) permanecem escuras por padrão de marca.
+               O tema escolhido é aplicado às telas internas do aplicativo.
             </p>
           </CardContent>
         </Card>
@@ -263,8 +257,8 @@ export default function Configuracoes() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-foreground bg-foreground/10">
-              <span className="text-xl">🇧🇷</span>
+             <div className="flex items-center gap-3 p-4 rounded-xl border border-primary/30 bg-primary/10">
+               <Globe className="h-5 w-5 text-primary" />
               <span className="font-medium">Português (Brasil)</span>
             </div>
             <p className="text-xs text-muted-foreground mt-3">

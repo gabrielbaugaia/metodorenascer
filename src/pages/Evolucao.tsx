@@ -531,8 +531,8 @@ export default function Evolucao() {
 
   return (
     <ClientLayout>
-      <div className="max-w-3xl mx-auto space-y-8 px-3 sm:px-0 pb-20 sm:pb-0 overflow-x-hidden">
-        <PageHeader title="Evolução" subtitle="Acompanhe seu progresso e envie suas fotos" actions={<PageTutorial pageId="evolucao" />} />
+      <div className="max-w-5xl mx-auto space-y-8 pb-20 sm:pb-0 overflow-x-hidden">
+        <PageHeader eyebrow="Histórico de transformação" title="Evolução" subtitle="Compare ciclos, acompanhe medidas e registre novas fotos com o mesmo padrão." actions={<PageTutorial pageId="evolucao" />} />
         <PageTutorialBanner pageId="evolucao" />
 
         {/* AI Analysis Modal/Card */}
@@ -581,7 +581,7 @@ export default function Evolucao() {
         )}
 
         {/* Fotos Iniciais da Anamnese — Compacto */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader className="pb-2 px-3 sm:px-6 py-3">
             <CardTitle className="flex items-center gap-2 text-sm">
               <ImageIcon className="h-4 w-4 text-foreground" />
@@ -589,11 +589,11 @@ export default function Evolucao() {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-3 sm:px-6 pb-3">
-            <div className="grid grid-cols-3 gap-2">
+             <div className="grid grid-cols-3 gap-3 md:gap-5">
               {photoTypes.map(({ key, label }) => {
                 const fotoSrc = anamnesePhotoSrc[key];
                 return (
-                  <div key={key} className="relative aspect-[3/4] rounded-md bg-muted overflow-hidden" style={{ maxHeight: 160 }}>
+                   <div key={key} className="relative aspect-[3/4] rounded-xl bg-muted overflow-hidden">
                     {fotoSrc ? (
                       <img
                         src={fotoSrc}
@@ -607,7 +607,7 @@ export default function Evolucao() {
                         <span className="text-[9px]">{label}</span>
                       </div>
                     )}
-                    <div className="absolute bottom-0 left-0 right-0 bg-background/80 py-0.5 text-center">
+                     <div className="absolute bottom-0 left-0 right-0 bg-card/90 py-1.5 text-center">
                       <span className="text-[9px] font-medium">{label}</span>
                     </div>
                   </div>

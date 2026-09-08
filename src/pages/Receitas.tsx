@@ -250,14 +250,14 @@ export default function Receitas() {
         {!isBlocked && (
         <>
         {/* Header */}
-        <div className="pb-6 mb-2 border-b border-border/60">
+        <div className="pb-8 mb-2 border-b border-border/70">
           <div>
             <p className="eyebrow-label">Nutrição aplicada</p>
             <h1 className="display-title mt-2">Receitas</h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-[15px] mt-2 max-w-2xl leading-relaxed">
               {isTrialing 
                 ? `${trialUsage.used_recipe_count}/1 receita usada no período de teste`
-                : "Escolha ingredientes e nossa IA criará uma receita fitness personalizada"
+                : "Transforme os ingredientes disponíveis em uma preparação alinhada ao seu plano."
               }
             </p>
           </div>
@@ -283,10 +283,10 @@ export default function Receitas() {
           {/* Tab: Gerar Receita */}
           <TabsContent value="generate" className="space-y-6">
             {/* Ingredient input */}
-            <Card variant="dashboard">
+            <Card variant="dashboard" className="overflow-hidden">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg uppercase">
-                  <Sparkles className="w-5 h-5 text-foreground" />
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Sparkles className="w-5 h-5 text-primary" />
                   Selecione seus ingredientes
                 </CardTitle>
               </CardHeader>
@@ -316,7 +316,7 @@ export default function Receitas() {
                       <Badge
                         key={ing}
                         variant={ingredients.includes(ing.toLowerCase()) ? "default" : "outline"}
-                        className="cursor-pointer hover:bg-foreground/20 transition-colors"
+                        className="cursor-pointer hover:bg-primary/15 transition-colors"
                         onClick={() => {
                           if (ingredients.includes(ing.toLowerCase())) {
                             removeIngredient(ing.toLowerCase());
@@ -388,7 +388,7 @@ export default function Receitas() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
-                      <ChefHat className="w-5 h-5 text-foreground" />
+                       <ChefHat className="w-5 h-5 text-primary" />
                       {recipeTitle}
                     </CardTitle>
                     <div className="flex gap-2">
@@ -406,7 +406,7 @@ export default function Receitas() {
                         size="sm"
                         onClick={() => saveRecipe(true)}
                         disabled={saving}
-                        className="text-red-500 hover:text-red-600"
+                         className="text-destructive hover:text-destructive"
                       >
                         <Heart className="h-4 w-4 mr-1" />
                         Favoritar
@@ -415,7 +415,7 @@ export default function Receitas() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="prose prose-invert max-w-none">
+                   <div className="prose max-w-none prose-headings:text-foreground prose-strong:text-foreground">
                     <div 
                       className="text-muted-foreground leading-relaxed space-y-2"
                       dangerouslySetInnerHTML={{
@@ -523,8 +523,8 @@ function RecipeCard({
             <CardTitle className="flex items-center gap-2 text-lg">
               <ChefHat className="w-5 h-5 text-foreground" />
               {recipe.title}
-              {recipe.is_favorite && (
-                <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+               {recipe.is_favorite && (
+                <Heart className="h-4 w-4 fill-primary text-primary" />
               )}
             </CardTitle>
             <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
@@ -540,7 +540,7 @@ function RecipeCard({
               variant="ghost"
               size="icon"
               onClick={() => onToggleFavorite(recipe.id, recipe.is_favorite)}
-              className={recipe.is_favorite ? "text-red-500" : "text-muted-foreground"}
+               className={recipe.is_favorite ? "text-primary" : "text-muted-foreground"}
             >
               <Heart className={`h-4 w-4 ${recipe.is_favorite ? "fill-current" : ""}`} />
             </Button>
@@ -567,7 +567,7 @@ function RecipeCard({
               ))}
             </div>
           </div>
-          <div className="prose prose-invert max-w-none">
+           <div className="prose max-w-none prose-headings:text-foreground prose-strong:text-foreground">
             <div className="whitespace-pre-wrap text-muted-foreground leading-relaxed text-sm">
               {recipe.recipe_content}
             </div>
