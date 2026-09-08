@@ -270,15 +270,85 @@ export default function Nutricao() {
     }
   };
 
+  const handleRegisterMeal = async (refeicao: Refeicao) => {
+    const key = `${refeicao.nome}-${refeicao.horario ?? ""}`;
+    const alimentos = refeicao.alimentos ?? [];
+    if (alimentos.length === 0) {
+      toast.error("Esta refeição não tem alimentos listados.");
+      return;
+    }
+
+    trackMealRegistrationStarted("plano");
+    setRegisteringMeal(key);
+
+    const mealType = inferMealType(refeicao);
+    const m = refeicao.macros_refeicao;
+    const totalCalories =
+      m?.calorias || refeicao.calorias_aproximadas || refeicao.calorias_total || 0;
+    const perItem = alimentos.length > 0 ? Math.round(totalCalories / alimentos.length) : 0;
+
+    const foods = alimentos.map((alimento, i) => {
+      const isString = typeof alimento === "string";
+      const nome = isString ? alimento : alimento.item;
+      const cal = !isString && alimento.calorias ? alimento.calorias : perItem;
+      const first = i === 0;
+      return {
+        food_name: nome,
+        calories: cal,
+        protein_g: first ? Number(m?.proteinas_g ?? 0) : 0,
+        carbs_g: first ? Number(m?.carboidratos_g ?? 0) : 0,
+        fat_g: first ? Number(m?.gorduras_g ?? 0) : 0,
+        portion_size: refeicao.nome,
+        meal_type: mealType,
+      };
+    });
+
+    try {
+      await addMultipleFoods(foods);
+      const now = new Date();
+      const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      setRegisteredMeals((prev) => ({ ...prev, [key]: hhmm }));
+      trackMealRegistered("plano", foods.length);
+    } catch {
+      toast.error("Não foi possível registrar. Tente novamente.");
+    } finally {
+      setRegisteringMeal(null);
+    }
+  };
+
+  const mealCardProps = (refeicao: Refeicao) => {
+    const key = `${refeicao.nome}-${refeicao.horario ?? ""}`;
+    return {
+      onRegister: isFull ? handleRegisterMeal : undefined,
+      registeredAt: registeredMeals[key] ?? null,
+      registering: registeringMeal === key,
+    };
+  };
+
   if (loading) {
     return (
       <ClientLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-foreground" />
+        <PageLoadingState message="Carregando seu plano nutricional..." />
+      </ClientLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <ClientLayout>
+        <div className="py-10">
+          <PageErrorState
+            title="Não foi possível carregar seu plano"
+            description="Verifique sua conexão e tente novamente. Se persistir, fale com o mentor."
+            onRetry={() => refetch()}
+            secondaryLabel="Falar com Mentor"
+            secondaryAction={() => navigate("/suporte")}
+          />
         </div>
       </ClientLayout>
     );
   }
+
 
   return (
     <ClientLayout>
