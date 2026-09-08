@@ -191,7 +191,8 @@ self.addEventListener('notificationclick', function(event) {
   console.log('[SW] Notificação clicada:', event);
   event.notification.close();
   
-  const urlToOpen = event.notification.data?.url || '/area-cliente';
+  const baseUrl = event.notification.data?.url || '/area-cliente';
+  const urlToOpen = baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'notif=1';
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
