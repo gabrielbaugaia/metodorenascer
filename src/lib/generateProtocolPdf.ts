@@ -409,8 +409,8 @@ function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
 // Nutrition strings are normalized before both measurement and drawing.
 export function sanitizeNutritionText(value: unknown): string {
   return String(value ?? "")
-    .replace(/(?:â(?:†|€|€™|€˜|€")+[’'\u0092]?|!+[’'\u0092]+|[→↳]|=>|->|[—–])/gi, " - ")
-    .replace(/•/g, " ")
+    .replace(/(?:\u00E2(?:\u2020|\u20AC|\u2122|\u02DC|\u201C)+[\u2019'\u0092]?|!+[\u2019'\u0092]+|[\u2192\u21B3]|=>|->|[\u2014\u2013])/gi, " - ")
+    .replace(/\u2022/g, " ")
     .replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060\uFEFF�]/g, "")
     .replace(/\s*-\s*-+\s*/g, " - ")
     .replace(/[ \t]{2,}/g, " ")
