@@ -441,7 +441,7 @@ function renderMealBlock(refeicao: any, helpers: any) {
       m.carboidrato || m.carboidratos ? `C: ${m.carboidrato || m.carboidratos}g` : null,
       m.gordura || m.gorduras ? `G: ${m.gordura || m.gorduras}g` : null,
     ].filter(Boolean).join(" | ");
-    if (macroLine) addText(`  ↳ ${macroLine}`, 8);
+    if (macroLine) addText(`  ${macroLine}`, 8);
   }
 
   // Substituições inline
@@ -449,7 +449,7 @@ function renderMealBlock(refeicao: any, helpers: any) {
   if (subs.length > 0) {
     addText("  Substituições:", 5);
     subs.forEach((sub: any) => {
-      const subText = typeof sub === "string" ? sub : `${sub.original || ""} → ${sub.substituto || sub.opcao || ""}`;
+      const subText = typeof sub === "string" ? sub : `${sub.original || ""} - ${sub.substituto || sub.opcao || ""}`;
       addText(`    • ${subText}`, 10);
     });
   }
@@ -555,7 +555,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
             m.gordura || m.gorduras ? `G: ${m.gordura || m.gorduras}g` : null,
             m.calorias ? `${m.calorias} kcal` : null,
           ].filter(Boolean).join(" | ");
-          if (line) addText(`  ↳ ${line}`, 8);
+          if (line) addText(`  ${line}`, 8);
         }
       });
     }
@@ -617,7 +617,7 @@ function generateNutricaoPdf(doc: jsPDF, conteudo: any, helpers: any) {
           if (typeof item === "string") {
             addText(`• ${item}`, 5);
           } else {
-            const text = `${item.original || item.de || ""} → ${item.substituto || item.para || item.opcao || ""}`;
+            const text = `${item.original || item.de || ""} - ${item.substituto || item.para || item.opcao || ""}`;
             addText(`• ${text}`, 5);
           }
         });
