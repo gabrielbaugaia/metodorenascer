@@ -238,7 +238,7 @@ export default function MeuPerfil() {
     <ClientLayout>
       <div className="max-w-3xl mx-auto space-y-8">
         <div className="flex items-start gap-4 border-b border-border/70 pb-8">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/area-cliente")}>
+          <Button variant="ghost" size="icon" aria-label="Voltar" onClick={() => navigate("/area-cliente")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>

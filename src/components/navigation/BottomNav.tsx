@@ -18,6 +18,7 @@ import {
   Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 const ICON_STROKE = 1.5;
 
@@ -29,21 +30,27 @@ const primaryNav = [
   { icon: Camera, label: "Evolução", href: "/evolucao" },
 ];
 
-const moreItems = [
-  { icon: NotebookPen, label: "Diário", href: "/nutricao-diario" },
-  { icon: HeartPulse, label: "Aeróbico", href: "/cardio" },
+const contentItems = [
   { icon: ChefHat, label: "Receitas", href: "/receitas" },
   { icon: Play, label: "Vídeos", href: "/videos" },
   { icon: Brain, label: "Mindset", href: "/mindset" },
+];
+
+const secondaryItems = [
+  { icon: HeartPulse, label: "Aeróbico", href: "/cardio" },
+  { icon: NotebookPen, label: "Diário", href: "/nutricao-diario" },
   { icon: Activity, label: "Painel", href: "/renascer" },
   { icon: MessageCircle, label: "Suporte", href: "/suporte" },
-  { icon: User, label: "Perfil", href: "/meu-perfil" },
-  { icon: Settings, label: "Ajustes", href: "/configuracoes" },
+  { icon: User, label: "Meu Perfil", href: "/meu-perfil" },
+  { icon: Settings, label: "Configurações", href: "/configuracoes" },
 ];
+
+const moreItems = [...contentItems, ...secondaryItems];
 
 export function BottomNav() {
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { trackMoreMenuOpened, trackContentHubOpened } = useAnalytics();
 
   const isMoreActive = moreItems.some((i) => location.pathname === i.href);
 
@@ -67,31 +74,41 @@ export function BottomNav() {
         style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
         aria-hidden={!moreOpen}
       >
-        <div className="px-4 pt-3 pb-4">
-          <p className="text-[10px] font-medium tracking-widest text-muted-foreground mb-3 uppercase">
-            Mais módulos
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            {moreItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setMoreOpen(false)}
-                  className={cn(
-                    "flex min-h-[60px] flex-col items-center justify-center gap-1.5 rounded-xl py-3 transition-colors duration-200",
-                    isActive
-                      ? "bg-foreground/10 text-foreground"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
-                  )}
-                >
-                  <item.icon className="h-5 w-5" strokeWidth={ICON_STROKE} aria-hidden="true" />
-                  <span className="text-[10px] font-medium">{item.label}</span>
-                </NavLink>
-              );
-            })}
-          </div>
+        <div className="px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          {[
+            { label: "Conteúdos", items: contentItems },
+            { label: "Mais", items: secondaryItems },
+          ].map((group) => (
+            <div key={group.label} className="mb-3 last:mb-0">
+              <p className="text-[10px] font-medium tracking-widest text-muted-foreground mb-2 uppercase">
+                {group.label}
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {group.items.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <NavLink
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => {
+                        if (group.label === "Conteúdos") trackContentHubOpened("mobile");
+                        setMoreOpen(false);
+                      }}
+                      className={cn(
+                        "flex min-h-[60px] flex-col items-center justify-center gap-1.5 rounded-xl px-1 py-3 text-center transition-colors duration-200",
+                        isActive
+                          ? "bg-foreground/10 text-foreground"
+                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" strokeWidth={ICON_STROKE} aria-hidden="true" />
+                      <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -122,7 +139,12 @@ export function BottomNav() {
 
           {/* Mais button */}
           <button
-            onClick={() => setMoreOpen((prev) => !prev)}
+            onClick={() => {
+              setMoreOpen((prev) => {
+                if (!prev) trackMoreMenuOpened("mobile");
+                return !prev;
+              });
+            }}
             aria-expanded={moreOpen}
             aria-label={moreOpen ? "Fechar mais módulos" : "Abrir mais módulos"}
             className={cn(

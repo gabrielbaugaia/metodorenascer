@@ -4,7 +4,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useActivityTracker } from "@/hooks/useActivityTracker";
-import { useAchievements } from "@/hooks/useAchievements";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Target, Utensils, TrendingUp, Heart, CreditCard, Lock, Camera, AlertTriangle, Dumbbell, ClipboardCheck, Flame, ArrowRight, ChefHat } from "lucide-react";
@@ -21,15 +20,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScoreRing } from "@/components/renascer/ScoreRing";
 import { useGabrielBauScore } from "@/hooks/useGabrielBauScore";
-import { computeBodyIndicators, type DayLog } from "@/lib/bodyIndicators";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, subDays } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PageHeader } from "@/components/ui/page-header";
-import { MetricStrip, SectionHeader } from "@/components/ui/premium";
+import { SectionHeader } from "@/components/ui/premium";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ManualInput } from "@/components/renascer/ManualInput";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { WeeklyConsistencyBlock } from "@/components/progress/WeeklyConsistencyBlock";
 
 
 function DashboardSkeleton() {
@@ -125,7 +124,6 @@ export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const { subscribed, loading: subLoading, createCheckout, openCustomerPortal, subscriptionEnd } = useSubscription();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
-  const { streak } = useAchievements();
   const gabrielBauData = useGabrielBauScore();
   useActivityTracker();
   const navigate = useNavigate();
@@ -142,51 +140,6 @@ export default function Dashboard() {
   const [anamneseIncomplete, setAnamneseIncomplete] = useState(false);
   const [firstName, setFirstName] = useState("");
 
-
-  // Fetch consistency data
-  const { data: consistencyData } = useQuery({
-    queryKey: ["dashboard-consistency", user?.id],
-    enabled: !!user?.id && subscribed,
-    queryFn: async () => {
-      const today = format(new Date(), "yyyy-MM-dd");
-      const sevenDaysAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
-
-      const { data: manualLogs } = await supabase
-        .from("manual_day_logs")
-        .select("date, sleep_hours, stress_level, energy_focus, trained_today, rpe")
-        .eq("user_id", user!.id)
-        .gte("date", sevenDaysAgo)
-        .lte("date", today);
-
-      const logs: DayLog[] = (manualLogs || []).map((l) => ({
-        date: l.date,
-        sleep_hours: l.sleep_hours,
-        stress_level: l.stress_level,
-        energy_focus: l.energy_focus,
-        trained_today: l.trained_today,
-      }));
-
-      return computeBodyIndicators(logs);
-    },
-  });
-
-  // Fetch weight evolution
-  const { data: weightDelta } = useQuery({
-    queryKey: ["dashboard-weight-delta", user?.id],
-    enabled: !!user?.id && subscribed,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("weekly_checkins")
-        .select("current_weight, created_at")
-        .eq("user_id", user!.id)
-        .not("current_weight", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(2);
-
-      if (!data || data.length < 2) return null;
-      return Number((data[0].current_weight! - data[1].current_weight!).toFixed(1));
-    },
-  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -519,33 +472,22 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Progresso da semana */}
+        {/* Consistência da semana — mesma fonte usada em Evolução */}
         <section className="section-block">
-           <SectionHeader title="Progresso da semana" action={<Button
-               variant="ghost"
-               size="sm"
-              onClick={() => navigate("/evolucao")}
-               className="text-muted-foreground"
-            >
-              Ver evolução
-             </Button>} />
-           <MetricStrip items={[
-              {
-                label: "Consistência",
-                value: consistencyData?.hasEnoughData ? `${consistencyData.consistencyPercent}%` : "—",
-                hint: "últimos 7 dias",
-              },
-              {
-                label: "Sequência",
-                value: streak.current_streak > 0 ? `${streak.current_streak}` : "—",
-                hint: streak.current_streak > 0 ? "dias consecutivos" : "sem registro",
-              },
-              {
-                label: "Peso",
-                value: weightDelta != null ? `${weightDelta > 0 ? "+" : ""}${weightDelta} kg` : "—",
-                hint: "variação recente",
-              },
-             ]} />
+          <SectionHeader
+            title="Progresso da semana"
+            action={
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/evolucao")}
+                className="min-h-11 text-muted-foreground"
+              >
+                Ver evolução
+              </Button>
+            }
+          />
+          <WeeklyConsistencyBlock context="hoje" />
         </section>
 
         {/* Pilares do acompanhamento */}
@@ -614,7 +556,7 @@ export default function Dashboard() {
               onSaveSuccess={() => {
                 trackCheckinCompleted("diario");
                 queryClient.invalidateQueries({ queryKey: ["renascer-score"] });
-                queryClient.invalidateQueries({ queryKey: ["dashboard-consistency"] });
+                queryClient.invalidateQueries({ queryKey: ["weekly-consistency"] });
                 setShowDailyLog(false);
               }}
             />

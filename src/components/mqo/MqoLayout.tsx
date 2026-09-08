@@ -6,7 +6,7 @@ interface MqoLayoutProps {
 
 export function MqoLayout({ children }: MqoLayoutProps) {
   return (
-    <div className="min-h-screen bg-white text-black">
+    <div className="min-h-dvh bg-white text-black">
       {/* Header */}
       <header className="border-b-2 border-[#FFC400] bg-black px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center gap-3">

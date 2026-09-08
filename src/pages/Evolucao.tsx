@@ -34,6 +34,10 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTutorial, PageTutorialBanner } from "@/components/onboarding/PageTutorial";
+import { WeeklyConsistencyBlock } from "@/components/progress/WeeklyConsistencyBlock";
+import { EvolutionOverview, type EvolutionPeriod } from "@/components/evolution/EvolutionOverview";
+import { PhotoComparison } from "@/components/evolution/PhotoComparison";
+import { CoachReading } from "@/components/evolution/CoachReading";
 
 interface CheckIn {
   id: string;
@@ -80,6 +84,7 @@ export default function Evolucao() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [period, setPeriod] = useState<EvolutionPeriod>("90d");
 
   useEffect(() => {
     trackEvolutionViewed();
@@ -522,6 +527,15 @@ export default function Evolucao() {
   const daysSinceLastCheckin = lastCheckinDate ? differenceInDays(new Date(), lastCheckinDate) : null;
   const canSubmitNew = daysSinceLastCheckin === null || daysSinceLastCheckin >= 25;
 
+  const weightSeries = [...checkins]
+    .filter((c) => c.peso_atual != null && (c.data_checkin || c.created_at))
+    .map((c) => ({ date: (c as { data_checkin?: string }).data_checkin || c.created_at, weight: Number(c.peso_atual) }))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  const latestCheckin = checkins[0] ?? null;
+  const latestPhotos = latestCheckin ? checkinPhotoSrc[latestCheckin.id] ?? {} : {};
+  const currentWeight = latestCheckin?.peso_atual ?? profile?.weight ?? null;
+
   const photoTypes = [
     { key: "frente" as const, label: "Frente" },
     { key: "lado" as const, label: "Lado" },
@@ -551,7 +565,7 @@ export default function Evolucao() {
                   <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-foreground shrink-0" />
                   Análise Comparativa
                 </CardTitle>
-                <Button variant="ghost" size="icon" onClick={() => setShowAnalysis(false)}>
+                <Button variant="ghost" size="icon" aria-label="Fechar análise" onClick={() => setShowAnalysis(false)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -587,47 +601,35 @@ export default function Evolucao() {
           </Card>
         )}
 
-        {/* Fotos Iniciais da Anamnese — Compacto */}
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-2 px-3 sm:px-6 py-3">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <ImageIcon className="h-4 w-4 text-foreground" />
-              Fotos Iniciais
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-3 sm:px-6 pb-3">
-             <div className="grid grid-cols-3 gap-3 md:gap-5">
-              {photoTypes.map(({ key, label }) => {
-                const fotoSrc = anamnesePhotoSrc[key];
-                return (
-                   <div key={key} className="relative aspect-[3/4] rounded-xl bg-muted overflow-hidden">
-                    {fotoSrc ? (
-                      <img
-                        src={fotoSrc}
-                        alt={`Foto de anamnese - ${label}`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                        <Camera className="h-4 w-4 mb-1" />
-                        <span className="text-[9px]">{label}</span>
-                      </div>
-                    )}
-                     <div className="absolute bottom-0 left-0 right-0 bg-card/90 py-1.5 text-center">
-                      <span className="text-[9px] font-medium">{label}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {profile?.created_at && (
-              <p className="text-[10px] text-muted-foreground mt-2 text-center">
-                Registrado em {format(new Date(profile.created_at), "dd/MM/yyyy", { locale: ptBR })}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <WeeklyConsistencyBlock context="evolucao" />
+
+        <EvolutionOverview
+          weightSeries={weightSeries}
+          currentWeight={currentWeight}
+          period={period}
+          onPeriodChange={setPeriod}
+        />
+
+        <PhotoComparison
+          initial={{
+            frente: anamnesePhotoSrc.frente,
+            lado: anamnesePhotoSrc.lado,
+            costas: anamnesePhotoSrc.costas,
+          }}
+          current={{
+            frente: latestPhotos.frente ?? latestPhotos.single ?? null,
+            lado: latestPhotos.lado ?? null,
+            costas: latestPhotos.costas ?? null,
+          }}
+          initialDate={profile?.created_at ?? null}
+          currentDate={latestCheckin?.created_at ?? null}
+        />
+
+        <CoachReading
+          analysis={latestCheckin?.ai_analysis ?? null}
+          analysisDate={latestCheckin?.created_at ?? null}
+          studentNotes={latestCheckin?.notas ?? null}
+        />
 
         {/* Novo Check-in */}
         <Card className={!canSubmitNew ? "opacity-70" : ""}>
@@ -678,6 +680,15 @@ export default function Evolucao() {
                     <div key={key} className="space-y-1 sm:space-y-2">
                       <div
                         className={`relative aspect-[3/4] rounded-md sm:rounded-lg border-2 border-dashed border-border/50 overflow-hidden cursor-pointer hover:border-foreground/50 transition-colors ${!canSubmitNew || isValidating ? "pointer-events-none" : ""} ${!canSubmitNew ? "opacity-50" : ""}`}
+                        role="button"
+                        tabIndex={canSubmitNew && !isValidating ? 0 : -1}
+                        aria-label={`Adicionar foto de ${label.toLowerCase()}`}
+                        onKeyDown={(e) => {
+                          if ((e.key === "Enter" || e.key === " ") && canSubmitNew && !isValidating) {
+                            e.preventDefault();
+                            fileInputRefs[key].current?.click();
+                          }
+                        }}
                         onClick={() => canSubmitNew && !isValidating && fileInputRefs[key].current?.click()}
                       >
                         {photoPreviews[key] ? (
@@ -699,6 +710,7 @@ export default function Evolucao() {
                             {!isValidating && (
                               <button
                                 type="button"
+                                aria-label={`Remover foto de ${label.toLowerCase()}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   removePhoto(key);

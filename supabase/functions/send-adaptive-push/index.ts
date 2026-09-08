@@ -8,20 +8,20 @@ import { requireAdminOrService } from "../_shared/auth.ts";
 
 const PROFILE_MESSAGES: Record<string, { title: string; body: string }> = {
   consistent: {
-    title: "🔥 Padrão forte",
-    body: "Sua consistência está construindo momentum. Continue assim.",
+    title: "Você construiu uma boa sequência esta semana",
+    body: "A regularidade é o que sustenta o resultado. Siga o plano de hoje.",
   },
   explorer: {
-    title: "🧠 Experimento rápido",
-    body: "Tente uma ação de 2 minutos agora. Pequenos passos importam.",
+    title: "Um passo pequeno hoje",
+    body: "Escolha uma ação curta do seu plano e execute agora.",
   },
   resistant: {
-    title: "⚡ Apenas comece",
-    body: "Comece com 2 minutos de movimento. É tudo que precisa.",
+    title: "Comece pelo mais simples",
+    body: "Dois minutos de movimento já mantêm a rotina de pé.",
   },
   executor: {
-    title: "🎯 Pronto",
-    body: "Sua próxima ação está esperando. Vamos lá.",
+    title: "Sua próxima ação está pronta",
+    body: "Abra o app e siga o que está previsto para hoje.",
   },
 };
 

@@ -277,7 +277,7 @@ export function PageTutorialBanner({ pageId }: PageTutorialProps) {
               </Button>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={handleDismiss}>
+          <Button variant="ghost" size="icon" aria-label="Dispensar aviso" className="h-7 w-7 shrink-0" onClick={handleDismiss}>
             <XIcon className="w-4 h-4" />
           </Button>
         </div>

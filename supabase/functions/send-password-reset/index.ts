@@ -125,7 +125,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Método Renascer <noreply@renascerapp.com.br>",
       to: [email],
-      subject: "🔑 Recuperação de Senha - Método Renascer",
+      subject: "Recuperação de senha — Gabriel Baú Consultoria",
       html: `
         <!DOCTYPE html>
         <html>
@@ -152,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
         <body>
           <div class="container">
             <div class="logo">
-              <h1>🔥 MÉTODO RENASCER</h1>
+              <h1>GABRIEL BAÚ CONSULTORIA</h1>
             </div>
             
             <div class="card">
@@ -174,7 +174,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               
               <div class="security-notice">
-                <p><strong>🔒 Dica de segurança:</strong> Se você não solicitou esta recuperação de senha, ignore este email. Sua conta permanece segura.</p>
+                <p><strong>Segurança:</strong> Se você não solicitou esta recuperação de senha, ignore este email. Sua conta permanece segura.</p>
                 <p style="margin-top: 12px;">Se o botão não funcionar, copie e cole este link no navegador:</p>
                 <p style="word-break: break-all; color: #FF4500; font-size: 12px;">${resetLink}</p>
               </div>

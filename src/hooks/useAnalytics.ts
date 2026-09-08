@@ -303,6 +303,68 @@ export function useAnalytics() {
     [trackEvent]
   );
 
+
+  // ===== P1: retenção e percepção de valor =====
+  const trackConsistencySummaryViewed = useCallback(
+    (context: "hoje" | "evolucao") => {
+      trackEvent("consistency_summary_viewed", context, { context });
+    },
+    [trackEvent]
+  );
+
+  const trackWeeklyConsistencyViewed = useCallback(
+    (context: "hoje" | "evolucao") => {
+      trackEvent("weekly_consistency_viewed", context, { context });
+    },
+    [trackEvent]
+  );
+
+  const trackProgressPeriodChanged = useCallback(
+    (period: "30d" | "90d" | "all") => {
+      trackEvent("progress_period_changed", "evolucao", { period });
+    },
+    [trackEvent]
+  );
+
+  const trackEvolutionComparisonViewed = useCallback(() => {
+    trackEvent("evolution_comparison_viewed", "evolucao");
+  }, [trackEvent]);
+
+  const trackEvolutionPhotoCompared = useCallback(
+    (view: "frente" | "lado" | "costas") => {
+      trackEvent("evolution_photo_compared", "evolucao", { view });
+    },
+    [trackEvent]
+  );
+
+  const trackEvolutionInsightViewed = useCallback(
+    (state: "disponivel" | "vazio") => {
+      trackEvent("evolution_insight_viewed", "evolucao", { state });
+    },
+    [trackEvent]
+  );
+
+  const trackContentHubOpened = useCallback(
+    (surface: "desktop" | "mobile") => {
+      trackEvent("content_hub_opened", "conteudos", { surface });
+    },
+    [trackEvent]
+  );
+
+  const trackMoreMenuOpened = useCallback(
+    (surface: "desktop" | "mobile") => {
+      trackEvent("more_menu_opened", "navegacao", { surface });
+    },
+    [trackEvent]
+  );
+
+  const trackNotificationOpened = useCallback(
+    (notificationType: string) => {
+      trackEvent("notification_opened", "notificacao", { notification_type: notificationType });
+    },
+    [trackEvent]
+  );
+
   // Track session end on page unload
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -357,6 +419,17 @@ export function useAnalytics() {
     trackPhotoCheckinUploaded,
     // Support
     trackSupportMessageSent,
+
+    // P1 retenção
+    trackConsistencySummaryViewed,
+    trackWeeklyConsistencyViewed,
+    trackProgressPeriodChanged,
+    trackEvolutionComparisonViewed,
+    trackEvolutionPhotoCompared,
+    trackEvolutionInsightViewed,
+    trackContentHubOpened,
+    trackMoreMenuOpened,
+    trackNotificationOpened,
 
     // Churn
     trackCancelIntent,

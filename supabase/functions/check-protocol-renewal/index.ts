@@ -75,10 +75,10 @@ Deno.serve(async (req) => {
 
       // Build notification content
       const title = daysSince >= 85
-        ? "🚨 Novo protocolo necessário"
+        ? "Seu protocolo precisa de atualização"
         : daysSince >= 60
-        ? "🔄 Protocolo expirado"
-        : "📊 Ajuste de protocolo";
+        ? "Seu protocolo venceu o ciclo"
+        : "Hora de ajustar seu protocolo";
 
       const body = daysSince >= 85
         ? "Seu protocolo completou 90 dias. Seu corpo já se adaptou completamente — envie fotos e medidas para gerar um protocolo 100% novo."
