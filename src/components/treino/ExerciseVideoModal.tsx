@@ -204,12 +204,12 @@ export function ExerciseVideoModal({
               )}
               {exerciseData.target && (
                 <Badge className="text-xs capitalize bg-foreground/20 text-foreground border-foreground/30">
-                  🎯 {exerciseData.target}
+                   Alvo: {exerciseData.target}
                 </Badge>
               )}
               {exerciseData.equipment && (
                 <Badge variant="outline" className="text-xs capitalize">
-                  🏋️ {exerciseData.equipment}
+                   Equipamento: {exerciseData.equipment}
                 </Badge>
               )}
             </div>
@@ -217,7 +217,7 @@ export function ExerciseVideoModal({
 
           {/* Elegant fallback when no GIF available */}
           {!loading && error && (
-            <div className="relative aspect-[4/3] max-h-[200px] rounded-xl overflow-hidden bg-gradient-to-br from-primary/5 via-muted to-secondary/10 border border-border/50">
+             <div className="relative aspect-[4/3] max-h-[200px] rounded-xl overflow-hidden bg-secondary/50 border border-border/50">
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center">
@@ -256,7 +256,7 @@ export function ExerciseVideoModal({
               {/* Progress header */}
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-foreground">
-                  {allDone ? "✅ Concluído!" : `Série ${nextSetNumber}/${totalSets}`}
+                   {allDone ? "Concluído" : `Série ${nextSetNumber}/${totalSets}`}
                 </span>
                 <div className="flex gap-2 text-xs text-muted-foreground">
                   <span>{exercise.reps} reps</span>
@@ -336,7 +336,7 @@ export function ExerciseVideoModal({
               {allDone && (
                 <div className="text-center py-2">
                   <p className="text-sm text-foreground font-semibold">
-                    Todas as séries concluídas! 🎉
+                     Todas as séries concluídas.
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Feche e vá para o próximo exercício

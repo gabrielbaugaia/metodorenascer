@@ -347,7 +347,7 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
                 onClick={() => cameraInputRef.current?.click()}
               >
                 <Camera className="h-4 w-4" />
-                📸 Tirar foto
+                 Tirar foto
               </Button>
               <Button
                 variant="outline"
@@ -356,7 +356,7 @@ export function FoodSearchModal({ open, onClose, mealType, onSelectFood, onAddMu
                 onClick={() => galleryInputRef.current?.click()}
               >
                 <ImageIcon className="h-4 w-4" />
-                🖼️ Galeria
+                 Galeria
               </Button>
             </div>
 

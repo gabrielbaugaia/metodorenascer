@@ -83,10 +83,10 @@ function isExpandedFormat(conteudo: NutritionContent): boolean {
 /* MacroCard — neutro, sem cores vividas */
 function MacroCard({ label, value, unit }: { label: string; value: number | string; unit?: string; color?: string }) {
   return (
-    <Card className="p-3 sm:p-4 text-center border-border/50">
-      <p className="text-xl md:text-2xl font-bold text-foreground">{value}{unit || ''}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-    </Card>
+    <div className="min-w-0 border-b border-r border-border/70 p-4 text-center md:p-5">
+      <p className="text-xl md:text-2xl font-bold text-foreground tabular-nums">{value}{unit || ''}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{label}</p>
+    </div>
   );
 }
 
@@ -110,11 +110,11 @@ function MealMacrosBar({ macros }: { macros?: MacrosRefeicao }) {
 
 function MealCard({ refeicao, index }: { refeicao: Refeicao; index: number }) {
   return (
-    <Card key={index} className="border border-border/50">
+    <Card key={index} className="border border-border/80">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-3 text-sm sm:text-base">
-            <Apple className="w-4 h-4 sm:w-5 sm:h-5 text-foreground shrink-0" strokeWidth={1.5} />
+             <Apple className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" strokeWidth={1.5} />
             <span>{refeicao.nome}</span>
           </CardTitle>
           <div className="flex items-center gap-2">

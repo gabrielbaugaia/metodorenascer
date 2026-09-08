@@ -405,7 +405,7 @@ export function EvolutionAnalysisResult({
                 <CardContent className="space-y-1.5 sm:space-y-2 px-3 sm:px-6 pb-3 sm:pb-6">
                   {data.mudancasPositivas?.length > 0 && (
                     <div>
-                      <p className="text-[10px] sm:text-xs text-green-500 mb-0.5 sm:mb-1 flex items-center gap-1">
+                       <p className="text-[10px] sm:text-xs text-success mb-0.5 sm:mb-1 flex items-center gap-1">
                         <CheckCircle2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Melhorias
                       </p>
                       <ul className="space-y-0.5">
@@ -436,9 +436,9 @@ export function EvolutionAnalysisResult({
 
       {/* Ajustes de Treino */}
       {analysis.ajustesTreino && (
-        <Card className="border-blue-500/30 bg-blue-500/5">
+        <Card className="border-primary/25 bg-primary/5">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base text-blue-400">
+            <CardTitle className="flex items-center gap-2 text-base text-primary">
               <Dumbbell className="h-4 w-4" />
               Ajustes no Treino
             </CardTitle>
@@ -447,11 +447,11 @@ export function EvolutionAnalysisResult({
             {analysis.ajustesTreino.intensificar?.length > 0 && (
               <div>
                 <p className="text-xs font-medium mb-2 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3 text-green-500" /> Intensificar
+                  <TrendingUp className="h-3 w-3 text-success" /> Intensificar
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {analysis.ajustesTreino.intensificar.map((item, i) => (
-                    <Badge key={i} variant="outline" className="border-green-500/50 text-green-400">
+                    <Badge key={i} variant="outline" className="border-success/40 text-success">
                       {item}
                     </Badge>
                   ))}
@@ -556,7 +556,7 @@ export function EvolutionAnalysisResult({
 
       {/* Mensagem Motivacional */}
       {analysis.mensagemMotivacional && (
-        <Card className="border-foreground bg-gradient-to-r from-primary/10 to-primary/5">
+         <Card className="border-primary/25 bg-primary/5">
           <CardContent className="pt-6">
             <p className="text-center italic text-sm">
               "{analysis.mensagemMotivacional}"
