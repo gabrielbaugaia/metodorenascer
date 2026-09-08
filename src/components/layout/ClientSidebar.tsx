@@ -44,7 +44,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { cn } from "@/lib/utils";
-import logoGb from "@/assets/logo-gb.png.asset.json";
 
 const ICON_STROKE = 1.4;
 
@@ -145,7 +144,7 @@ export function ClientSidebar() {
       <div className="hidden md:flex h-24 items-center justify-between border-b border-sidebar-border px-5">
         {!collapsed && (
           <div className="flex items-center gap-3 min-w-0">
-            <img src={logoGb.url} alt="Gabriel Baú" className="h-7 w-7 object-contain shrink-0" />
+            <img src="/favicon.png" alt="Gabriel Baú" className="h-7 w-7 object-contain shrink-0" />
             <span className="flex flex-col min-w-0">
               <span className="text-[15px] font-bold tracking-[0.08em] leading-tight text-sidebar-foreground truncate">
                 {isAdmin ? "PAINEL" : "GABRIEL BAÚ"}
@@ -162,7 +161,7 @@ export function ClientSidebar() {
       {/* Mobile header inside sheet */}
       <div className="md:hidden flex h-16 items-center border-b border-sidebar-border px-5">
         <div className="flex items-center gap-3">
-          <img src={logoGb.url} alt="Gabriel Baú" className="h-6 w-6 object-contain" />
+          <img src="/favicon.png" alt="Gabriel Baú" className="h-6 w-6 object-contain" />
           <span className="text-sm font-bold tracking-[0.08em] text-sidebar-foreground">{isAdmin ? "PAINEL" : "GABRIEL BAÚ"}</span>
         </div>
       </div>
