@@ -257,82 +257,124 @@ export function generateProtocolPdf(protocol: Protocol, includeAudit: boolean = 
   doc.save(fileName);
 }
 
-function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
-  const { addSectionTitle, addSubsectionTitle, addText, addBoldText, checkNewPage, margin, contentWidth } = helpers;
-  const pageWidth = doc.internal.pageSize.getWidth();
+/** Renderiza a tabela de exercícios com altura de linha dinâmica e page break correto. */
+function renderExerciseTable(doc: jsPDF, exercises: any[], helpers: any) {
+  const { margin, contentWidth, bottomLimit, newPage } = helpers;
+  if (!exercises || exercises.length === 0) return;
 
-  // Info do plano
-  if (conteudo?.nivel || conteudo?.objetivo) {
-    addSectionTitle("Informações do Protocolo");
-    if (conteudo.nivel) addText(`Nível: ${conteudo.nivel}`);
-    if (conteudo.objetivo) addText(`Objetivo: ${conteudo.objetivo}`);
-    if (conteudo.frequencia_semanal) addText(`Frequência: ${conteudo.frequencia_semanal}x por semana`);
+  const colWidths = [
+    contentWidth * 0.42,
+    contentWidth * 0.11,
+    contentWidth * 0.13,
+    contentWidth * 0.12,
+    contentWidth * 0.22,
+  ];
+  const headers = ["EXERCÍCIO", "SÉRIES", "REPS", "DESC.", "OBSERVAÇÕES"];
+
+  const drawTableHeader = (y: number) => {
+    setFill(doc, PDF_COLORS.graphite);
+    doc.rect(margin, y, contentWidth, 8, "F");
+    setText(doc, PDF_COLORS.offWhite);
+    doc.setFontSize(6.8);
+    doc.setFont("helvetica", "bold");
+    let x = margin;
+    headers.forEach((h, i) => {
+      doc.text(h, x + 3, y + 5.3);
+      x += colWidths[i];
+    });
+    return y + 8;
+  };
+
+  let tableY = drawTableHeader(helpers.yPos());
+
+  exercises.forEach((ex: any, idx: number) => {
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+
+    const name = String(ex.nome || ex.name || "-");
+    const tips = String(ex.dicas || ex.tips || "");
+    const nameLines = doc.splitTextToSize(name, colWidths[0] - 6);
+    const tipLines = tips ? doc.splitTextToSize(tips, colWidths[4] - 6) : ["—"];
+    const rowLines = Math.max(nameLines.length, tipLines.length, 1);
+    const rowHeight = rowLines * 4.2 + 4;
+
+    if (tableY + rowHeight > bottomLimit) {
+      helpers.setYPos(tableY);
+      newPage();
+      tableY = drawTableHeader(helpers.yPos());
+    }
+
+    setFill(doc, idx % 2 === 0 ? PDF_COLORS.white : PDF_COLORS.surface);
+    doc.rect(margin, tableY, contentWidth, rowHeight, "F");
+    setFill(doc, PDF_COLORS.hairline);
+    doc.rect(margin, tableY + rowHeight - 0.25, contentWidth, 0.25, "F");
+
+    const baseY = tableY + 5;
+    let x = margin;
+
+    setText(doc, PDF_COLORS.text);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text(nameLines, x + 3, baseY);
+    x += colWidths[0];
+
+    doc.setFont("helvetica", "normal");
+    const mid = [
+      String(ex.series || ex.sets || "-"),
+      String(ex.repeticoes || ex.reps || "-"),
+      String(ex.descanso || ex.rest || "-"),
+    ];
+    mid.forEach((cell, i) => {
+      doc.text(cell, x + 3, baseY);
+      x += colWidths[i + 1];
+    });
+
+    setText(doc, PDF_COLORS.muted);
+    doc.setFontSize(7.2);
+    doc.text(tipLines, x + 3, baseY);
+
+    tableY += rowHeight;
+  });
+
+  helpers.setYPos(tableY + 7);
+}
+
+/** Estima a altura necessária de um bloco de treino para decidir o page break. */
+function estimateWorkoutHeight(exercises: any[]) {
+  return 22 + (exercises?.length || 0) * 9;
+}
+
+function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
+  const { addSectionTitle, addSubsectionTitle, addText, addBoldText, bottomLimit, newPage } = helpers;
+
+  if (conteudo?.aquecimento || conteudo?.alongamento) {
+    addSectionTitle("Preparação");
     if (conteudo.aquecimento) addText(`Aquecimento: ${conteudo.aquecimento}`);
     if (conteudo.alongamento) addText(`Alongamento: ${conteudo.alongamento}`);
   }
 
   if (conteudo?.observacoes_gerais) {
-    addSectionTitle("Observações Gerais");
+    addSectionTitle("Observações gerais");
     addText(conteudo.observacoes_gerais);
   }
 
+  const startBlock = (exercises: any[]) => {
+    const needed = estimateWorkoutHeight(exercises);
+    const remaining = bottomLimit - helpers.yPos();
+    if (needed > remaining && remaining < 90) newPage();
+  };
+
   // Handle treinos array format (direct workout list)
   if (conteudo?.treinos && Array.isArray(conteudo.treinos)) {
-    addSectionTitle("PLANO DE TREINO SEMANAL");
-    
-    conteudo.treinos.forEach((treino: any, idx: number) => {
-      checkNewPage(30);
-      addSubsectionTitle(`Treino ${treino.letra || treino.day || '?'} - ${treino.foco || treino.focus || ''}${treino.duration ? ` (${treino.duration} min)` : ''}`);
+    addSectionTitle("Plano de treino semanal");
 
-      // Tabela de exercícios
-      let tableY = helpers.yPos ? helpers.yPos() : 0;
-      const colWidths = [60, 25, 30, 25, 40];
-      const headers = ["EXERCÍCIO", "SÉRIES", "REPS", "DESC.", "DICAS"];
-      
-      // Header da tabela
-      doc.setFillColor(50, 50, 50);
-      doc.rect(margin, tableY, contentWidth, 7, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "bold");
-      
-      let xPos = margin;
-      headers.forEach((header, i) => {
-        doc.text(header, xPos + 2, tableY + 5);
-        xPos += colWidths[i];
-      });
-      tableY += 7;
-
-      // Linhas de exercícios
+    conteudo.treinos.forEach((treino: any) => {
       const exercises = treino.exercicios || treino.exercises || [];
-      exercises.forEach((ex: any, exIdx: number) => {
-        checkNewPage(10);
-        const bgColor = exIdx % 2 === 0 ? 250 : 240;
-        doc.setFillColor(bgColor, bgColor, bgColor);
-        doc.rect(margin, tableY, contentWidth, 8, "F");
-        
-        doc.setTextColor(50, 50, 50);
-        doc.setFontSize(7);
-        doc.setFont("helvetica", "normal");
-        
-        xPos = margin;
-        const rowData = [
-          (ex.nome || ex.name)?.substring(0, 25) || "-",
-          String(ex.series || ex.sets || "-"),
-          String(ex.repeticoes || ex.reps || "-"),
-          ex.descanso || ex.rest || "-",
-          (ex.dicas || ex.tips)?.substring(0, 20) || "-"
-        ];
-        
-        rowData.forEach((cell, i) => {
-          doc.text(cell, xPos + 2, tableY + 5);
-          xPos += colWidths[i];
-        });
-        
-        tableY += 8;
-      });
-
-      if (helpers.setYPos) helpers.setYPos(tableY + 5);
+      startBlock(exercises);
+      addSubsectionTitle(
+        `Treino ${treino.letra || treino.day || "?"} — ${treino.foco || treino.focus || ""}${treino.duration ? `  ·  ${treino.duration} min` : ""}`
+      );
+      renderExerciseTable(doc, exercises, helpers);
     });
   }
 
@@ -340,7 +382,7 @@ function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
   if (conteudo?.semanas && Array.isArray(conteudo.semanas)) {
     conteudo.semanas.forEach((semana: any) => {
       const isBlocked = semana.bloqueada;
-      addSectionTitle(`SEMANA ${semana.semana}${semana.ciclo ? ` - Ciclo ${semana.ciclo}` : ''}${isBlocked ? ' 🔒' : ''}`);
+      addSectionTitle(`Semana ${semana.semana}${semana.ciclo ? ` — Ciclo ${semana.ciclo}` : ""}${isBlocked ? " (bloqueada)" : ""}`);
 
       if (isBlocked) {
         addText("Esta semana será liberada após envio do feedback e fotos do ciclo anterior.", 5);
@@ -348,64 +390,17 @@ function generateTreinoPdf(doc: jsPDF, conteudo: any, helpers: any) {
       }
 
       semana.dias?.forEach((dia: any) => {
-        checkNewPage(30);
-        addSubsectionTitle(`${dia.dia} - ${dia.foco}${dia.duracao_minutos ? ` (${dia.duracao_minutos} min)` : ''}`);
-
-        // Tabela de exercícios
-        let tableY = helpers.yPos ? helpers.yPos() : 0;
-        const colWidths = [60, 25, 30, 25, 40];
-        const headers = ["EXERCÍCIO", "SÉRIES", "REPS", "DESC.", "DICAS"];
-        
-        // Header da tabela
-        doc.setFillColor(50, 50, 50);
-        doc.rect(margin, tableY, contentWidth, 7, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(7);
-        doc.setFont("helvetica", "bold");
-        
-        let xPos = margin;
-        headers.forEach((header, i) => {
-          doc.text(header, xPos + 2, tableY + 5);
-          xPos += colWidths[i];
-        });
-        tableY += 7;
-
-        // Linhas de exercícios
-        dia.exercicios?.forEach((ex: any, idx: number) => {
-          checkNewPage(10);
-          const bgColor = idx % 2 === 0 ? 250 : 240;
-          doc.setFillColor(bgColor, bgColor, bgColor);
-          doc.rect(margin, tableY, contentWidth, 8, "F");
-          
-          doc.setTextColor(50, 50, 50);
-          doc.setFontSize(7);
-          doc.setFont("helvetica", "normal");
-          
-          xPos = margin;
-          const rowData = [
-            ex.nome?.substring(0, 25) || "-",
-            String(ex.series || "-"),
-            String(ex.repeticoes || "-"),
-            ex.descanso || "-",
-            ex.dicas?.substring(0, 20) || "-"
-          ];
-          
-          rowData.forEach((cell, i) => {
-            doc.text(cell, xPos + 2, tableY + 5);
-            xPos += colWidths[i];
-          });
-          
-          tableY += 8;
-        });
-
-        if (helpers.setYPos) helpers.setYPos(tableY + 5);
+        const exercises = dia.exercicios || [];
+        startBlock(exercises);
+        addSubsectionTitle(`${dia.dia} — ${dia.foco}${dia.duracao_minutos ? `  ·  ${dia.duracao_minutos} min` : ""}`);
+        renderExerciseTable(doc, exercises, helpers);
       });
     });
   }
 
   // Próxima avaliação
   if (conteudo?.proxima_avaliacao) {
-    addSectionTitle("Próxima Avaliação");
+    addSectionTitle("Próxima avaliação");
     addBoldText(conteudo.proxima_avaliacao);
   }
 }
