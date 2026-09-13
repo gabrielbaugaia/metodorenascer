@@ -258,7 +258,7 @@ export function ScheduleAndPhotosFields({ formData, userId, userName, onChange }
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            💡 Mudou o horário do treino? Avise para ajustarmos sua dieta!
+             Mudou o horário do treino? Avise para ajustarmos sua dieta!
           </p>
         </CardContent>
       </Card>

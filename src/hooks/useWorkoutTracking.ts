@@ -283,7 +283,7 @@ export function useWorkoutTracking() {
             : `${streakResult.newStreak} dias de sequência!`;
           
           sonnerToast.success(streakMessage, {
-            icon: "🔥",
+            icon: "",
             duration: 4000,
           });
         }

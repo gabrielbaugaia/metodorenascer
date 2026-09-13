@@ -31,7 +31,7 @@ export function TrainingPreferencesSection({ preferencias_treino, onChange }: Tr
             className="resize-none"
           />
           <p className="text-xs text-muted-foreground">
-            💡 Campo opcional — quanto mais detalhes você compartilhar, mais personalizado será seu treino.
+             Campo opcional — quanto mais detalhes você compartilhar, mais personalizado será seu treino.
           </p>
         </div>
       </CardContent>

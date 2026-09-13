@@ -272,7 +272,7 @@ export async function generateMessageReportPdf(
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(55, 65, 81);
-    const recLines = doc.splitTextToSize(`💡 ${bottleneck.recommendation}`, contentWidth - 15);
+    const recLines = doc.splitTextToSize(` ${bottleneck.recommendation}`, contentWidth - 15);
     doc.text(recLines, margin + 5, y + 27);
 
     y += 42;

@@ -244,7 +244,7 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
           <CardContent className="space-y-4">
             {analysis.recomendacoes.prioridades && analysis.recomendacoes.prioridades.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium mb-2">🎯 Prioridades</h4>
+                <h4 className="text-sm font-medium mb-2"> Prioridades</h4>
                 <ul className="space-y-1">
                   {analysis.recomendacoes.prioridades.map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
@@ -258,7 +258,7 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
 
             {analysis.recomendacoes.treino && analysis.recomendacoes.treino.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium mb-2">💪 Treino</h4>
+                <h4 className="text-sm font-medium mb-2"> Treino</h4>
                 <ul className="space-y-1">
                   {analysis.recomendacoes.treino.map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -272,7 +272,7 @@ export function BodyAnalysisResult({ analysis }: BodyAnalysisResultProps) {
 
             {analysis.recomendacoes.postura && analysis.recomendacoes.postura.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium mb-2">🧘 Postura</h4>
+                <h4 className="text-sm font-medium mb-2"> Postura</h4>
                 <ul className="space-y-1">
                   {analysis.recomendacoes.postura.map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
