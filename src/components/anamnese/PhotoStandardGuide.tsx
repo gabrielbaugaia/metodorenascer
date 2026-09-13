@@ -81,7 +81,7 @@ export function PhotoStandardGuide({ compact = false }: PhotoStandardGuideProps)
         <HelpCircle className="h-6 w-6 text-primary flex-shrink-0" />
         <div className="flex-1">
           <h4 className="font-semibold text-foreground mb-2">
-            📸 Modelo Padrão para Fotos (Obrigatório)
+             Modelo Padrão para Fotos (Obrigatório)
           </h4>
           <p className="text-sm text-muted-foreground mb-3">
             Siga exatamente o padrão abaixo. Fotos fora do padrão serão recusadas automaticamente.
@@ -138,11 +138,11 @@ export function PhotoStandardGuide({ compact = false }: PhotoStandardGuideProps)
           </div>
 
           <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3">
-            <p className="text-sm font-medium text-destructive mb-1">⚠️ Fotos NÃO serão aceitas se:</p>
+            <p className="text-sm font-medium text-destructive mb-1"> Fotos NÃO serão aceitas se:</p>
             <ul className="text-xs text-muted-foreground space-y-1">
-              <li>❌ Estiver usando camiseta, blusa ou casaco</li>
-              <li>❌ Estiver usando boné, óculos ou acessórios</li>
-              <li>❌ O corpo não estiver visível para avaliação</li>
+              <li> Estiver usando camiseta, blusa ou casaco</li>
+              <li> Estiver usando boné, óculos ou acessórios</li>
+              <li> O corpo não estiver visível para avaliação</li>
             </ul>
           </div>
         </div>

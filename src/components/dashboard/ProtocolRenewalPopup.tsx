@@ -57,8 +57,8 @@ export function ProtocolRenewalPopup({ daysSinceLastProtocol }: ProtocolRenewalP
   if (!shouldShow) return null;
 
   const title = is90
-    ? "🚨 Seu protocolo completou 90 dias!"
-    : "📊 Seu protocolo completou 30 dias!";
+    ? " Seu protocolo completou 90 dias!"
+    : " Seu protocolo completou 30 dias!";
 
   const description = is90
     ? "Um novo protocolo é essencial para continuar evoluindo. Seu corpo já se adaptou aos estímulos atuais."

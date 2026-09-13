@@ -151,7 +151,7 @@ export function generateMqoProtocolPdf(protocols: Protocol[], clientName: string
         checkPageBreak(6);
         const passed = protocol.audit_result[key] === true;
         doc.setTextColor(passed ? 34 : 220, passed ? 139 : 38, passed ? 34 : 38);
-        doc.text(`${passed ? "✅" : "❌"} ${label}`, margin, y);
+        doc.text(`${passed ? "SIM" : "NAO"} ${label}`, margin, y);
         y += 5;
       }
 
