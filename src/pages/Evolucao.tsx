@@ -47,6 +47,7 @@ interface CheckIn {
   foto_url: string | null;
   semana_numero: number | null;
   ai_analysis: string | null;
+  data_checkin?: string | null;
 }
 
 interface Profile {
