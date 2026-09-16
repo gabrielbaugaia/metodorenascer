@@ -47,6 +47,7 @@ interface CheckIn {
   foto_url: string | null;
   semana_numero: number | null;
   ai_analysis: string | null;
+  data_checkin?: string | null;
 }
 
 interface Profile {
@@ -529,7 +530,7 @@ export default function Evolucao() {
 
   const weightSeries = [...checkins]
     .filter((c) => c.peso_atual != null && (c.data_checkin || c.created_at))
-    .map((c) => ({ date: (c as { data_checkin?: string }).data_checkin || c.created_at, weight: Number(c.peso_atual) }))
+    .map((c) => ({ date: c.data_checkin || c.created_at, weight: Number(c.peso_atual) }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const latestCheckin = checkins[0] ?? null;
