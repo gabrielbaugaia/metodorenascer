@@ -11,12 +11,6 @@ export const allowedOrigins = [
   // Preview/staging Lovable
   "https://lxdosmjenbaugmhyfanx.lovableproject.com",
   "https://a75d46a2-4cbd-4416-81c4-9988ca4fb176.lovableproject.com",
-  "https://metodorenascer.lovable.app",
-  // Domínios legados (mantidos durante a migração)
-  "https://renascerapp.com.br",
-  "https://www.renascerapp.com.br",
-  "https://metodo.renascerapp.com.br",
-  "https://www.metodo.renascerapp.com.br",
   "http://localhost:5173",
   "http://localhost:8080",
   "http://localhost:3000",
