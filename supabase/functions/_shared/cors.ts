@@ -1,14 +1,22 @@
 // Shared CORS configuration for all edge functions
 // Usage: import { getCorsHeaders, handleCorsPreflightRequest } from "../_shared/cors.ts";
 
+import { PUBLIC_APP_URL } from "./appConfig.ts";
+
 export const allowedOrigins = [
+  // Origem pública canônica
+  PUBLIC_APP_URL,
+  "https://gabrielbau.com.br",
+  "https://www.gabrielbau.com.br",
+  // Preview/staging Lovable
   "https://lxdosmjenbaugmhyfanx.lovableproject.com",
   "https://a75d46a2-4cbd-4416-81c4-9988ca4fb176.lovableproject.com",
-  "https://app.gabrielbau.com.br",
+  "https://metodorenascer.lovable.app",
+  // Domínios legados (mantidos durante a migração)
   "https://renascerapp.com.br",
   "https://www.renascerapp.com.br",
-  "https://app.gabrielbau.com.br",
-  "https://www.app.gabrielbau.com.br",
+  "https://metodo.renascerapp.com.br",
+  "https://www.metodo.renascerapp.com.br",
   "http://localhost:5173",
   "http://localhost:8080",
   "http://localhost:3000",
@@ -16,7 +24,7 @@ export const allowedOrigins = [
 
 export function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("origin") || "";
-  const allowedOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  const allowedOrigin = allowedOrigins.includes(origin) ? origin : PUBLIC_APP_URL;
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
