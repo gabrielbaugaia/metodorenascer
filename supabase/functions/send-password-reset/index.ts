@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { appUrl } from "../_shared/appConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
       type: 'recovery',
       email: email,
       options: {
-        redirectTo: 'https://app.gabrielbau.com.br/redefinir-senha',
+        redirectTo: appUrl("/redefinir-senha"),
       }
     });
 

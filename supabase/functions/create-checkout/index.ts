@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getCorsHeaders, handleCorsPreflightRequest, mapErrorToUserMessage } from "../_shared/cors.ts";
+import { PUBLIC_APP_URL } from "../_shared/appConfig.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -193,7 +194,7 @@ serve(async (req) => {
       }
     }
 
-    const origin = req.headers.get("origin") || "https://app.gabrielbau.com.br";
+    const origin = req.headers.get("origin") || PUBLIC_APP_URL;
     
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,

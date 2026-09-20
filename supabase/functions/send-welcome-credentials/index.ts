@@ -6,6 +6,7 @@ import {
   createSuccessResponse,
 } from "../_shared/cors.ts";
 import { requireAdminOrService } from "../_shared/auth.ts";
+import { appUrl } from "../_shared/appConfig.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -40,7 +41,7 @@ serve(async (req) => {
 
     logStep("Sending welcome email", { email, plan_name });
 
-    const loginUrl = "https://app.gabrielbau.com.br/auth";
+    const loginUrl = appUrl("/auth");
 
     const htmlContent = `
 <!DOCTYPE html>

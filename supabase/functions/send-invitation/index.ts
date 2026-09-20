@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { 
+import { PUBLIC_APP_URL } from "../_shared/appConfig.ts";
   getCorsHeaders, 
   handleCorsPreflightRequest, 
   createErrorResponse, 
@@ -125,7 +126,7 @@ serve(async (req) => {
     });
 
     // Generate invitation link - using official domain
-    const baseUrl = "https://app.gabrielbau.com.br";
+    const baseUrl = PUBLIC_APP_URL;
     const inviteLink = `${baseUrl}/auth?invited=true&email=${encodeURIComponent(email)}`;
 
     // Email content varies based on payment requirement
