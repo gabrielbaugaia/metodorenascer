@@ -1,150 +1,103 @@
 project_id = "lxdosmjenbaugmhyfanx"
 
-[functions.create-checkout]
-verify_jwt = true
-
-[functions.check-subscription]
-verify_jwt = true
-
-[functions.customer-portal]
-verify_jwt = true
-
-[functions.generate-recipe]
-verify_jwt = true
-
-[functions.check-user-activity]
-verify_jwt = true
-
-[functions.admin-delete-user]
-verify_jwt = true
-
-[functions.send-invitation]
-verify_jwt = true
-
-[functions.send-push]
-verify_jwt = true
-
-[functions.stripe-webhook]
-verify_jwt = false
-
-[functions.verify-admin]
-verify_jwt = true
-
-[functions.ai-mentor]
-verify_jwt = true
-
-[functions.generate-protocol]
-verify_jwt = true
-
-[functions.analyze-evolution]
-verify_jwt = true
-
-[functions.admin-create-user]
-verify_jwt = true
-
-[functions.admin-reset-password]
-verify_jwt = true
-
-[functions.send-urgent-support-alert]
-verify_jwt = false
-
-[functions.weekly-support-report]
-verify_jwt = false
-
-[functions.send-password-reset]
-verify_jwt = false
-
-[functions.analyze-body-composition]
-verify_jwt = true
-
-[functions.validate-body-photo]
-verify_jwt = true
-
-[functions.generate-blog-image]
-verify_jwt = true
-
-[functions.generate-blog-post]
-verify_jwt = true
-
-[functions.process-automated-messages]
-verify_jwt = true
-
-[functions.check-free-expiration]
-verify_jwt = false
-
-[functions.complete-guest-checkout]
-verify_jwt = false
-
-[functions.finalize-checkout]
-verify_jwt = false
-
-[functions.sync-stripe-subscription]
-verify_jwt = true
-
-[functions.admin-update-email]
-verify_jwt = true
-
-[functions.sync-exercise-gifs]
-verify_jwt = false
-
-[functions.suggest-exercise-name]
-verify_jwt = false
-# Auth validated in code: admin role required
-
-[functions.search-exercise-gif]
-verify_jwt = true
-
-[functions.process-gif-queue]
-verify_jwt = true
-
-[functions.update-protocol-gifs]
-verify_jwt = true
-
-[functions.clean-youtube-urls]
-verify_jwt = true
-
-[functions.cleanup-old-conversations]
-verify_jwt = false
-
-[functions.audit-treino]
-verify_jwt = false
-
-[functions.mqo-analyze]
-verify_jwt = true
-
-[functions.mqo-generate-protocol]
-verify_jwt = true
-
-[functions.audit-prescription]
-verify_jwt = true
-
-[functions.health-sync]
-verify_jwt = false
-
-[functions.extract-fitness-data]
-verify_jwt = false
-
-[functions.extract-body-assessment]
-verify_jwt = false
-
-[functions.submit-external-anamnese]
-verify_jwt = false
-
-[functions.classify-behavior]
-verify_jwt = true
-
-[functions.send-adaptive-push]
-verify_jwt = false
-
-[functions.analyze-meal-photo]
-verify_jwt = true
-
-[functions.send-welcome-credentials]
-verify_jwt = false
-
-[functions.whatsapp-webhook]
-verify_jwt = false
-
-[functions.whatsapp-send]
-verify_jwt = true
-
+[functions]
+  [functions.admin-create-user]
+    verify_jwt = true
+  [functions.admin-delete-user]
+    verify_jwt = true
+  [functions.admin-reset-password]
+    verify_jwt = true
+  [functions.admin-update-email]
+    verify_jwt = true
+  [functions.ai-mentor]
+    verify_jwt = true
+  [functions.analyze-body-composition]
+    verify_jwt = true
+  [functions.analyze-evolution]
+    verify_jwt = true
+  [functions.analyze-meal-photo]
+    verify_jwt = true
+  [functions.audit-prescription]
+    verify_jwt = true
+  [functions.audit-treino]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.check-free-expiration]
+    verify_jwt = false
+  [functions.check-subscription]
+    verify_jwt = true
+  [functions.check-user-activity]
+    verify_jwt = true
+  [functions.classify-behavior]
+    verify_jwt = true
+  [functions.clean-youtube-urls]
+    verify_jwt = true
+  [functions.cleanup-old-conversations]
+    verify_jwt = false
+  [functions.complete-guest-checkout]
+    verify_jwt = false
+  [functions.create-checkout]
+    verify_jwt = true
+  [functions.customer-portal]
+    verify_jwt = true
+  [functions.extract-body-assessment]
+    verify_jwt = false
+  [functions.extract-fitness-data]
+    verify_jwt = false
+  [functions.finalize-checkout]
+    verify_jwt = false
+  [functions.generate-blog-image]
+    verify_jwt = true
+  [functions.generate-blog-post]
+    verify_jwt = true
+  [functions.generate-protocol]
+    verify_jwt = true
+  [functions.generate-recipe]
+    verify_jwt = true
+  [functions.health-sync]
+    verify_jwt = false
+  [functions.mqo-analyze]
+    verify_jwt = true
+  [functions.mqo-generate-protocol]
+    verify_jwt = true
+  [functions.process-automated-messages]
+    verify_jwt = true
+  [functions.process-gif-queue]
+    verify_jwt = true
+  [functions.search-exercise-gif]
+    verify_jwt = true
+  [functions.send-adaptive-push]
+    verify_jwt = false
+  [functions.send-invitation]
+    verify_jwt = true
+  [functions.send-password-reset]
+    verify_jwt = false
+  [functions.send-push]
+    verify_jwt = true
+  [functions.send-urgent-support-alert]
+    verify_jwt = false
+  [functions.send-welcome-credentials]
+    verify_jwt = false
+  [functions.stripe-webhook]
+    verify_jwt = false
+  [functions.submit-external-anamnese]
+    verify_jwt = false
+  [functions.suggest-exercise-name]
+    verify_jwt = false
+  [functions.sync-exercise-gifs]
+    verify_jwt = false
+  [functions.sync-stripe-subscription]
+    verify_jwt = true
+  [functions.update-protocol-gifs]
+    verify_jwt = true
+  [functions.validate-body-photo]
+    verify_jwt = true
+  [functions.verify-admin]
+    verify_jwt = true
+  [functions.weekly-support-report]
+    verify_jwt = false
+  [functions.whatsapp-send]
+    verify_jwt = true
+  [functions.whatsapp-webhook]
+    verify_jwt = false
