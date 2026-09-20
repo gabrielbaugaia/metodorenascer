@@ -53,6 +53,7 @@ import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { createBodyPhotosSignedUrl } from "@/lib/bodyPhotos";
+import { PUBLIC_APP_URL } from "@/lib/appConfig";
 
 interface Profile {
   id: string;
@@ -541,7 +542,7 @@ export default function AdminClienteDetalhes() {
 
       if (error) throw error;
 
-      const baseUrl = window.location.origin;
+      const baseUrl = PUBLIC_APP_URL;
       const link = `${baseUrl}/anamnese-externa/${token}`;
 
       await navigator.clipboard.writeText(link);

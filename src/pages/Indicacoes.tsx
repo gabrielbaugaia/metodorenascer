@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Share2, Users, Gift, Percent, CheckCircle, Clock, Loader2, Coins } from "lucide-react";
+import { PUBLIC_APP_URL } from "@/lib/appConfig";
 
 interface Referral {
   id: string;
@@ -110,7 +111,7 @@ export default function Indicacoes() {
   };
 
   const referralLink = referralCode 
-    ? `${window.location.origin}/convite?ref=${referralCode}`
+    ? `${PUBLIC_APP_URL}/convite?ref=${referralCode}`
     : "";
 
   const copyLink = async () => {

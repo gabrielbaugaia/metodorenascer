@@ -20,6 +20,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { PUBLIC_APP_URL } from "@/lib/appConfig";
 
 interface BlogPostData {
   id: string;
@@ -60,8 +61,8 @@ export default function BlogPost() {
   }, [post]);
 
   const updatePostMetaTags = (postData: BlogPostData) => {
-    const baseUrl = window.location.origin;
-    const title = postData.meta_title || `${postData.title} | GabrielBau Treinador`;
+    const baseUrl = PUBLIC_APP_URL;
+    const title = postData.meta_title || `${postData.title} | Consultoria Gabriel Baú`;
     const description = postData.meta_description || postData.excerpt || '';
     const image = postData.cover_image_url || `${baseUrl}/og-blog.png`;
     const url = `${baseUrl}/blog/${postData.slug}`;
