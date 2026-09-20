@@ -44,7 +44,7 @@ export function V2HeroSection() {
         </p>
 
         <p className="font-body-v2 text-[17px] text-muted-foreground/80 font-light leading-[1.8] max-w-[560px] mb-[52px]">
-          O Consultoria Gabriel Baú é o único sistema que cruza seus dados fisiológicos,
+          A Consultoria Gabriel Baú é o único sistema que cruza seus dados fisiológicos,
           mentais e de treino diariamente — e adapta seu protocolo
           em <strong className="text-foreground font-medium">tempo real</strong>. Não é um app genérico. É inteligência aplicada ao seu corpo.
         </p>

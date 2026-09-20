@@ -292,7 +292,7 @@ export default function CheckoutSuccess() {
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-muted-foreground">
-            Bem-vindo ao Consultoria Gabriel Baú! Sua assinatura foi ativada com sucesso.
+            Bem-vindo à Consultoria Gabriel Baú! Sua assinatura foi ativada com sucesso.
           </p>
 
           {subscribed ? (

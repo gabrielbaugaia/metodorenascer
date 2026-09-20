@@ -19,7 +19,7 @@ const Index = () => {
     
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'O Consultoria Gabriel Baú é um sistema de prescrição física, nutricional e mental criado para transformar corpo, energia e disciplina de forma personalizada e sustentável.');
+      metaDescription.setAttribute('content', 'A Consultoria Gabriel Baú é um sistema de prescrição física, nutricional e mental criado para transformar corpo, energia e disciplina de forma personalizada e sustentável.');
     }
   }, []);
 

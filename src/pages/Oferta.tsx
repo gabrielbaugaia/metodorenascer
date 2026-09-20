@@ -119,7 +119,7 @@ export default function Oferta() {
           </h2>
           <p className="text-gray-300 text-center text-lg">
             Não é sua culpa. Você só não tinha o método certo e o acompanhamento necessário. 
-            O Consultoria Gabriel Baú foi criado para pessoas reais, com rotinas reais, que querem 
+            A Consultoria Gabriel Baú foi criado para pessoas reais, com rotinas reais, que querem 
             resultados de verdade.
           </p>
         </div>

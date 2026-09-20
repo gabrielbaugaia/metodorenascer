@@ -41,7 +41,7 @@ export default function AcessoBloqueado() {
 
   const handleContactAdmin = () => {
     window.open(
-      "https://wa.me/5511999999999?text=Olá! Meu acesso ao Consultoria Gabriel Baú expirou e gostaria de reativar.",
+      "https://wa.me/5511999999999?text=Olá! Meu acesso à Consultoria Gabriel Baú expirou e gostaria de reativar.",
       "_blank"
     );
   };

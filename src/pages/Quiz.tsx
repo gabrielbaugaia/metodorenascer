@@ -83,7 +83,7 @@ const Quiz = () => {
     if (meta) {
       meta.setAttribute(
         "content",
-        "Diagnóstico em 60s do Consultoria Gabriel Baú: descubra seu risco de Burnout, Compulsão Alimentar e Queda de Motivação com base em sono, stress e comportamento."
+        "Diagnóstico em 60s da Consultoria Gabriel Baú: descubra seu risco de Burnout, Compulsão Alimentar e Queda de Motivação com base em sono, stress e comportamento."
       );
     }
 
@@ -481,7 +481,7 @@ const Quiz = () => {
 
             <div className="border border-border bg-card p-6 rounded-sm mb-8">
               <p className="text-foreground text-xs uppercase tracking-[0.3em] font-medium mb-3">
-                Bem-vindo ao Consultoria Gabriel Baú
+                Bem-vindo à Consultoria Gabriel Baú
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Um método que integra Engenharia do Movimento, SIS e Behavior — sistemas que mapeiam suas variáveis diariamente para que seu progresso seja eficiente e ultra personalizado. Se algo muda no seu corpo ou rotina, sou notificado e já ajusto o protocolo.
@@ -514,7 +514,7 @@ const Quiz = () => {
               Seu corpo é o seu <em className="text-foreground italic">principal ativo.</em>
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-              Para empreendedores e executivos, disciplina física é performance nos negócios. O Consultoria Gabriel Baú garante que você não quebre no meio do caminho.
+              Para empreendedores e executivos, disciplina física é performance nos negócios. A Consultoria Gabriel Baú garante que você não quebre no meio do caminho.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">

@@ -9,11 +9,11 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 const faqs = [
   {
     question: "Como funciona o Consultoria Gabriel Baú?",
-    answer: "O Consultoria Gabriel Baú é uma consultoria online completa que combina treino personalizado, nutrição estratégica e acompanhamento comportamental. Após a inscrição, você preenche uma anamnese detalhada e recebe seu plano personalizado em até 48 horas. Todo o suporte é feito via app, com resposta rápida do seu mentor.",
+    answer: "A Consultoria Gabriel Baú é uma consultoria online completa que combina treino personalizado, nutrição estratégica e acompanhamento comportamental. Após a inscrição, você preenche uma anamnese detalhada e recebe seu plano personalizado em até 48 horas. Todo o suporte é feito via app, com resposta rápida do seu mentor.",
   },
   {
     question: "Os planos substituem um profissional?",
-    answer: "Não. O Consultoria Gabriel Baú já é uma consultoria especializada conduzida pelo Personal Trainer GabrielBau, profissional de educação física, mestre em exercício físico, e por uma equipe multidisciplinar formada por nutricionistas e consultores médicos, todos registrados em seus conselhos. Você terá acompanhamento real de especialistas, e não fichas prontas ou planilhas genéricas como se vê por aí.",
+    answer: "Não. A Consultoria Gabriel Baú já é uma consultoria especializada conduzida pelo Personal Trainer Gabriel Baú, profissional de educação física, mestre em exercício físico, e por uma equipe multidisciplinar formada por nutricionistas e consultores médicos, todos registrados em seus conselhos. Você terá acompanhamento real de especialistas, e não fichas prontas ou planilhas genéricas como se vê por aí.",
   },
   {
     question: "Como funciona o pagamento?",
@@ -53,7 +53,7 @@ const faqs = [
   },
   {
     question: "E se eu tiver lesões ou restrições de saúde?",
-    answer: "Nesse caso, seu plano é montado respeitando suas limitações e histórico. Sempre recomendamos que você tenha liberação do seu médico e siga orientações profissionais específicas para o seu caso. O Consultoria Gabriel Baú adapta treinos e estratégias dentro do que é seguro para você.",
+    answer: "Nesse caso, seu plano é montado respeitando suas limitações e histórico. Sempre recomendamos que você tenha liberação do seu médico e siga orientações profissionais específicas para o seu caso. A Consultoria Gabriel Baú adapta treinos e estratégias dentro do que é seguro para você.",
   },
   {
     question: "Tenho pouco tempo por dia. Ainda assim funciona?",
@@ -61,7 +61,7 @@ const faqs = [
   },
   {
     question: "O método inclui medicamentos ou hormônios?",
-    answer: "Não. O Consultoria Gabriel Baú não prescreve medicamentos nem hormônios. Qualquer uso desse tipo de recurso deve ser decidido e acompanhado exclusivamente pelo seu médico. Nosso foco está em treino, nutrição estratégica e mentalidade para resultados sustentáveis.",
+    answer: "Não. A Consultoria Gabriel Baú não prescreve medicamentos nem hormônios. Qualquer uso desse tipo de recurso deve ser decidido e acompanhado exclusivamente pelo seu médico. Nosso foco está em treino, nutrição estratégica e mentalidade para resultados sustentáveis.",
   },
 ];
 
