@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Link2, Sparkles, Activity, Scale, Ruler, Heart, TrendingUp } from "lucide-react";
+import { Loader2, Link2, Sparkles, Activity, Scale, Ruler, Heart, TrendingUp, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,6 +19,7 @@ interface Assessment {
   id: string;
   assessed_at: string;
   source_name: string;
+  source_url: string | null;
   weight: number | null;
   height: number | null;
   bmi: number | null;
@@ -103,6 +104,18 @@ export function BodyAssessmentImport({ clientId, onAssessmentImported }: BodyAss
     }
   };
 
+  const openAssessmentFile = async (path: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("sis-media")
+        .createSignedUrl(path.replace(/^sis-media\//, ""), 60 * 10);
+      if (error || !data?.signedUrl) throw error || new Error("Link indisponível");
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível abrir o laudo");
+    }
+  };
+
   const MetricItem = ({ label, value, unit, icon: Icon }: { label: string; value: number | null; unit?: string; icon?: any }) => {
     if (value == null) return null;
     return (
@@ -180,11 +193,24 @@ export function BodyAssessmentImport({ clientId, onAssessmentImported }: BodyAss
                       {format(new Date(a.assessed_at), "dd/MM/yyyy", { locale: ptBR })}
                     </span>
                   </div>
-                  {a.body_type && (
-                    <Badge variant="secondary" className="text-xs">
-                      {a.body_type}
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {a.body_type && (
+                      <Badge variant="secondary" className="text-xs">
+                        {a.body_type}
+                      </Badge>
+                    )}
+                    {a.source_url && !a.source_url.startsWith("http") && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 text-xs"
+                        onClick={() => openAssessmentFile(a.source_url!)}
+                      >
+                        <FileText className="h-3.5 w-3.5 mr-1.5" />
+                        Abrir laudo
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Key metrics grid */}
