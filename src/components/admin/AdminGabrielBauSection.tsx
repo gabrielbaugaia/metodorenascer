@@ -9,7 +9,7 @@ import { calcScore, classify, calculateTrend } from "@/lib/renascerScoreCalc";
 import { format, subDays } from "date-fns";
 import { Flame, Loader2 } from "lucide-react";
 
-interface AdminGabriel BaúSectionProps {
+interface AdminGabrielBauSectionProps {
   clientId: string;
 }
 
@@ -22,7 +22,7 @@ interface DayLog {
   rpe: number | null;
 }
 
-export function AdminGabriel BaúSection({ clientId }: AdminGabriel BaúSectionProps) {
+export function AdminGabrielBauSection({ clientId }: AdminGabrielBauSectionProps) {
   const { data: logs, isLoading } = useQuery({
     queryKey: ["admin-renascer-logs", clientId],
     queryFn: async () => {
