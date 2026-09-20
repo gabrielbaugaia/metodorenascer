@@ -104,6 +104,18 @@ export function BodyAssessmentImport({ clientId, onAssessmentImported }: BodyAss
     }
   };
 
+  const openAssessmentFile = async (path: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("sis-media")
+        .createSignedUrl(path.replace(/^sis-media\//, ""), 60 * 10);
+      if (error || !data?.signedUrl) throw error || new Error("Link indisponível");
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível abrir o laudo");
+    }
+  };
+
   const MetricItem = ({ label, value, unit, icon: Icon }: { label: string; value: number | null; unit?: string; icon?: any }) => {
     if (value == null) return null;
     return (
