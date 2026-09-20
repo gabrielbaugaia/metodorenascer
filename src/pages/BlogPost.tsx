@@ -20,6 +20,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { PUBLIC_APP_URL } from "@/lib/appConfig";
 
 interface BlogPostData {
   id: string;
@@ -60,8 +61,8 @@ export default function BlogPost() {
   }, [post]);
 
   const updatePostMetaTags = (postData: BlogPostData) => {
-    const baseUrl = window.location.origin;
-    const title = postData.meta_title || `${postData.title} | GabrielBau Treinador`;
+    const baseUrl = PUBLIC_APP_URL;
+    const title = postData.meta_title || `${postData.title} | Consultoria Gabriel Baú`;
     const description = postData.meta_description || postData.excerpt || '';
     const image = postData.cover_image_url || `${baseUrl}/og-blog.png`;
     const url = `${baseUrl}/blog/${postData.slug}`;
@@ -79,7 +80,7 @@ export default function BlogPost() {
       'og:title': title,
       'og:description': description,
       'og:image': image,
-      'og:site_name': 'GabrielBau Treinador'
+      'og:site_name': 'Consultoria Gabriel Baú'
     };
 
     Object.entries(ogTags).forEach(([property, content]) => {
@@ -343,7 +344,7 @@ export default function BlogPost() {
               PRONTO PARA <span className="text-foreground">GABRIEL BAÚ</span>?
             </h3>
             <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-              Conheça o GabrielBau Treinador e comece sua jornada de transformação física e mental.
+              Conheça o Consultoria Gabriel Baú e comece sua jornada de transformação física e mental.
             </p>
             <Link 
               to="/#preco"

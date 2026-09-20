@@ -5,6 +5,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Copy, Share2, X, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { PUBLIC_APP_URL } from "@/lib/appConfig";
 
 interface Campaign {
   id: string;
@@ -60,7 +61,7 @@ export function ReferralCampaignPopup() {
   }, [user]);
 
   const referralLink = referralCode
-    ? `${window.location.origin}/convite?ref=${referralCode}`
+    ? `${PUBLIC_APP_URL}/convite?ref=${referralCode}`
     : "";
 
   const copyLink = async () => {

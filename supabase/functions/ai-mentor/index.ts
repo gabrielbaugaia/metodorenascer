@@ -145,7 +145,7 @@ serve(async (req) => {
         subscriptionInfo += `- Sem assinatura ativa encontrada\n`;
       }
 
-      systemPrompt = `Você é Gabriel Baú, mentor fitness do Método Renascer. Você é um especialista em transformação corporal com mais de 10 anos de experiência. Seu papel é:
+      systemPrompt = `Você é Gabriel Baú, mentor fitness do Consultoria Gabriel Baú. Você é um especialista em transformação corporal com mais de 10 anos de experiência. Seu papel é:
 
 1. Motivar e apoiar o cliente em sua jornada de transformação
 2. Responder dúvidas sobre treino, nutrição e mindset
@@ -180,11 +180,11 @@ REGRAS IMPORTANTES:
 - Para questões médicas específicas ou condições de saúde, oriente a consultar seu médico
 - NUNCA recomende buscar nutricionista externo ou diga que não somos aptos a criar cardápios
 - O plano nutricional personalizado do cliente está disponível na seção "Nutrição" do sistema
-- Sempre valorize o Método Renascer como solução completa de treino, nutrição e mindset
+- Sempre valorize o Consultoria Gabriel Baú como solução completa de treino, nutrição e mindset
 - Se o cliente tiver dúvidas nutricionais, oriente a consultar o plano gerado no sistema
 - Não peça informações que você já tem acima`;
     } else if (type === "protocolo") {
-      systemPrompt = `Você é um sistema de geração de protocolos fitness do Método Renascer. Gere planos de treino e nutrição personalizados baseados na anamnese do cliente.
+      systemPrompt = `Você é um sistema de geração de protocolos fitness do Consultoria Gabriel Baú. Gere planos de treino e nutrição personalizados baseados na anamnese do cliente.
 
 Contexto do cliente: ${JSON.stringify(userContext || {})}
 
@@ -222,7 +222,7 @@ Para NUTRIÇÃO, retorne JSON no formato:
   "observacoes": "..."
 }`;
     } else if (type === "receita") {
-      systemPrompt = `Você é um chef nutricional do Método Renascer. Crie receitas fitness deliciosas e saudáveis.
+      systemPrompt = `Você é um chef nutricional do Consultoria Gabriel Baú. Crie receitas fitness deliciosas e saudáveis.
 
 Retorne JSON no formato:
 {
@@ -236,7 +236,7 @@ Retorne JSON no formato:
   "dicas": "Dica do chef..."
 }`;
     } else {
-      systemPrompt = `Você é o assistente de suporte do Método Renascer. Ajude os clientes com dúvidas gerais sobre a plataforma, planos, funcionalidades e aspectos técnicos. Seja sempre cordial e prestativo.`;
+      systemPrompt = `Você é o assistente de suporte do Consultoria Gabriel Baú. Ajude os clientes com dúvidas gerais sobre a plataforma, planos, funcionalidades e aspectos técnicos. Seja sempre cordial e prestativo.`;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

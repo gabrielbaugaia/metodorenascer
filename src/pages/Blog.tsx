@@ -10,6 +10,7 @@ import { Footer } from "@/components/Footer";
 import { Menu, X as CloseIcon } from "lucide-react";
 import { Link as RouterLink } from "react-router-dom";
 import { useState as useMenuState } from "react";
+import { PUBLIC_APP_URL } from "@/lib/appConfig";
 
 interface BlogPost {
   id: string;
@@ -32,9 +33,9 @@ const CATEGORIES = [
 ];
 
 const updateMetaTags = () => {
-  const baseUrl = window.location.origin;
-  const title = "Blog | GabrielBau Treinador - Transformação Física e Mental";
-  const description = "Artigos sobre treino, nutrição e mindset para sua transformação. Conteúdo exclusivo do GabrielBau Treinador.";
+  const baseUrl = PUBLIC_APP_URL;
+  const title = "Blog | Consultoria Gabriel Baú - Transformação Física e Mental";
+  const description = "Artigos sobre treino, nutrição e mindset para sua transformação. Conteúdo exclusivo da Consultoria Gabriel Baú.";
   const image = `${baseUrl}/og-blog.png`;
 
   document.title = title;
@@ -50,7 +51,7 @@ const updateMetaTags = () => {
     'og:title': title,
     'og:description': description,
     'og:image': image,
-    'og:site_name': 'GabrielBau Treinador'
+    'og:site_name': 'Consultoria Gabriel Baú'
   };
 
   Object.entries(ogTags).forEach(([property, content]) => {

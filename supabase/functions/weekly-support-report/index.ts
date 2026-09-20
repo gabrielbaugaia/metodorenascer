@@ -324,7 +324,7 @@ const handler = async (req: Request): Promise<Response> => {
               ` : ''}
 
               <center style="margin-top: 32px;">
-                <a href="https://preview--formadeser.lovable.app/admin/suporte-chats" class="cta-button">
+                <a href="https://app.gabrielbau.com.br/admin/suporte-chats" class="cta-button">
                   Ver Todos os Chats
                 </a>
               </center>

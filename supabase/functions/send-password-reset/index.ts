@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { appUrl } from "../_shared/appConfig.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
       type: 'recovery',
       email: email,
       options: {
-        redirectTo: 'https://metodo.renascerapp.com.br/redefinir-senha',
+        redirectTo: appUrl("/redefinir-senha"),
       }
     });
 
@@ -120,10 +121,10 @@ const handler = async (req: Request): Promise<Response> => {
     // 6. Send email via Resend
     console.log(`[${requestId}] Step 6: Sending email via Resend...`);
     console.log(`[${requestId}] To: ${email}`);
-    console.log(`[${requestId}] From: Método Renascer <noreply@renascerapp.com.br>`);
+    console.log(`[${requestId}] From: Consultoria Gabriel Baú <noreply@renascerapp.com.br>`);
 
     const emailResponse = await resend.emails.send({
-      from: "Método Renascer <noreply@renascerapp.com.br>",
+      from: "Consultoria Gabriel Baú <noreply@renascerapp.com.br>",
       to: [email],
       subject: "Recuperação de senha — Gabriel Baú Consultoria",
       html: `
@@ -181,7 +182,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             
             <div class="footer">
-              <p>© ${new Date().getFullYear()} Método Renascer by Gabriel Bau</p>
+              <p>© ${new Date().getFullYear()} Consultoria Gabriel Baú</p>
               <p>Este é um email automático. Por favor, não responda.</p>
             </div>
           </div>

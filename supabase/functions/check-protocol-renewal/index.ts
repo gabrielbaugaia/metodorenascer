@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                from: "Método Renascer <noreply@renascerapp.com.br>",
+                from: "Consultoria Gabriel Baú <noreply@renascerapp.com.br>",
                 to: [profile.email],
                 subject: title,
                 html: `
@@ -136,12 +136,12 @@ Deno.serve(async (req) => {
                     <p>Olá ${profile.full_name || ""},</p>
                     <p>${body}</p>
                     <p style="margin-top: 24px;">
-                      <a href="https://metodorenascer.lovable.app/evolucao" 
+                      <a href="https://app.gabrielbau.com.br/evolucao" 
                          style="background: #c97a2a; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block;">
                         Enviar Evolução
                       </a>
                     </p>
-                    <p style="color: #888; font-size: 12px; margin-top: 32px;">Método Renascer — Transformação Real</p>
+                    <p style="color: #888; font-size: 12px; margin-top: 32px;">Consultoria Gabriel Baú — Transformação Real</p>
                   </div>
                 `,
               }),

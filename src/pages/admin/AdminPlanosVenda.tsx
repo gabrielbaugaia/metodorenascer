@@ -158,7 +158,7 @@ export default function AdminPlanosVenda() {
   }
 
   if (!isAdmin) {
-    navigate("/area-cliente");
+    navigate("/dashboard");
     return null;
   }
 

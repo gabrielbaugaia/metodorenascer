@@ -47,7 +47,7 @@ export function ProblemSection() {
           {/* Bottom Message */}
           <div className="text-center mt-12">
             <p className="text-foreground text-lg md:text-xl font-semibold">
-              O GabrielBau Treinador é o ultimato para mudar sua vida.
+              A Consultoria Gabriel Baú é o ultimato para mudar sua vida.
             </p>
           </div>
         </div>

@@ -6,6 +6,7 @@ import {
   createSuccessResponse,
 } from "../_shared/cors.ts";
 import { requireAdminOrService } from "../_shared/auth.ts";
+import { appUrl } from "../_shared/appConfig.ts";
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
@@ -40,7 +41,7 @@ serve(async (req) => {
 
     logStep("Sending welcome email", { email, plan_name });
 
-    const loginUrl = "https://metodorenascer.lovable.app/auth";
+    const loginUrl = appUrl("/auth");
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -84,7 +85,7 @@ serve(async (req) => {
     </div>
 
     <p style="color:#444;font-size:11px;text-align:center;margin-top:20px;">
-      © ${new Date().getFullYear()} Método Renascer. Todos os direitos reservados.
+      © ${new Date().getFullYear()} Consultoria Gabriel Baú. Todos os direitos reservados.
     </p>
   </div>
 </body>
@@ -97,7 +98,7 @@ serve(async (req) => {
         Authorization: `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: "Método Renascer <noreply@renascerapp.com.br>",
+        from: "Consultoria Gabriel Baú <noreply@renascerapp.com.br>",
         to: [email],
         subject: "Suas credenciais de acesso — Gabriel Baú Consultoria",
         html: htmlContent,

@@ -809,7 +809,7 @@ INSTRUÇÕES DE CORREÇÃO:
     protocolData.ciclo_atual = 1;
     protocolData.total_ciclos = totalCycles;
     protocolData.data_proxima_avaliacao = new Date(Date.now() + weeksPerCycle * 7 * 24 * 60 * 60 * 1000).toISOString();
-    protocolData.metodo = "Método Renascer";
+    protocolData.metodo = "Consultoria Gabriel Baú";
     protocolData.versao_guia = "1.0";
 
     // Save protocol to database

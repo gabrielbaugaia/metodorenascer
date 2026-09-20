@@ -151,7 +151,7 @@ export default function AdminCriarCliente() {
   };
 
   if (!isAdmin) {
-    navigate("/area-cliente");
+    navigate("/dashboard");
     return null;
   }
 

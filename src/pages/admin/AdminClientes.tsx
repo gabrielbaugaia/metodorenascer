@@ -159,7 +159,7 @@ export default function AdminClientes() {
     if (!authLoading && !user) {
       navigate("/auth");
     } else if (!adminLoading && !isAdmin) {
-      navigate("/area-cliente");
+      navigate("/dashboard");
     }
   }, [user, isAdmin, authLoading, adminLoading, navigate]);
 
@@ -491,7 +491,7 @@ export default function AdminClientes() {
         <div className="flex flex-col gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold uppercase">Clientes</h1>
-            <p className="text-muted-foreground text-sm">Gerencie todos os clientes do GabrielBau Treinador</p>
+            <p className="text-muted-foreground text-sm">Gerencie todos os clientes da Consultoria Gabriel Baú</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm" onClick={exportCSV} className="w-full sm:w-auto">

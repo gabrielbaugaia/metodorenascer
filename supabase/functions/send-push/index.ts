@@ -157,7 +157,7 @@ serve(async (req) => {
           sub.endpoint,
           VAPID_PUBLIC_KEY,
           VAPID_PRIVATE_KEY,
-          "mailto:suporte@metodorenascer.com"
+          "mailto:contato@renascerapp.com.br"
         );
 
         const pushResponse = await fetch(sub.endpoint, {

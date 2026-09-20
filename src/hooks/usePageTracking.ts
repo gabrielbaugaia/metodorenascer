@@ -19,7 +19,9 @@ const routeToPageName: Record<string, string> = {
   "/suporte": "suporte",
   "/meu-perfil": "perfil",
   "/indicacoes": "indicacoes",
-  "/area-cliente": "area_cliente",
+  "/evolucao": "evolucao",
+  "/cardio": "cardio",
+
   "/protocolos": "protocolos",
   "/convite": "convite",
   "/redefinir-senha": "redefinir_senha",

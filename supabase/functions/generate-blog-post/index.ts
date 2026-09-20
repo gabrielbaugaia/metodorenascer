@@ -51,7 +51,7 @@ serve(async (req) => {
       'acima-40': 'O público tem mais de 40 anos. Considere cuidados com saúde e adaptações necessárias.'
     };
 
-    const systemPrompt = `Você é um copywriter especializado em transformação física e mental. Gere artigos de blog em português brasileiro para o Método Renascer.
+    const systemPrompt = `Você é um copywriter especializado em transformação física e mental. Gere artigos de blog em português brasileiro para o Consultoria Gabriel Baú.
 
 ESTILO DE LINGUAGEM:
 ${languageStyles[language] || languageStyles['conversacional']}
@@ -63,7 +63,7 @@ PÚBLICO-ALVO:
 ${audienceStyles[audience] || audienceStyles['iniciantes']}
 
 CONTEXTO IMPORTANTE:
-- O Método Renascer é um programa de transformação física e mental personalizado
+- O Consultoria Gabriel Baú é um programa de transformação física e mental personalizado
 - Os leitores são potenciais CLIENTES, não profissionais
 - O objetivo é fazer o leitor se sentir seguro e animado para começar
 - Transmita confiança sem ser vendedor

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, Share2, Users, Gift, Percent, CheckCircle, Clock, Loader2, Coins } from "lucide-react";
+import { PUBLIC_APP_URL } from "@/lib/appConfig";
 
 interface Referral {
   id: string;
@@ -110,7 +111,7 @@ export default function Indicacoes() {
   };
 
   const referralLink = referralCode 
-    ? `${window.location.origin}/convite?ref=${referralCode}`
+    ? `${PUBLIC_APP_URL}/convite?ref=${referralCode}`
     : "";
 
   const copyLink = async () => {
@@ -128,7 +129,7 @@ export default function Indicacoes() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "GabrielBau Treinador",
+          title: "Consultoria Gabriel Baú",
           text: "Junte-se a mim no sistema de Gabriel Baú Treinador e ganhe desconto!",
           url: referralLink,
         });
@@ -159,7 +160,7 @@ export default function Indicacoes() {
     <ClientLayout>
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/area-cliente")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>

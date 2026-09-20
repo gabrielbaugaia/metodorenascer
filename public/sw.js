@@ -1,6 +1,6 @@
 // Service Worker para Push Notifications e Cache
-// v7: força refresh para nova UI do admin Reels (toolbar 4 ícones, IA individual, infinite scroll)
-const CACHE_NAME = 'renascer-cache-v7';
+// v8: força refresh para nova UI do admin Reels (toolbar 4 ícones, IA individual, infinite scroll)
+const CACHE_NAME = 'gb-consultoria-cache-v8';
 const STATIC_ASSETS = [
   '/',
   '/favicon.ico'
@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
 
 // Cache static assets on install
 self.addEventListener('install', function(event) {
-  console.log('[SW] Instalando v7');
+  console.log('[SW] Instalando v8');
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(STATIC_ASSETS);
@@ -19,7 +19,7 @@ self.addEventListener('install', function(event) {
 });
 
 self.addEventListener('activate', function(event) {
-  console.log('[SW] Ativando v7 - limpando caches antigos');
+  console.log('[SW] Ativando v8 - limpando caches antigos');
   event.waitUntil(
     caches.keys().then(function(cacheNames) {
       return Promise.all(
@@ -38,7 +38,7 @@ self.addEventListener('activate', function(event) {
       // Notify all clients to reload
       return clients.matchAll({ type: 'window' }).then(function(windowClients) {
         windowClients.forEach(function(client) {
-          client.postMessage({ type: 'SW_UPDATED', version: 'v7' });
+          client.postMessage({ type: 'SW_UPDATED', version: 'v8' });
         });
       });
     })
