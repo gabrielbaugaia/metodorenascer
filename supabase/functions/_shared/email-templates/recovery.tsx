@@ -26,19 +26,19 @@ export const RecoveryEmail = ({
     <Head>
       <style>{darkModeCss}</style>
     </Head>
-    <Preview>Redefinicao de senha - {siteName}</Preview>
+    <Preview>Redefinição de senha - {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Redefinir sua senha</Heading>
         <Text style={text}>
           Recebemos um pedido para redefinir a senha da sua conta em {siteName}.
-          Use o botao abaixo para criar uma nova senha.
+          Use o botão abaixo para criar uma nova senha.
         </Text>
         <Button className="dm-btn" style={button} href={confirmationUrl}>
           Criar nova senha
         </Button>
         <Text style={footer}>
-          Se voce nao solicitou a redefinicao, ignore este e-mail. Sua senha
+          Se você não solicitou a redefinição, ignore este e-mail. Sua senha
           permanece a mesma.
         </Text>
       </Container>

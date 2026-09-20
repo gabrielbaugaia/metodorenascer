@@ -36,12 +36,12 @@ export const EmailChangeEmail = ({
     <Head>
       <style>{darkModeCss}</style>
     </Head>
-    <Preview>Confirme a alteracao de e-mail - {siteName}</Preview>
+    <Preview>Confirme a alteração de e-mail - {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirme a alteracao de e-mail</Heading>
+        <Heading style={h1}>Confirme a alteração de e-mail</Heading>
         <Text style={text}>
-          Voce solicitou alterar o e-mail da sua conta em {siteName} de{' '}
+          Você solicitou alterar o e-mail da sua conta em {siteName} de{' '}
           <Link href={`mailto:${oldEmail}`} style={link}>
             {oldEmail}
           </Link>{' '}
@@ -52,13 +52,13 @@ export const EmailChangeEmail = ({
           .
         </Text>
         <Text style={text}>
-          Use o botao abaixo para confirmar a alteracao:
+          Use o botão abaixo para confirmar a alteração:
         </Text>
         <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Confirmar alteracao
+          Confirmar alteração
         </Button>
         <Text style={footer}>
-          Se voce nao solicitou esta alteracao, proteja sua conta imediatamente.
+          Se você não solicitou esta alteração, proteja sua conta imediatamente.
         </Text>
       </Container>
     </Body>

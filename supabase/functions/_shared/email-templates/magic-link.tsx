@@ -31,14 +31,14 @@ export const MagicLinkEmail = ({
       <Container style={container}>
         <Heading style={h1}>Seu link de acesso</Heading>
         <Text style={text}>
-          Use o botao abaixo para entrar em {siteName}. Este link expira em
+          Use o botão abaixo para entrar em {siteName}. Este link expira em
           alguns minutos.
         </Text>
         <Button className="dm-btn" style={button} href={confirmationUrl}>
           Entrar
         </Button>
         <Text style={footer}>
-          Se voce nao solicitou este link, ignore este e-mail.
+          Se você não solicitou este link, ignore este e-mail.
         </Text>
       </Container>
     </Body>

@@ -43,7 +43,7 @@ export const SignupEmail = ({
            foi criada.
         </Text>
         <Text style={text}>
-          Confirme seu endereco de e-mail (
+          Confirme seu endereço de e-mail (
           <Link href={`mailto:${recipient}`} style={link}>
             {recipient}
           </Link>
@@ -53,7 +53,7 @@ export const SignupEmail = ({
           Confirmar e-mail
         </Button>
         <Text style={footer}>
-          Se voce nao criou esta conta, ignore este e-mail.
+          Se você não criou esta conta, ignore este e-mail.
         </Text>
       </Container>
     </Body>

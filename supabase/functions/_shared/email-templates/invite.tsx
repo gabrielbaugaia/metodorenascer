@@ -32,19 +32,19 @@ export const InviteEmail = ({
     <Preview>Convite para {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Voce recebeu um convite</Heading>
+        <Heading style={h1}>Você recebeu um convite</Heading>
         <Text style={text}>
-          Voce foi convidado para{' '}
+          Você foi convidado para{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
           </Link>
-          . Use o botao abaixo para aceitar o convite e criar sua conta.
+          . Use o botão abaixo para aceitar o convite e criar sua conta.
         </Text>
         <Button className="dm-btn" style={button} href={confirmationUrl}>
           Aceitar convite
         </Button>
         <Text style={footer}>
-          Se voce nao esperava este convite, ignore este e-mail.
+          Se você não esperava este convite, ignore este e-mail.
         </Text>
       </Container>
     </Body>
