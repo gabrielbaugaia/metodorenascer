@@ -78,7 +78,7 @@ const Quiz = () => {
   });
 
   useEffect(() => {
-    document.title = "Diagnóstico GabrielBau | Descubra seu risco de Burnout";
+    document.title = "Diagnóstico Gabriel Baú | Descubra seu risco de Burnout";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) {
       meta.setAttribute(
@@ -253,7 +253,7 @@ const Quiz = () => {
         >
           <div className="w-full max-w-md">
             <div className="mb-2 flex items-center justify-between text-[0.65rem] uppercase tracking-[0.3em] text-muted-foreground">
-              <span>Diagnóstico GabrielBau</span>
+              <span>Diagnóstico Gabriel Baú</span>
               <span>{step} de 4</span>
             </div>
             <div className="mb-10 h-px w-full bg-border relative">
@@ -344,7 +344,7 @@ const Quiz = () => {
               Para liberar sua <em className="text-foreground italic">análise completa</em>
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-              Preciso de 3 informações para GabrielBau revisar seu perfil pessoalmente e te enviar o diagnóstico clínico detalhado.
+              Preciso de 3 informações para Gabriel Baú revisar seu perfil pessoalmente e te enviar o diagnóstico clínico detalhado.
             </p>
 
             <form
@@ -426,7 +426,7 @@ const Quiz = () => {
 
             <img
               src={gabrielBauPhoto}
-              alt="GabrielBau — Especialista em Treinamento"
+              alt="Gabriel Baú — Especialista em Treinamento"
               className="w-32 h-40 rounded-sm border border-border mb-6 object-cover object-top"
             />
 

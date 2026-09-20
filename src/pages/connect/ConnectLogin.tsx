@@ -46,7 +46,7 @@ const ConnectLogin = () => {
           <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-foreground/10 mx-auto">
             <Heart className="h-8 w-8 text-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">GabrielBau Connect</h1>
+          <h1 className="text-2xl font-bold text-foreground">Gabriel Baú Connect</h1>
           <p className="text-sm text-muted-foreground">
             Conecte seus dados de saúde
           </p>
