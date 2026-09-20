@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Link2, Sparkles, Activity, Scale, Ruler, Heart, TrendingUp } from "lucide-react";
+import { Loader2, Link2, Sparkles, Activity, Scale, Ruler, Heart, TrendingUp, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
