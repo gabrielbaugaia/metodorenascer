@@ -166,7 +166,7 @@ export default function Dashboard() {
         .eq("user_id", user.id)
         .eq("week_number", weekNumber)
         .eq("year", now.getFullYear())
-        .single();
+        .maybeSingle();
       setCanDoWeeklyCheckin(!data);
     };
     checkWeeklyCheckin();
