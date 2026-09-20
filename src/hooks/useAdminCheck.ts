@@ -45,7 +45,7 @@ export function useAdminCheck() {
     };
 
     checkAdmin();
-  }, [user]);
+  }, [user, authLoading]);
 
   return { isAdmin, loading, setIsAdmin };
 }
