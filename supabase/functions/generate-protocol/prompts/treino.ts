@@ -1,5 +1,5 @@
 // ============================================================================
-// PROMPT DE TREINO - MÉTODO RENASCER
+// PROMPT DE TREINO - CONSULTORIA GABRIEL BAÚ
 // ============================================================================
 // REGRAS APLICADAS:
 // - Estrutura: Treino A, B, C, D (divisões por letras, não dias da semana)
@@ -27,9 +27,9 @@ export function getTreinoSystemPrompt(durationWeeks: number, weeksPerCycle: numb
     ? `\n### LISTA DE EXERCÍCIOS PADRONIZADOS (USE EXATAMENTE ESTES NOMES) ###\n${exerciseNames.map(name => `- "${name}"`).join('\n')}\n\nIMPORTANTE: Use EXATAMENTE os nomes da lista acima para garantir que os GIFs demonstrativos sejam exibidos corretamente. Se precisar de um exercício que não está na lista, use um nome simples e descritivo SEM variações.\n`
     : '';
 
-  return `Você é um Personal Trainer especializado do Método Renascer. Crie um protocolo de treino COMPLETO e PERSONALIZADO seguindo rigorosamente estas regras:
+  return `Você é um Personal Trainer especializado do Consultoria Gabriel Baú. Crie um protocolo de treino COMPLETO e PERSONALIZADO seguindo rigorosamente estas regras:
 
-### PRINCÍPIOS DO MÉTODO RENASCER ###
+### PRINCÍPIOS DO CONSULTORIA GABRIEL BAÚ ###
 - "Básico muito bem feito": APENAS exercícios simples, seguros e conhecidos
 - Exercícios PERMITIDOS: agachamento, remada, supino, puxada, desenvolvimento, flexões, pranchas, afundos, leg press, terra romeno, rosca, tríceps, elevação lateral, abdominal, prancha
 - Exercícios PROIBIDOS: movimentos de circo, instáveis, complexos ou que exijam muita coordenação
@@ -174,7 +174,7 @@ SEM ESTES 5 ITENS, O PROTOCOLO É CONSIDERADO INVÁLIDO:
 
 RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
 {
-  "titulo": "Protocolo de Treino - Método Renascer",
+  "titulo": "Protocolo de Treino - Consultoria Gabriel Baú",
   "duracao_semanas": ${durationWeeks},
   "ciclo_atual": 1,
   "total_ciclos": ${totalCycles},
@@ -256,7 +256,7 @@ export function getTreinoUserPrompt(
 ): string {
   const preferencias = (userContext as any).preferencias_treino;
   
-  return `Crie um protocolo de treino PERSONALIZADO para este cliente do Método Renascer:
+  return `Crie um protocolo de treino PERSONALIZADO para este cliente do Consultoria Gabriel Baú:
 
 ### DADOS DO CLIENTE ###
 ${JSON.stringify(userContext, null, 2)}
@@ -281,7 +281,7 @@ ${adjustments ? `### AJUSTES SOLICITADOS ###\n${adjustments}` : ""}
 2. Identifique o OBJETIVO (emagrecimento ou hipertrofia) com base nos dados
 3. Identifique o LOCAL DE TREINO (casa ou musculação) com base na anamnese
 4. Aplique as regras de volume, frequência e métodos conforme o nível
-5. Use APENAS exercícios simples e seguros do Método Renascer
+5. Use APENAS exercícios simples e seguros do Consultoria Gabriel Baú
 6. ⚠️ CADA EXERCÍCIO DEVE SER INDIVIDUAL - NÃO usar bi-set, superset, tri-set ou circuitos
 7. Considere lesões, restrições e disponibilidade
 8. Divida os treinos por LETRAS (A, B, C, D) e não por dias da semana

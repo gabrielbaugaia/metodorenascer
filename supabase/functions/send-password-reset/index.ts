@@ -104,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
       type: 'recovery',
       email: email,
       options: {
-        redirectTo: 'https://metodo.renascerapp.com.br/redefinir-senha',
+        redirectTo: 'https://app.gabrielbau.com.br/redefinir-senha',
       }
     });
 
@@ -120,10 +120,10 @@ const handler = async (req: Request): Promise<Response> => {
     // 6. Send email via Resend
     console.log(`[${requestId}] Step 6: Sending email via Resend...`);
     console.log(`[${requestId}] To: ${email}`);
-    console.log(`[${requestId}] From: Método Renascer <noreply@renascerapp.com.br>`);
+    console.log(`[${requestId}] From: Consultoria Gabriel Baú <noreply@renascerapp.com.br>`);
 
     const emailResponse = await resend.emails.send({
-      from: "Método Renascer <noreply@renascerapp.com.br>",
+      from: "Consultoria Gabriel Baú <noreply@renascerapp.com.br>",
       to: [email],
       subject: "Recuperação de senha — Gabriel Baú Consultoria",
       html: `
@@ -181,7 +181,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             
             <div class="footer">
-              <p>© ${new Date().getFullYear()} Método Renascer by Gabriel Bau</p>
+              <p>© ${new Date().getFullYear()} Consultoria Gabriel Baú</p>
               <p>Este é um email automático. Por favor, não responda.</p>
             </div>
           </div>

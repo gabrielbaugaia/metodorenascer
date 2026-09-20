@@ -259,7 +259,7 @@ serve(async (req) => {
               .replace(/\{nome_completo\}/gi, profile.full_name || 'Cliente');
 
             await resend.emails.send({
-              from: "Renascer <contato@renascerapp.com.br>",
+              from: "Consultoria Gabriel Baú <contato@renascerapp.com.br>",
               to: [profile.email],
               subject: message.message_title,
               html: `
@@ -270,7 +270,7 @@ serve(async (req) => {
                   </div>
                   <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
                   <p style="color: #999; font-size: 12px;">
-                    Renascer - Sua jornada de transformação
+                    Consultoria Gabriel Baú - Sua jornada de transformação
                   </p>
                 </div>
               `,

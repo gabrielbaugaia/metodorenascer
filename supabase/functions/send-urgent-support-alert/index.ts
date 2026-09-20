@@ -202,7 +202,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
 
               <center>
-                <a href="https://preview--formadeser.lovable.app/admin/suporte-chats" class="cta-button">
+                <a href="https://app.gabrielbau.com.br/admin/suporte-chats" class="cta-button">
                   Ver Conversa Completa
                 </a>
               </center>

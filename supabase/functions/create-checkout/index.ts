@@ -193,7 +193,7 @@ serve(async (req) => {
       }
     }
 
-    const origin = req.headers.get("origin") || "https://metodo.renascerapp.com.br";
+    const origin = req.headers.get("origin") || "https://app.gabrielbau.com.br";
     
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,

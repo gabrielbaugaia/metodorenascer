@@ -10,7 +10,7 @@ export function V2Footer() {
         </p>
       </div>
       <div className="font-mono-v2 text-[9px] tracking-[2px] uppercase text-muted-foreground text-left md:text-right leading-[2]">
-        <a href="https://metodo.renascerapp.com.br" className="text-foreground hover:underline">metodo.renascerapp.com.br</a><br />
+        <a href="https://app.gabrielbau.com.br" className="text-foreground hover:underline">app.gabrielbau.com.br</a><br />
         @renascerapp · @BAUGABRIEL<br />
         Dados · Precisão · Resultado
       </div>

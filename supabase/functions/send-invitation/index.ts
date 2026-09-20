@@ -125,7 +125,7 @@ serve(async (req) => {
     });
 
     // Generate invitation link - using official domain
-    const baseUrl = "https://metodo.renascerapp.com.br";
+    const baseUrl = "https://app.gabrielbau.com.br";
     const inviteLink = `${baseUrl}/auth?invited=true&email=${encodeURIComponent(email)}`;
 
     // Email content varies based on payment requirement
@@ -139,11 +139,11 @@ serve(async (req) => {
 
     // Send invitation email
     const emailResult = await resend.emails.send({
-      from: "Método Renascer <noreply@renascerapp.com.br>",
+      from: "Consultoria Gabriel Baú <noreply@renascerapp.com.br>",
       to: [email],
       subject: shouldRequirePayment 
-        ? "Complete seu pagamento - Método Renascer" 
-        : "Seu convite para o Método Renascer",
+        ? "Complete seu pagamento - Consultoria Gabriel Baú" 
+        : "Seu convite para o Consultoria Gabriel Baú",
       html: `
         <!DOCTYPE html>
         <html>
@@ -154,14 +154,14 @@ serve(async (req) => {
         <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0a0a0a; color: #ffffff; margin: 0; padding: 0;">
           <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
             <div style="text-align: center; margin-bottom: 40px;">
-              <h1 style="color: #FF4500; font-size: 28px; margin: 0;">MÉTODO RENASCER</h1>
+              <h1 style="color: #FF4500; font-size: 28px; margin: 0;">CONSULTORIA GABRIEL BAÚ</h1>
             </div>
             
             <div style="background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); border: 1px solid #333; border-radius: 12px; padding: 32px;">
               <h2 style="color: #ffffff; font-size: 24px; margin-top: 0;">Olá, ${full_name}!</h2>
               
               <p style="color: #cccccc; font-size: 16px; line-height: 1.6;">
-                Você foi convidado para fazer parte do <strong style="color: #FF4500;">Método Renascer</strong>!
+                Você foi convidado para fazer parte do <strong style="color: #FF4500;">Consultoria Gabriel Baú</strong>!
               </p>
               
               ${paymentMessage}
@@ -184,7 +184,7 @@ serve(async (req) => {
             </div>
             
             <div style="text-align: center; margin-top: 32px; color: #666; font-size: 12px;">
-              <p>© 2024 Método Renascer. Todos os direitos reservados.</p>
+              <p>© 2024 Consultoria Gabriel Baú. Todos os direitos reservados.</p>
             </div>
           </div>
         </body>

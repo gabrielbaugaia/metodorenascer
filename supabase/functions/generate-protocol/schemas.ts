@@ -1,5 +1,5 @@
 // ============================================================================
-// SCHEMAS DE VALIDAÇÃO - PROTOCOLOS MÉTODO RENASCER
+// SCHEMAS DE VALIDAÇÃO - PROTOCOLOS CONSULTORIA GABRIEL BAÚ
 // ============================================================================
 
 // Exercício individual

@@ -1,5 +1,5 @@
 // ============================================================================
-// PROMPT DE NUTRIÇÃO - MÉTODO RENASCER (V2 - PRESCRIÇÃO COMPLETA)
+// PROMPT DE NUTRIÇÃO - CONSULTORIA GABRIEL BAÚ (V2 - PRESCRIÇÃO COMPLETA)
 // ============================================================================
 
 // ============================================================================
@@ -73,7 +73,7 @@ export function buildMealSchedule(
 }
 
 export function getNutricaoSystemPrompt(durationWeeks: number, weeksPerCycle: number): string {
-  return `Você é um Nutricionista Esportivo de Elite do Método Renascer. Crie um plano alimentar COMPLETO, QUANTIFICADO e ESTRATÉGICO.
+  return `Você é um Nutricionista Esportivo de Elite do Consultoria Gabriel Baú. Crie um plano alimentar COMPLETO, QUANTIFICADO e ESTRATÉGICO.
 
 ### REGRAS ABSOLUTAS - NÃO VIOLAR ###
 1. TODOS os campos listados no JSON são OBRIGATÓRIOS
@@ -134,7 +134,7 @@ O plano é para ${durationWeeks} semanas, ajustável a cada ${weeksPerCycle} sem
 
 RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
 {
-  "titulo": "Plano Nutricional Personalizado - Método Renascer",
+  "titulo": "Plano Nutricional Personalizado - Consultoria Gabriel Baú",
   "duracao_semanas": ${durationWeeks},
   "ciclo_atual": 1,
   "nivel": "iniciante|intermediario|avancado",

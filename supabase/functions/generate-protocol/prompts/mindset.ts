@@ -1,5 +1,5 @@
 // ============================================================================
-// PROMPT DE MINDSET - MÉTODO RENASCER
+// PROMPT DE MINDSET - CONSULTORIA GABRIEL BAÚ
 // ============================================================================
 // REGRAS APLICADAS:
 // - Base: terapia cognitivo-comportamental e psicologia da mudança de hábitos
@@ -20,9 +20,9 @@
 // ============================================================================
 
 export function getMindsetSystemPrompt(durationWeeks: number, weeksPerCycle: number): string {
-  return `Você é um Coach de Mentalidade e Psicologia Esportiva do Método Renascer. Crie um protocolo de mindset COMPLETO e PERSONALIZADO seguindo rigorosamente estas regras:
+  return `Você é um Coach de Mentalidade e Psicologia Esportiva do Consultoria Gabriel Baú. Crie um protocolo de mindset COMPLETO e PERSONALIZADO seguindo rigorosamente estas regras:
 
-### PRINCÍPIOS DO MÉTODO RENASCER ###
+### PRINCÍPIOS DO CONSULTORIA GABRIEL BAÚ ###
 - Base científica: terapia cognitivo-comportamental (TCC) e psicologia da mudança de hábitos
 - Elementos-chave: metas específicas, monitoramento, reestruturação de crenças, exposição gradual, reforço positivo
 - Foco: aumentar ADESÃO a treino e dieta (resultados práticos)
@@ -83,7 +83,7 @@ AVANÇADO (otimização, alta performance sustentável):
 
 RETORNE APENAS JSON VÁLIDO sem markdown, no formato:
 {
-  "titulo": "Protocolo de Mindset - Método Renascer",
+  "titulo": "Protocolo de Mindset - Consultoria Gabriel Baú",
   "duracao_semanas": ${durationWeeks},
   "nivel": "iniciante|intermediario|avancado",
   "objetivo": "emagrecimento|hipertrofia",
@@ -159,7 +159,7 @@ export function getMindsetUserPrompt(
   durationWeeks: number,
   adjustments?: string
 ): string {
-  return `Crie um protocolo de mindset PERSONALIZADO para este cliente do Método Renascer:
+  return `Crie um protocolo de mindset PERSONALIZADO para este cliente do Consultoria Gabriel Baú:
 
 ### DADOS DO CLIENTE ###
 ${JSON.stringify(userContext, null, 2)}
