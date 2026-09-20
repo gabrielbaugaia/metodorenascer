@@ -43,7 +43,7 @@ export default function AdminLeads() {
     if (!authLoading && !user) {
       navigate("/auth");
     } else if (!adminLoading && !isAdmin) {
-      navigate("/area-cliente");
+      navigate("/dashboard");
     }
   }, [user, isAdmin, authLoading, adminLoading, navigate]);
 
