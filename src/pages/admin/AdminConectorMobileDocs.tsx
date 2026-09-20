@@ -31,7 +31,7 @@ const SectionIcon = ({ icon: Icon, label }: { icon: React.ElementType; label: st
 
 const checklist = {
   fase1: [
-    'Criar projeto Capacitor ou Swift chamado "GabrielBau Connect"',
+    'Criar projeto Capacitor ou Swift chamado "Gabriel Baú Connect"',
     "Implementar tela Login",
     "Integrar Supabase Auth",
     "Salvar JWT com segurança",
@@ -98,8 +98,8 @@ const AdminConectorMobileDocs = () => {
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Conector Mobile GabrielBau</h1>
-          <p className="text-muted-foreground text-sm mt-1">Documentação Técnica Oficial — GabrielBau Connect</p>
+          <h1 className="text-2xl font-bold text-foreground">Conector Mobile Gabriel Baú</h1>
+          <p className="text-muted-foreground text-sm mt-1">Documentação Técnica Oficial — Gabriel Baú Connect</p>
         </div>
 
         <Accordion type="multiple" defaultValue={["visao-geral"]} className="space-y-3">
@@ -112,24 +112,24 @@ const AdminConectorMobileDocs = () => {
               <Card className="border-0 shadow-none">
                 <CardContent className="pt-2 space-y-4 text-sm text-muted-foreground">
                   <p>
-                    O <strong className="text-foreground">Conector Mobile GabrielBau</strong> é um aplicativo nativo (iOS e Android) responsável por sincronizar dados de saúde do dispositivo do usuário com o backend do GabrielBau.
+                    O <strong className="text-foreground">Conector Mobile Gabriel Baú</strong> é um aplicativo nativo (iOS e Android) responsável por sincronizar dados de saúde do dispositivo do usuário com o backend do app Gabriel Baú.
                   </p>
                   <p className="font-medium text-foreground">Fluxo iOS:</p>
                   <CodeBlock>{`Apple Watch
   → Apple Health (HealthKit)
-    → GabrielBau Connect (app mobile)
+    → Gabriel Baú Connect (app mobile)
       → Edge Function health-sync
         → Banco de Dados
           → Página /dados-corpo no sistema de Gabriel Baú`}</CodeBlock>
                   <p className="font-medium text-foreground">Fluxo Android:</p>
                   <CodeBlock>{`Android Watch
   → Health Connect
-    → GabrielBau Connect (app mobile)
+    → Gabriel Baú Connect (app mobile)
       → Edge Function health-sync
         → Banco de Dados
           → Página /dados-corpo no sistema de Gabriel Baú`}</CodeBlock>
                   <p className="text-xs text-primary dark:text-primary font-medium">
-                    ⚠ O app GabrielBau (Lovable/web) NÃO acessa HealthKit diretamente. O conector mobile é obrigatório.
+                    ⚠ O app Gabriel Baú (web) NÃO acessa HealthKit diretamente. O conector mobile é obrigatório.
                   </p>
                 </CardContent>
               </Card>
@@ -411,7 +411,7 @@ npm install
 npm install -D @capacitor/cli
 
 # 4) Inicializar Capacitor (apenas uma vez)
-npx cap init "GabrielBau Connect" "com.renascer.connect"
+npx cap init "Gabriel Baú Connect" "com.renascer.connect"
 
 # 5) Adicionar plataforma iOS
 npm install @capacitor/ios
