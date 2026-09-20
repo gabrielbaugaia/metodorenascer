@@ -19,6 +19,7 @@ interface Assessment {
   id: string;
   assessed_at: string;
   source_name: string;
+  source_url: string | null;
   weight: number | null;
   height: number | null;
   bmi: number | null;
