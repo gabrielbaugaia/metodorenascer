@@ -15,7 +15,7 @@ export function WhatIsSection() {
           </h2>
           
           <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-2xl">
-            O GabrielBau Treinador foi criado para quem entende que resultado não vem de motivação,
+            O Consultoria Gabriel Baú foi criado para quem entende que resultado não vem de motivação,
 mas de prescrição correta e execução consistente.
           </p>
           

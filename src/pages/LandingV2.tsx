@@ -16,7 +16,7 @@ const LandingV2 = () => {
   const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.title = "GabrielBau Treinador | Sistema de Inteligência em Performance";
+    document.title = "Consultoria Gabriel Baú | Sistema de Inteligência em Performance";
   }, []);
 
   // Cursor glow — desktop only

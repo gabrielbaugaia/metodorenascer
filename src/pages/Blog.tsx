@@ -51,7 +51,7 @@ const updateMetaTags = () => {
     'og:title': title,
     'og:description': description,
     'og:image': image,
-    'og:site_name': 'GabrielBau Treinador'
+    'og:site_name': 'Consultoria Gabriel Baú'
   };
 
   Object.entries(ogTags).forEach(([property, content]) => {

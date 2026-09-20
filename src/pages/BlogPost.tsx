@@ -80,7 +80,7 @@ export default function BlogPost() {
       'og:title': title,
       'og:description': description,
       'og:image': image,
-      'og:site_name': 'GabrielBau Treinador'
+      'og:site_name': 'Consultoria Gabriel Baú'
     };
 
     Object.entries(ogTags).forEach(([property, content]) => {
@@ -344,7 +344,7 @@ export default function BlogPost() {
               PRONTO PARA <span className="text-foreground">GABRIEL BAÚ</span>?
             </h3>
             <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-              Conheça o GabrielBau Treinador e comece sua jornada de transformação física e mental.
+              Conheça o Consultoria Gabriel Baú e comece sua jornada de transformação física e mental.
             </p>
             <Link 
               to="/#preco"

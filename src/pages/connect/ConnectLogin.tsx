@@ -90,7 +90,7 @@ const ConnectLogin = () => {
         </form>
 
         <p className="text-xs text-center text-muted-foreground">
-          Use as mesmas credenciais do GabrielBau Treinador
+          Use as mesmas credenciais do Consultoria Gabriel Baú
         </p>
       </div>
     </div>

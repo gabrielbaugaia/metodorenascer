@@ -84,7 +84,7 @@ export default function Oferta() {
     <div className="min-h-screen bg-black text-white">
       <header className="py-6 px-4 border-b border-gray-800">
         <div className="max-w-4xl mx-auto text-center">
-          <span className="text-xl font-bold tracking-tight">GabrielBau Treinador</span>
+          <span className="text-xl font-bold tracking-tight">Consultoria Gabriel Baú</span>
         </div>
       </header>
 
@@ -95,7 +95,7 @@ export default function Oferta() {
             TESTE 7 DIAS GRÁTIS.
           </h1>
           <p className="text-xl md:text-2xl text-gray-300 mb-8">
-            Experimente o GabrielBau Treinador sem compromisso. Cancele quando quiser.
+            Experimente o Consultoria Gabriel Baú sem compromisso. Cancele quando quiser.
           </p>
           <Button
             onClick={handleCheckout}
@@ -119,7 +119,7 @@ export default function Oferta() {
           </h2>
           <p className="text-gray-300 text-center text-lg">
             Não é sua culpa. Você só não tinha o método certo e o acompanhamento necessário. 
-            O GabrielBau Treinador foi criado para pessoas reais, com rotinas reais, que querem 
+            O Consultoria Gabriel Baú foi criado para pessoas reais, com rotinas reais, que querem 
             resultados de verdade.
           </p>
         </div>
@@ -267,7 +267,7 @@ export default function Oferta() {
 
       <footer className="py-8 px-4 border-t border-gray-800">
         <div className="max-w-4xl mx-auto text-center text-gray-500 text-sm">
-          GabrielBau Treinador © 2026
+          Consultoria Gabriel Baú © 2026
         </div>
       </footer>
     </div>

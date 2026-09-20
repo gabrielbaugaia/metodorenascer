@@ -146,7 +146,7 @@ export function LPHero() {
       <div className="relative z-10 w-full px-6 md:px-14 flex-1 flex flex-col justify-between gap-12 md:gap-16">
         <div className="max-w-[640px]">
           <div className="lp-mono text-[10px] tracking-[4px] uppercase lp-accent mb-6 lp-fade-up">
-            GabrielBau Treinador · Est. Alphaville
+            Consultoria Gabriel Baú · Est. Alphaville
           </div>
           <h1
             className="lp-display lp-text leading-[0.9] tracking-[-0.03em] mb-6 lp-fade-up"
@@ -159,7 +159,7 @@ export function LPHero() {
             className="lp-body lp-muted leading-[1.6] max-w-[520px] mb-8 md:mb-10 lp-fade-up"
             style={{ fontSize: "clamp(15px, 1.3vw, 18px)", animationDelay: "0.2s" }}
           >
-            O GabrielBau Treinador combina ciência, acompanhamento humano e inteligência de dados
+            O Consultoria Gabriel Baú combina ciência, acompanhamento humano e inteligência de dados
             para criar a direção que faltava para seu corpo voltar a evoluir.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lp-fade-up" style={{ animationDelay: "0.3s" }}>
@@ -272,7 +272,7 @@ export function LPMentor() {
             <div className="absolute inset-0 lp-accent-bg opacity-20 blur-3xl scale-90" />
             <img
               src={gabrielBauPhoto}
-              alt="GabrielBau — criador do GabrielBau Treinador"
+              alt="GabrielBau — criador do Consultoria Gabriel Baú"
               className="relative w-full h-full object-cover object-top grayscale-[20%]"
               loading="lazy"
             />
@@ -840,7 +840,7 @@ export function LPFooter() {
           <Link to="/auth" className="hover:lp-text transition-colors">Entrar</Link>
         </div>
         <div className="lp-mono text-[9px] tracking-[2px] uppercase lp-muted">
-          © {new Date().getFullYear()} GabrielBau Treinador
+          © {new Date().getFullYear()} Consultoria Gabriel Baú
         </div>
       </div>
     </footer>
