@@ -466,13 +466,15 @@ export function buildPrescriptionPlan(
       maxConsecutiveSessions: inputs.maxConsecutiveSessions,
       effort: inputs.effort,
       structured: inputs.structured,
+      overrides: ov,
     },
     decisionSummary,
   };
 }
 
 /** Bloco de restrições duras que vai ao LLM. O modelo não pode ultrapassar isto. */
-export function planToPromptConstraints(plan: PrescriptionPlan): string {
+export function planToPromptConstraints(plan: PrescriptionPlan, overrides?: TrainerOverrides): string {
+  const ovr = overrides || EMPTY_OVERRIDES;
   const lines = plan.muscles.map(
     (m) =>
       `- ${m.label}: ${m.directSets} séries efetivas/semana, em ${m.frequency} sessão(ões), no máximo ${m.maxSetsPerSession} séries por sessão, repetições ${m.repRange}, RIR alvo ${m.targetRir}${
