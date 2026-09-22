@@ -6,6 +6,7 @@
 // ============================================================================
 
 import { DEFAULT_ENGINE_CONFIG, MUSCLE_LABELS, type EngineConfig } from "./config.ts";
+import { EMPTY_OVERRIDES } from "./types.ts";
 import type {
   Confidence,
   EngineInputs,
