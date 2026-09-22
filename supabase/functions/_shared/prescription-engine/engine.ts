@@ -499,6 +499,18 @@ REGRAS DURAS:
 4. Respeite a faixa de repetições e o RIR alvo de cada grupo.
 5. Não inclua grupos musculares que não estão na lista acima.
 ${plan.deload.recommended ? "6. Esta é uma fase de DESCARGA: reduza exigência, mantenha técnica, sem falha concêntrica.\n" : ""}${
+    ovr.excludedExercises.length
+      ? `\nEXERCÍCIOS PROIBIDOS PELO TREINADOR (nunca use, nem variações diretas):\n${ovr.excludedExercises.map((e) => `- ${e}`).join("\n")}\n`
+      : ""
+  }${
+    ovr.lockedExercises.length
+      ? `\nEXERCÍCIOS OBRIGATÓRIOS DEFINIDOS PELO TREINADOR (devem aparecer na rotina):\n${ovr.lockedExercises.map((e) => `- ${e}`).join("\n")}\n`
+      : ""
+  }${
+    plan.overridesApplied.length
+      ? `\nDECISÕES HUMANAS JÁ APLICADAS (não questione, não altere):\n${plan.overridesApplied.map((a) => `- ${a}`).join("\n")}\n`
+      : ""
+  }${
     plan.safetyAlerts.length ? `\nALERTAS DE SEGURANÇA:\n${plan.safetyAlerts.map((a) => `- ${a}`).join("\n")}\n` : ""
   }### FIM DAS RESTRIÇÕES DO MOTOR ###`;
 }
