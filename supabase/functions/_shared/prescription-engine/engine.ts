@@ -436,6 +436,7 @@ export function buildPrescriptionPlan(
     weeklySetCapacity,
     totalDirectSets: totalDirect,
     muscles: muscles.filter((m) => m.directSets > 0),
+    overridesApplied,
     readiness,
     effort: inputs.effort,
     structured: inputs.structured,
