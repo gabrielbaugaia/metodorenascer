@@ -57,6 +57,7 @@ import { NutritionProtocolEditor } from "@/components/admin/NutritionProtocolEdi
 import { MindsetProtocolEditor } from "@/components/admin/MindsetProtocolEditor";
 import { ClientAnamneseCard } from "@/components/admin/ClientAnamneseCard";
 import { PrescriptionAuditPanel } from "@/components/admin/PrescriptionAuditPanel";
+import { PrescriptionEnginePanel } from "@/components/admin/PrescriptionEnginePanel";
 import { ManualProtocolInput } from "@/components/admin/ManualProtocolInput";
 
 interface Profile {
@@ -780,6 +781,14 @@ export default function AdminPlanos() {
             {/* Audit Panel */}
             {editDialog.protocol?.audit_result && (
               <PrescriptionAuditPanel auditResult={editDialog.protocol.audit_result} />
+            )}
+
+            {/* Motor de prescrição — só para treino */}
+            {editDialog.protocol?.tipo === "treino" && (
+              <PrescriptionEnginePanel
+                meta={editDialog.protocol.prescription_meta}
+                userId={editDialog.protocol.user_id}
+              />
             )}
           </DialogContent>
         </Dialog>
