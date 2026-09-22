@@ -457,8 +457,9 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
       systemPrompt = getTreinoSystemPrompt(durationWeeks, weeksPerCycle, totalCycles, exerciseNames);
       userPrompt = getTreinoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments, healthContext);
       if (prescriptionPlan) {
-        systemPrompt += `\n\n${planToPromptConstraints(prescriptionPlan)}`;
-        userPrompt += `\n\n${planToPromptConstraints(prescriptionPlan)}`;
+        const constraints = planToPromptConstraints(prescriptionPlan, engineInputs?.overrides);
+        systemPrompt += `\n\n${constraints}`;
+        userPrompt += `\n\n${constraints}`;
       }
     } else if (tipo === "nutricao") {
       systemPrompt = getNutricaoSystemPrompt(durationWeeks, weeksPerCycle);
@@ -901,6 +902,8 @@ INSTRUÇÕES DE CORREÇÃO:
           decision_summary: prescriptionPlan.decisionSummary,
           inputs_snapshot: prescriptionPlan.inputsSnapshot,
           engine_notes: engineNotes,
+          gate: engineGate,
+          overrides_applied: prescriptionPlan.overridesApplied,
           plan: prescriptionPlan,
           compliance,
         };
