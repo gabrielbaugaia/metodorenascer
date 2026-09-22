@@ -16,6 +16,7 @@ import type {
   MusclePriority,
   MuscleStatus,
   PrescriptionPlan,
+  TrainerOverrides,
 } from "./types.ts";
 
 const ALL_MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleKey[];
