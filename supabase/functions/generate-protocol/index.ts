@@ -4,6 +4,11 @@ import { getCorsHeaders, handleCorsPreflightRequest, createErrorResponse, create
 import { getTreinoSystemPrompt, getTreinoUserPrompt } from "./prompts/treino.ts";
 import { getNutricaoSystemPrompt, getNutricaoUserPrompt } from "./prompts/nutricao.ts";
 import { getMindsetSystemPrompt, getMindsetUserPrompt } from "./prompts/mindset.ts";
+import { gatherEngineInputs } from "../_shared/prescription-engine/gather.ts";
+import { buildPrescriptionPlan, planToPromptConstraints } from "../_shared/prescription-engine/engine.ts";
+import { enforcePlan } from "../_shared/prescription-engine/enforce.ts";
+import type { PrescriptionPlan } from "../_shared/prescription-engine/types.ts";
+import type { ComplianceReport } from "../_shared/prescription-engine/enforce.ts";
 import { 
   validateTreinoProtocol, 
   validateNutricaoProtocol, 
@@ -389,11 +394,42 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
       }
     }
 
+    // ============================================================
+    // ENGENHARIA DO MOVIMENTO — PRESCRIPTION ENGINE v1
+    // A dose (volume/frequência/RIR) é calculada por regras determinísticas.
+    // A IA só escolhe exercícios e organiza a rotina dentro desses limites.
+    // ============================================================
+    let prescriptionPlan: PrescriptionPlan | null = null;
+    let engineNotes: string[] = [];
+
+    if (tipo === "treino") {
+      try {
+        let engineProfile = (userContext && typeof userContext === "object") ? userContext as Record<string, unknown> : null;
+        if (!engineProfile) {
+          const { data: p } = await supabaseClient.from("profiles").select("*").eq("id", targetUserId).maybeSingle();
+          engineProfile = (p || {}) as Record<string, unknown>;
+        }
+        const gathered = await gatherEngineInputs(supabaseClient, targetUserId, engineProfile);
+        engineNotes = gathered.notes;
+        prescriptionPlan = buildPrescriptionPlan(gathered.inputs, gathered.config);
+        console.log(
+          `[engine] ${prescriptionPlan.engineVersion} | confiança ${prescriptionPlan.confidence} | ${prescriptionPlan.totalDirectSets} séries/sem | prontidão ${prescriptionPlan.readiness.score}`,
+        );
+      } catch (engineErr) {
+        console.error("[engine] falha ao calcular dose (seguindo sem motor):", engineErr);
+        prescriptionPlan = null;
+      }
+    }
+
     // Selecionar prompts baseado no tipo
     if (tipo === "treino") {
       // P1 FIX: Passar lista de exercícios para o prompt
       systemPrompt = getTreinoSystemPrompt(durationWeeks, weeksPerCycle, totalCycles, exerciseNames);
       userPrompt = getTreinoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments, healthContext);
+      if (prescriptionPlan) {
+        systemPrompt += `\n\n${planToPromptConstraints(prescriptionPlan)}`;
+        userPrompt += `\n\n${planToPromptConstraints(prescriptionPlan)}`;
+      }
     } else if (tipo === "nutricao") {
       systemPrompt = getNutricaoSystemPrompt(durationWeeks, weeksPerCycle);
       userPrompt = getNutricaoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments, healthContext);
@@ -812,6 +848,37 @@ INSTRUÇÕES DE CORREÇÃO:
     protocolData.metodo = "Consultoria Gabriel Baú";
     protocolData.versao_guia = "1.0";
 
+    // ============================================================
+    // Conformidade com o motor: a IA não pode furar a dose calculada.
+    // ============================================================
+    let compliance: ComplianceReport | null = null;
+    let prescriptionMeta: Record<string, unknown> | null = null;
+    if (tipo === "treino" && prescriptionPlan) {
+      try {
+        compliance = enforcePlan(protocolData, prescriptionPlan);
+        if (!compliance.compliant) {
+          console.warn("[engine] desvio de dose após ajuste:", JSON.stringify(compliance.perMuscle.filter((p) => !p.withinTolerance)));
+        }
+        protocolData.rir_alvo = Object.fromEntries(prescriptionPlan.muscles.map((m) => [m.label, m.targetRir]));
+        prescriptionMeta = {
+          engine_version: prescriptionPlan.engineVersion,
+          generated_at: prescriptionPlan.generatedAt,
+          confidence: prescriptionPlan.confidence,
+          confidence_reasons: prescriptionPlan.confidenceReasons,
+          deload: prescriptionPlan.deload,
+          readiness: prescriptionPlan.readiness,
+          safety_alerts: prescriptionPlan.safetyAlerts,
+          decision_summary: prescriptionPlan.decisionSummary,
+          inputs_snapshot: prescriptionPlan.inputsSnapshot,
+          engine_notes: engineNotes,
+          plan: prescriptionPlan,
+          compliance,
+        };
+      } catch (e) {
+        console.error("[engine] falha na conformidade (não bloqueante):", e);
+      }
+    }
+
     // Save protocol to database
     const { data: savedProtocol, error: saveError } = await supabaseClient
       .from("protocolos")
@@ -822,6 +889,7 @@ INSTRUÇÕES DE CORREÇÃO:
         titulo: protocolData.titulo || `Protocolo de ${tipo}`,
         conteudo: protocolData,
         ativo: true,
+        ...(prescriptionMeta ? { prescription_meta: prescriptionMeta } : {}),
       })
       .select()
       .single();
