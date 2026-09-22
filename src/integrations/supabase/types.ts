@@ -1988,6 +1988,160 @@ export type Database = {
           },
         ]
       }
+      prescription_overrides: {
+        Row: {
+          baseline_plan: Json | null
+          created_at: string
+          deload_directive: string | null
+          excluded_exercises: string[]
+          id: string
+          locked_exercises: string[]
+          locked_frequency: number | null
+          muscle_locks: Json
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          baseline_plan?: Json | null
+          created_at?: string
+          deload_directive?: string | null
+          excluded_exercises?: string[]
+          id?: string
+          locked_exercises?: string[]
+          locked_frequency?: number | null
+          muscle_locks?: Json
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          baseline_plan?: Json | null
+          created_at?: string
+          deload_directive?: string | null
+          excluded_exercises?: string[]
+          id?: string
+          locked_exercises?: string[]
+          locked_frequency?: number | null
+          muscle_locks?: Json
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescription_overrides_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescription_overrides_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prescription_runs: {
+        Row: {
+          alerts: Json
+          changes: Json | null
+          confidence: string | null
+          created_at: string
+          created_by: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          engine_version: string | null
+          id: string
+          inputs_snapshot: Json | null
+          mode: string
+          overrides_applied: Json | null
+          plan: Json | null
+          previous_volume: Json | null
+          proposed_volume: Json | null
+          protocol_id: string | null
+          review_reasons: Json
+          status: string
+          trainer_decision: string
+          user_id: string
+        }
+        Insert: {
+          alerts?: Json
+          changes?: Json | null
+          confidence?: string | null
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          engine_version?: string | null
+          id?: string
+          inputs_snapshot?: Json | null
+          mode?: string
+          overrides_applied?: Json | null
+          plan?: Json | null
+          previous_volume?: Json | null
+          proposed_volume?: Json | null
+          protocol_id?: string | null
+          review_reasons?: Json
+          status?: string
+          trainer_decision?: string
+          user_id: string
+        }
+        Update: {
+          alerts?: Json
+          changes?: Json | null
+          confidence?: string | null
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          engine_version?: string | null
+          id?: string
+          inputs_snapshot?: Json | null
+          mode?: string
+          overrides_applied?: Json | null
+          plan?: Json | null
+          previous_volume?: Json | null
+          proposed_volume?: Json | null
+          protocol_id?: string | null
+          review_reasons?: Json
+          status?: string
+          trainer_decision?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescription_runs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescription_runs_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescription_runs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           acquisition_channel: string | null
