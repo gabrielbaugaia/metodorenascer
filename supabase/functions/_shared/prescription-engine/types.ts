@@ -147,6 +147,8 @@ export interface MusclePrescription {
   previousSets: number | null;
   deltaVsPreviousCycle: number | null;
   rationale: string[];
+  /** De onde veio a decisão final deste grupo. */
+  source: "motor" | "override";
 }
 
 /** Esforço real relatado pelo aluno (RIR) nas últimas semanas. */
@@ -187,4 +189,6 @@ export interface PrescriptionPlan {
   safetyAlerts: string[];
   inputsSnapshot: Record<string, unknown>;
   decisionSummary: string[];
+  /** Decisões que vieram de override humano, já aplicadas. */
+  overridesApplied: string[];
 }
