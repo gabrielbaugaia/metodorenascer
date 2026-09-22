@@ -934,6 +934,30 @@ INSTRUÇÕES DE CORREÇÃO:
 
     console.log(`Protocol ${tipo} generated and saved successfully for user ${targetUserId}`);
 
+    // Observabilidade: registra a execução do motor para auditoria posterior.
+    if (tipo === "treino" && prescriptionPlan && engineGate) {
+      try {
+        await supabaseClient.from("prescription_runs").insert({
+          user_id: targetUserId,
+          mode: "geracao",
+          engine_version: prescriptionPlan.engineVersion,
+          status: engineGate.status,
+          review_reasons: engineGate.reasons,
+          confidence: prescriptionPlan.confidence,
+          inputs_snapshot: prescriptionPlan.inputsSnapshot,
+          plan: prescriptionPlan,
+          previous_volume: engineInputs?.previousPlannedVolume ?? {},
+          proposed_volume: Object.fromEntries(prescriptionPlan.muscles.map((m) => [m.muscle, m.directSets])),
+          alerts: prescriptionPlan.safetyAlerts,
+          overrides_applied: prescriptionPlan.overridesApplied,
+          protocol_id: savedProtocol?.id ?? null,
+          created_by: user.id,
+        });
+      } catch (logErr) {
+        console.error("[engine] falha ao registrar execução (não bloqueante):", logErr);
+      }
+    }
+
     // === AUDIT STEP (admin-triggered or automatic) ===
     let auditResult = null;
     try {
