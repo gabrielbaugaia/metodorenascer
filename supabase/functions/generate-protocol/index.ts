@@ -401,6 +401,8 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
     // ============================================================
     let prescriptionPlan: PrescriptionPlan | null = null;
     let engineNotes: string[] = [];
+    let engineGate: GateResult | null = null;
+    let engineInputs: EngineInputs | null = null;
 
     if (tipo === "treino") {
       try {
@@ -411,10 +413,37 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
         }
         const gathered = await gatherEngineInputs(supabaseClient, targetUserId, engineProfile);
         engineNotes = gathered.notes;
+        engineInputs = gathered.inputs;
         prescriptionPlan = buildPrescriptionPlan(gathered.inputs, gathered.config);
+        engineGate = evaluateGate(prescriptionPlan, gathered.inputs);
         console.log(
-          `[engine] ${prescriptionPlan.engineVersion} | confiança ${prescriptionPlan.confidence} | ${prescriptionPlan.totalDirectSets} séries/sem | prontidão ${prescriptionPlan.readiness.score}`,
+          `[engine] ${prescriptionPlan.engineVersion} | confiança ${prescriptionPlan.confidence} | ${prescriptionPlan.totalDirectSets} séries/sem | prontidão ${prescriptionPlan.readiness.score} | gate ${engineGate.status}`,
         );
+        // Gate de segurança: geração automática pelo aluno para quando o motor
+        // encontra inconsistência séria. O treinador continua podendo gerar e revisar.
+        if (engineGate.status === "BLOQUEADO" && !isAdmin) {
+          await supabaseClient.from("prescription_runs").insert({
+            user_id: targetUserId,
+            mode: "geracao_bloqueada",
+            engine_version: prescriptionPlan.engineVersion,
+            status: engineGate.status,
+            review_reasons: engineGate.reasons,
+            confidence: prescriptionPlan.confidence,
+            inputs_snapshot: prescriptionPlan.inputsSnapshot,
+            plan: prescriptionPlan,
+            proposed_volume: Object.fromEntries(prescriptionPlan.muscles.map((m) => [m.muscle, m.directSets])),
+            alerts: prescriptionPlan.safetyAlerts,
+            overrides_applied: prescriptionPlan.overridesApplied,
+            created_by: user.id,
+          });
+          return new Response(
+            JSON.stringify({
+              error: "Geração bloqueada pelo motor de prescrição. Seu treinador vai revisar antes de liberar.",
+              reasons: engineGate.reasons,
+            }),
+            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
       } catch (engineErr) {
         console.error("[engine] falha ao calcular dose (seguindo sem motor):", engineErr);
         prescriptionPlan = null;
