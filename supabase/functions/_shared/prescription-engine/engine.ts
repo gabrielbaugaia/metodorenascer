@@ -69,12 +69,19 @@ export function buildPrescriptionPlan(
   const d = cfg.defaults;
   const decisionSummary: string[] = [];
   const safetyAlerts: string[] = [];
+  const ov = inputs.overrides || EMPTY_OVERRIDES;
+  const overridesApplied: string[] = [];
 
   let weeklyFrequency = clamp(Math.round(inputs.weeklyFrequency || 3), 1, 7);
   // Sem dias consecutivos, não cabem mais de 4 sessões numa semana.
   if (inputs.allowsConsecutiveDays === false && weeklyFrequency > 4) {
     weeklyFrequency = 4;
     decisionSummary.push("Aluno não treina em dias consecutivos: frequência limitada a 4 sessões por semana.");
+  }
+  // Override humano de frequência vence qualquer cálculo.
+  if (ov.lockedFrequency && ov.lockedFrequency >= 1 && ov.lockedFrequency <= 7) {
+    weeklyFrequency = ov.lockedFrequency;
+    overridesApplied.push(`Frequência travada pelo treinador em ${weeklyFrequency}x/semana.`);
   }
   const sessionMinutes = clamp(Math.round(inputs.sessionMinutes || 60), 20, 150);
   const perSession = sessionSetCapacity(sessionMinutes, cfg);
