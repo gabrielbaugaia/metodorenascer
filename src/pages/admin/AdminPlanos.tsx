@@ -106,6 +106,7 @@ interface Protocol {
   data_geracao: string;
   ativo: boolean;
   audit_result?: any;
+  prescription_meta?: any;
   profile?: Profile;
   currentWeight?: number | null;
 }
