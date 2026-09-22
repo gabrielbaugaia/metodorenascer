@@ -420,7 +420,11 @@ export function buildPrescriptionPlan(
     decisionSummary.push("Esforço real desconhecido: nenhuma série com RIR registrado no período.");
   }
   if (deload.recommended) decisionSummary.push(`Descarga sugerida: ${deload.reason}.`);
+  totalDirect = muscles.reduce((a, m) => a + m.directSets, 0);
   decisionSummary.push(`Total de ${totalDirect} séries efetivas diretas por semana.`);
+  if (overridesApplied.length > 0) {
+    decisionSummary.push(`${overridesApplied.length} decisão(ões) vieram de override humano do treinador.`);
+  }
 
   return {
     engineVersion: cfg.version,
