@@ -20,13 +20,17 @@ export function evaluateGate(plan: PrescriptionPlan, inputs: EngineInputs): Gate
   if (plan.muscles.length === 0 || plan.totalDirectSets < 8) {
     blocking.push("Volume total calculado é baixo demais para ser um treino seguro e útil.");
   }
+  // Falta de dados não bloqueia: o motor cai para a dose conservadora e o
+  // treinador revisa. Bloqueio fica reservado a inconsistência séria.
   if (
     plan.confidence === "baixa" &&
     Object.keys(inputs.previousWeeklyVolume).length === 0 &&
     inputs.readiness.confidence === "baixa" &&
     !inputs.structured.weeklyFrequency
   ) {
-    blocking.push("Dados insuficientes: sem histórico de treino, sem recuperação e sem disponibilidade estruturada.");
+    review.push(
+      "Dados insuficientes: sem histórico de treino, sem recuperação e sem disponibilidade estruturada. Dose conservadora aplicada.",
+    );
   }
   if (
     inputs.structured.availableDays &&
