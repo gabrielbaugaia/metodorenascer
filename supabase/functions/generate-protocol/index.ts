@@ -7,7 +7,8 @@ import { getMindsetSystemPrompt, getMindsetUserPrompt } from "./prompts/mindset.
 import { gatherEngineInputs } from "../_shared/prescription-engine/gather.ts";
 import { buildPrescriptionPlan, planToPromptConstraints } from "../_shared/prescription-engine/engine.ts";
 import { enforcePlan } from "../_shared/prescription-engine/enforce.ts";
-import type { PrescriptionPlan } from "../_shared/prescription-engine/types.ts";
+import { evaluateGate } from "../_shared/prescription-engine/gate.ts";
+import type { EngineInputs, GateResult, PrescriptionPlan } from "../_shared/prescription-engine/types.ts";
 import type { ComplianceReport } from "../_shared/prescription-engine/enforce.ts";
 import { 
   validateTreinoProtocol, 
@@ -401,6 +402,8 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
     // ============================================================
     let prescriptionPlan: PrescriptionPlan | null = null;
     let engineNotes: string[] = [];
+    let engineGate: GateResult | null = null;
+    let engineInputs: EngineInputs | null = null;
 
     if (tipo === "treino") {
       try {
@@ -411,10 +414,37 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
         }
         const gathered = await gatherEngineInputs(supabaseClient, targetUserId, engineProfile);
         engineNotes = gathered.notes;
+        engineInputs = gathered.inputs;
         prescriptionPlan = buildPrescriptionPlan(gathered.inputs, gathered.config);
+        engineGate = evaluateGate(prescriptionPlan, gathered.inputs);
         console.log(
-          `[engine] ${prescriptionPlan.engineVersion} | confiança ${prescriptionPlan.confidence} | ${prescriptionPlan.totalDirectSets} séries/sem | prontidão ${prescriptionPlan.readiness.score}`,
+          `[engine] ${prescriptionPlan.engineVersion} | confiança ${prescriptionPlan.confidence} | ${prescriptionPlan.totalDirectSets} séries/sem | prontidão ${prescriptionPlan.readiness.score} | gate ${engineGate.status}`,
         );
+        // Gate de segurança: geração automática pelo aluno para quando o motor
+        // encontra inconsistência séria. O treinador continua podendo gerar e revisar.
+        if (engineGate.status === "BLOQUEADO" && !isAdmin) {
+          await supabaseClient.from("prescription_runs").insert({
+            user_id: targetUserId,
+            mode: "geracao_bloqueada",
+            engine_version: prescriptionPlan.engineVersion,
+            status: engineGate.status,
+            review_reasons: engineGate.reasons,
+            confidence: prescriptionPlan.confidence,
+            inputs_snapshot: prescriptionPlan.inputsSnapshot,
+            plan: prescriptionPlan,
+            proposed_volume: Object.fromEntries(prescriptionPlan.muscles.map((m) => [m.muscle, m.directSets])),
+            alerts: prescriptionPlan.safetyAlerts,
+            overrides_applied: prescriptionPlan.overridesApplied,
+            created_by: user.id,
+          });
+          return new Response(
+            JSON.stringify({
+              error: "Geração bloqueada pelo motor de prescrição. Seu treinador vai revisar antes de liberar.",
+              reasons: engineGate.reasons,
+            }),
+            { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
       } catch (engineErr) {
         console.error("[engine] falha ao calcular dose (seguindo sem motor):", engineErr);
         prescriptionPlan = null;
@@ -427,8 +457,9 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
       systemPrompt = getTreinoSystemPrompt(durationWeeks, weeksPerCycle, totalCycles, exerciseNames);
       userPrompt = getTreinoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments, healthContext);
       if (prescriptionPlan) {
-        systemPrompt += `\n\n${planToPromptConstraints(prescriptionPlan)}`;
-        userPrompt += `\n\n${planToPromptConstraints(prescriptionPlan)}`;
+        const constraints = planToPromptConstraints(prescriptionPlan, engineInputs?.overrides);
+        systemPrompt += `\n\n${constraints}`;
+        userPrompt += `\n\n${constraints}`;
       }
     } else if (tipo === "nutricao") {
       systemPrompt = getNutricaoSystemPrompt(durationWeeks, weeksPerCycle);
@@ -871,6 +902,8 @@ INSTRUÇÕES DE CORREÇÃO:
           decision_summary: prescriptionPlan.decisionSummary,
           inputs_snapshot: prescriptionPlan.inputsSnapshot,
           engine_notes: engineNotes,
+          gate: engineGate,
+          overrides_applied: prescriptionPlan.overridesApplied,
           plan: prescriptionPlan,
           compliance,
         };
@@ -900,6 +933,30 @@ INSTRUÇÕES DE CORREÇÃO:
     }
 
     console.log(`Protocol ${tipo} generated and saved successfully for user ${targetUserId}`);
+
+    // Observabilidade: registra a execução do motor para auditoria posterior.
+    if (tipo === "treino" && prescriptionPlan && engineGate) {
+      try {
+        await supabaseClient.from("prescription_runs").insert({
+          user_id: targetUserId,
+          mode: "geracao",
+          engine_version: prescriptionPlan.engineVersion,
+          status: engineGate.status,
+          review_reasons: engineGate.reasons,
+          confidence: prescriptionPlan.confidence,
+          inputs_snapshot: prescriptionPlan.inputsSnapshot,
+          plan: prescriptionPlan,
+          previous_volume: engineInputs?.previousPlannedVolume ?? {},
+          proposed_volume: Object.fromEntries(prescriptionPlan.muscles.map((m) => [m.muscle, m.directSets])),
+          alerts: prescriptionPlan.safetyAlerts,
+          overrides_applied: prescriptionPlan.overridesApplied,
+          protocol_id: savedProtocol?.id ?? null,
+          created_by: user.id,
+        });
+      } catch (logErr) {
+        console.error("[engine] falha ao registrar execução (não bloqueante):", logErr);
+      }
+    }
 
     // === AUDIT STEP (admin-triggered or automatic) ===
     let auditResult = null;

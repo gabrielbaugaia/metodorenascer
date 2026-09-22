@@ -2,6 +2,7 @@
 // Perfis sintéticos para validar o motor sem tocar em dados reais.
 // Usados pela simulação no admin e pelos testes automatizados.
 // ============================================================================
+import { EMPTY_OVERRIDES } from "./types.ts";
 import type { EngineInputs, MuscleKey, MusclePriority } from "./types.ts";
 
 export interface TestProfile {
@@ -144,6 +145,7 @@ export function buildTestInputs(profile: TestProfile): EngineInputs {
     },
     trainerDirectives: null,
     manualProtocol: false,
+    overrides: structuredClone(EMPTY_OVERRIDES),
   };
   return { ...base, ...profile.over };
 }

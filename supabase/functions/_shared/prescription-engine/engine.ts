@@ -6,6 +6,7 @@
 // ============================================================================
 
 import { DEFAULT_ENGINE_CONFIG, MUSCLE_LABELS, type EngineConfig } from "./config.ts";
+import { EMPTY_OVERRIDES } from "./types.ts";
 import type {
   Confidence,
   EngineInputs,
@@ -15,6 +16,7 @@ import type {
   MusclePriority,
   MuscleStatus,
   PrescriptionPlan,
+  TrainerOverrides,
 } from "./types.ts";
 
 const ALL_MUSCLES = Object.keys(MUSCLE_LABELS) as MuscleKey[];
@@ -68,12 +70,19 @@ export function buildPrescriptionPlan(
   const d = cfg.defaults;
   const decisionSummary: string[] = [];
   const safetyAlerts: string[] = [];
+  const ov = inputs.overrides || EMPTY_OVERRIDES;
+  const overridesApplied: string[] = [];
 
   let weeklyFrequency = clamp(Math.round(inputs.weeklyFrequency || 3), 1, 7);
   // Sem dias consecutivos, não cabem mais de 4 sessões numa semana.
   if (inputs.allowsConsecutiveDays === false && weeklyFrequency > 4) {
     weeklyFrequency = 4;
     decisionSummary.push("Aluno não treina em dias consecutivos: frequência limitada a 4 sessões por semana.");
+  }
+  // Override humano de frequência vence qualquer cálculo.
+  if (ov.lockedFrequency && ov.lockedFrequency >= 1 && ov.lockedFrequency <= 7) {
+    weeklyFrequency = ov.lockedFrequency;
+    overridesApplied.push(`Frequência travada pelo treinador em ${weeklyFrequency}x/semana.`);
   }
   const sessionMinutes = clamp(Math.round(inputs.sessionMinutes || 60), 20, 150);
   const perSession = sessionSetCapacity(sessionMinutes, cfg);
@@ -101,13 +110,22 @@ export function buildPrescriptionPlan(
     recommended: deloadReasons.length >= (readiness.confidence === "alta" ? 1 : 2),
     reason: deloadReasons.length ? deloadReasons.join("; ") : null,
   };
+  if (ov.deloadDirective === "forcar") {
+    deload.recommended = true;
+    deload.reason = "descarga determinada pelo treinador";
+    overridesApplied.push("Descarga forçada pelo treinador.");
+  } else if (ov.deloadDirective === "ignorar" && deload.recommended) {
+    deload.recommended = false;
+    deload.reason = `sugestão de descarga ignorada pelo treinador (${deload.reason})`;
+    overridesApplied.push("Sugestão de descarga ignorada pelo treinador.");
+  }
 
   // ---------- Volume por músculo ----------
   const muscles: MusclePrescription[] = [];
 
   for (const muscle of ALL_MUSCLES) {
     const range = cfg.ranges[muscle];
-    const priority: MusclePriority = inputs.priorities[muscle] || "desenvolvimento";
+    const priority: MusclePriority = ov.muscles[muscle]?.priority || inputs.priorities[muscle] || "desenvolvimento";
     const rationale: string[] = [];
 
     // 1) Base: volume previamente tolerado (dado real) ou âncora por nível.
@@ -222,6 +240,7 @@ export function buildPrescriptionPlan(
       previousSets: prevPlanned ?? prevRealized,
       deltaVsPreviousCycle: prevPlanned !== null ? sets - prevPlanned : null,
       rationale,
+      source: "motor",
     });
   }
 
@@ -298,6 +317,54 @@ export function buildPrescriptionPlan(
     m.totalEquivalentSets = m.directSets;
   }
 
+  // ---------- Override humano: última palavra, depois de tudo ----------
+  for (const m of muscles) {
+    const o = ov.muscles[m.muscle];
+    if (!o) continue;
+    let touched = false;
+    if (typeof o.lockedSets === "number" && o.lockedSets >= 0) {
+      m.directSets = Math.round(o.lockedSets);
+      m.rationale.push(`volume travado pelo treinador em ${m.directSets} séries/semana`);
+      overridesApplied.push(`${m.label}: volume travado em ${m.directSets} séries/semana.`);
+      touched = true;
+    } else {
+      if (typeof o.minSets === "number" && m.directSets < o.minSets) {
+        m.directSets = Math.round(o.minSets);
+        m.rationale.push(`piso manual do treinador: ${m.directSets} séries/semana`);
+        overridesApplied.push(`${m.label}: piso manual de ${m.directSets} séries/semana.`);
+        touched = true;
+      }
+      if (typeof o.maxSets === "number" && m.directSets > o.maxSets) {
+        m.directSets = Math.round(o.maxSets);
+        m.rationale.push(`teto manual do treinador: ${m.directSets} séries/semana`);
+        overridesApplied.push(`${m.label}: teto manual de ${m.directSets} séries/semana.`);
+        touched = true;
+      }
+    }
+    if (o.priority) {
+      overridesApplied.push(`${m.label}: prioridade manual "${o.priority}".`);
+      touched = true;
+    }
+    if (typeof o.lockedFrequency === "number" && o.lockedFrequency >= 1) {
+      m.frequency = Math.min(weeklyFrequency, Math.round(o.lockedFrequency));
+      m.rationale.push(`frequência travada pelo treinador em ${m.frequency}x/semana`);
+      overridesApplied.push(`${m.label}: frequência travada em ${m.frequency}x/semana.`);
+      touched = true;
+    }
+    if (touched) {
+      m.source = "override";
+      m.totalEquivalentSets = m.directSets;
+      m.maxSetsPerSession = Math.max(2, Math.ceil(m.directSets / Math.max(1, m.frequency)));
+      m.deltaVsPreviousCycle = m.previousSets !== null ? m.directSets - m.previousSets : null;
+    }
+  }
+  if (ov.excludedExercises.length > 0) {
+    overridesApplied.push(`Exercícios proibidos pelo treinador: ${ov.excludedExercises.join(", ")}.`);
+  }
+  if (ov.lockedExercises.length > 0) {
+    overridesApplied.push(`Exercícios obrigatórios definidos pelo treinador: ${ov.lockedExercises.join(", ")}.`);
+  }
+
   // ---------- Segurança ----------
   const painText = [inputs.injuries, inputs.medicalRestrictions, ...inputs.painReports].filter(Boolean).join(" ").toLowerCase();
   if (painText.trim()) {
@@ -354,7 +421,11 @@ export function buildPrescriptionPlan(
     decisionSummary.push("Esforço real desconhecido: nenhuma série com RIR registrado no período.");
   }
   if (deload.recommended) decisionSummary.push(`Descarga sugerida: ${deload.reason}.`);
+  totalDirect = muscles.reduce((a, m) => a + m.directSets, 0);
   decisionSummary.push(`Total de ${totalDirect} séries efetivas diretas por semana.`);
+  if (overridesApplied.length > 0) {
+    decisionSummary.push(`${overridesApplied.length} decisão(ões) vieram de override humano do treinador.`);
+  }
 
   return {
     engineVersion: cfg.version,
@@ -366,6 +437,7 @@ export function buildPrescriptionPlan(
     weeklySetCapacity,
     totalDirectSets: totalDirect,
     muscles: muscles.filter((m) => m.directSets > 0),
+    overridesApplied,
     readiness,
     effort: inputs.effort,
     structured: inputs.structured,
@@ -395,13 +467,15 @@ export function buildPrescriptionPlan(
       maxConsecutiveSessions: inputs.maxConsecutiveSessions,
       effort: inputs.effort,
       structured: inputs.structured,
+      overrides: ov,
     },
     decisionSummary,
   };
 }
 
 /** Bloco de restrições duras que vai ao LLM. O modelo não pode ultrapassar isto. */
-export function planToPromptConstraints(plan: PrescriptionPlan): string {
+export function planToPromptConstraints(plan: PrescriptionPlan, overrides?: TrainerOverrides): string {
+  const ovr = overrides || EMPTY_OVERRIDES;
   const lines = plan.muscles.map(
     (m) =>
       `- ${m.label}: ${m.directSets} séries efetivas/semana, em ${m.frequency} sessão(ões), no máximo ${m.maxSetsPerSession} séries por sessão, repetições ${m.repRange}, RIR alvo ${m.targetRir}${
@@ -426,6 +500,18 @@ REGRAS DURAS:
 4. Respeite a faixa de repetições e o RIR alvo de cada grupo.
 5. Não inclua grupos musculares que não estão na lista acima.
 ${plan.deload.recommended ? "6. Esta é uma fase de DESCARGA: reduza exigência, mantenha técnica, sem falha concêntrica.\n" : ""}${
+    ovr.excludedExercises.length
+      ? `\nEXERCÍCIOS PROIBIDOS PELO TREINADOR (nunca use, nem variações diretas):\n${ovr.excludedExercises.map((e) => `- ${e}`).join("\n")}\n`
+      : ""
+  }${
+    ovr.lockedExercises.length
+      ? `\nEXERCÍCIOS OBRIGATÓRIOS DEFINIDOS PELO TREINADOR (devem aparecer na rotina):\n${ovr.lockedExercises.map((e) => `- ${e}`).join("\n")}\n`
+      : ""
+  }${
+    plan.overridesApplied.length
+      ? `\nDECISÕES HUMANAS JÁ APLICADAS (não questione, não altere):\n${plan.overridesApplied.map((a) => `- ${a}`).join("\n")}\n`
+      : ""
+  }${
     plan.safetyAlerts.length ? `\nALERTAS DE SEGURANÇA:\n${plan.safetyAlerts.map((a) => `- ${a}`).join("\n")}\n` : ""
   }### FIM DAS RESTRIÇÕES DO MOTOR ###`;
 }

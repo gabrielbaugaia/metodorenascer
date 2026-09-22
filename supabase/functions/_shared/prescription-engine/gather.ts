@@ -8,6 +8,7 @@ import { mergeEngineConfig, type EngineConfig } from "./config.ts";
 import { realizedVolumeFromLogs } from "./enforce.ts";
 import { computeReadiness } from "./readiness.ts";
 import { aggregateVolume } from "./muscles.ts";
+import { loadOverrides } from "./overrides.ts";
 import type {
   EffortSignal,
   EngineInputs,
@@ -325,7 +326,11 @@ export async function gatherEngineInputs(
     structured,
     trainerDirectives: null,
     manualProtocol: false,
+    overrides: await loadOverrides(supabase, userId),
   };
+  if (Object.keys(inputs.overrides.muscles).length > 0 || inputs.overrides.lockedFrequency) {
+    notes.push("existem travas manuais do treinador aplicadas a este aluno");
+  }
 
   return { inputs, config, notes };
 }

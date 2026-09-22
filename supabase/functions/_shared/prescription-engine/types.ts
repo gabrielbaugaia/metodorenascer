@@ -88,6 +88,40 @@ export interface EngineInputs {
   // Treinador
   trainerDirectives: string | null;
   manualProtocol: boolean;
+  overrides: TrainerOverrides;
+}
+
+/** Trava manual do treinador para um grupo muscular. */
+export interface MuscleOverride {
+  lockedSets?: number | null;
+  minSets?: number | null;
+  maxSets?: number | null;
+  priority?: MusclePriority | null;
+  lockedFrequency?: number | null;
+}
+
+/** Overrides humanos. Sempre vencem o motor e a IA. */
+export interface TrainerOverrides {
+  muscles: Partial<Record<MuscleKey, MuscleOverride>>;
+  lockedFrequency: number | null;
+  excludedExercises: string[];
+  lockedExercises: string[];
+  deloadDirective: "forcar" | "ignorar" | null;
+}
+
+export const EMPTY_OVERRIDES: TrainerOverrides = {
+  muscles: {},
+  lockedFrequency: null,
+  excludedExercises: [],
+  lockedExercises: [],
+  deloadDirective: null,
+};
+
+export type GateStatus = "APROVADO" | "REQUER_REVISAO" | "BLOQUEADO";
+
+export interface GateResult {
+  status: GateStatus;
+  reasons: string[];
 }
 
 export interface ReadinessResult {
@@ -113,6 +147,8 @@ export interface MusclePrescription {
   previousSets: number | null;
   deltaVsPreviousCycle: number | null;
   rationale: string[];
+  /** De onde veio a decisão final deste grupo. */
+  source: "motor" | "override";
 }
 
 /** Esforço real relatado pelo aluno (RIR) nas últimas semanas. */
@@ -153,4 +189,6 @@ export interface PrescriptionPlan {
   safetyAlerts: string[];
   inputsSnapshot: Record<string, unknown>;
   decisionSummary: string[];
+  /** Decisões que vieram de override humano, já aplicadas. */
+  overridesApplied: string[];
 }

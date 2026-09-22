@@ -3,6 +3,7 @@ import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.t
 import { buildPrescriptionPlan } from "./engine.ts";
 import { aggregateVolume } from "./muscles.ts";
 import { enforcePlan } from "./enforce.ts";
+import { EMPTY_OVERRIDES } from "./types.ts";
 import type { EngineInputs, MuscleKey, ReadinessResult } from "./types.ts";
 
 function readiness(score: number, confidence: ReadinessResult["confidence"] = "alta"): ReadinessResult {
@@ -26,6 +27,7 @@ function baseInputs(over: Partial<EngineInputs> = {}): EngineInputs {
     adherencePct: 85, sessionsLast4Weeks: 14, progressionSignal: "estavel",
     lastDeloadWeeksAgo: null, readiness: readiness(70),
     trainerDirectives: null, manualProtocol: false,
+    overrides: structuredClone(EMPTY_OVERRIDES),
     ...over,
   };
 }
