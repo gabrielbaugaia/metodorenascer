@@ -124,7 +124,7 @@ export function buildPrescriptionPlan(
 
   for (const muscle of ALL_MUSCLES) {
     const range = cfg.ranges[muscle];
-    const priority: MusclePriority = inputs.priorities[muscle] || "desenvolvimento";
+    const priority: MusclePriority = ov.muscles[muscle]?.priority || inputs.priorities[muscle] || "desenvolvimento";
     const rationale: string[] = [];
 
     // 1) Base: volume previamente tolerado (dado real) ou âncora por nível.
