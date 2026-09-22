@@ -394,11 +394,42 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
       }
     }
 
+    // ============================================================
+    // ENGENHARIA DO MOVIMENTO — PRESCRIPTION ENGINE v1
+    // A dose (volume/frequência/RIR) é calculada por regras determinísticas.
+    // A IA só escolhe exercícios e organiza a rotina dentro desses limites.
+    // ============================================================
+    let prescriptionPlan: PrescriptionPlan | null = null;
+    let engineNotes: string[] = [];
+
+    if (tipo === "treino") {
+      try {
+        let engineProfile = (userContext && typeof userContext === "object") ? userContext as Record<string, unknown> : null;
+        if (!engineProfile) {
+          const { data: p } = await supabaseClient.from("profiles").select("*").eq("id", targetUserId).maybeSingle();
+          engineProfile = (p || {}) as Record<string, unknown>;
+        }
+        const gathered = await gatherEngineInputs(supabaseClient, targetUserId, engineProfile);
+        engineNotes = gathered.notes;
+        prescriptionPlan = buildPrescriptionPlan(gathered.inputs, gathered.config);
+        console.log(
+          `[engine] ${prescriptionPlan.engineVersion} | confiança ${prescriptionPlan.confidence} | ${prescriptionPlan.totalDirectSets} séries/sem | prontidão ${prescriptionPlan.readiness.score}`,
+        );
+      } catch (engineErr) {
+        console.error("[engine] falha ao calcular dose (seguindo sem motor):", engineErr);
+        prescriptionPlan = null;
+      }
+    }
+
     // Selecionar prompts baseado no tipo
     if (tipo === "treino") {
       // P1 FIX: Passar lista de exercícios para o prompt
       systemPrompt = getTreinoSystemPrompt(durationWeeks, weeksPerCycle, totalCycles, exerciseNames);
       userPrompt = getTreinoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments, healthContext);
+      if (prescriptionPlan) {
+        systemPrompt += `\n\n${planToPromptConstraints(prescriptionPlan)}`;
+        userPrompt += `\n\n${planToPromptConstraints(prescriptionPlan)}`;
+      }
     } else if (tipo === "nutricao") {
       systemPrompt = getNutricaoSystemPrompt(durationWeeks, weeksPerCycle);
       userPrompt = getNutricaoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments, healthContext);
