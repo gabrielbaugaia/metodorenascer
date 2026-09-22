@@ -848,6 +848,37 @@ INSTRUÇÕES DE CORREÇÃO:
     protocolData.metodo = "Consultoria Gabriel Baú";
     protocolData.versao_guia = "1.0";
 
+    // ============================================================
+    // Conformidade com o motor: a IA não pode furar a dose calculada.
+    // ============================================================
+    let compliance: ComplianceReport | null = null;
+    let prescriptionMeta: Record<string, unknown> | null = null;
+    if (tipo === "treino" && prescriptionPlan) {
+      try {
+        compliance = enforcePlan(protocolData, prescriptionPlan);
+        if (!compliance.compliant) {
+          console.warn("[engine] desvio de dose após ajuste:", JSON.stringify(compliance.perMuscle.filter((p) => !p.withinTolerance)));
+        }
+        protocolData.rir_alvo = Object.fromEntries(prescriptionPlan.muscles.map((m) => [m.label, m.targetRir]));
+        prescriptionMeta = {
+          engine_version: prescriptionPlan.engineVersion,
+          generated_at: prescriptionPlan.generatedAt,
+          confidence: prescriptionPlan.confidence,
+          confidence_reasons: prescriptionPlan.confidenceReasons,
+          deload: prescriptionPlan.deload,
+          readiness: prescriptionPlan.readiness,
+          safety_alerts: prescriptionPlan.safetyAlerts,
+          decision_summary: prescriptionPlan.decisionSummary,
+          inputs_snapshot: prescriptionPlan.inputsSnapshot,
+          engine_notes: engineNotes,
+          plan: prescriptionPlan,
+          compliance,
+        };
+      } catch (e) {
+        console.error("[engine] falha na conformidade (não bloqueante):", e);
+      }
+    }
+
     // Save protocol to database
     const { data: savedProtocol, error: saveError } = await supabaseClient
       .from("protocolos")
@@ -858,6 +889,7 @@ INSTRUÇÕES DE CORREÇÃO:
         titulo: protocolData.titulo || `Protocolo de ${tipo}`,
         conteudo: protocolData,
         ativo: true,
+        ...(prescriptionMeta ? { prescription_meta: prescriptionMeta } : {}),
       })
       .select()
       .single();
