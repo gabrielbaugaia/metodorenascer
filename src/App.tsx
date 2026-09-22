@@ -172,6 +172,7 @@ const App = () => {
             <Route path="/admin/clientes/:id" element={<AdminGuard><AdminClienteDetalhes /></AdminGuard>} />
             <Route path="/admin/criar-cliente" element={<AdminGuard><AdminCriarCliente /></AdminGuard>} />
             <Route path="/admin/planos" element={<AdminGuard><AdminPlanos /></AdminGuard>} />
+            <Route path="/admin/motor" element={<AdminGuard><AdminMotor /></AdminGuard>} />
             <Route path="/admin/suporte" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
             <Route path="/admin/suporte-chats" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
             <Route path="/admin/mensagens" element={<AdminGuard><AdminMensagens /></AdminGuard>} />
