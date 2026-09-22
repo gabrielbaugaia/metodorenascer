@@ -239,6 +239,7 @@ export function buildPrescriptionPlan(
       previousSets: prevPlanned ?? prevRealized,
       deltaVsPreviousCycle: prevPlanned !== null ? sets - prevPlanned : null,
       rationale,
+      source: "motor",
     });
   }
 
@@ -313,6 +314,54 @@ export function buildPrescriptionPlan(
     m.repRange = isSmall ? reps.isolador : reps.composto;
     m.targetRir = isSmall ? rirCfg.isolador : rirCfg.composto;
     m.totalEquivalentSets = m.directSets;
+  }
+
+  // ---------- Override humano: última palavra, depois de tudo ----------
+  for (const m of muscles) {
+    const o = ov.muscles[m.muscle];
+    if (!o) continue;
+    let touched = false;
+    if (typeof o.lockedSets === "number" && o.lockedSets >= 0) {
+      m.directSets = Math.round(o.lockedSets);
+      m.rationale.push(`volume travado pelo treinador em ${m.directSets} séries/semana`);
+      overridesApplied.push(`${m.label}: volume travado em ${m.directSets} séries/semana.`);
+      touched = true;
+    } else {
+      if (typeof o.minSets === "number" && m.directSets < o.minSets) {
+        m.directSets = Math.round(o.minSets);
+        m.rationale.push(`piso manual do treinador: ${m.directSets} séries/semana`);
+        overridesApplied.push(`${m.label}: piso manual de ${m.directSets} séries/semana.`);
+        touched = true;
+      }
+      if (typeof o.maxSets === "number" && m.directSets > o.maxSets) {
+        m.directSets = Math.round(o.maxSets);
+        m.rationale.push(`teto manual do treinador: ${m.directSets} séries/semana`);
+        overridesApplied.push(`${m.label}: teto manual de ${m.directSets} séries/semana.`);
+        touched = true;
+      }
+    }
+    if (o.priority) {
+      overridesApplied.push(`${m.label}: prioridade manual "${o.priority}".`);
+      touched = true;
+    }
+    if (typeof o.lockedFrequency === "number" && o.lockedFrequency >= 1) {
+      m.frequency = Math.min(weeklyFrequency, Math.round(o.lockedFrequency));
+      m.rationale.push(`frequência travada pelo treinador em ${m.frequency}x/semana`);
+      overridesApplied.push(`${m.label}: frequência travada em ${m.frequency}x/semana.`);
+      touched = true;
+    }
+    if (touched) {
+      m.source = "override";
+      m.totalEquivalentSets = m.directSets;
+      m.maxSetsPerSession = Math.max(2, Math.ceil(m.directSets / Math.max(1, m.frequency)));
+      m.deltaVsPreviousCycle = m.previousSets !== null ? m.directSets - m.previousSets : null;
+    }
+  }
+  if (ov.excludedExercises.length > 0) {
+    overridesApplied.push(`Exercícios proibidos pelo treinador: ${ov.excludedExercises.join(", ")}.`);
+  }
+  if (ov.lockedExercises.length > 0) {
+    overridesApplied.push(`Exercícios obrigatórios definidos pelo treinador: ${ov.lockedExercises.join(", ")}.`);
   }
 
   // ---------- Segurança ----------
