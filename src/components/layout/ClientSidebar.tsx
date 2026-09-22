@@ -98,6 +98,12 @@ const adminSections: AdminSection[] = [
     ],
   },
   {
+    label: "PRESCRIÇÃO",
+    items: [
+      { title: "Motor de Prescrição", url: "/admin/motor", icon: Dumbbell },
+    ],
+  },
+  {
     label: "CONTEÚDO",
     items: [
       { title: "Biblioteca de Vídeos", url: "/admin/videos", icon: Video },

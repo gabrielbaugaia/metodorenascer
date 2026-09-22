@@ -69,7 +69,12 @@ export function buildPrescriptionPlan(
   const decisionSummary: string[] = [];
   const safetyAlerts: string[] = [];
 
-  const weeklyFrequency = clamp(Math.round(inputs.weeklyFrequency || 3), 1, 7);
+  let weeklyFrequency = clamp(Math.round(inputs.weeklyFrequency || 3), 1, 7);
+  // Sem dias consecutivos, não cabem mais de 4 sessões numa semana.
+  if (inputs.allowsConsecutiveDays === false && weeklyFrequency > 4) {
+    weeklyFrequency = 4;
+    decisionSummary.push("Aluno não treina em dias consecutivos: frequência limitada a 4 sessões por semana.");
+  }
   const sessionMinutes = clamp(Math.round(inputs.sessionMinutes || 60), 20, 150);
   const perSession = sessionSetCapacity(sessionMinutes, cfg);
   const weeklySetCapacity = perSession * weeklyFrequency;
@@ -138,6 +143,18 @@ export function buildPrescriptionPlan(
       rationale.push(`aderência ${Math.round(adherence)}%: ${d.adherenceReduceSets}`);
     }
 
+    // 4b) Esforço real relatado (RIR). Só entra com amostra suficiente.
+    if (inputs.effort.reading === "muito_alto") {
+      sets += d.effort.highEffortSetsAdjust;
+      rationale.push(
+        `RIR médio ${inputs.effort.avgRir?.toFixed(1)} (esforço muito alto): ${d.effort.highEffortSetsAdjust}`,
+      );
+    } else if (inputs.effort.reading === "baixo") {
+      rationale.push(
+        `RIR médio ${inputs.effort.avgRir?.toFixed(1)} (esforço baixo): ajustar intensidade antes de somar volume`,
+      );
+    }
+
     // 5) Retorno decrescente: sem justificativa, não passa do topo do default.
     const canExceedDefault =
       priority === "alta" &&
@@ -162,9 +179,17 @@ export function buildPrescriptionPlan(
     if (prevPlanned !== null && prevPlanned > 0) {
       const delta = sets - prevPlanned;
       const blockedByAdherence = adherence !== null && adherence < d.adherenceBlockProgressionBelow && delta > 0;
+      const blockedByEffort = inputs.effort.reading !== "adequado" && inputs.effort.reading !== "desconhecido" && delta > 0;
       if (blockedByAdherence) {
         sets = prevPlanned;
         rationale.push(`aderência < ${d.adherenceBlockProgressionBelow}%: sem aumento de volume`);
+      } else if (blockedByEffort) {
+        sets = prevPlanned;
+        rationale.push(
+          inputs.effort.reading === "muito_alto"
+            ? "esforço registrado muito alto: volume mantido"
+            : "esforço registrado baixo: corrigir intensidade antes de aumentar volume",
+        );
       } else if (Math.abs(delta) > d.maxWeeklyDelta) {
         sets = prevPlanned + Math.sign(delta) * d.maxWeeklyDelta;
         rationale.push(`ajuste limitado a ${d.maxWeeklyDelta} séries por ciclo`);
@@ -304,11 +329,30 @@ export function buildPrescriptionPlan(
   else if (readiness.confidence === "media") points += 1;
   else confidenceReasons.push("poucos dados de recuperação (sono/VFC/check-in)");
 
-  const confidence: Confidence = points >= 9 ? "alta" : points >= 6 ? "media" : "baixa";
+  // Esforço real registrado pelo aluno (RIR).
+  if (inputs.effort.reading !== "desconhecido") points += 1;
+  else confidenceReasons.push("sem RIR registrado nas séries (esforço real desconhecido)");
+
+  // Anamnese estruturada x dedução por texto livre.
+  const st = inputs.structured;
+  if (st.weeklyFrequency && st.sessionMinutes) points += 1;
+  else confidenceReasons.push("frequência/duração deduzidas de texto livre da anamnese");
+  if (st.priorities) points += 1;
+  else confidenceReasons.push("prioridade muscular deduzida de texto livre");
+  if (!st.equipment) confidenceReasons.push("equipamentos disponíveis não informados");
+
+  const confidence: Confidence = points >= 12 ? "alta" : points >= 8 ? "media" : "baixa";
 
   decisionSummary.unshift(
     `Nível ${inputs.level}, ${weeklyFrequency}x/semana, ${sessionMinutes} min por sessão, prontidão ${readiness.score}/100 (confiança ${readiness.confidence}).`,
   );
+  if (inputs.effort.reading !== "desconhecido") {
+    decisionSummary.push(
+      `Esforço real: RIR médio ${inputs.effort.avgRir?.toFixed(1)} em ${inputs.effort.setsWithRir} séries registradas (${inputs.effort.reading.replace("_", " ")}).`,
+    );
+  } else {
+    decisionSummary.push("Esforço real desconhecido: nenhuma série com RIR registrado no período.");
+  }
   if (deload.recommended) decisionSummary.push(`Descarga sugerida: ${deload.reason}.`);
   decisionSummary.push(`Total de ${totalDirect} séries efetivas diretas por semana.`);
 
@@ -323,6 +367,8 @@ export function buildPrescriptionPlan(
     totalDirectSets: totalDirect,
     muscles: muscles.filter((m) => m.directSets > 0),
     readiness,
+    effort: inputs.effort,
+    structured: inputs.structured,
     deload,
     confidence,
     confidenceReasons,
@@ -344,6 +390,11 @@ export function buildPrescriptionPlan(
       readinessConfidence: readiness.confidence,
       hasTrainerDirectives: !!inputs.trainerDirectives,
       equipment: inputs.equipment,
+      availableDays: inputs.availableDays,
+      allowsConsecutiveDays: inputs.allowsConsecutiveDays,
+      maxConsecutiveSessions: inputs.maxConsecutiveSessions,
+      effort: inputs.effort,
+      structured: inputs.structured,
     },
     decisionSummary,
   };

@@ -11,6 +11,7 @@ interface SetLog {
   restSeconds: number;
   restRespected: boolean;
   completedAt: Date;
+  rir?: number | null;
 }
 
 interface RestTimer {
@@ -165,6 +166,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
         restSeconds: row.rest_seconds,
         restRespected: row.rest_respected,
         completedAt: new Date(row.created_at),
+        rir: row.rir === null || row.rir === undefined ? null : Number(row.rir),
       }));
 
       // Mark all recovered logs as already persisted
@@ -319,7 +321,8 @@ export function useWorkoutSession(exercises: Exercise[]) {
       setNumber: number,
       weightKg: number,
       repsDone: number,
-      restSeconds: number
+      restSeconds: number,
+      rir?: number | null
     ) => {
       const newLog: SetLog = {
         exerciseName,
@@ -329,6 +332,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
         restSeconds,
         restRespected: true,
         completedAt: new Date(),
+        rir: rir === undefined ? null : rir,
       };
 
       setLogs((prev) => {
@@ -371,6 +375,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
               reps_done: repsDone,
               rest_seconds: restSeconds,
               rest_respected: true,
+              rir: rir === undefined ? null : rir,
             })
             .then(({ error }) => {
               if (error) {
@@ -439,6 +444,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
           reps_done: l.repsDone,
           rest_seconds: l.restSeconds,
           rest_respected: l.restRespected,
+          rir: l.rir === undefined ? null : l.rir,
         }));
 
         await supabase.from("workout_set_logs").insert(setLogRows);

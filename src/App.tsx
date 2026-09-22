@@ -40,6 +40,7 @@ const AdminClientes = lazy(() => import("./pages/admin/AdminClientes"));
 const AdminClienteDetalhes = lazy(() => import("./pages/admin/AdminClienteDetalhes"));
 const AdminCriarCliente = lazy(() => import("./pages/admin/AdminCriarCliente"));
 const AdminPlanos = lazy(() => import("./pages/admin/AdminPlanos"));
+const AdminMotor = lazy(() => import("./pages/admin/AdminMotor"));
 const AdminSuporteChats = lazy(() => import("./pages/admin/AdminSuporteChats"));
 const AdminMensagens = lazy(() => import("./pages/admin/AdminMensagens"));
 const AdminVideos = lazy(() => import("./pages/admin/AdminVideos"));
@@ -171,6 +172,7 @@ const App = () => {
             <Route path="/admin/clientes/:id" element={<AdminGuard><AdminClienteDetalhes /></AdminGuard>} />
             <Route path="/admin/criar-cliente" element={<AdminGuard><AdminCriarCliente /></AdminGuard>} />
             <Route path="/admin/planos" element={<AdminGuard><AdminPlanos /></AdminGuard>} />
+            <Route path="/admin/motor" element={<AdminGuard><AdminMotor /></AdminGuard>} />
             <Route path="/admin/suporte" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
             <Route path="/admin/suporte-chats" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
             <Route path="/admin/mensagens" element={<AdminGuard><AdminMensagens /></AdminGuard>} />

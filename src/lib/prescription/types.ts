@@ -106,6 +106,23 @@ export interface MusclePrescription {
   rationale: string[];
 }
 
+export interface EffortSignal {
+  avgRir: number | null;
+  setsWithRir: number;
+  totalSets: number;
+  coveragePct: number;
+  reading: "muito_alto" | "adequado" | "baixo" | "desconhecido";
+}
+
+export interface StructuredCoverage {
+  weeklyFrequency: boolean;
+  sessionMinutes: boolean;
+  availableDays: boolean;
+  priorities: boolean;
+  equipment: boolean;
+  consecutiveDays: boolean;
+}
+
 export interface PrescriptionPlan {
   engineVersion: string;
   generatedAt: string;
@@ -117,6 +134,8 @@ export interface PrescriptionPlan {
   totalDirectSets: number;
   muscles: MusclePrescription[];
   readiness: ReadinessResult;
+  effort?: EffortSignal;
+  structured?: StructuredCoverage;
   deload: { recommended: boolean; reason: string | null };
   confidence: Confidence;
   confidenceReasons: string[];

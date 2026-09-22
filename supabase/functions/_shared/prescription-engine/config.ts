@@ -125,6 +125,18 @@ export const ENGINE_DEFAULTS = {
     minWeeksBetween: 4,
     readinessFloor: 40,
   },
+
+  /** Leitura do esforço real (RIR registrado pelo aluno). */
+  effort: {
+    /** Mínimo de séries com RIR para o sinal ser considerado. */
+    minSamples: 10,
+    /** RIR médio igual ou abaixo disto = esforço muito alto. */
+    highEffortRirMax: 0.8,
+    /** RIR médio igual ou acima disto = esforço baixo. */
+    lowEffortRirMin: 3.2,
+    /** Ajuste em séries quando o esforço está muito alto. */
+    highEffortSetsAdjust: -1,
+  },
 };
 
 export type EngineConfig = {

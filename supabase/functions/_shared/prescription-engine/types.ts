@@ -56,6 +56,9 @@ export interface EngineInputs {
   // Agenda
   weeklyFrequency: number;
   sessionMinutes: number;
+  availableDays: string[];
+  allowsConsecutiveDays: boolean | null;
+  maxConsecutiveSessions: number | null;
 
   // Saúde / limitações
   injuries: string | null;
@@ -75,6 +78,12 @@ export interface EngineInputs {
 
   // Recuperação
   readiness: ReadinessResult;
+
+  // Esforço real (RIR registrado pelo aluno)
+  effort: EffortSignal;
+
+  // Origem das entradas (estruturado x texto livre)
+  structured: StructuredCoverage;
 
   // Treinador
   trainerDirectives: string | null;
@@ -106,6 +115,25 @@ export interface MusclePrescription {
   rationale: string[];
 }
 
+/** Esforço real relatado pelo aluno (RIR) nas últimas semanas. */
+export interface EffortSignal {
+  avgRir: number | null;
+  setsWithRir: number;
+  totalSets: number;
+  coveragePct: number;
+  reading: "muito_alto" | "adequado" | "baixo" | "desconhecido";
+}
+
+/** Quais entradas vieram de campo estruturado (true) ou de texto livre/default (false). */
+export interface StructuredCoverage {
+  weeklyFrequency: boolean;
+  sessionMinutes: boolean;
+  availableDays: boolean;
+  priorities: boolean;
+  equipment: boolean;
+  consecutiveDays: boolean;
+}
+
 export interface PrescriptionPlan {
   engineVersion: string;
   generatedAt: string;
@@ -117,6 +145,8 @@ export interface PrescriptionPlan {
   totalDirectSets: number;
   muscles: MusclePrescription[];
   readiness: ReadinessResult;
+  effort: EffortSignal;
+  structured: StructuredCoverage;
   deload: { recommended: boolean; reason: string | null };
   confidence: Confidence;
   confidenceReasons: string[];
