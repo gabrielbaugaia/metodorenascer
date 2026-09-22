@@ -223,6 +223,26 @@ export function buildPrescriptionPlan(
       m.rationale.push(`agenda real (${weeklyFrequency}x de ${sessionMinutes} min): volume ajustado à capacidade`);
     }
     totalDirect = muscles.reduce((a, m) => a + m.directSets, 0);
+
+    // Se ainda não cabe, cortar 1 série por vez do maior volume,
+    // preservando primeiro os grupos marcados como prioridade alta.
+    const priorityRank: Record<MusclePriority, number> = { reduzir: 0, manutencao: 1, desenvolvimento: 2, alta: 3 };
+    let guard = 500;
+    while (totalDirect > weeklySetCapacity && guard-- > 0) {
+      const candidates = muscles.filter((m) => m.directSets > 0);
+      if (candidates.length === 0) break;
+      candidates.sort((a, b) =>
+        priorityRank[a.priority] - priorityRank[b.priority] || b.directSets - a.directSets
+      );
+      candidates[0].directSets -= 1;
+      totalDirect -= 1;
+    }
+    for (const m of muscles) {
+      if (m.directSets > 0 && m.directSets < 4 && m.priority !== "reduzir") {
+        m.rationale.push("volume mínimo de manutenção pela agenda disponível");
+      }
+    }
+
     decisionSummary.push(
       `Capacidade semanal de ~${weeklySetCapacity} séries efetivas (${weeklyFrequency} sessões x ${perSession} séries): volume total ajustado.`,
     );
