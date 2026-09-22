@@ -4,6 +4,11 @@ import { getCorsHeaders, handleCorsPreflightRequest, createErrorResponse, create
 import { getTreinoSystemPrompt, getTreinoUserPrompt } from "./prompts/treino.ts";
 import { getNutricaoSystemPrompt, getNutricaoUserPrompt } from "./prompts/nutricao.ts";
 import { getMindsetSystemPrompt, getMindsetUserPrompt } from "./prompts/mindset.ts";
+import { gatherEngineInputs } from "../_shared/prescription-engine/gather.ts";
+import { buildPrescriptionPlan, planToPromptConstraints } from "../_shared/prescription-engine/engine.ts";
+import { enforcePlan } from "../_shared/prescription-engine/enforce.ts";
+import type { PrescriptionPlan } from "../_shared/prescription-engine/types.ts";
+import type { ComplianceReport } from "../_shared/prescription-engine/enforce.ts";
 import { 
   validateTreinoProtocol, 
   validateNutricaoProtocol, 
