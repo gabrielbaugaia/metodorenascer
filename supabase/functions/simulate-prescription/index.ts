@@ -1,12 +1,15 @@
 // ============================================================================
 // ENGENHARIA DO MOVIMENTO — PRESCRIPTION ENGINE v1
-// Simulação de dose: roda o motor sem gerar nem salvar protocolo.
-// Acesso restrito a admin. Nunca escreve no banco.
+// Shadow mode / simulação: roda o motor sem gerar nem salvar protocolo.
+// Acesso restrito a admin. Nunca escreve em protocolos nem em treinos.
+// A única escrita possível é o log da execução em prescription_runs.
 // ============================================================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { gatherEngineInputs } from "../_shared/prescription-engine/gather.ts";
 import { buildPrescriptionPlan } from "../_shared/prescription-engine/engine.ts";
+import { evaluateGate } from "../_shared/prescription-engine/gate.ts";
+import { buildShadowDiff, currentVolumeFromProtocol } from "../_shared/prescription-engine/shadow.ts";
 import { mergeEngineConfig } from "../_shared/prescription-engine/config.ts";
 import { TEST_PROFILES, buildTestInputs } from "../_shared/prescription-engine/test-profiles.ts";
 
@@ -43,7 +46,7 @@ serve(async (req) => {
     if (!isAdmin) return json({ error: "Forbidden" }, 403);
 
     const body = await req.json().catch(() => ({}));
-    const { userId, profileKey } = body as { userId?: string; profileKey?: string };
+    const { userId, profileKey, log } = body as { userId?: string; profileKey?: string; log?: boolean };
 
     // Configuração ativa do motor (mesma usada na geração real).
     let config = mergeEngineConfig(null);
@@ -62,10 +65,19 @@ serve(async (req) => {
       if (!profile) return json({ error: "Perfil de teste desconhecido" }, 400);
       const inputs = buildTestInputs(profile);
       const plan = buildPrescriptionPlan(inputs, config);
-      return json({ mode: "perfil_teste", profile: { key: profile.key, label: profile.label }, inputs, plan, notes: [] });
+      const gate = evaluateGate(plan, inputs);
+      return json({
+        mode: "perfil_teste",
+        profile: { key: profile.key, label: profile.label },
+        inputs,
+        plan,
+        gate,
+        diff: [],
+        notes: [],
+      });
     }
 
-    // ----- Aluno real -----
+    // ----- Aluno real (shadow mode) -----
     if (!userId) return json({ error: "Informe userId ou profileKey" }, 400);
 
     const { data: profile, error: profileError } = await supabase
@@ -76,17 +88,46 @@ serve(async (req) => {
     if (profileError || !profile) return json({ error: "Aluno não encontrado" }, 404);
 
     const gathered = await gatherEngineInputs(supabase, userId, profile);
-    const plan = buildPrescriptionPlan(gathered.inputs, config);
+    const plan = buildPrescriptionPlan(gathered.inputs, gathered.config);
+    const gate = evaluateGate(plan, gathered.inputs);
 
-    // Protocolo atual, apenas para comparação (somente leitura).
+    // Protocolo atual, somente leitura, apenas para comparação.
     const { data: current } = await supabase
       .from("protocolos")
-      .select("id, created_at, prescription_meta")
+      .select("id, created_at, titulo, conteudo, prescription_meta")
       .eq("user_id", userId)
       .eq("tipo", "treino")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    const currentVolume = currentVolumeFromProtocol(current ?? null);
+    const diff = buildShadowDiff(plan, currentVolume);
+
+    let runId: string | null = null;
+    if (log) {
+      const { data: run } = await supabase
+        .from("prescription_runs")
+        .insert({
+          user_id: userId,
+          mode: "shadow",
+          engine_version: plan.engineVersion,
+          status: gate.status,
+          review_reasons: gate.reasons,
+          confidence: plan.confidence,
+          inputs_snapshot: plan.inputsSnapshot,
+          plan,
+          previous_volume: currentVolume.volume,
+          proposed_volume: Object.fromEntries(plan.muscles.map((m) => [m.muscle, m.directSets])),
+          changes: diff,
+          alerts: plan.safetyAlerts,
+          overrides_applied: plan.overridesApplied,
+          created_by: user.id,
+        })
+        .select("id")
+        .maybeSingle();
+      runId = run?.id ?? null;
+    }
 
     return json({
       mode: "aluno",
@@ -94,7 +135,17 @@ serve(async (req) => {
       inputs: gathered.inputs,
       notes: gathered.notes,
       plan,
-      currentProtocol: current ?? null,
+      gate,
+      diff,
+      runId,
+      currentProtocol: current
+        ? {
+          id: current.id,
+          titulo: current.titulo,
+          created_at: current.created_at,
+          volumeSource: currentVolume.source,
+        }
+        : null,
     });
   } catch (err) {
     console.error("[simulate-prescription]", err);
