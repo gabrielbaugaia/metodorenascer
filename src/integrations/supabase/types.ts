@@ -1940,6 +1940,54 @@ export type Database = {
           },
         ]
       }
+      prescription_engine_config_history: {
+        Row: {
+          action: string
+          changed_by: string | null
+          config_id: string | null
+          created_at: string
+          id: string
+          new_config: Json | null
+          previous_config: Json | null
+          summary: string | null
+        }
+        Insert: {
+          action?: string
+          changed_by?: string | null
+          config_id?: string | null
+          created_at?: string
+          id?: string
+          new_config?: Json | null
+          previous_config?: Json | null
+          summary?: string | null
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          config_id?: string | null
+          created_at?: string
+          id?: string
+          new_config?: Json | null
+          previous_config?: Json | null
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescription_engine_config_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescription_engine_config_history_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "prescription_engine_config"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           acquisition_channel: string | null
@@ -1997,6 +2045,13 @@ export type Database = {
           toma_medicamentos: boolean | null
           training_level: string | null
           training_location: string | null
+          treino_dias_consecutivos: boolean | null
+          treino_dias_semana: string[] | null
+          treino_duracao_sessao_min: number | null
+          treino_equipamentos: string[] | null
+          treino_frequencia_semanal: number | null
+          treino_max_sessoes_consecutivas: number | null
+          treino_prioridades: Json | null
           updated_at: string | null
           weight: number | null
           whatsapp: string | null
@@ -2057,6 +2112,13 @@ export type Database = {
           toma_medicamentos?: boolean | null
           training_level?: string | null
           training_location?: string | null
+          treino_dias_consecutivos?: boolean | null
+          treino_dias_semana?: string[] | null
+          treino_duracao_sessao_min?: number | null
+          treino_equipamentos?: string[] | null
+          treino_frequencia_semanal?: number | null
+          treino_max_sessoes_consecutivas?: number | null
+          treino_prioridades?: Json | null
           updated_at?: string | null
           weight?: number | null
           whatsapp?: string | null
@@ -2117,6 +2179,13 @@ export type Database = {
           toma_medicamentos?: boolean | null
           training_level?: string | null
           training_location?: string | null
+          treino_dias_consecutivos?: boolean | null
+          treino_dias_semana?: string[] | null
+          treino_duracao_sessao_min?: number | null
+          treino_equipamentos?: string[] | null
+          treino_frequencia_semanal?: number | null
+          treino_max_sessoes_consecutivas?: number | null
+          treino_prioridades?: Json | null
           updated_at?: string | null
           weight?: number | null
           whatsapp?: string | null

@@ -18,7 +18,17 @@ interface SetLog {
   restSeconds: number;
   restRespected: boolean;
   completedAt: Date;
+  rir?: number | null;
 }
+
+/** Escala simples de esforço. Opcional: o aluno conclui o treino sem preencher. */
+const RIR_OPTIONS: { value: number; label: string }[] = [
+  { value: 0, label: "0" },
+  { value: 1, label: "1" },
+  { value: 2, label: "2" },
+  { value: 3, label: "3" },
+  { value: 4, label: "4+" },
+];
 
 interface ExerciseSetTrackerProps {
   exerciseName: string;
@@ -34,7 +44,8 @@ interface ExerciseSetTrackerProps {
     setNumber: number,
     weightKg: number,
     repsDone: number,
-    restSeconds: number
+    restSeconds: number,
+    rir?: number | null
   ) => void;
   onExerciseClick?: (exerciseName: string) => void;
 }
@@ -60,6 +71,7 @@ export function ExerciseSetTracker({
 
   const [weights, setWeights] = useState<Record<number, string>>({});
   const [reps, setReps] = useState<Record<number, string>>({});
+  const [rirBySet, setRirBySet] = useState<Record<number, number>>({});
 
   const getWeight = (setNum: number) => {
     if (weights[setNum] !== undefined) return weights[setNum];
@@ -78,7 +90,8 @@ export function ExerciseSetTracker({
   const handleLog = (setNum: number) => {
     const w = parseFloat(getWeight(setNum)) || 0;
     const r = parseInt(getReps(setNum)) || 0;
-    onLogSet(exerciseName, setNum, w, r, restSeconds);
+    const rir = rirBySet[setNum];
+    onLogSet(exerciseName, setNum, w, r, restSeconds, rir === undefined ? null : rir);
   };
 
   return (
@@ -167,6 +180,11 @@ export function ExerciseSetTracker({
                     <span className="text-sm font-semibold text-foreground">
                       {completed.repsDone} reps
                     </span>
+                    {completed.rir !== null && completed.rir !== undefined && (
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        RIR {completed.rir >= 4 ? "4+" : completed.rir}
+                      </span>
+                    )}
                   </div>
                 );
               }
@@ -175,8 +193,9 @@ export function ExerciseSetTracker({
                 return (
                   <div
                     key={setNum}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 bg-muted/30"
+                    className="px-3 py-2 rounded-lg border border-border/50 bg-muted/30 space-y-2"
                   >
+                  <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-12 shrink-0">
                       Série {setNum}
                     </span>
@@ -216,6 +235,39 @@ export function ExerciseSetTracker({
                     >
                       OK
                     </Button>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[11px] text-muted-foreground mr-1">
+                        Esforço (opcional) — repetições que sobraram:
+                      </span>
+                      {RIR_OPTIONS.map((opt) => {
+                        const active = rirBySet[setNum] === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            aria-label={`Registrar RIR ${opt.label} na série ${setNum}`}
+                            aria-pressed={active}
+                            onClick={() =>
+                              setRirBySet((prev) => {
+                                const next = { ...prev };
+                                if (active) delete next[setNum];
+                                else next[setNum] = opt.value;
+                                return next;
+                              })
+                            }
+                            className={cn(
+                              "min-w-11 h-9 px-2 rounded-lg border text-xs transition-colors duration-200",
+                              active
+                                ? "border-brand-gold bg-brand-gold/15 text-foreground"
+                                : "border-border/50 text-muted-foreground"
+                            )}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               }

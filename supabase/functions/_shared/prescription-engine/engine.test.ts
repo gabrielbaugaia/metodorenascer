@@ -15,6 +15,12 @@ function baseInputs(over: Partial<EngineInputs> = {}): EngineInputs {
     level: "intermediario", objective: "hipertrofia", secondaryObjectives: [],
     trainingLocation: "academia", equipment: [], preferences: null,
     weeklyFrequency: 4, sessionMinutes: 60,
+    availableDays: [], allowsConsecutiveDays: null, maxConsecutiveSessions: null,
+    effort: { avgRir: null, setsWithRir: 0, totalSets: 0, coveragePct: 0, reading: "desconhecido" },
+    structured: {
+      weeklyFrequency: true, sessionMinutes: true, availableDays: true,
+      priorities: true, equipment: true, consecutiveDays: true,
+    },
     injuries: null, medicalRestrictions: null, painReports: [],
     priorities: {}, previousWeeklyVolume: {}, previousPlannedVolume: {},
     adherencePct: 85, sessionsLast4Weeks: 14, progressionSignal: "estavel",

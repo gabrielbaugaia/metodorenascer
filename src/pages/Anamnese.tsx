@@ -13,6 +13,11 @@ import { TrainingHistoryFields } from "@/components/anamnese/TrainingHistoryFiel
 import { HealthAndHabitsFields } from "@/components/anamnese/HealthAndHabitsFields";
 import { ScheduleAndPhotosFields } from "@/components/anamnese/ScheduleAndPhotosFields";
 import { TrainingPreferencesSection } from "@/components/anamnese/TrainingPreferencesSection";
+import {
+  TrainingAvailabilityFields,
+  emptyAvailability,
+  type TrainingAvailability,
+} from "@/components/anamnese/TrainingAvailabilityFields";
 
 interface FormData {
   // Dados Pessoais
@@ -120,6 +125,7 @@ export default function Anamnese() {
   const [loading, setLoading] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [availability, setAvailability] = useState<TrainingAvailability>(emptyAvailability);
   const [missingRequired, setMissingRequired] = useState<string[]>([]);
 
   const requiredFieldLabels: Record<string, string> = {
@@ -216,6 +222,24 @@ export default function Anamnese() {
         foto_costas_url: profile.foto_costas_url || prev.foto_costas_url,
         observacoes_adicionais: profile.observacoes_adicionais || prev.observacoes_adicionais,
         preferencias_treino: (profile as any).preferencias_treino || prev.preferencias_treino,
+      }));
+
+      const p = profile as any;
+      setAvailability((prev) => ({
+        frequenciaSemanal: p.treino_frequencia_semanal ? String(p.treino_frequencia_semanal) : prev.frequenciaSemanal,
+        diasSemana: Array.isArray(p.treino_dias_semana) ? p.treino_dias_semana : prev.diasSemana,
+        duracaoSessaoMin: p.treino_duracao_sessao_min ? String(p.treino_duracao_sessao_min) : prev.duracaoSessaoMin,
+        diasConsecutivos:
+          typeof p.treino_dias_consecutivos === "boolean"
+            ? (p.treino_dias_consecutivos ? "sim" : "nao")
+            : prev.diasConsecutivos,
+        maxSessoesConsecutivas: p.treino_max_sessoes_consecutivas
+          ? String(p.treino_max_sessoes_consecutivas)
+          : prev.maxSessoesConsecutivas,
+        prioridades: p.treino_prioridades && typeof p.treino_prioridades === "object"
+          ? p.treino_prioridades
+          : prev.prioridades,
+        equipamentos: Array.isArray(p.treino_equipamentos) ? p.treino_equipamentos : prev.equipamentos,
       }));
 
       setProfileLoaded(true);
@@ -364,6 +388,17 @@ export default function Anamnese() {
           foto_costas_url: formData.foto_costas_url,
           observacoes_adicionais: formData.observacoes_adicionais,
           preferencias_treino: formData.preferencias_treino,
+          treino_frequencia_semanal: availability.frequenciaSemanal ? Number(availability.frequenciaSemanal) : null,
+          treino_dias_semana: availability.diasSemana.length ? availability.diasSemana : null,
+          treino_duracao_sessao_min: availability.duracaoSessaoMin ? Number(availability.duracaoSessaoMin) : null,
+          treino_dias_consecutivos: availability.diasConsecutivos
+            ? availability.diasConsecutivos === "sim"
+            : null,
+          treino_max_sessoes_consecutivas: availability.maxSessoesConsecutivas
+            ? Number(availability.maxSessoesConsecutivas)
+            : null,
+          treino_prioridades: Object.keys(availability.prioridades).length ? availability.prioridades : null,
+          treino_equipamentos: availability.equipamentos.length ? availability.equipamentos : null,
           anamnese_completa: true,
           updated_at: new Date().toISOString(),
         })
@@ -538,6 +573,8 @@ export default function Anamnese() {
           </Card>
 
           {/* Preferências de Treino */}
+          <TrainingAvailabilityFields value={availability} onChange={setAvailability} />
+
           <TrainingPreferencesSection
             preferencias_treino={formData.preferencias_treino}
             onChange={handleFieldChange}
