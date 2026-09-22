@@ -109,6 +109,15 @@ export function buildPrescriptionPlan(
     recommended: deloadReasons.length >= (readiness.confidence === "alta" ? 1 : 2),
     reason: deloadReasons.length ? deloadReasons.join("; ") : null,
   };
+  if (ov.deloadDirective === "forcar") {
+    deload.recommended = true;
+    deload.reason = "descarga determinada pelo treinador";
+    overridesApplied.push("Descarga forçada pelo treinador.");
+  } else if (ov.deloadDirective === "ignorar" && deload.recommended) {
+    deload.recommended = false;
+    deload.reason = `sugestão de descarga ignorada pelo treinador (${deload.reason})`;
+    overridesApplied.push("Sugestão de descarga ignorada pelo treinador.");
+  }
 
   // ---------- Volume por músculo ----------
   const muscles: MusclePrescription[] = [];
