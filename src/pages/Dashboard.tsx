@@ -29,6 +29,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { ManualInput } from "@/components/renascer/ManualInput";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { WeeklyConsistencyBlock } from "@/components/progress/WeeklyConsistencyBlock";
+import { AvailabilityUpdateCard } from "@/components/dashboard/AvailabilityUpdateCard";
 
 
 function DashboardSkeleton() {
@@ -434,6 +435,8 @@ export default function Dashboard() {
           daysSinceLastProtocol={daysSinceLastProtocol}
           needsEvolutionPhotos={needsEvolutionPhotos}
         />
+
+        <AvailabilityUpdateCard />
 
         {/* Bloco principal do dia */}
         <section className="surface-dark overflow-hidden shadow-[var(--shadow-elevated)]">
