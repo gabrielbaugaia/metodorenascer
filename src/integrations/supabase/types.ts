@@ -1899,6 +1899,47 @@ export type Database = {
         }
         Relationships: []
       }
+      prescription_engine_config: {
+        Row: {
+          active: boolean
+          config: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          active?: boolean
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          active?: boolean
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescription_engine_config_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           acquisition_channel: string | null
@@ -2120,6 +2161,7 @@ export type Database = {
           created_at: string | null
           data_geracao: string | null
           id: string
+          prescription_meta: Json | null
           tipo: string
           titulo: string
           updated_at: string | null
@@ -2132,6 +2174,7 @@ export type Database = {
           created_at?: string | null
           data_geracao?: string | null
           id?: string
+          prescription_meta?: Json | null
           tipo: string
           titulo: string
           updated_at?: string | null
@@ -2144,6 +2187,7 @@ export type Database = {
           created_at?: string | null
           data_geracao?: string | null
           id?: string
+          prescription_meta?: Json | null
           tipo?: string
           titulo?: string
           updated_at?: string | null
@@ -3507,6 +3551,7 @@ export type Database = {
           reps_done: number
           rest_respected: boolean
           rest_seconds: number
+          rir: number | null
           session_id: string
           set_number: number
           user_id: string
@@ -3519,6 +3564,7 @@ export type Database = {
           reps_done?: number
           rest_respected?: boolean
           rest_seconds?: number
+          rir?: number | null
           session_id: string
           set_number: number
           user_id: string
@@ -3531,6 +3577,7 @@ export type Database = {
           reps_done?: number
           rest_respected?: boolean
           rest_seconds?: number
+          rir?: number | null
           session_id?: string
           set_number?: number
           user_id?: string
