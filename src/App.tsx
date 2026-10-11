@@ -16,6 +16,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Critical routes loaded immediately
 import LandingPremium from "./pages/LandingPremium";
+import LandingGB from "./pages/LandingGB";
 import Index from "./pages/Index";
 import LandingApp from "./pages/LandingApp";
 const Quiz = lazy(() => import("./pages/Quiz"));
@@ -128,7 +129,7 @@ const App = () => {
             <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* ROTAS PÚBLICAS */}
-            <Route path="/" element={<Auth />} />
+            <Route path="/" element={<LandingGB />} />
             <Route path="/landing-app" element={<Auth />} />
             <Route path="/quiz" element={<Auth />} />
             <Route path="/landing-classica" element={<Auth />} />
