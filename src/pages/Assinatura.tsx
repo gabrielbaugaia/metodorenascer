@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { ClientLayout } from "@/components/layout/ClientLayout";
+import { AsaasSubscriptionCard } from "@/components/subscription/AsaasSubscriptionCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -201,6 +202,7 @@ export default function Assinatura() {
   return (
     <ClientLayout>
       <div className="max-w-6xl mx-auto space-y-8">
+        <AsaasSubscriptionCard />
         <div>
           <h1 className="text-2xl font-bold">Minha Assinatura</h1>
           <p className="text-muted-foreground">Gerencie seu plano e renove sua transformação</p>
