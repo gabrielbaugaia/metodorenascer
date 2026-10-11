@@ -41,6 +41,8 @@ const AdminClienteDetalhes = lazy(() => import("./pages/admin/AdminClienteDetalh
 const AdminCriarCliente = lazy(() => import("./pages/admin/AdminCriarCliente"));
 const AdminPlanos = lazy(() => import("./pages/admin/AdminPlanos"));
 const AdminMotor = lazy(() => import("./pages/admin/AdminMotor"));
+const AdminPagamentos = lazy(() => import("./pages/admin/AdminPagamentos"));
+const CheckoutAsaas = lazy(() => import("./pages/CheckoutAsaas"));
 const AdminSuporteChats = lazy(() => import("./pages/admin/AdminSuporteChats"));
 const AdminMensagens = lazy(() => import("./pages/admin/AdminMensagens"));
 const AdminVideos = lazy(() => import("./pages/admin/AdminVideos"));
@@ -136,6 +138,7 @@ const App = () => {
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/convite" element={<Convite />} />
             <Route path="/checkout-success" element={<CheckoutSuccess />} />
+            <Route path="/checkout" element={<CheckoutAsaas />} />
             <Route path="/acesso-bloqueado" element={<AcessoBloqueado />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
@@ -173,6 +176,7 @@ const App = () => {
             <Route path="/admin/criar-cliente" element={<AdminGuard><AdminCriarCliente /></AdminGuard>} />
             <Route path="/admin/planos" element={<AdminGuard><AdminPlanos /></AdminGuard>} />
             <Route path="/admin/motor" element={<AdminGuard><AdminMotor /></AdminGuard>} />
+            <Route path="/admin/pagamentos" element={<AdminGuard><AdminPagamentos /></AdminGuard>} />
             <Route path="/admin/suporte" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
             <Route path="/admin/suporte-chats" element={<AdminGuard><AdminSuporteChats /></AdminGuard>} />
             <Route path="/admin/mensagens" element={<AdminGuard><AdminMensagens /></AdminGuard>} />
