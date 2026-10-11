@@ -101,6 +101,7 @@ const adminSections: AdminSection[] = [
     label: "PRESCRIÇÃO",
     items: [
       { title: "Motor de Prescrição", url: "/admin/motor", icon: Dumbbell },
+      { title: "Pagamentos Asaas", url: "/admin/pagamentos", icon: Dumbbell },
     ],
   },
   {
