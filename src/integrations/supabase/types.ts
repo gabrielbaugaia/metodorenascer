@@ -195,6 +195,183 @@ export type Database = {
         }
         Relationships: []
       }
+      asaas_customers: {
+        Row: {
+          asaas_customer_id: string
+          created_at: string
+          email: string
+          environment: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          asaas_customer_id: string
+          created_at?: string
+          email: string
+          environment?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          asaas_customer_id?: string
+          created_at?: string
+          email?: string
+          environment?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      asaas_payment_events: {
+        Row: {
+          asaas_payment_id: string | null
+          asaas_subscription_id: string | null
+          error: string | null
+          event_id: string
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean
+          received_at: string
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          error?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          payload: Json
+          processed?: boolean
+          received_at?: string
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          error?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+          received_at?: string
+        }
+        Relationships: []
+      }
+      asaas_payment_orders: {
+        Row: {
+          asaas_payment_id: string | null
+          asaas_subscription_id: string | null
+          billing_type: string
+          created_at: string
+          due_date: string | null
+          email: string
+          environment: string
+          id: string
+          idempotency_key: string
+          invoice_url: string | null
+          paid_at: string | null
+          plan_slug: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          value_cents: number
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          billing_type: string
+          created_at?: string
+          due_date?: string | null
+          email: string
+          environment?: string
+          id?: string
+          idempotency_key: string
+          invoice_url?: string | null
+          paid_at?: string | null
+          plan_slug: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          value_cents: number
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          billing_type?: string
+          created_at?: string
+          due_date?: string | null
+          email?: string
+          environment?: string
+          id?: string
+          idempotency_key?: string
+          invoice_url?: string | null
+          paid_at?: string | null
+          plan_slug?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          value_cents?: number
+        }
+        Relationships: []
+      }
+      asaas_subscriptions: {
+        Row: {
+          asaas_customer_id: string
+          asaas_subscription_id: string | null
+          canceled_at: string | null
+          created_at: string
+          cycle: string
+          email: string
+          environment: string
+          id: string
+          next_due_date: string | null
+          paid_until: string | null
+          plan_name: string
+          plan_slug: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          value_cents: number
+        }
+        Insert: {
+          asaas_customer_id: string
+          asaas_subscription_id?: string | null
+          canceled_at?: string | null
+          created_at?: string
+          cycle?: string
+          email: string
+          environment?: string
+          id?: string
+          next_due_date?: string | null
+          paid_until?: string | null
+          plan_name: string
+          plan_slug: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          value_cents: number
+        }
+        Update: {
+          asaas_customer_id?: string
+          asaas_subscription_id?: string | null
+          canceled_at?: string | null
+          created_at?: string
+          cycle?: string
+          email?: string
+          environment?: string
+          id?: string
+          next_due_date?: string | null
+          paid_until?: string | null
+          plan_name?: string
+          plan_slug?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          value_cents?: number
+        }
+        Relationships: []
+      }
       automated_messages: {
         Row: {
           cooldown_days: number | null
@@ -1839,6 +2016,30 @@ export type Database = {
           workout_completed_enabled?: boolean
           workout_reminder_enabled?: boolean
           workout_reminder_time?: string
+        }
+        Relationships: []
+      }
+      payment_settings: {
+        Row: {
+          checkout_provider: string
+          grace_days: number
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          checkout_provider?: string
+          grace_days?: number
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          checkout_provider?: string
+          grace_days?: number
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
