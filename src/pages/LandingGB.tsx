@@ -1,5 +1,7 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import "@/styles/gb-premium.css";
 import gabriel from "@/assets/lp-gb/gabriel-bau.jpg";
 import ev1 from "@/assets/lp-gb/evolucao-01.jpg";
@@ -23,6 +25,10 @@ const FAQ: [string, string][] = [
 ];
 
 export default function LandingGB() {
+  const { user } = useAuth();
+  const { isAdmin, loading } = useAdminCheck();
+  const navigate = useNavigate();
+  useEffect(() => { if (user && !loading) navigate(isAdmin ? "/admin" : "/dashboard", { replace: true }); }, [user, isAdmin, loading, navigate]);
   useEffect(() => { document.title = "Gabriel Baú — Consultoria de Treinamento"; }, []);
 
   return (
