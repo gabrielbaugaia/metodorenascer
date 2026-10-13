@@ -4,7 +4,7 @@
 - [x] Atualizar cards e comparação Start / Evolution / Premium sem alterar contratos ou pagamentos.
 - [x] Verificar CTAs, login e apresentação em mobile, tablet e desktop.
 - [x] Relatar limitações e deixar pronto para revisão, sem publicação.
-- [ ] Atualizar dieta personalizada e limites de ajuste alimentar nos cards e comparação; validar sem alterar cobrança.
+- [x] Atualizar dieta personalizada e limites de ajuste alimentar nos cards e comparação; validar sem alterar cobrança.
 
 ## Histórico anterior (fora deste pedido)
 
