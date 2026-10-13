@@ -22,7 +22,7 @@ const digits = (v: string) => v.replace(/\D/g, "");
 
 export default function CheckoutAsaas() {
   const [params] = useSearchParams();
-  const initial = PLANS.find((p) => p.slug === params.get("plano"))?.slug ?? "pro";
+  const initial = PLANS.find((p) => p.slug === params.get("plano"))?.slug ?? "consultoria";
   const [plan, setPlan] = useState<string>(initial);
   const [mode, setMode] = useState<string>("subscription");
   const [form, setForm] = useState({ name: "", email: "", cpf: "", phone: "" });
