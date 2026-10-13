@@ -21,7 +21,7 @@ const FAQ: [string, string][] = [
   ["Como tiro dúvidas com você?", "Pelo próprio app. O canal e a frequência das revisões variam conforme o plano escolhido."],
   ["E se eu tiver dor ou restrição de movimento?", "Você informa na avaliação e o treino é montado respeitando isso. Dor importante ou condição clínica é encaminhada para avaliação profissional antes de prescrever."],
   ["Preciso de academia completa?", "Não. Você informa os equipamentos que tem e o plano é feito para a sua estrutura real."],
-  ["Como funciona o cancelamento?", "Sem fidelidade. Você cancela quando quiser e mantém o acesso até o fim do período já pago."],
+  ["Como funciona o cancelamento?", "No Start (cartão recorrente), o cancelamento exige aviso de 30 dias. Mensal e Premium são pagos mês a mês, sem renovação automática: basta não renovar."],
 ];
 
 export default function LandingGB() {
