@@ -1,4 +1,11 @@
-# Roadmap — P0 da auditoria (App Consultoria Baú)
+# Roadmap — Planos de consultoria online
+
+- [ ] Conferir funcionalidades disponíveis e jornadas públicas existentes.
+- [ ] Atualizar cards e comparação Start / Evolution / Premium sem alterar contratos ou pagamentos.
+- [ ] Verificar CTAs, login e apresentação em mobile, tablet e desktop.
+- [ ] Relatar limitações e deixar pronto para revisão, sem publicação.
+
+## Histórico anterior (fora deste pedido)
 
 - [ ] 1. Unificar Hoje: /dashboard oficial, /renascer redireciona, um único score, check-in inline, CTA única, remover código morto
 - [ ] 2. Ligar Nutrição ao Diário Nutricional (registrar refeição a partir do plano + feedback)

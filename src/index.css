@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Isolated public consultancy palette; protected screens retain their theme. */
+.consultoria-plans {
+  --background: 220 30% 4%;
+  --foreground: 40 27% 93%;
+  --card: 220 24% 7%;
+  --card-foreground: 40 27% 93%;
+  --border: 220 24% 16%;
+  --muted-foreground: 40 6% 65%;
+  --primary: 33 35% 51%;
+  --primary-foreground: 220 30% 4%;
+  --secondary: 220 24% 10%;
+  --ring: 33 35% 51%;
+}
+
 @layer base {
   :root {
     /* Gabriel Baú Consultoria — canvas editorial claro */
