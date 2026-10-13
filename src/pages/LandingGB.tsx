@@ -12,9 +12,8 @@ import ev6 from "@/assets/lp-gb/evolucao-06.jpg";
 const INSTAGRAM = "https://www.instagram.com/baugabriel/";
 
 const PLANS = [
-  { slug: "essencial", name: "Essencial", price: 97, desc: "Treino individual no app, com registro de cargas e evolução." },
-  { slug: "pro", name: "PRO", price: 297, desc: "Acompanhamento mais próximo e ajustes do plano ao longo do ciclo.", featured: true },
-  { slug: "elite", name: "Elite", price: 697, desc: "Nível máximo de acompanhamento direto, para quem quer prioridade." },
+  { slug: "consultoria", name: "Consultoria", price: 197, desc: "Treino individual no app, com registro de cargas, nutrição prática e evolução acompanhada." },
+  { slug: "elite", name: "Premium", price: 697, desc: "Acompanhamento direto comigo, com prioridade e ajustes contínuos do plano.", featured: true },
 ];
 
 const FAQ: [string, string][] = [

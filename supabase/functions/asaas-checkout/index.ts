@@ -3,7 +3,7 @@ import { getCorsHeaders, handleCorsPreflightRequest } from "../_shared/cors.ts";
 import { ASAAS_PLANS, adminClient, asaas, asaasEnv, hasAsaasKey, json } from "../_shared/asaas.ts";
 
 const Body = z.object({
-  plan_slug: z.enum(["essencial", "pro", "elite"]),
+  plan_slug: z.enum(["consultoria", "essencial", "pro", "elite"]),
   mode: z.enum(["subscription", "pix", "card"]),
   name: z.string().trim().min(3).max(120),
   email: z.string().trim().email().max(255),

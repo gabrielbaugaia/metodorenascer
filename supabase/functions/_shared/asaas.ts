@@ -4,9 +4,10 @@ import { PUBLIC_APP_URL } from "./appConfig.ts";
 
 // Planos reaproveitados da Landing Premium (mesmos valores do Stripe — ver priceMappings.ts)
 export const ASAAS_PLANS: Record<string, { name: string; value_cents: number }> = {
+  consultoria: { name: "CONSULTORIA", value_cents: 19700 },
   essencial: { name: "ESSENCIAL", value_cents: 9700 },
   pro: { name: "PRO", value_cents: 29700 },
-  elite: { name: "ELITE", value_cents: 69700 },
+  elite: { name: "PREMIUM", value_cents: 69700 },
 };
 
 export function asaasEnv(): "sandbox" | "production" {
