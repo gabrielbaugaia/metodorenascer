@@ -1,27 +1,28 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test } from "node:test";
+import { strict as assert } from "node:assert";
 import { CONSULTORIA_PLANS, getConsultoriaPlan } from "./consultoriaPlans";
 
 describe("Planos vigentes de consultoria", () => {
   test("Start mantém R$197 e somente cartão recorrente", () => {
     const plan = getConsultoriaPlan("start");
-    expect(plan.price).toBe(197);
-    expect(plan.modes).toEqual(["subscription"]);
+    assert.equal(plan.price, 197);
+    assert.deepEqual(plan.modes, ["subscription"]);
   });
   test("Evolution mantém ID mensal, R$297 e Pix/cartão avulsos", () => {
     const plan = getConsultoriaPlan("mensal");
-    expect(plan.slug).toBe("mensal");
-    expect(plan.price).toBe(297);
-    expect(plan.modes).toEqual(["pix", "card"]);
+    assert.equal(plan.slug, "mensal");
+    assert.equal(plan.price, 297);
+    assert.deepEqual(plan.modes, ["pix", "card"]);
   });
   test("Premium mantém R$697 e Pix/cartão avulsos", () => {
     const plan = getConsultoriaPlan("premium");
-    expect(plan.price).toBe(697);
-    expect(plan.modes).toEqual(["pix", "card"]);
+    assert.equal(plan.price, 697);
+    assert.deepEqual(plan.modes, ["pix", "card"]);
   });
   test("Link antigo elite continua selecionando Premium", () => {
-    expect(getConsultoriaPlan("elite").slug).toBe("premium");
+    assert.equal(getConsultoriaPlan("elite").slug, "premium");
   });
   test("R$97 não é vendido", () => {
-    expect(CONSULTORIA_PLANS.some((plan) => plan.price === 97)).toBe(false);
+    assert.equal(CONSULTORIA_PLANS.some((plan) => plan.price === 97), false);
   });
 });
