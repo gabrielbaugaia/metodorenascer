@@ -3,7 +3,7 @@ import { getCorsHeaders, handleCorsPreflightRequest } from "../_shared/cors.ts";
 import { ASAAS_PLANS, adminClient, asaas, asaasEnv, hasAsaasKey, json } from "../_shared/asaas.ts";
 
 const Body = z.object({
-  plan_slug: z.enum(["consultoria", "essencial", "pro", "elite"]),
+  plan_slug: z.enum(["start", "mensal", "premium", "elite"]),
   mode: z.enum(["subscription", "pix", "card"]),
   name: z.string().trim().min(3).max(120),
   email: z.string().trim().email().max(255),
@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
     const userId = isAdminTest.userId;
     const email = (isAdminTest.email && !isAdminTest.admin ? isAdminTest.email : b.email).toLowerCase();
     const plan = ASAAS_PLANS[b.plan_slug];
+    if (!plan.modes.includes(b.mode)) return json({ error: "Forma de pagamento indisponível para este plano." }, 400, cors);
 
     // Idempotência
     const { data: prior } = await db.from("asaas_payment_orders").select("invoice_url").eq("idempotency_key", b.idempotency_key).maybeSingle();
@@ -66,7 +67,7 @@ Deno.serve(async (req) => {
     let invoiceUrl: string, paymentId: string | null = null, subId: string | null = null, billingType: string;
 
     if (b.mode === "subscription") {
-      billingType = "UNDEFINED"; // cliente escolhe Pix, boleto ou cartão na página hospedada
+      billingType = "CREDIT_CARD"; // recorrente só no cartão
       const s = await asaas<{ id: string }>("/subscriptions", {
         method: "POST",
         body: JSON.stringify({ customer: customerId, billingType, value, nextDueDate: today, cycle: "MONTHLY", description: `Consultoria Gabriel Baú — ${plan.name}`, externalReference: b.idempotency_key }),
