@@ -6,12 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { CONSULTORIA_PLANS, getConsultoriaPlan } from "@/lib/consultoriaPlans";
 
-const PLANS = [
-  { slug: "start", name: "Start", price: 197, modes: ["subscription"] },
-  { slug: "mensal", name: "Mensal", price: 297, modes: ["pix", "card"] },
-  { slug: "premium", name: "Premium", price: 697, modes: ["pix", "card"] },
-];
+const PLANS = CONSULTORIA_PLANS;
 const MODES = [
   { id: "subscription", label: "Cartão de crédito recorrente", hint: "Cobrança mensal automática. Cancelamento com aviso de 30 dias." },
   { id: "pix", label: "Pix", hint: "Pagamento do mês, sem renovação automática" },
@@ -22,10 +19,11 @@ const digits = (v: string) => v.replace(/\D/g, "");
 
 export default function CheckoutAsaas() {
   const [params] = useSearchParams();
-  const initial = PLANS.find((p) => p.slug === (params.get("plano") === "elite" ? "premium" : params.get("plano")))?.slug ?? "start";
-  const [plan, setPlan] = useState<string>(initial);
-  const [mode, setMode] = useState<string>(PLANS.find((p) => p.slug === initial)!.modes[0]);
-  const allowed = PLANS.find((p) => p.slug === plan)!.modes;
+  const initial = getConsultoriaPlan(params.get("plano"));
+  const [plan, setPlan] = useState<string>(initial.slug);
+  const [mode, setMode] = useState<string>(initial.modes[0] ?? "subscription");
+  const selectedPlan = getConsultoriaPlan(plan);
+  const allowed = selectedPlan.modes;
   const [form, setForm] = useState({ name: "", email: "", cpf: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const key = useMemo(() => crypto.randomUUID(), [plan, mode]);
@@ -59,11 +57,11 @@ export default function CheckoutAsaas() {
             <legend className="text-sm font-medium mb-2">Plano</legend>
             <div className="grid grid-cols-3 gap-2">
               {PLANS.map((p) => (
-                <button type="button" key={p.slug} onClick={() => { setPlan(p.slug); setMode(p.modes[0]); }} aria-pressed={plan === p.slug}
-                  className={`min-h-[44px] rounded-lg border p-3 text-left transition-colors duration-200 ${plan === p.slug ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}>
+                <Button variant="outline" type="button" key={p.slug} onClick={() => { setPlan(p.slug); setMode(p.modes[0] ?? "subscription"); }} aria-pressed={plan === p.slug}
+                  className={`h-auto min-h-[64px] min-w-0 flex-col items-start gap-1 whitespace-normal rounded-lg p-2 sm:p-3 text-left transition-colors duration-200 ${plan === p.slug ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}>
                   <span className="block text-sm font-medium">{p.name}</span>
                   <span className="block text-xs text-muted-foreground">R$ {p.price}/mês</span>
-                </button>
+                </Button>
               ))}
             </div>
           </fieldset>
@@ -71,13 +69,15 @@ export default function CheckoutAsaas() {
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium mb-2">Forma de pagamento</legend>
             {MODES.filter((m) => allowed.includes(m.id)).map((m) => (
-              <button type="button" key={m.id} onClick={() => setMode(m.id)} aria-pressed={mode === m.id}
-                className={`w-full min-h-[44px] rounded-lg border p-3 text-left transition-colors duration-200 ${mode === m.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}>
+              <Button variant="outline" type="button" key={m.id} onClick={() => setMode(m.id)} aria-pressed={mode === m.id}
+                className={`w-full h-auto min-h-[44px] flex-col items-start gap-1 whitespace-normal rounded-lg p-3 text-left transition-colors duration-200 ${mode === m.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}>
                 <span className="block text-sm font-medium">{m.label}</span>
                 <span className="block text-xs text-muted-foreground">{m.hint}</span>
-              </button>
+              </Button>
             ))}
           </fieldset>
+
+          <p className="text-sm text-muted-foreground">{selectedPlan.payment}</p>
 
           <div className="grid gap-4">
             <div className="space-y-1.5"><Label htmlFor="n">Nome completo</Label>

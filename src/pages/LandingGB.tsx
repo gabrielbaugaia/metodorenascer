@@ -8,20 +8,15 @@ import ev1 from "@/assets/lp-gb/evolucao-01.jpg";
 import ev2 from "@/assets/lp-gb/evolucao-02.jpg";
 import ev5 from "@/assets/lp-gb/evolucao-05.jpg";
 import ev6 from "@/assets/lp-gb/evolucao-06.jpg";
+import { ConsultoriaPlansSection } from "@/components/landing/ConsultoriaPlansSection";
 
 const INSTAGRAM = "https://www.instagram.com/baugabriel/";
-
-const PLANS = [
-  { slug: "start", name: "Start", price: 197, desc: "Treino individual no app, com registro de cargas e evolução. Cartão de crédito recorrente, cancelamento com aviso de 30 dias." },
-  { slug: "mensal", name: "Mensal", price: 297, desc: "Mesmo acompanhamento, sem fidelidade e sem renovação automática. Pix ou cartão." },
-  { slug: "premium", name: "Premium", price: 697, desc: "Acompanhamento direto comigo, com prioridade e ajustes contínuos. Pagamento mensal, sem recorrência. Pix ou cartão.", featured: true },
-];
 
 const FAQ: [string, string][] = [
   ["Como tiro dúvidas com você?", "Pelo próprio app. O canal e a frequência das revisões variam conforme o plano escolhido."],
   ["E se eu tiver dor ou restrição de movimento?", "Você informa na avaliação e o treino é montado respeitando isso. Dor importante ou condição clínica é encaminhada para avaliação profissional antes de prescrever."],
   ["Preciso de academia completa?", "Não. Você informa os equipamentos que tem e o plano é feito para a sua estrutura real."],
-  ["Como funciona o cancelamento?", "No Start (cartão recorrente), o cancelamento exige aviso de 30 dias. Mensal e Premium são pagos mês a mês, sem renovação automática: basta não renovar."],
+  ["Como funciona o cancelamento?", "No Start (cartão recorrente), o cancelamento exige aviso de 30 dias. Evolution e Premium são pagos mês a mês por Pix ou cartão, sem renovação automática: basta não renovar."],
 ];
 
 export default function LandingGB() {
@@ -106,23 +101,7 @@ export default function LandingGB() {
         </div>
       </section>
 
-      <section id="planos">
-        <div className="w">
-          <span className="eb">Planos</span>
-          <h2 className="serif">Escolha o nível de acompanhamento.</h2>
-          <div className="plans">
-            {PLANS.map((p) => (
-              <div key={p.slug} className={`plan${p.featured ? " f" : ""}`}>
-                <span className="eb">{p.name}</span>
-                <div className="p">R$ {p.price}<small> /mês</small></div>
-                <p>{p.desc}</p>
-                <Link className={p.featured ? "btn" : "ghost"} to={`/checkout?plano=${p.slug}`}>Começar</Link>
-              </div>
-            ))}
-          </div>
-          <p className="note">Start no cartão recorrente. Mensal e Premium no Pix ou cartão, mês a mês.</p>
-        </div>
-      </section>
+      <ConsultoriaPlansSection />
 
       <section>
         <div className="w faqg">
