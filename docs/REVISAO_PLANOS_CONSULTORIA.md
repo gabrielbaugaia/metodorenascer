@@ -14,7 +14,7 @@
 - Treino individualizado e registro de séries/repetições/cargas: `useProtocol`, `Treino`, `useWorkoutSession`.
 - SIS e indicadores com sono, estresse, energia e recuperação: `useSisScore`, `sisScoreCalc`, `bodyIndicators`, check-in em `Dashboard`. Sem alegação de diagnóstico ou previsão clínica.
 - Fotos, peso e medidas: `Evolucao`, `DadosCorpo`, `bodyPhotos`. Comunicação em ciclos de 30 dias.
-- Ferramentas alimentares: `Nutricao`, `NutricaoTracking` e `Receitas`. Lista de compras depende de estar incluída no protocolo; não é garantida em todo protocolo.
+- Ferramentas alimentares: `Nutricao`, `NutricaoTracking` e `Receitas`. Lista de compras depende de estar incluída no protocolo; não é garantida em todo protocolo. Conforme atualização do proprietário, os três planos incluem prescrição de dieta personalizada: Start sem ajuste do protocolo alimentar; Evolution/Premium com 1 ajuste mensal, caso necessário. Estes limites são apresentação comercial, sem nova automação ou controle de quota.
 - Suporte e intervenção humana: `Suporte`, telas administrativas de suporte e mensagens. Isso permite a prestação do serviço, mas não comprova que Gabriel cumpriu revisões semanais.
 - Integração WhatsApp existe; não comprova número pessoal, disponibilidade de Gabriel nem prazo de resposta. A página limita o contato a dias úteis/horário comercial, conforme agenda, sem resposta imediata, plantão ou 24h.
 - Não foi anunciada regeneração automática de treino nem ajuste automático de dieta. Revisões humanas são descritas como serviço de Gabriel nos planos Evolution/Premium.

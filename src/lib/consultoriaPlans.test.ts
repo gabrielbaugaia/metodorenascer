@@ -26,4 +26,13 @@ describe("Planos vigentes de consultoria", () => {
   test("R$97 não é vendido", () => {
     assert.equal(CONSULTORIA_PLANS.some((plan) => plan.price === 97), false);
   });
+  test("Start inclui dieta personalizada sem ajuste alimentar", () => {
+    assert.deepEqual(getConsultoriaPlan("start").nutrition, { personalizedDiet: true, monthlyAdjustments: 0 });
+  });
+  test("Evolution inclui dieta personalizada e 1 ajuste alimentar mensal", () => {
+    assert.deepEqual(getConsultoriaPlan("mensal").nutrition, { personalizedDiet: true, monthlyAdjustments: 1 });
+  });
+  test("Premium inclui dieta personalizada e 1 ajuste alimentar mensal", () => {
+    assert.deepEqual(getConsultoriaPlan("premium").nutrition, { personalizedDiet: true, monthlyAdjustments: 1 });
+  });
 });
