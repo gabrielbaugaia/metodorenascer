@@ -12,8 +12,9 @@ import ev6 from "@/assets/lp-gb/evolucao-06.jpg";
 const INSTAGRAM = "https://www.instagram.com/baugabriel/";
 
 const PLANS = [
-  { slug: "consultoria", name: "Consultoria", price: 197, desc: "Treino individual no app, com registro de cargas, nutrição prática e evolução acompanhada." },
-  { slug: "elite", name: "Premium", price: 697, desc: "Acompanhamento direto comigo, com prioridade e ajustes contínuos do plano.", featured: true },
+  { slug: "start", name: "Start", price: 197, desc: "Treino individual no app, com registro de cargas e evolução. Cartão de crédito recorrente, cancelamento com aviso de 30 dias." },
+  { slug: "mensal", name: "Mensal", price: 297, desc: "Mesmo acompanhamento, sem fidelidade e sem renovação automática. Pix ou cartão." },
+  { slug: "premium", name: "Premium", price: 697, desc: "Acompanhamento direto comigo, com prioridade e ajustes contínuos. Pagamento mensal, sem recorrência. Pix ou cartão.", featured: true },
 ];
 
 const FAQ: [string, string][] = [
@@ -119,7 +120,7 @@ export default function LandingGB() {
               </div>
             ))}
           </div>
-          <p className="note">Sem fidelidade. Pix, cartão ou assinatura mensal.</p>
+          <p className="note">Start no cartão recorrente. Mensal e Premium no Pix ou cartão, mês a mês.</p>
         </div>
       </section>
 

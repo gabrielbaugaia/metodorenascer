@@ -8,23 +8,24 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 const PLANS = [
-  { slug: "essencial", name: "Essencial", price: 97 },
-  { slug: "pro", name: "PRO", price: 297 },
-  { slug: "elite", name: "Elite", price: 697 },
-] as const;
+  { slug: "start", name: "Start", price: 197, modes: ["subscription"] },
+  { slug: "mensal", name: "Mensal", price: 297, modes: ["pix", "card"] },
+  { slug: "premium", name: "Premium", price: 697, modes: ["pix", "card"] },
+];
 const MODES = [
-  { id: "subscription", label: "Assinatura mensal", hint: "Pix, boleto ou cartão, renovação automática" },
-  { id: "pix", label: "Pix avulso", hint: "30 dias de acesso" },
-  { id: "card", label: "Cartão avulso", hint: "30 dias de acesso" },
-] as const;
+  { id: "subscription", label: "Cartão de crédito recorrente", hint: "Cobrança mensal automática. Cancelamento com aviso de 30 dias." },
+  { id: "pix", label: "Pix", hint: "Pagamento do mês, sem renovação automática" },
+  { id: "card", label: "Cartão de crédito", hint: "Pagamento do mês, sem renovação automática" },
+];
 
 const digits = (v: string) => v.replace(/\D/g, "");
 
 export default function CheckoutAsaas() {
   const [params] = useSearchParams();
-  const initial = PLANS.find((p) => p.slug === params.get("plano"))?.slug ?? "consultoria";
+  const initial = PLANS.find((p) => p.slug === (params.get("plano") === "elite" ? "premium" : params.get("plano")))?.slug ?? "start";
   const [plan, setPlan] = useState<string>(initial);
-  const [mode, setMode] = useState<string>("subscription");
+  const [mode, setMode] = useState<string>(PLANS.find((p) => p.slug === initial)!.modes[0]);
+  const allowed = PLANS.find((p) => p.slug === plan)!.modes;
   const [form, setForm] = useState({ name: "", email: "", cpf: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const key = useMemo(() => crypto.randomUUID(), [plan, mode]);
@@ -58,7 +59,7 @@ export default function CheckoutAsaas() {
             <legend className="text-sm font-medium mb-2">Plano</legend>
             <div className="grid grid-cols-3 gap-2">
               {PLANS.map((p) => (
-                <button type="button" key={p.slug} onClick={() => setPlan(p.slug)} aria-pressed={plan === p.slug}
+                <button type="button" key={p.slug} onClick={() => { setPlan(p.slug); setMode(p.modes[0]); }} aria-pressed={plan === p.slug}
                   className={`min-h-[44px] rounded-lg border p-3 text-left transition-colors duration-200 ${plan === p.slug ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}>
                   <span className="block text-sm font-medium">{p.name}</span>
                   <span className="block text-xs text-muted-foreground">R$ {p.price}/mês</span>
@@ -69,7 +70,7 @@ export default function CheckoutAsaas() {
 
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium mb-2">Forma de pagamento</legend>
-            {MODES.map((m) => (
+            {MODES.filter((m) => allowed.includes(m.id)).map((m) => (
               <button type="button" key={m.id} onClick={() => setMode(m.id)} aria-pressed={mode === m.id}
                 className={`w-full min-h-[44px] rounded-lg border p-3 text-left transition-colors duration-200 ${mode === m.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}>
                 <span className="block text-sm font-medium">{m.label}</span>

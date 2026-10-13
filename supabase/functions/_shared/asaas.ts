@@ -3,11 +3,16 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 import { PUBLIC_APP_URL } from "./appConfig.ts";
 
 // Planos reaproveitados da Landing Premium (mesmos valores do Stripe — ver priceMappings.ts)
-export const ASAAS_PLANS: Record<string, { name: string; value_cents: number }> = {
-  consultoria: { name: "CONSULTORIA", value_cents: 19700 },
-  essencial: { name: "ESSENCIAL", value_cents: 9700 },
-  pro: { name: "PRO", value_cents: 29700 },
-  elite: { name: "PREMIUM", value_cents: 69700 },
+export type AsaasMode = "subscription" | "pix" | "card";
+// Planos vigentes. essencial/pro/consultoria mantidos só para registros antigos (não vendidos).
+export const ASAAS_PLANS: Record<string, { name: string; value_cents: number; modes: AsaasMode[] }> = {
+  start: { name: "START", value_cents: 19700, modes: ["subscription"] },
+  mensal: { name: "MENSAL", value_cents: 29700, modes: ["pix", "card"] },
+  premium: { name: "PREMIUM", value_cents: 69700, modes: ["pix", "card"] },
+  elite: { name: "PREMIUM", value_cents: 69700, modes: ["pix", "card"] },
+  consultoria: { name: "CONSULTORIA", value_cents: 19700, modes: [] },
+  essencial: { name: "ESSENCIAL", value_cents: 9700, modes: [] },
+  pro: { name: "PRO", value_cents: 29700, modes: [] },
 };
 
 export function asaasEnv(): "sandbox" | "production" {
