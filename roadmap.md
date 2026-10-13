@@ -1,9 +1,9 @@
 # Roadmap — Planos de consultoria online
 
-- [ ] Conferir funcionalidades disponíveis e jornadas públicas existentes.
-- [ ] Atualizar cards e comparação Start / Evolution / Premium sem alterar contratos ou pagamentos.
-- [ ] Verificar CTAs, login e apresentação em mobile, tablet e desktop.
-- [ ] Relatar limitações e deixar pronto para revisão, sem publicação.
+- [x] Conferir funcionalidades disponíveis e jornadas públicas existentes.
+- [x] Atualizar cards e comparação Start / Evolution / Premium sem alterar contratos ou pagamentos.
+- [x] Verificar CTAs, login e apresentação em mobile, tablet e desktop.
+- [x] Relatar limitações e deixar pronto para revisão, sem publicação.
 
 ## Histórico anterior (fora deste pedido)
 
