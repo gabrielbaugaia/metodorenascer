@@ -18,16 +18,24 @@
 .gbp section{padding:112px 0;border-bottom:1px solid var(--line)}
 .gbp .hero{padding:0;display:grid;min-height:calc(100vh - 64px)}
 @media(min-width:900px){.gbp .hero{grid-template-columns:1.1fr .9fr}}
-.gbp .hero-t{padding:96px 24px 72px;display:flex;flex-direction:column;justify-content:center;max-width:620px;margin-left:auto;width:100%}
-@media(min-width:900px){.gbp .hero-t{padding:96px 64px 96px 24px}}
+.gbp .hero-t{padding:48px 24px;display:flex;flex-direction:column;justify-content:center;max-width:620px;margin-inline:auto;width:100%;min-width:0}
+@media(min-width:900px){.gbp .hero-t{padding:64px 48px 64px 24px;margin-right:0}}
+.gbp .hero .eb{font-size:10px;line-height:1.7;letter-spacing:0;max-width:100%}
+.gbp .hero h1{font-size:40px;line-height:1.12;letter-spacing:0;margin:22px 0 24px;text-wrap:balance}
+.gbp .hero h1 em{font-style:normal}
+.gbp .hero .lead{font-size:16px;line-height:1.7;margin:0 0 28px;max-width:500px}
+.gbp .hero .hero-cta{height:auto;min-height:50px;border-radius:4px;letter-spacing:0;white-space:normal;font-size:14px;padding:14px 24px}
+@media(min-width:640px){.gbp .hero-t{padding-top:64px;padding-bottom:64px}.gbp .hero h1{font-size:56px}.gbp .hero .lead{font-size:17px}}
+@media(min-width:1200px){.gbp .hero h1{font-size:64px}}
 .gbp h1{font-size:clamp(44px,6.4vw,84px);margin:24px 0}
 .gbp h1 em{font-style:italic;color:var(--br)}
 .gbp h2{font-size:clamp(34px,4.4vw,56px);margin:16px 0 0}
 .gbp .lead{font-size:18px;color:var(--mut);max-width:480px;margin:0 0 40px}
 .gbp .hero-img{position:relative;min-height:420px;background:var(--card)}
 .gbp .hero-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(.35) contrast(1.05)}
-.gbp .facts{display:flex;gap:40px;margin-top:56px;padding-top:28px;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
-.gbp .facts b{display:block;font-family:'Fraunces',serif;font-weight:300;font-size:26px;color:var(--tx)}
+.gbp .hero .facts{display:grid;gap:12px;list-style:none;margin:28px 0 0;padding:22px 0 0;border-top:1px solid var(--line);font-size:13px;line-height:1.5;color:var(--tx)}
+.gbp .hero .facts li{display:flex;align-items:baseline;gap:10px;min-width:0}
+.gbp .hero .facts li::before{content:'—';color:var(--br);flex-shrink:0}
 .gbp .two{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);margin-top:56px}
 @media(min-width:760px){.gbp .two{grid-template-columns:1fr 1fr}}
 .gbp .two>div{background:var(--bg);padding:40px}

@@ -9,6 +9,7 @@ import ev2 from "@/assets/lp-gb/evolucao-02.jpg";
 import ev5 from "@/assets/lp-gb/evolucao-05.jpg";
 import ev6 from "@/assets/lp-gb/evolucao-06.jpg";
 import { ConsultoriaPlansSection } from "@/components/landing/ConsultoriaPlansSection";
+import { Button } from "@/components/ui/button";
 
 const INSTAGRAM = "https://www.instagram.com/baugabriel/";
 
@@ -41,14 +42,29 @@ export default function LandingGB() {
 
       <section className="hero" id="topo">
         <div className="hero-t">
-          <span className="eb">Consultoria individual de treinamento</span>
-          <h1 className="serif">Pare de treinar <em>no escuro.</em></h1>
-          <p className="lead">Treino feito para você, ajustado pelos seus dados reais de execução. Acompanhamento direto comigo.</p>
-          <div><a className="btn" href="#planos">Ver planos →</a></div>
-          <div className="facts">
-            <div><b>Individual</b>Nada de ficha pronta</div>
-            <div><b>Contínuo</b>Ajuste a cada ciclo</div>
+          <span className="eb">GABRIEL BAÚ | ENGENHARIA DO MOVIMENTO</span>
+          <h1 className="serif">Seu treino evolui com os seus <em>resultados.</em></h1>
+          <p className="lead">Um método de treinamento individualizado que analisa suas cargas, evolução, recuperação e rotina para ajustar cada etapa do seu progresso. Tecnologia inteligente e acompanhamento profissional para você saber exatamente o que fazer e quando evoluir.</p>
+          <div>
+            <Button asChild className="btn hero-cta">
+              <a href="#metodo" onClick={(event) => {
+                const section = document.getElementById("metodo");
+                if (!section) return;
+                event.preventDefault();
+                const headerHeight = document.querySelector(".gbp header")?.getBoundingClientRect().height ?? 64;
+                window.history.replaceState(null, "", "#metodo");
+                window.scrollTo({
+                  top: section.getBoundingClientRect().top + window.scrollY - headerHeight - 16,
+                  behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+                });
+              }}>Conhecer meu método</a>
+            </Button>
           </div>
+          <ul className="facts">
+            <li>Análise real da sua evolução</li>
+            <li>SIS™ — Inteligência aplicada ao treino</li>
+            <li>Acompanhamento profissional individualizado</li>
+          </ul>
         </div>
         <div className="hero-img"><img src={gabriel} alt="Gabriel Baú" /></div>
       </section>
