@@ -89,17 +89,20 @@
 .consultoria-plans .cp-payment{margin:16px 0 0;font-size:12px;line-height:1.7;color:hsl(var(--muted-foreground))}
 .consultoria-plans .cp-comparison{margin-top:72px}
 .consultoria-plans .cp-comparison h3{font-family:'Fraunces',serif;font-size:28px;font-weight:400;margin:0 0 28px}
-.consultoria-plans table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px;line-height:1.6}
-.consultoria-plans th,.consultoria-plans td{padding:20px 16px;text-align:left;vertical-align:top;border-bottom:1px solid hsl(var(--border));overflow-wrap:anywhere}
+.consultoria-plans table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px;line-height:1.45}
+.consultoria-plans th,.consultoria-plans td{padding:14px 12px;text-align:center;vertical-align:middle;border-bottom:1px solid hsl(var(--border));overflow-wrap:break-word}
 .consultoria-plans thead th{font-weight:600;color:hsl(var(--foreground));border-top:1px solid hsl(var(--border))}
 .consultoria-plans thead th:first-child{width:28%}
-.consultoria-plans tbody th{font-weight:400;color:hsl(var(--foreground))}
+.consultoria-plans tbody th,.consultoria-plans thead th:first-child{text-align:left;font-weight:500;color:hsl(var(--foreground))}
 .consultoria-plans td{color:hsl(var(--muted-foreground))}
+.consultoria-plans .cp-included{width:18px;height:18px;margin:auto;color:hsl(var(--primary))}
 .consultoria-plans th:nth-child(3),.consultoria-plans td:nth-child(3){background:hsl(var(--card))}
-.consultoria-plans .cp-footnotes{margin-top:24px;max-width:850px;color:hsl(var(--muted-foreground));font-size:12px;line-height:1.8;display:grid;gap:12px}
-.consultoria-plans .cp-footnotes p{margin:0}
+.consultoria-plans .cp-footnotes{margin:24px 0 0;color:hsl(var(--muted-foreground));font-size:12px;line-height:1.5}
+.consultoria-plans .cp-footnotes>div{display:grid;grid-template-columns:180px minmax(0,1fr);gap:16px;padding:12px 0;border-bottom:1px solid hsl(var(--border))}
+.consultoria-plans .cp-footnotes dt{color:hsl(var(--foreground));font-weight:500}
+.consultoria-plans .cp-footnotes dd{margin:0}
 .consultoria-plans .cp-presencial{display:flex;align-items:center;justify-content:space-between;gap:32px;border-top:1px solid hsl(var(--border));margin-top:48px;padding-top:32px}
 .consultoria-plans .cp-presencial p{font-size:14px;max-width:650px;color:hsl(var(--muted-foreground));margin:10px 0 0}
 .consultoria-plans .cp-presencial-cta{width:auto;flex-shrink:0}
 @media(max-width:1023px){.consultoria-plans .cp-grid{grid-template-columns:1fr}.consultoria-plans .cp-plan{padding:28px}.consultoria-plans .cp-intro{min-height:0}.consultoria-plans .cp-badge-slot{min-height:0}.consultoria-plans .cp-checklist{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:639px){.consultoria-plans .cp-heading h2{font-size:34px}.consultoria-plans .cp-heading>p{font-size:16px}.consultoria-plans .cp-plan{padding:24px 20px}.consultoria-plans .cp-checklist{grid-template-columns:1fr}.consultoria-plans .cp-presencial{align-items:stretch;flex-direction:column;gap:20px}.consultoria-plans table,.consultoria-plans tbody,.consultoria-plans tr{display:block}.consultoria-plans thead{display:none}.consultoria-plans tr{border-top:1px solid hsl(var(--border));padding:20px 0}.consultoria-plans tbody th{display:block;border:0;padding:0 0 14px;font-weight:600}.consultoria-plans td{display:grid;grid-template-columns:82px minmax(0,1fr);gap:16px;border:0;padding:10px 12px}.consultoria-plans td:before{content:attr(data-plan);font-weight:500;color:hsl(var(--foreground))}.consultoria-plans .cp-comparison{margin-top:48px}}
+@media(max-width:639px){.consultoria-plans .cp-heading h2{font-size:34px}.consultoria-plans .cp-heading>p{font-size:16px}.consultoria-plans .cp-plan{padding:24px 20px}.consultoria-plans .cp-checklist{grid-template-columns:1fr}.consultoria-plans .cp-presencial{align-items:stretch;flex-direction:column;gap:20px}.consultoria-plans .cp-comparison{margin-top:48px}.consultoria-plans .cp-comparison h3{font-size:26px;margin-bottom:20px}.consultoria-plans table{font-size:12px;line-height:1.4}.consultoria-plans th,.consultoria-plans td{padding:12px 4px}.consultoria-plans thead th:first-child{width:31%}.consultoria-plans thead th{font-size:11px}.consultoria-plans .cp-footnotes>div{grid-template-columns:100px minmax(0,1fr);gap:12px}}

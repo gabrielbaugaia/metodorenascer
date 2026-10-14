@@ -54,15 +54,17 @@ export function getConsultoriaPlan(slug: string | null) {
 }
 
 export const CONSULTORIA_COMPARISON = [
-  { feature: "Treino individualizado e histórico no app", values: ["Incluído", "Incluído", "Incluído"] },
-  { feature: "SIS™ e indicadores de recuperação", values: ["Incluído", "Incluído", "Incluído"] },
-  { feature: "Fotos e medidas", values: ["Registro a cada 30 dias", "Registro e análise a cada 30 dias", "Registro e análise aprofundada a cada 30 dias"] },
-  { feature: "Ferramentas alimentares e receitas", values: ["Incluído¹", "Incluído¹", "Incluído¹"] },
+  { feature: "Treino e histórico no app", values: ["Incluído", "Incluído", "Incluído"] },
+  { feature: "SIS™ e recuperação", values: ["Incluído", "Incluído", "Incluído"] },
+  { feature: "Fotos e medidas · 30 dias", values: ["Registro", "Registro + análise", "Análise aprofundada"] },
+  { feature: "Diário alimentar e receitas", values: ["Incluído", "Incluído", "Incluído"] },
+  { feature: "Lista de compras", values: ["No protocolo¹", "No protocolo¹", "No protocolo¹"] },
   { feature: "Prescrição de dieta personalizada", values: CONSULTORIA_PLANS.map((plan) => plan.nutrition.personalizedDiet ? "Incluída" : "Não incluída") },
-  { feature: "Ajustes do protocolo alimentar", values: CONSULTORIA_PLANS.map((plan) => plan.nutrition.monthlyAdjustments === 0 ? "Sem ajuste do protocolo" : `${plan.nutrition.monthlyAdjustments} ajuste por mês, caso necessário`) },
-  { feature: "Feedback humano pessoal de Gabriel", values: ["Não inclui revisão semanal", "1 vez por semana no app", "Semanal + acompanhamento mais próximo"] },
-  { feature: "Revisão de metas e ajustes supervisionados", values: ["Não inclui revisão semanal", "Na revisão semanal", "Conforme necessidade"] },
-  { feature: "Contato", values: ["Pelo app", "Suporte pelo app", "App + WhatsApp pessoal²"] },
-  { feature: "Pagamento", values: ["Cartão recorrente", "Pix ou cartão, sem renovação automática", "Pix ou cartão, sem renovação automática"] },
-  { feature: "Cancelamento / renovação", values: ["Aviso de 30 dias", "Sem fidelidade; você decide renovar", "Você decide renovar a cada mês"] },
+  { feature: "Ajuste alimentar, se necessário", values: CONSULTORIA_PLANS.map((plan) => plan.nutrition.monthlyAdjustments === 0 ? "Não incluído" : `${plan.nutrition.monthlyAdjustments}/mês`) },
+  { feature: "Feedback de Gabriel no app", values: ["Sem revisão semanal", "1×/semana", "Semanal + próximo"] },
+  { feature: "Metas e ajustes de treino", values: ["Sem revisão semanal", "Revisão semanal", "Conforme necessidade"] },
+  { feature: "Contato", values: ["App", "App", "App + WhatsApp²"] },
+  { feature: "Pagamento", values: ["Cartão", "Pix ou cartão", "Pix ou cartão"] },
+  { feature: "Renovação", values: ["Automática", "Você renova", "Você renova"] },
+  { feature: "Cancelamento / fidelidade", values: ["Aviso de 30 dias", "Sem fidelidade", "Sem recorrência"] },
 ];

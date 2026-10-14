@@ -38,13 +38,13 @@ export function ConsultoriaPlansSection() {
           <table>
             <caption className="sr-only">Comparação dos planos de consultoria online</caption>
             <thead><tr><th scope="col">O que está incluído</th>{CONSULTORIA_PLANS.map((plan) => <th scope="col" key={plan.slug}>{plan.name}</th>)}</tr></thead>
-            <tbody>{CONSULTORIA_COMPARISON.map((row) => <tr key={row.feature}><th scope="row">{row.feature}</th>{row.values.map((value, i) => <td key={i} data-plan={CONSULTORIA_PLANS[i]?.name}>{value}</td>)}</tr>)}</tbody>
+            <tbody>{CONSULTORIA_COMPARISON.map((row) => <tr key={row.feature}><th scope="row">{row.feature}</th>{row.values.map((value, i) => <td key={i}>{value === "Incluído" || value === "Incluída" ? <><Check className="cp-included" aria-hidden="true" /><span className="sr-only">{value}</span></> : value}</td>)}</tr>)}</tbody>
           </table>
-          <div className="cp-footnotes">
-            <p>¹ Ferramentas de organização alimentar, diário e receitas. A lista de compras aparece quando incluída no protocolo. Todos os planos incluem prescrição de dieta personalizada: Start sem ajuste do protocolo alimentar; Evolution e Premium com 1 ajuste por mês, caso necessário.</p>
-            <p>O SIS™ organiza os dados registrados e orienta a leitura da recuperação. Não faz diagnóstico nem previsão clínica. Mudanças de treino dependem da prescrição; nos planos Evolution e Premium, os ajustes são supervisionados por Gabriel.</p>
-            <p>² WhatsApp pessoal exclusivo do Premium, em dias úteis e horário comercial, com atendimento conforme agenda. Sem atendimento de urgência.</p>
-          </div>
+          <dl className="cp-footnotes">
+            <div><dt>¹ Lista de compras</dt><dd>Disponível quando incluída no protocolo.</dd></div>
+            <div><dt>SIS™ e treino</dt><dd>Leitura de recuperação, sem diagnóstico ou previsão clínica. Ajustes conforme prescrição; supervisão de Gabriel no Evolution e Premium.</dd></div>
+            <div><dt>² WhatsApp Premium</dt><dd>Dias úteis, horário comercial, conforme agenda. Fora do expediente: próximo período de atendimento. Sem urgências, resposta imediata ou plantão 24h.</dd></div>
+          </dl>
         </div>
         <div className="cp-presencial">
           <div><span className="eb">Personal presencial</span><p>Procura acompanhamento presencial? Essa modalidade é tratada separadamente e não está incluída nos planos online.</p></div>
