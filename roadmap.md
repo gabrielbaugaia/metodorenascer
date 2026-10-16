@@ -1,9 +1,9 @@
 # Roadmap — Planos de consultoria online
 
 ## Pedido atual — responsividade cliente e admin
-- [ ] Revisar layouts compartilhados, navegação, abas, tabelas e janelas.
-- [ ] Corrigir os problemas encontrados sem mudar regras, identidade ou acesso.
-- [ ] Validar páginas e navegação em celular, tablet e desktop; não publicar.
+- [x] Revisar layouts compartilhados, navegação, abas, tabelas e janelas.
+- [x] Corrigir os problemas encontrados sem mudar regras, identidade ou acesso.
+- [x] Validar navegação admin, detalhes de cliente e janelas entre 320 e 1280px; compilação aprovada, sem publicar. Telas de cliente conferidas isoladamente com a conta admin, sem alterar permissões; conteúdo de protocolos de aluno ativo não validado por falta de sessão autorizada de aluno.
 
 ## Pedido atual — identificação dos conteúdos
 - [x] Atualizar rótulos visíveis de protocolos, análises e relatórios para Equipe GB sem inventar revisão pessoal.
