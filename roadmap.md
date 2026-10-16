@@ -1,5 +1,9 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — identificação dos conteúdos
+- [x] Atualizar rótulos visíveis de protocolos, análises e relatórios para Equipe GB sem inventar revisão pessoal.
+- [x] Conferir referências remanescentes e validar timeline com dados de teste e PDF exportado; compilação aprovada, sem publicar. Conta do proprietário redireciona ao admin, portanto histórico real de aluno não foi validado. Ferramentas técnicas de IA no admin/blog e avisos de automação permanecem transparentes.
+
 - [x] Conferir funcionalidades disponíveis e jornadas públicas existentes.
 - [x] Atualizar cards e comparação Start / Evolution / Premium sem alterar contratos ou pagamentos.
 - [x] Verificar CTAs, login e apresentação em mobile, tablet e desktop.

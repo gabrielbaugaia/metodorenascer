@@ -125,7 +125,7 @@ export function PrescriptionEnginePanel({ meta, userId }: Props) {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           Este protocolo foi criado antes do motor de prescrição ou de forma manual. A dose por grupo muscular
-          aparece aqui nos próximos protocolos gerados por IA.
+          aparece aqui nos próximos protocolos gerados pelo sistema da Equipe GB.
         </CardContent>
       </Card>
     );
@@ -137,7 +137,7 @@ export function PrescriptionEnginePanel({ meta, userId }: Props) {
     <Card className="border-border/60">
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-sm font-semibold">Por que a IA prescreveu assim?</CardTitle>
+          <CardTitle className="text-sm font-semibold">Critérios da prescrição · Equipe GB</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={meta.confidence === "alta" ? "default" : "secondary"}>
               {CONFIDENCE_LABEL[meta.confidence || "baixa"]}
@@ -218,7 +218,7 @@ export function PrescriptionEnginePanel({ meta, userId }: Props) {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Planejado = dose calculada pelo motor. No protocolo = séries efetivamente escritas pela IA.
+          Planejado = dose calculada pelo motor. No protocolo = séries efetivamente incluídas no treino.
           Realizado = média semanal das últimas 4 semanas registrada pelo aluno.
         </p>
 
@@ -279,7 +279,7 @@ export function PrescriptionEnginePanel({ meta, userId }: Props) {
           {((meta.compliance?.adjustments?.length || 0) > 0 ||
             (meta.compliance?.unmatchedExercises?.length || 0) > 0) && (
             <AccordionItem value="conformidade">
-              <AccordionTrigger className="text-sm">Ajustes aplicados sobre a saída da IA</AccordionTrigger>
+              <AccordionTrigger className="text-sm">Ajustes aplicados ao protocolo gerado</AccordionTrigger>
               <AccordionContent>
                 <ul className="ml-4 list-disc text-xs text-muted-foreground">
                   {(meta.compliance?.adjustments || []).map((a, i) => (

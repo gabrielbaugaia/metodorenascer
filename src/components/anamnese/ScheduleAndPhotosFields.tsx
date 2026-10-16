@@ -280,7 +280,7 @@ export function ScheduleAndPhotosFields({ formData, userId, userName, onChange }
               <Loader2 className="h-8 w-8 animate-spin text-foreground mb-3" />
               <h3 className="font-medium mb-1">Analisando sua composição corporal...</h3>
               <p className="text-sm text-muted-foreground">
-                Nossa IA está avaliando suas fotos para gerar uma análise personalizada
+                Preparando sua análise personalizada no app da Equipe GB
               </p>
             </div>
           </CardContent>
@@ -295,7 +295,7 @@ export function ScheduleAndPhotosFields({ formData, userId, userName, onChange }
                 <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Sparkles className="h-5 w-5 text-foreground" />
-                    Avaliação Física por IA
+                    Avaliação Física · Equipe GB
                   </CardTitle>
                   <span className="text-sm text-muted-foreground">
                     {analysisOpen ? "Ocultar" : "Ver análise"}

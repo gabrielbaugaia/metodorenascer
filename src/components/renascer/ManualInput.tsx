@@ -428,7 +428,7 @@ export function ManualInput({ dataMode, todayLog, onSaveSuccess }: ManualInputPr
               <span className="font-semibold">Enviar print do Fitness</span>
             </Button>
             <p className="text-[11px] text-muted-foreground text-center">
-              Até 3 telas — Apple Fitness, Google Fit ou Samsung Health — a IA lê automaticamente
+              Até 3 telas — Apple Fitness, Google Fit ou Samsung Health — leitura automática no app
             </p>
           </>
         )}

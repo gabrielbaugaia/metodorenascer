@@ -15,7 +15,7 @@ const pillars = [
   {
     icon: Utensils,
     title: "Nutrição + Receitas",
-    description: "Plano alimentar alinhado ao seu objetivo, mais acesso IA de receitas exclusiva que facilitam a execução no dia a dia."
+    description: "Plano alimentar alinhado ao seu objetivo, mais acesso ao gerador de receitas da Equipe GB para facilitar a execução no dia a dia."
   },
   {
     icon: Brain,

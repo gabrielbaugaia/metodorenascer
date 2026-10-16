@@ -217,7 +217,7 @@ export function EvolutionTimeline({
                               {analysis.data && (
                                 <Badge variant="secondary" className="text-xs bg-foreground/20 text-foreground">
                                   <Sparkles className="h-3 w-3 mr-1" />
-                                  Análise IA
+                                  Análise Equipe GB
                                 </Badge>
                               )}
                             </div>
@@ -268,7 +268,7 @@ export function EvolutionTimeline({
                             <div className="border-t border-border/30 pt-4">
                               <div className="flex items-center gap-2 mb-3">
                                 <Sparkles className="h-4 w-4 text-foreground" />
-                                <span className="font-medium text-sm">Análise do Mentor</span>
+                                <span className="font-medium text-sm">Análise Equipe GB</span>
                               </div>
                               
                               {analysis.structured ? (

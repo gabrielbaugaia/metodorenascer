@@ -50,7 +50,7 @@ export function CoachReading({ analysis, analysisDate, studentNotes }: Props) {
             </p>
           )}
           <p className="mt-5 text-xs text-muted-foreground">
-            Gabriel Baú · Consultoria
+            Equipe GB · Consultoria
             {analysisDate ? ` · ${format(new Date(analysisDate), "dd/MM/yyyy", { locale: ptBR })}` : ""}
           </p>
         </>

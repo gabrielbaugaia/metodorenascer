@@ -92,7 +92,7 @@ const faqs = [
   },
   {
     question: "O suporte funciona 24 horas?",
-    answer: "Sim! Nosso mentor IA está disponível 24/7 para tirar suas dúvidas sobre treino, nutrição e mindset."
+    answer: "O chat da Equipe GB oferece orientações automáticas sobre treino, nutrição e mindset. O atendimento pessoal segue as condições do seu plano; não é um canal de emergência."
   },
   {
     question: "Como funciona o acompanhamento de evolução?",
