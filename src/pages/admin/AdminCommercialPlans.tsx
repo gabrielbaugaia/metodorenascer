@@ -418,15 +418,16 @@ export default function AdminCommercialPlans() {
             {/* Modules Access */}
             <div>
               <Label className="mb-2 block">Módulos Inclusos</Label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {ALL_MODULES.map(mod => {
                   const hasAccess = formData.modules_access[mod] === 'full';
                   return (
-                    <button
+                    <Button
+                      variant="ghost"
                       key={mod}
                       type="button"
                       onClick={() => toggleModuleAccess(mod)}
-                      className={`flex flex-col items-center gap-1 p-3 rounded-lg border transition-colors ${
+                      className={`h-auto min-h-16 min-w-0 whitespace-normal flex flex-col items-center gap-1 p-3 rounded-lg border transition-colors ${
                         hasAccess 
                           ? 'bg-foreground/10 border-foreground text-foreground' 
                           : 'bg-muted border-muted-foreground/20 text-muted-foreground'
@@ -434,7 +435,7 @@ export default function AdminCommercialPlans() {
                     >
                       {MODULE_ICONS[mod]}
                       <span className="text-xs">{MODULE_DISPLAY_NAMES[mod]}</span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -452,8 +453,8 @@ export default function AdminCommercialPlans() {
             </div>
 
             {/* Switches */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-6">
                 <div className="flex items-center gap-2">
                   <Switch 
                     checked={formData.is_active}
