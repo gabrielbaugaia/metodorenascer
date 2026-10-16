@@ -40,7 +40,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-dvh flex w-full bg-background overflow-x-hidden">
         <ClientSidebar />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto min-w-0">
+        <main className="relative flex-1 min-w-0">
           {/* Mobile Header */}
           <header className="md:hidden sticky top-0 z-40 flex h-[calc(3.75rem+env(safe-area-inset-top))] items-center justify-between border-b border-sidebar-border bg-sidebar text-sidebar-foreground px-4 pt-[env(safe-area-inset-top)]">
             <div className="flex items-center gap-3">
@@ -60,7 +60,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
               <AdminSupportNotifications />
             </div>
           )}
-          <div className="px-5 py-7 md:px-12 md:py-12 lg:px-16 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-16 max-w-[1280px] mx-auto w-full">
+          <div className={`app-content min-w-0 px-4 py-6 sm:px-6 md:px-8 md:py-10 xl:px-12 max-w-[1280px] mx-auto w-full ${isAdmin ? "pb-10 md:pb-16" : "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-16"}`}>
             {children}
           </div>
 

@@ -206,7 +206,7 @@ export default function GabrielBau() {
             <ManualInput dataMode={dataMode} todayLog={todayLog} onSaveSuccess={handleSaveSuccess} />
 
             {/* Batch upload */}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
                 className="flex-1 gap-2 border-foreground/30 text-foreground hover:bg-foreground/10"

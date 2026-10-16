@@ -251,13 +251,13 @@ export default function Indicacoes() {
               <Input
                 value={referralLink}
                 readOnly
-                className="font-mono text-sm"
+                className="min-w-0 font-mono text-sm"
               />
-              <Button onClick={copyLink} variant="outline">
+              <Button onClick={copyLink} variant="outline" size="icon" className="shrink-0" aria-label="Copiar link de indicação">
                 {copied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button onClick={shareLink} className="flex-1">
                 <Share2 className="h-4 w-4 mr-2" />
                 Compartilhar Link

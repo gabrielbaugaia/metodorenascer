@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Internal app sizing: contain content, not hidden controls or clipped text. */
+.app-content { overflow-wrap: anywhere; }
+.app-content :where(.grid) > * { min-width: 0; }
+.app-dialog {
+  width: calc(100% - 2rem);
+  max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-wrap: anywhere;
+}
+.app-dialog :where(.grid) > * { min-width: 0; }
+
 /* Isolated public consultancy palette; protected screens retain their theme. */
 .consultoria-plans {
   --background: 220 30% 4%;

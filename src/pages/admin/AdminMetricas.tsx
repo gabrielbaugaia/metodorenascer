@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Loader2, TrendingUp, Users, DollarSign, BarChart3, Activity, RefreshCw } from "lucide-react";
+import { ArrowLeft, Loader2, TrendingUp, Users, DollarSign, BarChart3, Activity, RefreshCw } from "lucide-react";
 
 interface ConversionFunnel {
   landing_views: number;
@@ -122,12 +122,15 @@ export default function AdminMetricas() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
+          <ArrowLeft className="h-4 w-4" /> Voltar ao painel
+        </Button>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold">Métricas e CRM</h1>
             <p className="text-muted-foreground">Visão completa de finanças, uso e retenção</p>
           </div>
-          <Button onClick={fetchMetrics} variant="outline" size="sm">
+          <Button onClick={fetchMetrics} variant="outline" size="sm" className="self-start shrink-0">
             <RefreshCw className="w-4 h-4 mr-2" />
             Atualizar
           </Button>
@@ -189,7 +192,7 @@ export default function AdminMetricas() {
         </div>
 
         <Tabs defaultValue="funnel" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
             <TabsTrigger value="funnel">Funil</TabsTrigger>
             <TabsTrigger value="pages">Páginas</TabsTrigger>
             <TabsTrigger value="engagement">Engajamento</TabsTrigger>
@@ -430,7 +433,7 @@ export default function AdminMetricas() {
                 </div>
               ))}
               {mrrSummary.length === 0 && (
-                <div className="col-span-5 text-center text-muted-foreground py-8">
+                <div className="col-span-full text-center text-muted-foreground py-8">
                   Nenhum dado de MRR disponível ainda
                 </div>
               )}

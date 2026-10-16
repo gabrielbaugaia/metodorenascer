@@ -732,7 +732,7 @@ export default function AdminReels() {
             </SelectContent>
           </Select>
           {filtered.length > 0 && (
-            <div className="flex gap-2 shrink-0">
+            <div className="flex flex-wrap gap-2 min-w-0">
               <Button
                 type="button"
                 variant="outline"

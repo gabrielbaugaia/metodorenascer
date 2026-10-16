@@ -128,7 +128,7 @@ export function WorkoutCard({
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleTrigger asChild>
             <CardHeader className="cursor-pointer select-none p-5 md:p-6">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                   {/* Day badge */}
                   <div
@@ -153,7 +153,7 @@ export function WorkoutCard({
                     <CardTitle className="text-base sm:text-xl mb-1 truncate">
                       {focus}
                     </CardTitle>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-brand-gold" />
                         {duration}

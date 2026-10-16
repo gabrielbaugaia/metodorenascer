@@ -399,7 +399,7 @@ export default function Nutricao() {
           <>
             {/* Macros Overview — cores neutras */}
             {isFull && (
-              <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[var(--shadow-soft)] md:grid-cols-5">
+              <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[var(--shadow-soft)] sm:grid-cols-3 xl:grid-cols-5">
                 <MacroCard label="kcal/dia" value={macrosDiarios?.calorias || conteudo.calorias_diarias || macros?.calorias_diarias || "--"} />
                 <MacroCard label="Proteínas" value={macrosDiarios?.proteina_g || macros?.proteinas_g || "--"} unit="g" />
                 <MacroCard label="Carboidratos" value={macrosDiarios?.carboidrato_g || macros?.carboidratos_g || "--"} unit="g" />
