@@ -61,13 +61,13 @@ function MetricCard({ icon: Icon, label, value, unit, color, source, subtitle, e
       className={isClickable ? "cursor-pointer active:scale-[0.98] transition-transform" : ""}
       onClick={isClickable ? onClick : undefined}
     >
-      <CardContent className="p-4 flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${color}`}>
+      <CardContent className="p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
+        <div className={`shrink-0 p-2 rounded-lg ${color}`}>
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-lg font-bold">
+          <p className="text-lg font-bold break-words">
             {emptyValue ? "—" : value}
             {!emptyValue && unit && <span className="text-xs font-normal text-muted-foreground ml-1">{unit}</span>}
           </p>
