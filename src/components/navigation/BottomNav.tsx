@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { Button } from "@/components/ui/button";
 
 const ICON_STROKE = 1.5;
 
@@ -68,7 +69,7 @@ export function BottomNav() {
       {/* "Mais" drawer — slides up from above the nav bar */}
       <div
         className={cn(
-          "md:hidden fixed left-0 right-0 z-50 bg-card border-t border-border rounded-t-2xl shadow-xl transition-transform duration-200",
+          "md:hidden fixed left-0 right-0 z-50 max-h-[calc(100dvh-8rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain bg-card border-t border-border rounded-t-2xl shadow-xl transition-transform duration-200",
           moreOpen ? "translate-y-0" : "translate-y-full pointer-events-none",
         )}
         style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
@@ -138,7 +139,8 @@ export function BottomNav() {
           })}
 
           {/* Mais button */}
-          <button
+          <Button
+            variant="ghost"
             onClick={() => {
               setMoreOpen((prev) => {
                 if (!prev) trackMoreMenuOpened("mobile");
@@ -148,7 +150,7 @@ export function BottomNav() {
             aria-expanded={moreOpen}
             aria-label={moreOpen ? "Fechar mais módulos" : "Abrir mais módulos"}
             className={cn(
-              "flex h-full min-h-11 flex-1 flex-col items-center justify-center gap-0.5 transition-colors duration-200",
+              "flex h-full min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-none px-0 transition-colors duration-200",
               moreOpen || isMoreActive ? "text-primary" : "text-sidebar-foreground/55",
             )}
           >
@@ -158,7 +160,7 @@ export function BottomNav() {
               <MoreHorizontal className="h-5 w-5" strokeWidth={ICON_STROKE} aria-hidden="true" />
             )}
             <span className="text-[10px] font-medium">Mais</span>
-          </button>
+          </Button>
         </div>
       </nav>
     </>

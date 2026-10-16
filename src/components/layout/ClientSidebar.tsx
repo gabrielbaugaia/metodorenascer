@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -138,8 +138,8 @@ const adminSections: AdminSection[] = [
 ];
 
 export function ClientSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  const collapsed = !isMobile && state === "collapsed";
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin } = useAdminCheck();
@@ -149,6 +149,10 @@ export function ClientSidebar() {
   const moreActive = clientMoreItems.some((i) => i.url === location.pathname);
   const [contentOpen, setContentOpen] = useState(contentActive);
   const [moreOpen, setMoreOpen] = useState(moreActive);
+
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [location.pathname, setOpenMobile]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -162,7 +166,7 @@ export function ClientSidebar() {
     <Sidebar
       className={cn(
         "border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300",
-        collapsed ? "w-16" : "w-[264px]"
+        collapsed ? "w-[--sidebar-width-icon]" : "w-[--sidebar-width]"
       )}
       collapsible="icon"
     >

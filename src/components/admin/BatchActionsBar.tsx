@@ -24,7 +24,7 @@ export function BatchActionsBar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[95vw] max-w-3xl">
+    <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-50 w-[95vw] max-w-3xl max-h-[35dvh] overflow-y-auto overscroll-contain">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card/95 backdrop-blur-md shadow-lg px-4 py-3">
         <div className="flex items-center gap-2">
           <Badge variant="default" className="text-sm">

@@ -129,7 +129,7 @@ export default function Protocolos() {
     return (
       <div className="space-y-6">
         {/* Macros Overview */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 min-[400px]:grid-cols-3 gap-3">
           <div className="bg-foreground/10 p-4 rounded-lg text-center">
             <p className="text-2xl font-bold text-foreground">{conteudo.calorias_diarias || "--"}</p>
             <p className="text-xs text-muted-foreground">Calorias/dia</p>
@@ -148,15 +148,15 @@ export default function Protocolos() {
         <div className="space-y-3">
           {conteudo.refeicoes?.map((refeicao: any, index: number) => (
             <div key={index} className="bg-muted/30 p-4 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <h4 className="font-semibold">{refeicao.nome}</h4>
                 <Badge variant="outline">{refeicao.horario}</Badge>
               </div>
               <ul className="space-y-1">
                 {refeicao.alimentos?.map((alimento: any, aIndex: number) => (
-                  <li key={aIndex} className="text-sm text-muted-foreground flex justify-between">
-                    <span>{typeof alimento === "string" ? alimento : alimento.item}</span>
-                    {alimento.calorias && <span>{alimento.calorias} kcal</span>}
+                  <li key={aIndex} className="text-sm text-muted-foreground flex flex-wrap justify-between gap-x-3 gap-y-1">
+                    <span className="min-w-0 break-words">{typeof alimento === "string" ? alimento : alimento.item}</span>
+                    {alimento.calorias && <span className="shrink-0">{alimento.calorias} kcal</span>}
                   </li>
                 ))}
               </ul>

@@ -238,17 +238,17 @@ export default function AdminTrialCampaigns() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3 min-w-0">
             <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div>
+            <div className="min-w-0 break-words">
               <h1 className="text-2xl font-bold">Campanhas de Trial</h1>
               <p className="text-muted-foreground">Gerencie períodos de teste gratuito</p>
             </div>
           </div>
-          <Button onClick={() => openEditor()}>
+          <Button className="self-start shrink-0" onClick={() => openEditor()}>
             <Plus className="w-4 h-4 mr-2" />
             Nova Campanha
           </Button>
@@ -304,15 +304,15 @@ export default function AdminTrialCampaigns() {
             {campaigns.map(campaign => (
               <Card key={campaign.id} className={!campaign.is_active ? 'opacity-60' : ''}>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="min-w-0">
+                      <CardTitle className="flex flex-wrap items-center gap-2 break-words">
                         {campaign.name}
                         <Badge variant={campaign.is_active ? 'default' : 'secondary'}>
                           {campaign.is_active ? 'Ativa' : 'Inativa'}
                         </Badge>
                       </CardTitle>
-                      <CardDescription className="flex items-center gap-4 mt-1">
+                      <CardDescription className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {campaign.duration_days} dias

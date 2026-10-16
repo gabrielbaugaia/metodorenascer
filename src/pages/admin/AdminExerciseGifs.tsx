@@ -2084,8 +2084,8 @@ export default function AdminExerciseGifs() {
 
         {/* Coverage Dashboard by Muscle Group */}
         <Card className="mb-6">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <div>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 space-y-0">
+            <div className="min-w-0">
               <CardTitle className="flex items-center gap-2">
                 <RefreshCw className="h-5 w-5" />
                 Cobertura por Grupo Muscular
