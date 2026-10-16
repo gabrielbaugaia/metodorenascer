@@ -2199,7 +2199,7 @@ export default function AdminExerciseGifs() {
             variant="outline"
             onClick={handleImportFromDatabase}
             disabled={importingDatabase}
-            className="border-foreground/50 text-foreground hover:bg-foreground/10"
+            className="max-w-full h-auto min-h-11 whitespace-normal text-center border-foreground/50 text-foreground hover:bg-foreground/10"
           >
             {importingDatabase ? <LoadingSpinner size="sm" className="mr-2" /> : <Database className="h-4 w-4 mr-2" />}
             Importar Base Completa ({(exercisesDatabase as ExerciseFromDb[]).length} exercícios)
@@ -2419,8 +2419,8 @@ export default function AdminExerciseGifs() {
         {/* Upload Area */}
         <Card className="mb-6 border-dashed border-2 border-foreground/30 bg-foreground/5">
           <CardContent className="py-6">
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="flex-1">
+            <div className="flex flex-col xl:flex-row items-start xl:items-center gap-4">
+              <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
                   <Upload className="h-5 w-5 text-foreground" />
                   Carregar GIF do Computador
@@ -2429,12 +2429,12 @@ export default function AdminExerciseGifs() {
                   Selecione um exercício e faça upload de uma imagem GIF (máx. 5MB)
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex w-full xl:w-auto min-w-0 flex-col sm:flex-row sm:items-center gap-3">
                 <Select 
                   value={selectedExerciseForUpload?.id || ""} 
                   onValueChange={(id) => setSelectedExerciseForUpload(gifs.find(g => g.id === id) || null)}
                 >
-                  <SelectTrigger className="w-64">
+                  <SelectTrigger className="w-full sm:w-64 min-w-0">
                     <SelectValue placeholder="Selecione um exercício..." />
                   </SelectTrigger>
                   <SelectContent className="max-h-80">

@@ -236,17 +236,17 @@ export default function AdminCommercialPlans() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div className="flex min-w-0 items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div>
+            <div className="min-w-0 break-words">
               <h1 className="text-2xl font-bold">Planos Comerciais</h1>
               <p className="text-muted-foreground">Gerencie os planos de venda</p>
             </div>
           </div>
-          <Button onClick={() => openEditor()}>
+          <Button className="self-start shrink-0" onClick={() => openEditor()}>
             <Plus className="w-4 h-4 mr-2" />
             Novo Plano
           </Button>
@@ -275,9 +275,9 @@ export default function AdminCommercialPlans() {
                   </Badge>
                 )}
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="min-w-0 break-words">
+                      <CardTitle className="flex flex-wrap items-center gap-2">
                         {plan.name}
                         {!plan.is_active && (
                           <Badge variant="secondary">Inativo</Badge>
@@ -285,7 +285,7 @@ export default function AdminCommercialPlans() {
                       </CardTitle>
                       <CardDescription>{plan.description}</CardDescription>
                     </div>
-                    <div className="text-right">
+                    <div className="shrink-0 text-left sm:text-right">
                       <div className="text-2xl font-bold">
                         {formatPriceBRL(plan.price_cents)}
                       </div>
