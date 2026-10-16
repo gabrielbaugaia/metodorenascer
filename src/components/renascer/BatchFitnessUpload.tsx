@@ -311,7 +311,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
         {step === "upload" && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Envie até 7 prints do Apple Fitness, Google Fit ou Samsung Health. A IA detecta a data e dados de cada imagem automaticamente.
+              Envie até 7 prints do Apple Fitness, Google Fit ou Samsung Health. O app detecta a data e dados de cada imagem automaticamente.
             </p>
 
             <input

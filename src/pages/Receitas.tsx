@@ -367,7 +367,7 @@ export default function Receitas() {
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4 mr-2" />
-                      Gerar Receita com IA
+                      Gerar Receita
                     </>
                   )}
                 </Button>

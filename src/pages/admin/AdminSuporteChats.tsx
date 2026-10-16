@@ -110,14 +110,14 @@ const getConversationStatus = (conversa: Conversa): ConversationStatus => {
   }
   
   if (lastMsg.role === 'assistant') {
-    return { label: 'Respondido pela IA', color: 'green', icon: CheckCircle2 };
+    return { label: 'Resposta automática · Equipe GB', color: 'green', icon: CheckCircle2 };
   }
   
   if (lastMsg.role === 'user') {
     if (lastUpdate < fiveMinutesAgo) {
       return { label: 'Requer Intervenção', color: 'red', icon: AlertTriangle };
     }
-    return { label: 'Aguardando IA', color: 'yellow', icon: Clock };
+    return { label: 'Aguardando resposta automática', color: 'yellow', icon: Clock };
   }
   
   return { label: 'Ativa', color: 'gray', icon: Circle };
@@ -832,7 +832,7 @@ export default function AdminSuporteChats() {
                       )}
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <Badge variant="outline" className="text-xs">
-                          {msg.role === "user" ? "Cliente" : msg.role === "admin" ? `Admin${msg.admin_name ? ` (${msg.admin_name})` : ''}` : "IA"}
+                          {msg.role === "user" ? "Cliente" : msg.role === "admin" ? `Admin${msg.admin_name ? ` (${msg.admin_name})` : ''}` : "Equipe GB · Automático"}
                         </Badge>
                         {msg.timestamp && (
                           <span className="text-xs opacity-70">

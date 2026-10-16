@@ -52,7 +52,7 @@ export function ManualProtocolInput({ userId, onSuccess, onCancel }: ManualProto
         if (selectedFile.type.startsWith("image/")) {
           imageBase64 = await fileToBase64(selectedFile);
         } else {
-          toast.error("Por enquanto, apenas imagens são suportadas para transcrição por IA");
+          toast.error("Por enquanto, apenas imagens são suportadas para transcrição");
           setProcessing(false);
           return;
         }
@@ -186,7 +186,7 @@ export function ManualProtocolInput({ userId, onSuccess, onCancel }: ManualProto
 
         <div>
           <Label className="text-xs text-muted-foreground">
-            Orientações adicionais para a IA (opcional)
+            Orientações adicionais para a transcrição (opcional)
           </Label>
           <Textarea
             placeholder="Ex: Foco em hipertrofia, aluno intermediário, evitar exercícios com impacto no joelho..."
@@ -206,12 +206,12 @@ export function ManualProtocolInput({ userId, onSuccess, onCancel }: ManualProto
           {processing ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              Processando com IA...
+              Processando protocolo...
             </>
           ) : (
             <>
               <Sparkles className="h-4 w-4 mr-2" />
-              Processar com IA e Subir Treino
+              Processar e Salvar Treino
             </>
           )}
         </Button>

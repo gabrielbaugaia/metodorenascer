@@ -446,7 +446,7 @@ export default function AdminCommercialPlans() {
               <Textarea 
                 value={featuresText}
                 onChange={e => setFeaturesText(e.target.value)}
-                placeholder="Treino personalizado por IA&#10;Plano nutricional completo&#10;Dashboard de progresso"
+                placeholder="Treino personalizado · Equipe GB&#10;Plano nutricional completo&#10;Dashboard de progresso"
                 rows={5}
               />
             </div>

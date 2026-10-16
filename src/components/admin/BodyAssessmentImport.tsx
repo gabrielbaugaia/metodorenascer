@@ -169,7 +169,7 @@ export function BodyAssessmentImport({ clientId, onAssessmentImported }: BodyAss
           </div>
           {importing && (
             <p className="text-xs text-muted-foreground animate-pulse">
-              Acessando link → Extraindo dados com IA → Salvando no perfil...
+              Acessando link → Extraindo dados → Salvando no perfil...
             </p>
           )}
         </div>

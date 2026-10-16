@@ -437,7 +437,7 @@ export async function generateAnalysisPdf(params: GenerateAnalysisPdfParams): Pr
   // Motivational message
   if (analysis.mensagemMotivacional) {
     checkNewPage(30);
-    addSectionTitle("Mensagem do Mentor");
+    addSectionTitle("Mensagem da Equipe GB");
     doc.setFontSize(10);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(60, 60, 60);
@@ -447,7 +447,7 @@ export async function generateAnalysisPdf(params: GenerateAnalysisPdfParams): Pr
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 100, 100);
-    doc.text("— Gabriel Baú", margin, yPos);
+    doc.text("— Equipe GB", margin, yPos);
   }
 
   // Footer

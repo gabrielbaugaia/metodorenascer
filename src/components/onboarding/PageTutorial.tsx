@@ -126,17 +126,17 @@ const TUTORIALS: Record<string, { title: string; steps: TutorialStep[] }> = {
     steps: [
       {
         title: "Envie mensagem ao mentor",
-        description: "Use o chat para tirar dúvidas sobre treino, nutrição ou mindset. O mentor IA conhece seu perfil completo e dá respostas personalizadas.",
+        description: "Use o chat da Equipe GB para tirar dúvidas sobre treino, nutrição ou mindset. As orientações automáticas consideram as informações do seu perfil.",
         icon: MessageCircle,
       },
       {
-        title: "Chat de IA disponível 24h",
-        description: "O mentor IA está disponível a qualquer hora. Pergunte sobre execução de exercícios, substituições de alimentos, ou peça motivação.",
+        title: "Chat da Equipe GB",
+        description: "Pergunte sobre execução de exercícios, substituições de alimentos ou motivação. O atendimento pessoal segue as condições do seu plano.",
         icon: Bot,
       },
       {
         title: "Tempo de resposta",
-        description: "O mentor IA responde instantaneamente. Para questões que precisam de atenção humana, use palavras como \"urgente\" ou \"falar com humano\" para priorizar.",
+        description: "O chat oferece respostas automáticas. Para solicitar atenção humana, use \"falar com humano\". Não é um canal de emergência.",
         icon: Clock,
       },
     ],
@@ -155,7 +155,7 @@ const TUTORIALS: Record<string, { title: string; steps: TutorialStep[] }> = {
         icon: ImageIcon,
       },
       {
-        title: "Análise de IA",
+        title: "Análise Equipe GB",
         description: "Após enviar as fotos, o sistema compara automaticamente com suas fotos anteriores e gera uma análise detalhada das mudanças visíveis no seu corpo.",
         icon: Sparkles,
       },
@@ -176,7 +176,7 @@ const TUTORIALS: Record<string, { title: string; steps: TutorialStep[] }> = {
       },
       {
         title: "Importe dados do celular",
-        description: "Se usar Apple Saúde ou Google Fit, tire um print da tela de resumo diário e anexe na seção de screenshots. A IA extrai os dados automaticamente.",
+        description: "Se usar Apple Saúde ou Google Fit, tire um print da tela de resumo diário e anexe na seção de screenshots. O app extrai os dados automaticamente.",
         icon: Smartphone,
       },
       {
