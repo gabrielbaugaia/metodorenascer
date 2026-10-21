@@ -48,7 +48,7 @@ export default function AdminAvaliacoesMovimento() {
     queryKey: ["mv-ficha", studentId],
     queryFn: async () => {
       const [{ data: p }, { data: pa }, { count: photos }] = await Promise.all([
-        db.from("profiles").select("anamnese_completa, objetivo_principal, lesoes, restricoes_medicas").eq("id", studentId).maybeSingle(),
+        db.from("profiles").select("anamnese_completa, objetivo_principal, injuries, restricoes_medicas, foto_frente_url, foto_costas_url, foto_lado_url").eq("id", studentId).maybeSingle(),
         db.from("physical_assessments").select("assessed_at, results").eq("user_id", studentId).eq("status", "published").order("assessed_at", { ascending: false }).limit(1).maybeSingle(),
         db.from("physical_assessment_photos").select("id", { count: "exact", head: true }).eq("user_id", studentId),
       ]);
@@ -113,10 +113,10 @@ export default function AdminAvaliacoesMovimento() {
                   <div><div className="text-muted-foreground">Anamnese</div>{profile.data?.p?.anamnese_completa ? "Completa" : "Pendente"}</div>
                   <div><div className="text-muted-foreground">Dobras (última)</div>
                     {profile.data?.pa ? `${Number(profile.data.pa.results?.body_fat_pct ?? 0).toFixed(1)}% · ${dateBR(profile.data.pa.assessed_at)}` : "Nenhuma publicada"}</div>
-                  <div><div className="text-muted-foreground">Fotos de avaliação</div>{profile.data?.photos ?? 0}</div>
-                  {(profile.data?.p?.lesoes || profile.data?.p?.restricoes_medicas) && (
+                  <div><div className="text-muted-foreground">Fotos</div>{(profile.data?.photos ?? 0) + [profile.data?.p?.foto_frente_url, profile.data?.p?.foto_costas_url, profile.data?.p?.foto_lado_url].filter(Boolean).length}</div>
+                  {(profile.data?.p?.injuries || profile.data?.p?.restricoes_medicas) && (
                     <div className="sm:col-span-3"><div className="text-muted-foreground">Lesões / restrições da anamnese</div>
-                      {[profile.data.p.lesoes, profile.data.p.restricoes_medicas].filter(Boolean).join(" · ")}</div>
+                      {[profile.data.p.injuries, profile.data.p.restricoes_medicas].filter(Boolean).join(" · ")}</div>
                   )}
                   <p className="text-xs text-muted-foreground sm:col-span-3">Anamnese, dobras, fotos e a última avaliação de movimento publicada entram na geração do treino. Prescrições manuais continuam valendo acima de tudo.</p>
                 </CardContent>

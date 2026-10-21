@@ -84,6 +84,7 @@ const ReelsPage = lazy(() => import("./pages/Reels"));
 const MinhasAvaliacoes = lazy(() => import("./pages/MinhasAvaliacoes"));
 const AdminAvaliacoes = lazy(() => import("./pages/admin/AdminAvaliacoes"));
 const AdminEvolucaoFisica = lazy(() => import("./pages/admin/AdminEvolucaoFisica"));
+const AdminAvaliacoesMovimento = lazy(() => import("./pages/admin/AdminAvaliacoesMovimento"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -179,6 +180,7 @@ const App = () => {
             <Route path="/admin/clientes" element={<AdminGuard><AdminClientes /></AdminGuard>} />
             <Route path="/admin/avaliacoes" element={<AdminGuard><AdminAvaliacoes /></AdminGuard>} />
             <Route path="/admin/evolucao-fisica" element={<AdminGuard><AdminEvolucaoFisica /></AdminGuard>} />
+            <Route path="/admin/avaliacoes-movimento" element={<AdminGuard><AdminAvaliacoesMovimento /></AdminGuard>} />
             <Route path="/admin/clientes/:id" element={<AdminGuard><AdminClienteDetalhes /></AdminGuard>} />
             <Route path="/admin/criar-cliente" element={<AdminGuard><AdminCriarCliente /></AdminGuard>} />
             <Route path="/admin/planos" element={<AdminGuard><AdminPlanos /></AdminGuard>} />
