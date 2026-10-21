@@ -1,5 +1,10 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — padrão do laudo de movimento
+- [x] Organizar laudo e análise na mesma avaliação, com registros por vista e dados angulares por marcação do treinador.
+- [x] Retirar Rosca Scott e Desenvolvimento da seleção de testes sem apagar histórico.
+- [x] Validar seis testes de cálculo/seleção e exportação PDF sintética; três páginas revisadas visualmente sem cortes ou sobreposição; compilação aprovada, sem publicar. Persistência/publicação com avaliação real permanece dependente de autorização, conforme pendência abaixo.
+
 ## Pedido atual — concluir avaliações de movimento
 - [x] Analisar fotos e amostras de vídeos no admin, com revisão antes de publicar.
 - [x] Preservar versões publicadas e proteger mídias; liberar histórico e laudo ao aluno.
