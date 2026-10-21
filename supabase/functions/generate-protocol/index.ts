@@ -1,5 +1,5 @@
 import { buildAssessmentGuidance, type AssessmentInput } from "../_shared/assessmentGuidance.ts";
-import { buildMovementGuidance, type MovementInput } from "../_shared/movementGuidance.ts";
+import { buildMovementGuidance, movementExerciseConflicts, type MovementInput } from "../_shared/movementGuidance.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getCorsHeaders, handleCorsPreflightRequest, createErrorResponse, createSuccessResponse } from "../_shared/cors.ts";
@@ -455,6 +455,7 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
 
     // Última avaliação física publicada (% gordura e IMC) orienta treino e dieta.
     let assessmentGuidance = "";
+    let movementSnapshot: MovementInput | null = null;
     if (tipo === "treino" || tipo === "nutricao") {
       try {
         const { data: lastAssessment } = await supabaseClient
@@ -472,18 +473,23 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
       }
       if (tipo === "treino") {
         try {
-          const { data: lastMovement } = await supabaseClient
+          const { data: lastMovement, error: movementError } = await supabaseClient
             .from("movement_assessments")
-            .select("assessed_at, findings, restrictions, notes")
+            .select("id, version, assessed_at, findings, restrictions, notes, excluded_exercises")
             .eq("user_id", targetUserId)
             .eq("status", "published")
             .order("assessed_at", { ascending: false })
+            .order("version", { ascending: false })
+            .order("published_at", { ascending: false })
             .limit(1)
             .maybeSingle();
-          const mg = buildMovementGuidance(lastMovement as MovementInput | null);
+          if (movementError) throw movementError;
+          movementSnapshot = lastMovement as MovementInput | null;
+          const mg = buildMovementGuidance(movementSnapshot);
           if (mg) assessmentGuidance = assessmentGuidance ? `${assessmentGuidance}\n\n${mg}` : mg;
         } catch (e) {
           console.error("[movement] falha ao carregar avaliação de movimento:", e);
+          return new Response(JSON.stringify({ error: "Não foi possível verificar as restrições de movimento. Tente novamente antes de gerar o treino." }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }
     }
@@ -923,6 +929,13 @@ INSTRUÇÕES DE CORREÇÃO:
     // ============================================================
     let compliance: ComplianceReport | null = null;
     let prescriptionMeta: Record<string, unknown> | null = null;
+    if (tipo === "treino") {
+      const conflicts = movementExerciseConflicts(protocolData, movementSnapshot?.excluded_exercises);
+      if (conflicts.length) {
+        await supabaseClient.from("prescription_runs").insert({ user_id: targetUserId, mode: "movimento_bloqueado", engine_version: prescriptionPlan?.engineVersion ?? "movement-safety-v1", status: "REQUER_REVISAO", review_reasons: conflicts.map(name => `Exercício vetado na avaliação: ${name}`), inputs_snapshot: { movement_assessment: movementSnapshot }, plan: prescriptionPlan ?? {}, created_by: user.id });
+        return new Response(JSON.stringify({ error: "O treino proposto incluiu exercício vetado pelo treinador e não foi salvo. Revise a proposta.", conflicts }), { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
     if (tipo === "treino" && prescriptionPlan) {
       try {
         compliance = enforcePlan(protocolData, prescriptionPlan);
@@ -940,6 +953,7 @@ INSTRUÇÕES DE CORREÇÃO:
           safety_alerts: prescriptionPlan.safetyAlerts,
           decision_summary: prescriptionPlan.decisionSummary,
           inputs_snapshot: prescriptionPlan.inputsSnapshot,
+          movement_assessment: movementSnapshot,
           engine_notes: engineNotes,
           gate: engineGate,
           overrides_applied: prescriptionPlan.overridesApplied,
@@ -952,6 +966,7 @@ INSTRUÇÕES DE CORREÇÃO:
     }
 
     // Save protocol to database
+    if (tipo === "treino" && movementSnapshot && !prescriptionMeta) prescriptionMeta = { movement_assessment: movementSnapshot };
     const { data: savedProtocol, error: saveError } = await supabaseClient
       .from("protocolos")
       .insert({
@@ -983,7 +998,7 @@ INSTRUÇÕES DE CORREÇÃO:
           status: engineGate.status,
           review_reasons: engineGate.reasons,
           confidence: prescriptionPlan.confidence,
-          inputs_snapshot: prescriptionPlan.inputsSnapshot,
+          inputs_snapshot: { ...prescriptionPlan.inputsSnapshot, movement_assessment: movementSnapshot },
           plan: prescriptionPlan,
           previous_volume: engineInputs?.previousPlannedVolume ?? {},
           proposed_volume: Object.fromEntries(prescriptionPlan.muscles.map((m) => [m.muscle, m.directSets])),

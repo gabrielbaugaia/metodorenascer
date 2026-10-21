@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Finding } from "@/lib/movementAssessment";
 
 export type MovementReport = { summary: string; recommendations: string; limitations: string; observations: { media_id: string; second: number | null; observation: string; confidence: string }[]; analyzed_at?: string };
-export type MovementAssessment = { id: string; user_id: string; assessed_at: string; assessment_type: string; findings: Finding[]; restrictions: string | null; notes: string | null; status: string; published_at: string | null; version: number; root_id: string | null; report: MovementReport | null; reviewed_at: string | null };
+export type MovementAssessment = { id: string; user_id: string; assessed_at: string; assessment_type: string; findings: Finding[]; restrictions: string | null; notes: string | null; status: string; published_at: string | null; version: number; root_id: string | null; report: MovementReport | null; reviewed_at: string | null; excluded_exercises: string[] };
 export function useMovementAssessments(userId?: string) {
   return useQuery({ queryKey: ["movement-assessments", userId], enabled: !!userId, refetchOnWindowFocus: true, refetchInterval: 60000, queryFn: async () => {
     if (!userId) return [];
