@@ -15,6 +15,20 @@
       "when": 1792114233138,
       "tag": "0001_restrict_settings_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792543734146,
+      "tag": "0002_physical_assessments",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792543953185,
+      "tag": "0003_physical_assessments_delete_guard",
+      "breakpoints": true
     }
   ]
 }

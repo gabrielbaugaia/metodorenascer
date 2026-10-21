@@ -81,6 +81,8 @@ const LandingV2 = lazy(() => import("./pages/LandingV2"));
 const AdminLeadsQuiz = lazy(() => import("./pages/admin/AdminLeadsQuiz"));
 const AdminReels = lazy(() => import("./pages/admin/AdminReels"));
 const ReelsPage = lazy(() => import("./pages/Reels"));
+const MinhasAvaliacoes = lazy(() => import("./pages/MinhasAvaliacoes"));
+const AdminAvaliacoes = lazy(() => import("./pages/admin/AdminAvaliacoes"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -149,6 +151,7 @@ const App = () => {
             {/* ROTAS QUE REQUEREM APENAS AUTENTICAÇÃO (mostram planos se sem assinatura) */}
             <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
             <Route path="/anamnese" element={<AuthGuard><Anamnese /></AuthGuard>} />
+            <Route path="/minhas-avaliacoes" element={<AuthGuard><MinhasAvaliacoes /></AuthGuard>} />
 
             {/* ROTAS QUE REQUEREM ASSINATURA ATIVA */}
             <Route path="/treino" element={<SubscriptionGuard><Treino /></SubscriptionGuard>} />
@@ -173,6 +176,7 @@ const App = () => {
             {/* ROTAS ADMIN (protegidas por AdminGuard) */}
             <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
             <Route path="/admin/clientes" element={<AdminGuard><AdminClientes /></AdminGuard>} />
+            <Route path="/admin/avaliacoes" element={<AdminGuard><AdminAvaliacoes /></AdminGuard>} />
             <Route path="/admin/clientes/:id" element={<AdminGuard><AdminClienteDetalhes /></AdminGuard>} />
             <Route path="/admin/criar-cliente" element={<AdminGuard><AdminCriarCliente /></AdminGuard>} />
             <Route path="/admin/planos" element={<AdminGuard><AdminPlanos /></AdminGuard>} />
