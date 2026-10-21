@@ -1889,6 +1889,7 @@ export type Database = {
           correction_reason: string | null
           created_at: string
           created_by: string | null
+          excluded_exercises: string[]
           findings: Json
           id: string
           notes: string | null
@@ -1910,6 +1911,7 @@ export type Database = {
           correction_reason?: string | null
           created_at?: string
           created_by?: string | null
+          excluded_exercises?: string[]
           findings?: Json
           id?: string
           notes?: string | null
@@ -1931,6 +1933,7 @@ export type Database = {
           correction_reason?: string | null
           created_at?: string
           created_by?: string | null
+          excluded_exercises?: string[]
           findings?: Json
           id?: string
           notes?: string | null
