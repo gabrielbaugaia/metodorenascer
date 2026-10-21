@@ -1,0 +1,4 @@
+ALTER TABLE public.movement_assessment_audit DROP CONSTRAINT movement_assessment_audit_assessment_id_fkey;
+ALTER TABLE public.movement_assessment_audit ADD CONSTRAINT movement_assessment_audit_assessment_id_fkey FOREIGN KEY (assessment_id) REFERENCES public.movement_assessments(id) ON DELETE CASCADE;
+CREATE OR REPLACE FUNCTION public.movement_media_invalidate_report() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$ BEGIN UPDATE public.movement_assessments SET report=NULL, reviewed_at=NULL WHERE id=CASE WHEN TG_OP='DELETE' THEN OLD.assessment_id ELSE NEW.assessment_id END AND status='draft'; RETURN NULL; END $$;
+CREATE TRIGGER movement_media_invalidate_report AFTER INSERT OR UPDATE OR DELETE ON public.movement_assessment_media FOR EACH ROW EXECUTE FUNCTION public.movement_media_invalidate_report();

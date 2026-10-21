@@ -57,6 +57,13 @@
       "when": 1792552200848,
       "tag": "0007_movement_exercise_exclusions",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792552324915,
+      "tag": "0008_movement_draft_cleanup",
+      "breakpoints": true
     }
   ]
 }
