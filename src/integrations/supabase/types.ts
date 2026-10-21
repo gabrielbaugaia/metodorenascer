@@ -2100,6 +2100,185 @@ export type Database = {
         }
         Relationships: []
       }
+      physical_assessment_audit: {
+        Row: {
+          action: string
+          actor: string | null
+          assessment_id: string
+          created_at: string
+          details: Json | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          assessment_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          assessment_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "physical_assessment_audit_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "physical_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      physical_assessment_photos: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          id: string
+          mime_type: string | null
+          position: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          position: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          position?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "physical_assessment_photos_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "physical_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "physical_assessment_photos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      physical_assessments: {
+        Row: {
+          age_years: number | null
+          assessed_at: string
+          birth_date: string | null
+          calc_method: string | null
+          calc_version: string | null
+          circumferences: Json
+          correction_reason: string | null
+          created_at: string
+          created_by: string | null
+          height_cm: number | null
+          id: string
+          notes: string | null
+          published_at: string | null
+          published_by: string | null
+          recommendations: string | null
+          results: Json | null
+          root_id: string | null
+          sex: string | null
+          skinfolds: Json
+          status: string
+          supersedes_id: string | null
+          updated_at: string
+          user_id: string
+          version: number
+          weight_kg: number | null
+        }
+        Insert: {
+          age_years?: number | null
+          assessed_at: string
+          birth_date?: string | null
+          calc_method?: string | null
+          calc_version?: string | null
+          circumferences?: Json
+          correction_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          height_cm?: number | null
+          id?: string
+          notes?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          recommendations?: string | null
+          results?: Json | null
+          root_id?: string | null
+          sex?: string | null
+          skinfolds?: Json
+          status?: string
+          supersedes_id?: string | null
+          updated_at?: string
+          user_id: string
+          version?: number
+          weight_kg?: number | null
+        }
+        Update: {
+          age_years?: number | null
+          assessed_at?: string
+          birth_date?: string | null
+          calc_method?: string | null
+          calc_version?: string | null
+          circumferences?: Json
+          correction_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          height_cm?: number | null
+          id?: string
+          notes?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          recommendations?: string | null
+          results?: Json | null
+          root_id?: string | null
+          sex?: string | null
+          skinfolds?: Json
+          status?: string
+          supersedes_id?: string | null
+          updated_at?: string
+          user_id?: string
+          version?: number
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "physical_assessments_supersedes_id_fkey"
+            columns: ["supersedes_id"]
+            isOneToOne: false
+            referencedRelation: "physical_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "physical_assessments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescription_engine_config: {
         Row: {
           active: boolean
