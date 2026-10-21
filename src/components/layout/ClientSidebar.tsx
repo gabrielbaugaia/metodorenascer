@@ -44,6 +44,7 @@ import {
   Activity,
   ChevronDown,
   MoreHorizontal,
+  LineChart,
 } from "lucide-react";
 import { ENABLE_HEALTH_METRICS } from "@/lib/healthConfig";
 import { supabase } from "@/integrations/supabase/client";

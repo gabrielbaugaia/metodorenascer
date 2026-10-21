@@ -83,6 +83,7 @@ const AdminReels = lazy(() => import("./pages/admin/AdminReels"));
 const ReelsPage = lazy(() => import("./pages/Reels"));
 const MinhasAvaliacoes = lazy(() => import("./pages/MinhasAvaliacoes"));
 const AdminAvaliacoes = lazy(() => import("./pages/admin/AdminAvaliacoes"));
+const AdminEvolucaoFisica = lazy(() => import("./pages/admin/AdminEvolucaoFisica"));
 
 const queryClient = new QueryClient({
   defaultOptions: {

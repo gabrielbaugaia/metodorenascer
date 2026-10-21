@@ -67,6 +67,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
 
         </main>
         {!isAdmin && <BottomNav />}
+        {!isAdmin && user && <AssessmentPublishedListener userId={user.id} />}
       </div>
     </SidebarProvider>
   );
