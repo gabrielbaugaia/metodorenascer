@@ -165,6 +165,7 @@ function Editor({ a, studentName, onChanged, onDeleted, onCreated }: { a: Assess
   const [report, setReport] = useState<MovementReport | null>(a.report);
   const [reviewed, setReviewed] = useState(!!a.reviewed_at);
   const [correction, setCorrection] = useState("");
+  const [excluded, setExcluded] = useState((a.excluded_exercises ?? []).join("\n"));
   const qc = useQueryClient();
   const media = useMovementMedia(a.id);
   const analyze = async () => {
@@ -194,7 +195,7 @@ function Editor({ a, studentName, onChanged, onDeleted, onCreated }: { a: Assess
   const correct = async () => {
     if (correction.trim().length < 5) return toast.error("Informe o motivo da correção (mínimo 5 caracteres).");
     setBusy("correction");
-    const { data, error } = await db.from("movement_assessments").insert({ user_id: a.user_id, assessed_at: a.assessed_at, findings: a.findings, restrictions: a.restrictions, notes: a.notes, supersedes_id: a.id, correction_reason: correction.trim() }).select("id").single();
+    const { data, error } = await db.from("movement_assessments").insert({ user_id: a.user_id, assessed_at: a.assessed_at, findings: a.findings, restrictions: a.restrictions, notes: a.notes, excluded_exercises: a.excluded_exercises, supersedes_id: a.id, correction_reason: correction.trim() }).select("id").single();
     setBusy(null);
     if (error) return toast.error(error.message);
     onChanged(); onCreated(data.id);
@@ -214,7 +215,7 @@ function Editor({ a, studentName, onChanged, onDeleted, onCreated }: { a: Assess
     if (publish && report && !reviewed) return toast.error("Confirme a revisão do laudo antes de publicar.");
     if (publish && !findings.length && !restrictions.trim() && !notes.trim() && !report) return toast.error("Registre os achados ou as observações antes de publicar.");
     setBusy(publish ? "pub" : "save");
-    const patch: Record<string, unknown> = { assessed_at: date, findings, restrictions: restrictions || null, notes: notes || null, report, reviewed_at: reviewed ? new Date().toISOString() : null };
+    const patch: Record<string, unknown> = { assessed_at: date, findings, restrictions: restrictions || null, notes: notes || null, excluded_exercises: excluded.split("\n").map(s => s.trim()).filter(Boolean), report, reviewed_at: reviewed ? new Date().toISOString() : null };
     if (publish) patch.status = "published";
     const { error } = await db.from("movement_assessments").update(patch).eq("id", a.id);
     setBusy(null);
@@ -339,6 +340,8 @@ function Editor({ a, studentName, onChanged, onDeleted, onCreated }: { a: Assess
 
         <div className="space-y-2"><label className="text-sm font-semibold">Restrições para o treino</label>
           <Textarea value={restrictions} onChange={(e) => setRestrictions(e.target.value)} placeholder="Ex.: sem agachamento livre com barra; evitar desenvolvimento atrás da nuca" /></div>
+        <div className="space-y-2"><label htmlFor="movement-excluded" className="text-sm font-semibold">Exercícios vetados · nome exato, um por linha</label>
+          <Textarea id="movement-excluded" value={excluded} onChange={e => setExcluded(e.target.value)} placeholder="Supino máquina" /></div>
         <div className="space-y-2"><label className="text-sm font-semibold">Observações da Equipe GB</label>
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
       </CardContent>
