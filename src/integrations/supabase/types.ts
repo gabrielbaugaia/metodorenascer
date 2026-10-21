@@ -1777,6 +1777,104 @@ export type Database = {
           },
         ]
       }
+      movement_assessment_media: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          id: string
+          kind: string
+          position_key: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          position_key: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          position_key?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movement_assessment_media_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "movement_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movement_assessment_media_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movement_assessments: {
+        Row: {
+          assessed_at: string
+          assessment_type: string
+          created_at: string
+          created_by: string | null
+          findings: Json
+          id: string
+          notes: string | null
+          published_at: string | null
+          restrictions: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessed_at?: string
+          assessment_type?: string
+          created_at?: string
+          created_by?: string | null
+          findings?: Json
+          id?: string
+          notes?: string | null
+          published_at?: string | null
+          restrictions?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assessed_at?: string
+          assessment_type?: string
+          created_at?: string
+          created_by?: string | null
+          findings?: Json
+          id?: string
+          notes?: string | null
+          published_at?: string | null
+          restrictions?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movement_assessments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mqo_clients: {
         Row: {
           attention_points: string | null

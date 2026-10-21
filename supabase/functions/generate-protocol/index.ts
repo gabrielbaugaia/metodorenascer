@@ -1,4 +1,5 @@
 import { buildAssessmentGuidance, type AssessmentInput } from "../_shared/assessmentGuidance.ts";
+import { buildMovementGuidance, type MovementInput } from "../_shared/movementGuidance.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getCorsHeaders, handleCorsPreflightRequest, createErrorResponse, createSuccessResponse } from "../_shared/cors.ts";
@@ -468,6 +469,22 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
         assessmentGuidance = buildAssessmentGuidance(lastAssessment as AssessmentInput | null, tipo);
       } catch (e) {
         console.error("[assessment] falha ao carregar avaliação:", e);
+      }
+      if (tipo === "treino") {
+        try {
+          const { data: lastMovement } = await supabaseClient
+            .from("movement_assessments")
+            .select("assessed_at, findings, restrictions, notes")
+            .eq("user_id", targetUserId)
+            .eq("status", "published")
+            .order("assessed_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          const mg = buildMovementGuidance(lastMovement as MovementInput | null);
+          if (mg) assessmentGuidance = assessmentGuidance ? `${assessmentGuidance}\n\n${mg}` : mg;
+        } catch (e) {
+          console.error("[movement] falha ao carregar avaliação de movimento:", e);
+        }
       }
     }
 
