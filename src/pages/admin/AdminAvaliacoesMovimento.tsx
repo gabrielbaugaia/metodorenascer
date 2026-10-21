@@ -14,6 +14,7 @@ import { MOVEMENT_FINDINGS, PHOTO_POSITIONS, VIDEO_POSITIONS, type Finding, type
 import { MovementAnalysisText, MovementReportView } from "@/components/assessment/MovementReport";
 import { useMovementMedia, type MovementAssessment, type MovementReport } from "@/hooks/useMovementAssessments";
 import { sampleMovementVideo } from "@/lib/movementVideo";
+import { MovementAngleEditor } from "@/components/assessment/MovementAngleEditor";
 
 const db = supabase as any;
 const BUCKET = "movement-media";
@@ -186,7 +187,12 @@ function Editor({ a, studentName, onChanged, onDeleted, onCreated }: { a: Assess
         throw new Error(message);
       }
       if (!data?.report) throw new Error(data?.error ?? "A análise não retornou um laudo.");
-      setReport(data.report); setReviewed(false);
+      const nextReport = { ...data.report, angles: report?.angles ?? [] };
+      setReport(nextReport); setReviewed(false);
+      if (nextReport.angles.length) {
+        const { error: saveError } = await db.from("movement_assessments").update({ report: nextReport, reviewed_at: null }).eq("id", a.id);
+        if (saveError) throw saveError;
+      }
       toast.success("Análise salva no rascunho. Revise os achados antes de publicar.");
       onChanged();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível analisar"); }
@@ -312,6 +318,10 @@ function Editor({ a, studentName, onChanged, onDeleted, onCreated }: { a: Assess
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{VIDEO_POSITIONS.map((p) => slot("video", p))}</div></section>
 
         {media.error && <p role="alert" className="text-destructive">Não foi possível carregar as mídias.</p>}
+        <MovementAngleEditor media={media.data ?? []} angles={report?.angles ?? []} disabled={!!busy} onChange={angles => {
+          setReport(previous => ({ summary: "", recommendations: "", limitations: "Ângulos projetados em imagem, marcados pelo treinador. Não são medições tridimensionais.", observations: [], ...previous, angles }));
+          setReviewed(false);
+        }} />
         <section className="space-y-4 border-y border-border py-5">
           <Button variant="outline" disabled={!!busy || !media.data?.length || !!media.error} onClick={analyze}>{busy === "analysis" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Analisar fotos e vídeos</Button>
           <p className="text-xs text-muted-foreground">Vídeos: observação de cinco quadros por arquivo, não análise contínua nem medição de força. A análise usa créditos Lovable.</p>
