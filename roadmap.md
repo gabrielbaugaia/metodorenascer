@@ -1,5 +1,11 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — concluir avaliações de movimento
+- [ ] Analisar fotos e amostras de vídeos no admin, com revisão antes de publicar.
+- [ ] Preservar versões publicadas e proteger mídias; liberar histórico e laudo ao aluno.
+- [ ] Rastrear a avaliação usada na prescrição e respeitar restrições aprovadas.
+- [ ] Validar testes, segurança e jornada disponível, sem publicar o app.
+
 ## Pedido atual — responsividade cliente e admin
 - [x] Revisar layouts compartilhados, navegação, abas, tabelas e janelas.
 - [x] Corrigir os problemas encontrados sem mudar regras, identidade ou acesso.
