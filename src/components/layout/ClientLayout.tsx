@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ClientSidebar } from "./ClientSidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { AssessmentPublishedListener } from "@/components/assessment/AssessmentPublishedListener";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { AdminSupportNotifications } from "@/components/admin/AdminSupportNotifications";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -66,6 +67,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
 
         </main>
         {!isAdmin && <BottomNav />}
+        {!isAdmin && user && <AssessmentPublishedListener userId={user.id} />}
       </div>
     </SidebarProvider>
   );

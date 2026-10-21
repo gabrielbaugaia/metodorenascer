@@ -1,3 +1,4 @@
+import { buildAssessmentGuidance, type AssessmentInput } from "../_shared/assessmentGuidance.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { getCorsHeaders, handleCorsPreflightRequest, createErrorResponse, createSuccessResponse } from "../_shared/cors.ts";
@@ -451,11 +452,31 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
       }
     }
 
+    // Última avaliação física publicada (% gordura e IMC) orienta treino e dieta.
+    let assessmentGuidance = "";
+    if (tipo === "treino" || tipo === "nutricao") {
+      try {
+        const { data: lastAssessment } = await supabaseClient
+          .from("physical_assessments")
+          .select("assessed_at, sex, weight_kg, results")
+          .eq("user_id", targetUserId)
+          .eq("status", "published")
+          .order("assessed_at", { ascending: false })
+          .order("version", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        assessmentGuidance = buildAssessmentGuidance(lastAssessment as AssessmentInput | null, tipo);
+      } catch (e) {
+        console.error("[assessment] falha ao carregar avaliação:", e);
+      }
+    }
+
     // Selecionar prompts baseado no tipo
     if (tipo === "treino") {
       // P1 FIX: Passar lista de exercícios para o prompt
       systemPrompt = getTreinoSystemPrompt(durationWeeks, weeksPerCycle, totalCycles, exerciseNames);
       userPrompt = getTreinoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments, healthContext);
+      if (assessmentGuidance) userPrompt += `\n\n${assessmentGuidance}`;
       if (prescriptionPlan) {
         const constraints = planToPromptConstraints(prescriptionPlan, engineInputs?.overrides);
         systemPrompt += `\n\n${constraints}`;
@@ -464,6 +485,7 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
     } else if (tipo === "nutricao") {
       systemPrompt = getNutricaoSystemPrompt(durationWeeks, weeksPerCycle);
       userPrompt = getNutricaoUserPrompt(userContext, planType, durationWeeks, weeksPerCycle, formattedAdjustments, healthContext);
+      if (assessmentGuidance) userPrompt += `\n\n${assessmentGuidance}`;
     } else if (tipo === "mindset") {
       systemPrompt = getMindsetSystemPrompt(durationWeeks, weeksPerCycle);
       userPrompt = getMindsetUserPrompt(userContext, planType, durationWeeks, formattedAdjustments);
