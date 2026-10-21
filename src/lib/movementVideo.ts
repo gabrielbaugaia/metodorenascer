@@ -1,16 +1,19 @@
 /** Capture a chronological sample; originals remain untouched in private storage. */
 export async function sampleMovementVideo(url: string): Promise<{ image: string; second: number }[]> {
   const video = document.createElement("video");
-  video.crossOrigin = "anonymous";
   video.muted = true;
   video.playsInline = true;
   const wait = (event: string) => new Promise<void>((resolve, reject) => {
     video.addEventListener(event, () => resolve(), { once: true });
     video.addEventListener("error", () => reject(new Error("Vídeo incompatível. Envie MP4/H.264 ou fotos do movimento.")), { once: true });
   });
+  let objectUrl: string | undefined;
   try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Não foi possível abrir o vídeo privado. Atualize a página e tente novamente.");
+    objectUrl = URL.createObjectURL(await response.blob());
     const loaded = wait("loadedmetadata");
-    video.src = url;
+    video.src = objectUrl;
     video.load();
     await loaded;
     if (!Number.isFinite(video.duration) || video.duration <= 0) throw new Error("Vídeo sem duração válida.");
@@ -33,5 +36,6 @@ export async function sampleMovementVideo(url: string): Promise<{ image: string;
   } finally {
     video.removeAttribute("src");
     video.load();
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
   }
 }
