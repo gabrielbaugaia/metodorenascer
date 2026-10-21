@@ -96,6 +96,7 @@ const adminSections: AdminSection[] = [
       { title: "Dashboard", url: "/admin", icon: Shield },
       { title: "Clientes", url: "/admin/clientes", icon: User },
       { title: "Avaliações Físicas", url: "/admin/avaliacoes", icon: ClipboardList },
+      { title: "Evolução Física", url: "/admin/evolucao-fisica", icon: LineChart },
       { title: "Leads", url: "/admin/leads", icon: Target },
       { title: "Leads do Quiz", url: "/admin/leads-quiz", icon: Target },
     ],
