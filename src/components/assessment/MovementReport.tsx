@@ -43,16 +43,16 @@ export function MovementReportView({ assessment: a, studentName }: { assessment:
       if (a.notes) line(`Observações: ${a.notes}`);
       for (const m of media.data ?? []) {
         if (m.kind !== "photo" || !m.url) continue;
-        const image = new Image(); image.crossOrigin = "anonymous";
-        await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error("Não foi possível incluir uma foto no PDF")); image.src = m.url ?? ""; });
+        const image = await loadImageOriented(m.url);
+        if (!image) throw new Error("Não foi possível incluir uma foto no PDF");
         newPage("Registros por vista");
         line(movementPositionLabel(m.position_key), 14);
         a.report?.observations.filter(o => o.media_id === m.id).forEach(o => line(o.observation));
         if (y > 170) newPage(movementPositionLabel(m.position_key));
-        const ratio = Math.min(170 / image.naturalWidth, (264 - y) / image.naturalHeight);
-        const width = image.naturalWidth * ratio, height = image.naturalHeight * ratio;
+        const ratio = Math.min(170 / image.w, (264 - y) / image.h);
+        const width = image.w * ratio, height = image.h * ratio;
         const imageY = y;
-        doc.addImage(image, "JPEG", 20, imageY, width, height);
+        doc.addImage(image.data, "JPEG", 20, imageY, width, height);
         doc.setDrawColor(...PDF_COLORS.bronze); doc.setLineWidth(0.6);
         for (const angle of a.report?.angles?.filter(x => x.media_id === m.id) ?? []) {
           angle.points.forEach((p, i) => {

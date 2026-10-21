@@ -181,7 +181,7 @@ export async function exportAssessmentPdf(a: AssessmentRow, photos: AssessmentPh
     const cellH = 120;
     let i = 0;
     for (const { p, photo } of withUrl) {
-      const img = await loadImage(photo!.url!);
+      const img = await loadImageOriented(photo!.url!);
       const cx = 15 + (i % 2) * (cellW + 6);
       const cy = y + Math.floor(i / 2) * (cellH + 10);
       doc.setFontSize(8).setTextColor(...bronze).text(p.label.toUpperCase(), cx, cy + 3);
