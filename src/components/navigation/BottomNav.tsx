@@ -44,6 +44,7 @@ const secondaryItems = [
   { icon: Activity, label: "Painel", href: "/renascer" },
   { icon: MessageCircle, label: "Suporte", href: "/suporte" },
   { icon: ClipboardList, label: "Minhas Avaliações", href: "/minhas-avaliacoes" },
+  { icon: Activity, label: "Movimento", href: "/minhas-avaliacoes-movimento" },
   { icon: User, label: "Meu Perfil", href: "/meu-perfil" },
   { icon: Settings, label: "Configurações", href: "/configuracoes" },
 ];

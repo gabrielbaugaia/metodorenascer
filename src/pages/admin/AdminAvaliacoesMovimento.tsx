@@ -11,16 +11,16 @@ import { Loader2, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { MOVEMENT_FINDINGS, PHOTO_POSITIONS, VIDEO_POSITIONS, type Finding, type Severity } from "@/lib/movementAssessment";
+import { MovementAnalysisText, MovementReportView } from "@/components/assessment/MovementReport";
+import { useMovementMedia, type MovementAssessment, type MovementReport } from "@/hooks/useMovementAssessments";
+import { sampleMovementVideo } from "@/lib/movementVideo";
 
 const db = supabase as any;
 const BUCKET = "movement-media";
 const SEVS: Severity[] = ["leve", "moderada", "importante"];
 const dateBR = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("pt-BR");
 
-type Assessment = {
-  id: string; user_id: string; assessed_at: string; findings: Finding[]; restrictions: string | null;
-  notes: string | null; status: string; published_at: string | null;
-};
+type Assessment = MovementAssessment;
 
 export default function AdminAvaliacoesMovimento() {
   const [params, setParams] = useSearchParams();
@@ -92,11 +92,11 @@ export default function AdminAvaliacoesMovimento() {
               <ul className="max-h-[50vh] space-y-1 overflow-y-auto">
                 {filtered.map((s) => (
                   <li key={s.id}>
-                    <button onClick={() => select({ aluno: s.id, id: "" })}
-                      className={`w-full rounded-md px-3 py-2 text-left text-sm hover:bg-secondary ${s.id === studentId ? "bg-secondary" : ""}`}>
+                    <Button variant="ghost" onClick={() => select({ aluno: s.id, id: "" })}
+                      className={`h-auto w-full flex-col items-start px-3 py-2 text-left text-sm whitespace-normal ${s.id === studentId ? "bg-secondary" : ""}`}>
                       <div className="font-medium break-words">{s.full_name || "Sem nome"}</div>
                       <div className="text-xs text-muted-foreground break-words">{s.email}</div>
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -134,11 +134,11 @@ export default function AdminAvaliacoesMovimento() {
                     <ul className="space-y-1">
                       {list.data.map((a) => (
                         <li key={a.id}>
-                          <button onClick={() => select({ id: a.id })}
-                            className={`flex w-full flex-wrap justify-between gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-secondary ${a.id === selectedId ? "bg-secondary" : ""}`}>
-                            <span>{dateBR(a.assessed_at)} · {(a.findings ?? []).length} achados</span>
+                          <Button variant="ghost" onClick={() => select({ id: a.id })}
+                            className={`h-auto w-full flex-wrap justify-between gap-2 px-3 py-2 text-left text-sm whitespace-normal ${a.id === selectedId ? "bg-secondary" : ""}`}>
+                            <span>{dateBR(a.assessed_at)} · v{a.version} · {(a.findings ?? []).length} achados</span>
                             <span className="text-muted-foreground">{a.status === "published" ? "Publicada" : "Rascunho"}</span>
-                          </button>
+                          </Button>
                         </li>
                       ))}
                     </ul>
@@ -146,7 +146,8 @@ export default function AdminAvaliacoesMovimento() {
                 </CardContent>
               </Card>
 
-              {current && <Editor key={current.id} a={current} onChanged={() => qc.invalidateQueries({ queryKey: ["mv-list", studentId] })} onDeleted={() => select({ id: "" })} />}
+              {(students.error || list.error || profile.error) && <p role="alert" className="text-destructive">Não foi possível carregar os dados. Atualize a página para tentar novamente.</p>}
+              {current && <Editor key={current.id} a={current} studentName={student.full_name ?? "Aluno"} onChanged={() => qc.invalidateQueries({ queryKey: ["mv-list", studentId] })} onDeleted={() => select({ id: "" })} onCreated={(id) => select({ id })} />}
             </>
           )}
         </div>
@@ -155,28 +156,50 @@ export default function AdminAvaliacoesMovimento() {
   );
 }
 
-function Editor({ a, onChanged, onDeleted }: { a: Assessment; onChanged: () => void; onDeleted: () => void }) {
+function Editor({ a, studentName, onChanged, onDeleted, onCreated }: { a: Assessment; studentName: string; onChanged: () => void; onDeleted: () => void; onCreated: (id: string) => void }) {
   const [date, setDate] = useState(a.assessed_at);
   const [findings, setFindings] = useState<Finding[]>(a.findings ?? []);
   const [restrictions, setRestrictions] = useState(a.restrictions ?? "");
   const [notes, setNotes] = useState(a.notes ?? "");
   const [busy, setBusy] = useState<string | null>(null);
+  const [report, setReport] = useState<MovementReport | null>(a.report);
+  const [reviewed, setReviewed] = useState(!!a.reviewed_at);
+  const [correction, setCorrection] = useState("");
   const qc = useQueryClient();
-
-  const media = useQuery({
-    queryKey: ["mv-media", a.id],
-    queryFn: async () => {
-      const { data, error } = await db.from("movement_assessment_media").select("*").eq("assessment_id", a.id);
-      if (error) throw error;
-      const rows = data as { id: string; kind: string; position_key: string; storage_path: string }[];
-      const urls: Record<string, string> = {};
-      await Promise.all(rows.map(async (r) => {
-        const { data: s } = await supabase.storage.from(BUCKET).createSignedUrl(r.storage_path, 3600);
-        if (s?.signedUrl) urls[r.id] = s.signedUrl;
-      }));
-      return rows.map((r) => ({ ...r, url: urls[r.id] }));
-    },
-  });
+  const media = useMovementMedia(a.id);
+  const analyze = async () => {
+    setBusy("analysis");
+    try {
+      if (!media.data?.length) throw new Error("Envie fotos ou vídeos para analisar.");
+      const frames = [];
+      for (const m of media.data) {
+        if (m.kind === "video" && m.url) {
+          const sample = await sampleMovementVideo(m.url);
+          frames.push(...sample.map(f => ({ mediaId: m.id, ...f })));
+        }
+      }
+      const { data, error } = await supabase.functions.invoke("analyze-movement", { body: { assessmentId: a.id, frames } });
+      if (error) {
+        let message = "Não foi possível analisar. Nenhum laudo foi publicado.";
+        if (error.context instanceof Response) { const body = await error.context.json().catch(() => null); message = body?.error ?? message; }
+        throw new Error(message);
+      }
+      if (!data?.report) throw new Error(data?.error ?? "A análise não retornou um laudo.");
+      setReport(data.report); setReviewed(false);
+      toast.success("Análise salva no rascunho. Revise os achados antes de publicar.");
+      onChanged();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível analisar"); }
+    finally { setBusy(null); }
+  };
+  const correct = async () => {
+    if (correction.trim().length < 5) return toast.error("Informe o motivo da correção (mínimo 5 caracteres).");
+    setBusy("correction");
+    const { data, error } = await db.from("movement_assessments").insert({ user_id: a.user_id, assessed_at: a.assessed_at, findings: a.findings, restrictions: a.restrictions, notes: a.notes, supersedes_id: a.id, correction_reason: correction.trim() }).select("id").single();
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    onChanged(); onCreated(data.id);
+    toast.success("Nova versão criada. A anterior permanece preservada; envie as mídias da correção.");
+  };
 
   const toggle = (f: (typeof MOVEMENT_FINDINGS)[number], sev: Severity | null) => {
     setFindings((prev) => {
@@ -186,9 +209,13 @@ function Editor({ a, onChanged, onDeleted }: { a: Assessment; onChanged: () => v
   };
 
   const save = async (publish = false) => {
+    if (a.status === "published") return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return toast.error("Informe uma data válida.");
+    if (publish && report && !reviewed) return toast.error("Confirme a revisão do laudo antes de publicar.");
+    if (publish && !findings.length && !restrictions.trim() && !notes.trim() && !report) return toast.error("Registre os achados ou as observações antes de publicar.");
     setBusy(publish ? "pub" : "save");
-    const patch: Record<string, unknown> = { assessed_at: date, findings, restrictions: restrictions || null, notes: notes || null };
-    if (publish) { patch.status = "published"; patch.published_at = new Date().toISOString(); }
+    const patch: Record<string, unknown> = { assessed_at: date, findings, restrictions: restrictions || null, notes: notes || null, report, reviewed_at: reviewed ? new Date().toISOString() : null };
+    if (publish) patch.status = "published";
     const { error } = await db.from("movement_assessments").update(patch).eq("id", a.id);
     setBusy(null);
     if (error) return toast.error(error.message);
@@ -206,19 +233,25 @@ function Editor({ a, onChanged, onDeleted }: { a: Assessment; onChanged: () => v
   };
 
   const upload = async (kind: "photo" | "video", key: string, file: File) => {
+    if (a.status === "published") return;
+    if (file.size > 200 * 1024 * 1024 || !file.type.startsWith(kind === "photo" ? "image/" : "video/")) return toast.error("Envie uma mídia válida com até 200 MB.");
+    if (kind === "photo" && !["image/jpeg", "image/png", "image/webp"].includes(file.type)) return toast.error("Envie a foto em JPEG, PNG ou WebP.");
     setBusy(key);
     try {
       const old = media.data?.find((m) => m.position_key === key);
-      if (old) {
-        await supabase.storage.from(BUCKET).remove([old.storage_path]);
-        await db.from("movement_assessment_media").delete().eq("id", old.id);
-      }
       const ext = file.name.split(".").pop() || (kind === "photo" ? "jpg" : "mp4");
       const path = `${a.user_id}/${a.id}/${key}_${Date.now()}.${ext}`;
       const { error: up } = await supabase.storage.from(BUCKET).upload(path, file);
       if (up) throw up;
       const { error } = await db.from("movement_assessment_media").insert({ assessment_id: a.id, user_id: a.user_id, kind, position_key: key, storage_path: path });
-      if (error) throw error;
+      if (error) { await supabase.storage.from(BUCKET).remove([path]); throw error; }
+      if (old) {
+        const { error: deletion } = await db.from("movement_assessment_media").delete().eq("id", old.id);
+        if (deletion) throw deletion;
+        await supabase.storage.from(BUCKET).remove([old.storage_path]);
+      }
+      await db.from("movement_assessments").update({ report: null, reviewed_at: null }).eq("id", a.id);
+      setReport(null); setReviewed(false);
       qc.invalidateQueries({ queryKey: ["mv-media", a.id] });
     } catch (e: any) {
       toast.error(e.message ?? "Erro no envio");
@@ -232,12 +265,12 @@ function Editor({ a, onChanged, onDeleted }: { a: Assessment; onChanged: () => v
         <div className="text-xs font-medium">{p.label}</div>
         {m?.url ? (kind === "photo"
           ? <img src={m.url} alt={p.label} className="aspect-[3/4] w-full rounded object-contain bg-secondary" />
-          : <video src={m.url} controls className="aspect-video w-full rounded bg-secondary" />)
+          : <video src={m.url} controls playsInline preload="metadata" className="aspect-video w-full rounded bg-secondary" />)
           : <div className="flex aspect-[3/4] items-center justify-center rounded bg-secondary text-xs text-muted-foreground">Sem arquivo</div>}
         <label className="flex cursor-pointer items-center justify-center gap-1 rounded-md border border-border py-1.5 text-xs hover:bg-secondary">
           {busy === p.key ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
           {m ? "Trocar" : "Enviar"}
-          <input type="file" hidden accept={kind === "photo" ? "image/*" : "video/*"}
+          <input type="file" hidden disabled={!!busy} aria-label={`Enviar ${p.label}`} accept={kind === "photo" ? "image/jpeg,image/png,image/webp" : "video/*"}
             onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(kind, p.key, f); e.target.value = ""; }} />
         </label>
       </div>
@@ -247,24 +280,40 @@ function Editor({ a, onChanged, onDeleted }: { a: Assessment; onChanged: () => v
   const regions = [...new Set(MOVEMENT_FINDINGS.map((f) => f.region))];
   const published = a.status === "published";
 
+  if (published) return <div className="space-y-5">
+    <MovementReportView assessment={a} studentName={studentName} />
+    <section className="border-t border-border pt-4 space-y-3">
+      <label htmlFor="correction-reason" className="text-sm font-semibold">Motivo da correção</label>
+      <Input id="correction-reason" value={correction} onChange={e => setCorrection(e.target.value)} />
+      <Button variant="outline" onClick={correct} disabled={!!busy}>Criar nova versão</Button>
+    </section>
+  </div>;
+
   return (
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
         <CardTitle className="text-base">{published ? "Avaliação publicada" : "Rascunho"}</CardTitle>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="ghost" onClick={remove}><Trash2 className="h-4 w-4" /></Button>
+          <Button size="sm" variant="ghost" aria-label="Excluir rascunho" disabled={!!busy} onClick={remove}><Trash2 className="h-4 w-4" /></Button>
           <Button size="sm" variant="outline" disabled={!!busy} onClick={() => save(false)}>{busy === "save" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}</Button>
           {!published && <Button size="sm" disabled={!!busy} onClick={() => save(true)}>{busy === "pub" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Publicar"}</Button>}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="max-w-xs"><label className="text-sm text-muted-foreground">Data</label>
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+        <div className="max-w-xs"><label htmlFor="movement-date" className="text-sm text-muted-foreground">Data</label>
+          <Input id="movement-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
 
         <section className="space-y-2"><h3 className="text-sm font-semibold">Fotos posturais</h3>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{PHOTO_POSITIONS.map((p) => slot("photo", p))}</div></section>
         <section className="space-y-2"><h3 className="text-sm font-semibold">Vídeos de movimento</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">{VIDEO_POSITIONS.map((p) => slot("video", p))}</div></section>
+
+        {media.error && <p role="alert" className="text-destructive">Não foi possível carregar as mídias.</p>}
+        <section className="space-y-4 border-y border-border py-5">
+          <Button variant="outline" disabled={!!busy || !media.data?.length || !!media.error} onClick={analyze}>{busy === "analysis" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Analisar fotos e vídeos</Button>
+          <p className="text-xs text-muted-foreground">Vídeos: observação de seis quadros por arquivo, não análise contínua nem medição de força. A análise usa créditos Lovable.</p>
+          {report && <><MovementAnalysisText report={report} /><label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={reviewed} onChange={e => setReviewed(e.target.checked)} className="mt-1" />Revisei o laudo e confirmei os achados e restrições abaixo para o treino.</label></>}
+        </section>
 
         <section className="space-y-3"><h3 className="text-sm font-semibold">Achados</h3>
           {regions.map((r) => (
@@ -278,7 +327,7 @@ function Editor({ a, onChanged, onDeleted }: { a: Assessment; onChanged: () => v
                     <div className="flex gap-1">
                       {SEVS.map((s) => (
                         <Button key={s} size="sm" variant={sev === s ? "default" : "outline"} className="h-7 px-2 text-xs"
-                          onClick={() => toggle(f, sev === s ? null : s)}>{s}</Button>
+                          disabled={!!busy} onClick={() => toggle(f, sev === s ? null : s)}>{s}</Button>
                       ))}
                     </div>
                   </div>
