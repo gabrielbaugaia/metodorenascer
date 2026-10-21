@@ -1777,6 +1777,66 @@ export type Database = {
           },
         ]
       }
+      movement_analysis_access_state: {
+        Row: {
+          blocked_status: number | null
+          id: boolean
+          message: string | null
+          updated_at: string
+        }
+        Insert: {
+          blocked_status?: number | null
+          id?: boolean
+          message?: string | null
+          updated_at?: string
+        }
+        Update: {
+          blocked_status?: number | null
+          id?: boolean
+          message?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      movement_assessment_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          assessment_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          assessment_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          assessment_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movement_assessment_audit_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movement_assessment_audit_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "movement_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movement_assessment_media: {
         Row: {
           assessment_id: string
@@ -1826,46 +1886,88 @@ export type Database = {
         Row: {
           assessed_at: string
           assessment_type: string
+          correction_reason: string | null
           created_at: string
           created_by: string | null
           findings: Json
           id: string
           notes: string | null
           published_at: string | null
+          published_by: string | null
+          report: Json | null
           restrictions: string | null
+          reviewed_at: string | null
+          root_id: string | null
           status: string
+          supersedes_id: string | null
           updated_at: string
           user_id: string
+          version: number
         }
         Insert: {
           assessed_at?: string
           assessment_type?: string
+          correction_reason?: string | null
           created_at?: string
           created_by?: string | null
           findings?: Json
           id?: string
           notes?: string | null
           published_at?: string | null
+          published_by?: string | null
+          report?: Json | null
           restrictions?: string | null
+          reviewed_at?: string | null
+          root_id?: string | null
           status?: string
+          supersedes_id?: string | null
           updated_at?: string
           user_id: string
+          version?: number
         }
         Update: {
           assessed_at?: string
           assessment_type?: string
+          correction_reason?: string | null
           created_at?: string
           created_by?: string | null
           findings?: Json
           id?: string
           notes?: string | null
           published_at?: string | null
+          published_by?: string | null
+          report?: Json | null
           restrictions?: string | null
+          reviewed_at?: string | null
+          root_id?: string | null
           status?: string
+          supersedes_id?: string | null
           updated_at?: string
           user_id?: string
+          version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "movement_assessments_published_by_fkey"
+            columns: ["published_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movement_assessments_root_id_fkey"
+            columns: ["root_id"]
+            isOneToOne: false
+            referencedRelation: "movement_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movement_assessments_supersedes_id_fkey"
+            columns: ["supersedes_id"]
+            isOneToOne: false
+            referencedRelation: "movement_assessments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "movement_assessments_user_id_fkey"
             columns: ["user_id"]
