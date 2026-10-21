@@ -312,7 +312,7 @@ function Editor({ a, studentName, onChanged, onDeleted, onCreated }: { a: Assess
         {media.error && <p role="alert" className="text-destructive">Não foi possível carregar as mídias.</p>}
         <section className="space-y-4 border-y border-border py-5">
           <Button variant="outline" disabled={!!busy || !media.data?.length || !!media.error} onClick={analyze}>{busy === "analysis" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Analisar fotos e vídeos</Button>
-          <p className="text-xs text-muted-foreground">Vídeos: observação de seis quadros por arquivo, não análise contínua nem medição de força. A análise usa créditos Lovable.</p>
+          <p className="text-xs text-muted-foreground">Vídeos: observação de cinco quadros por arquivo, não análise contínua nem medição de força. A análise usa créditos Lovable.</p>
           {report && <><MovementAnalysisText report={report} /><label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={reviewed} onChange={e => setReviewed(e.target.checked)} className="mt-1" />Revisei o laudo e confirmei os achados e restrições abaixo para o treino.</label></>}
         </section>
 

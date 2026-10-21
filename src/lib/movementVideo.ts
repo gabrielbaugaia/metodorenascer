@@ -21,8 +21,8 @@ export async function sampleMovementVideo(url: string): Promise<{ image: string;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Não foi possível ler o vídeo.");
     const frames = [];
-    for (let i = 0; i < 6; i++) {
-      const second = Math.min(video.duration - 0.01, video.duration * (i + 0.5) / 6);
+    for (let i = 0; i < 5; i++) {
+      const second = Math.min(video.duration - 0.01, video.duration * (i + 0.5) / 5);
       const seeked = wait("seeked");
       video.currentTime = Math.max(0.001, second);
       await seeked;
