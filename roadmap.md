@@ -1,9 +1,10 @@
 # Roadmap — Planos de consultoria online
 
 ## Pedido atual — marcações posturais automáticas
-- [ ] Sugerir pontos e linhas nas fotos com explicações, sem inventar medidas ou classificações clínicas.
-- [ ] Permitir revisão/correção no admin e incluir marcações no laudo do aluno e PDF.
-- [ ] Validar testes, análise e apresentação sem publicar avaliação real ou app.
+- [x] Sugerir pontos e linhas nas fotos com explicações, sem inventar medidas ou classificações clínicas.
+- [x] Permitir revisão/correção no admin e incluir marcações no laudo do aluno e PDF.
+- [x] Dez testes aprovados e compilação OK; análise real de figura sintética concluída sem pontos por evidência insuficiente. Com marcação simulada, correção, salvamento/leitura e bloqueio sem revisão conferidos no admin; rascunhos removidos. Nenhuma avaliação real nem app publicado.
+- [ ] Validar precisão das sugestões e PDF com fotos reais: aguarda aluno e avaliação autorizados, junto da validação ponta a ponta abaixo.
 
 ## Pedido atual — padrão do laudo de movimento
 - [x] Organizar laudo e análise na mesma avaliação, com registros por vista e dados angulares por marcação do treinador.
