@@ -82,7 +82,7 @@ export default function AdminAvaliacoesMovimento() {
 
   return (
     <ClientLayout>
-      <PageHeader title="Avaliação de Movimento" description="Postural, biomecânica e funcional, ligada ao cadastro do aluno e ao treino." />
+      <PageHeader title="Avaliação de Movimento" subtitle="Postural, biomecânica e funcional, ligada ao cadastro do aluno e ao treino." />
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
         <Card>
           <CardHeader><CardTitle className="text-base">Aluno</CardTitle></CardHeader>
