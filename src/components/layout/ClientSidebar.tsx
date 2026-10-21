@@ -13,6 +13,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
+  ClipboardList,
   Home,
   Dumbbell,
   Apple,
@@ -75,6 +76,7 @@ const clientContentItems = [
 
 const clientMoreItems = [
   { title: "Diário nutricional", url: "/nutricao-diario", icon: NotebookPen },
+  { title: "Minhas Avaliações", url: "/minhas-avaliacoes", icon: ClipboardList },
   { title: "Painel de dados", url: "/renascer", icon: Activity },
   { title: "Meu Perfil", url: "/meu-perfil", icon: User },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
@@ -93,6 +95,7 @@ const adminSections: AdminSection[] = [
     items: [
       { title: "Dashboard", url: "/admin", icon: Shield },
       { title: "Clientes", url: "/admin/clientes", icon: User },
+      { title: "Avaliações Físicas", url: "/admin/avaliacoes", icon: ClipboardList },
       { title: "Leads", url: "/admin/leads", icon: Target },
       { title: "Leads do Quiz", url: "/admin/leads-quiz", icon: Target },
     ],

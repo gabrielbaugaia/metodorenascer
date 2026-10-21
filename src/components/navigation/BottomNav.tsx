@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
+  ClipboardList,
   Flame,
   Dumbbell,
   Apple,
@@ -42,6 +43,7 @@ const secondaryItems = [
   { icon: NotebookPen, label: "Diário", href: "/nutricao-diario" },
   { icon: Activity, label: "Painel", href: "/renascer" },
   { icon: MessageCircle, label: "Suporte", href: "/suporte" },
+  { icon: ClipboardList, label: "Minhas Avaliações", href: "/minhas-avaliacoes" },
   { icon: User, label: "Meu Perfil", href: "/meu-perfil" },
   { icon: Settings, label: "Configurações", href: "/configuracoes" },
 ];
