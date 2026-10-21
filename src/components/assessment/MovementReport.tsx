@@ -7,6 +7,7 @@ import { movementPositionLabel } from "@/lib/movementAssessment";
 import { useState } from "react";
 import { AngleOverlay } from "./MovementAngleEditor";
 import { drawHeader, drawContinuationHeader, drawFooters, PDF_COLORS, setText } from "@/lib/pdfTheme";
+import { loadImageOriented } from "@/lib/assessmentPdf";
 
 export function MovementAnalysisText({ report }: { report: Report }) {
   return <section className="space-y-4 text-sm">
