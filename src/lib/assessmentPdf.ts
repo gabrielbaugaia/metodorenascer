@@ -10,7 +10,7 @@ import type { AssessmentPhoto, AssessmentRow } from "@/hooks/usePhysicalAssessme
  * fotos de celular); ao redesenhar em canvas o navegador aplica essa rotação,
  * então a imagem embutida no PDF fica em pé e sem distorção.
  */
-async function loadImage(url: string): Promise<{ data: string; w: number; h: number } | null> {
+export async function loadImageOriented(url: string): Promise<{ data: string; w: number; h: number } | null> {
   try {
     const blob = await (await fetch(url)).blob();
     const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" } as ImageBitmapOptions);
