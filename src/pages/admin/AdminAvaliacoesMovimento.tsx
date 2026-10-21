@@ -227,6 +227,8 @@ function Editor({ a, studentName, onChanged, onDeleted, onCreated }: { a: Assess
   const remove = async () => {
     if (!confirm("Excluir esta avaliação e suas mídias?")) return;
     const paths = (media.data ?? []).map((m) => m.storage_path);
+    const { error: mediaDeleteError } = await db.from("movement_assessment_media").delete().eq("assessment_id", a.id);
+    if (mediaDeleteError) return toast.error(mediaDeleteError.message);
     if (paths.length) await supabase.storage.from(BUCKET).remove(paths);
     const { error } = await db.from("movement_assessments").delete().eq("id", a.id);
     if (error) return toast.error(error.message);
@@ -267,7 +269,7 @@ function Editor({ a, studentName, onChanged, onDeleted, onCreated }: { a: Assess
         {m?.url ? (kind === "photo"
           ? <img src={m.url} alt={p.label} className="aspect-[3/4] w-full rounded object-contain bg-secondary" />
           : <video src={m.url} controls playsInline preload="metadata" className="aspect-video w-full rounded bg-secondary" />)
-          : <div className="flex aspect-[3/4] items-center justify-center rounded bg-secondary text-xs text-muted-foreground">Sem arquivo</div>}
+          : <div className="flex aspect-[3/4] items-center justify-center rounded bg-secondary text-xs text-muted-foreground">{m?.unavailable ? "Arquivo indisponível; envie novamente" : "Sem arquivo"}</div>}
         <label className="flex cursor-pointer items-center justify-center gap-1 rounded-md border border-border py-1.5 text-xs hover:bg-secondary">
           {busy === p.key ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
           {m ? "Trocar" : "Enviar"}

@@ -18,8 +18,7 @@ export function useMovementMedia(id: string) {
     if (error) throw error;
     return Promise.all((data ?? []).map(async m => {
       const { data: signed, error: signError } = await supabase.storage.from("movement-media").createSignedUrl(m.storage_path, 600);
-      if (signError) throw signError;
-      return { ...m, url: signed?.signedUrl };
+      return { ...m, url: signed?.signedUrl, unavailable: !!signError };
     }));
   } });
 }
