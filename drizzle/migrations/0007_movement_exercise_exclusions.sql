@@ -1,0 +1,1 @@
+ALTER TABLE public.movement_assessments ADD COLUMN IF NOT EXISTS excluded_exercises text[] NOT NULL DEFAULT '{}';

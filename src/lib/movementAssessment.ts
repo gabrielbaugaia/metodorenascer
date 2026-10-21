@@ -31,6 +31,9 @@ export const VIDEO_POSITIONS = [
   { key: "marcha", label: "Marcha" },
   { key: "single_leg_d", label: "Apoio unipodal D" },
   { key: "single_leg_e", label: "Apoio unipodal E" },
+  { key: "supino_maquina", label: "Supino máquina" },
+  { key: "rosca_scott", label: "Rosca Scott" },
+  { key: "desenvolvimento_maquina", label: "Desenvolvimento máquina" },
 ] as const;
 
 export type Finding = { key: string; label: string; region: string; severity: Severity };

@@ -85,6 +85,7 @@ const MinhasAvaliacoes = lazy(() => import("./pages/MinhasAvaliacoes"));
 const AdminAvaliacoes = lazy(() => import("./pages/admin/AdminAvaliacoes"));
 const AdminEvolucaoFisica = lazy(() => import("./pages/admin/AdminEvolucaoFisica"));
 const AdminAvaliacoesMovimento = lazy(() => import("./pages/admin/AdminAvaliacoesMovimento"));
+const MinhasAvaliacoesMovimento = lazy(() => import("./pages/MinhasAvaliacoesMovimento"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -154,6 +155,7 @@ const App = () => {
             <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
             <Route path="/anamnese" element={<AuthGuard><Anamnese /></AuthGuard>} />
             <Route path="/minhas-avaliacoes" element={<AuthGuard><MinhasAvaliacoes /></AuthGuard>} />
+            <Route path="/minhas-avaliacoes-movimento" element={<AuthGuard><MinhasAvaliacoesMovimento /></AuthGuard>} />
 
             {/* ROTAS QUE REQUEREM ASSINATURA ATIVA */}
             <Route path="/treino" element={<SubscriptionGuard><Treino /></SubscriptionGuard>} />

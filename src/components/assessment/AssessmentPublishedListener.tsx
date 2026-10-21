@@ -29,6 +29,14 @@ export function AssessmentPublishedListener({ userId }: { userId: string }) {
           }
         },
       )
+      .on("postgres_changes", { event: "*", schema: "public", table: "movement_assessments", filter: `user_id=eq.${userId}` }, (payload) => {
+        qc.invalidateQueries({ queryKey: ["movement-assessments", userId] });
+        const row = payload.new as { id?: string; status?: string };
+        if (row?.id && row.status === "published" && !seen.current.has(row.id)) {
+          seen.current.add(row.id);
+          toast.success("Nova avaliação de movimento publicada", { description: "Seu laudo da Equipe GB está disponível.", action: { label: "Ver", onClick: () => navigate("/minhas-avaliacoes-movimento") } });
+        }
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
