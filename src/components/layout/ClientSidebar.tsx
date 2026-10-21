@@ -78,6 +78,7 @@ const clientContentItems = [
 const clientMoreItems = [
   { title: "Diário nutricional", url: "/nutricao-diario", icon: NotebookPen },
   { title: "Minhas Avaliações", url: "/minhas-avaliacoes", icon: ClipboardList },
+  { title: "Avaliações de Movimento", url: "/minhas-avaliacoes-movimento", icon: Activity },
   { title: "Painel de dados", url: "/renascer", icon: Activity },
   { title: "Meu Perfil", url: "/meu-perfil", icon: User },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
