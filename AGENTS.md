@@ -8,3 +8,4 @@
 - Uploaded movement videos are analyzed as chronological image samples via an admin-authenticated server boundary; never represent sampled observations as continuous kinematics or measured force.
 - Share movement report rendering and private signed-media queries between admin and student views to keep publication and access behavior consistent.
 - Store projected movement angles as trainer-marked normalized three-point coordinates with media ID, frame time and image aspect ratio in the immutable report; never generate angular measurements or reference ranges from visual language-model guesses.
+- Store automatic posture suggestions as validated two-point photo annotations with explanations in the reviewed report; share their geometry between admin, student and PDF without altering original photos or interpreting them as measured metrics.

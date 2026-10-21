@@ -1,5 +1,10 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — marcações posturais automáticas
+- [ ] Sugerir pontos e linhas nas fotos com explicações, sem inventar medidas ou classificações clínicas.
+- [ ] Permitir revisão/correção no admin e incluir marcações no laudo do aluno e PDF.
+- [ ] Validar testes, análise e apresentação sem publicar avaliação real ou app.
+
 ## Pedido atual — padrão do laudo de movimento
 - [x] Organizar laudo e análise na mesma avaliação, com registros por vista e dados angulares por marcação do treinador.
 - [x] Retirar Rosca Scott e Desenvolvimento da seleção de testes sem apagar histórico.
