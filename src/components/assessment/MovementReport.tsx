@@ -8,6 +8,7 @@ import { useState } from "react";
 import { AngleOverlay } from "./MovementAngleEditor";
 import { drawHeader, drawContinuationHeader, drawFooters, PDF_COLORS, setText } from "@/lib/pdfTheme";
 import { loadImageOriented } from "@/lib/assessmentPdf";
+import { PostureOverlay, PostureLegend } from "./PostureAnnotations";
 
 export function MovementAnalysisText({ report }: { report: Report }) {
   return <section className="space-y-4 text-sm">
@@ -49,12 +50,23 @@ export function MovementReportView({ assessment: a, studentName }: { assessment:
         newPage("Registros por vista");
         line(movementPositionLabel(m.position_key), 14);
         a.report?.observations.filter(o => o.media_id === m.id).forEach(o => line(o.observation));
+        const annotations = a.report?.annotations?.filter(x => x.media_id === m.id) ?? [];
+        annotations.forEach((annotation, i) => { line(`${i + 1}. ${annotation.label}: ${annotation.observation}`, 9); line(annotation.explanation, 9); });
         if (y > 170) newPage(movementPositionLabel(m.position_key));
         const ratio = Math.min(170 / image.w, (264 - y) / image.h);
         const width = image.w * ratio, height = image.h * ratio;
         const imageY = y;
         doc.addImage(image.data, "JPEG", 20, imageY, width, height);
         doc.setDrawColor(...PDF_COLORS.bronze); doc.setLineWidth(0.6);
+        annotations.forEach((annotation, i) => {
+          annotation.points.forEach((p, n) => {
+            doc.circle(20 + p.x * width, imageY + p.y * height, 0.8);
+            const next = annotation.points[n + 1];
+            if (next) doc.line(20 + p.x * width, imageY + p.y * height, 20 + next.x * width, imageY + next.y * height);
+          });
+          const first = annotation.points[0];
+          if (first) { doc.setFontSize(9); setText(doc, PDF_COLORS.bronze); doc.text(String(i + 1), 20 + Math.min(0.94, first.x + 0.02) * width, imageY + Math.max(0.03, first.y - 0.02) * height); }
+        });
         for (const angle of a.report?.angles?.filter(x => x.media_id === m.id) ?? []) {
           angle.points.forEach((p, i) => {
             doc.circle(20 + p.x * width, imageY + p.y * height, 0.8);
@@ -87,7 +99,7 @@ export function MovementReportView({ assessment: a, studentName }: { assessment:
     {a.restrictions && <p className="text-sm whitespace-pre-wrap break-words"><strong>Restrições para o treino: </strong>{a.restrictions}</p>}
     {a.notes && <p className="text-sm whitespace-pre-wrap break-words">{a.notes}</p>}
     <h3 className="section-title">Registros por vista e teste</h3>
-    {media.isLoading ? <Loader2 className="animate-spin h-5 w-5" aria-label="Carregando mídias" /> : media.error ? <div role="alert"><p>Não foi possível abrir as mídias.</p><Button variant="outline" onClick={() => media.refetch()}>Tentar novamente</Button></div> : <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">{media.data?.map(m => <figure key={m.id} className="min-w-0 space-y-3"><figcaption className="font-semibold">{movementPositionLabel(m.position_key)}</figcaption>{m.kind === "photo" ? <div className="relative"><img src={m.url} alt={`Avaliação ${movementPositionLabel(m.position_key)}`} className="block w-full bg-secondary" />{a.report?.angles?.filter(x => x.media_id === m.id).map(angle => <AngleOverlay key={angle.id} angle={angle} />)}</div> : <video controls playsInline preload="metadata" src={m.url} className="w-full aspect-video bg-secondary" />}{a.report?.observations.filter(o => o.media_id === m.id).map((o, i) => <p key={i} className="text-sm break-words">{o.second !== null ? `${o.second.toLocaleString("pt-BR")} s · ` : ""}{o.observation}</p>)}</figure>)}</div>}
+    {media.isLoading ? <Loader2 className="animate-spin h-5 w-5" aria-label="Carregando mídias" /> : media.error ? <div role="alert"><p>Não foi possível abrir as mídias.</p><Button variant="outline" onClick={() => media.refetch()}>Tentar novamente</Button></div> : <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">{media.data?.map(m => <figure key={m.id} className="min-w-0 space-y-3"><figcaption className="font-semibold">{movementPositionLabel(m.position_key)}</figcaption>{m.kind === "photo" ? <div className="relative"><img src={m.url} alt={`Avaliação ${movementPositionLabel(m.position_key)}`} className="block w-full bg-secondary" /><PostureOverlay annotations={a.report?.annotations?.filter(x => x.media_id === m.id) ?? []} />{a.report?.angles?.filter(x => x.media_id === m.id).map(angle => <AngleOverlay key={angle.id} angle={angle} />)}</div> : <video controls playsInline preload="metadata" src={m.url} className="w-full aspect-video bg-secondary" />}<PostureLegend annotations={a.report?.annotations?.filter(x => x.media_id === m.id) ?? []} />{a.report?.observations.filter(o => o.media_id === m.id).map((o, i) => <p key={i} className="text-sm break-words">{o.second !== null ? `${o.second.toLocaleString("pt-BR")} s · ` : ""}{o.observation}</p>)}</figure>)}</div>}
     <section className="space-y-3"><h3 className="section-title">Dados técnicos · ângulos dos testes</h3><p className="text-xs text-muted-foreground">Marcação do treinador em imagem. Referências e classificação não são inferidas automaticamente.</p>{a.report?.angles?.length ? <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border text-left"><th className="p-2">Registro</th><th className="p-2">Medida</th><th className="p-2">Valor</th><th className="p-2">Quadro</th></tr></thead><tbody>{a.report.angles.map(angle => <tr key={angle.id} className="border-b border-border"><td className="p-2">{movementPositionLabel(media.data?.find(m => m.id === angle.media_id)?.position_key ?? "")}</td><td className="p-2">{angle.label}</td><td className="p-2 whitespace-nowrap">{angle.degrees.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}°</td><td className="p-2 whitespace-nowrap">{angle.second === null ? "Foto" : `${angle.second.toLocaleString("pt-BR")} s`}</td></tr>)}</tbody></table></div> : <p className="text-sm text-muted-foreground">Nenhuma medida angular registrada.</p>}</section>
     <p className="text-xs text-muted-foreground">Observação visual, não diagnóstico. Força e torque não são medidos por estas imagens.</p>
   </article>;
