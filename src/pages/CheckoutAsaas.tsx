@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { CONSULTORIA_PLANS, getConsultoriaPlan } from "@/lib/consultoriaPlans";
+import { useStartPromotion } from "@/hooks/useStartPromotion";
 
 const PLANS = CONSULTORIA_PLANS;
 const MODES = [
@@ -27,6 +28,7 @@ export default function CheckoutAsaas() {
   const [form, setForm] = useState({ name: "", email: "", cpf: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const key = useMemo(() => crypto.randomUUID(), [plan, mode]);
+  const promo = useStartPromotion();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +62,7 @@ export default function CheckoutAsaas() {
                 <Button variant="outline" type="button" key={p.slug} onClick={() => { setPlan(p.slug); setMode(p.modes[0] ?? "subscription"); }} aria-pressed={plan === p.slug}
                   className={`h-auto min-h-[64px] min-w-0 flex-col items-start gap-1 whitespace-normal rounded-lg p-2 sm:p-3 text-left transition-colors duration-200 ${plan === p.slug ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}>
                   <span className="block text-sm font-medium">{p.name}</span>
-                  <span className="block text-xs text-muted-foreground">R$ {p.price}/mês</span>
+                  <span className="block text-xs text-muted-foreground">R$ {p.slug === "start" && promo ? promo.price : p.price}/mês</span>
                 </Button>
               ))}
             </div>
@@ -77,7 +79,11 @@ export default function CheckoutAsaas() {
             ))}
           </fieldset>
 
-          <p className="text-sm text-muted-foreground">{selectedPlan.payment}</p>
+          <p className="text-sm text-muted-foreground">
+            {plan === "start" && promo
+              ? `Cartão de crédito recorrente. R$ ${promo.price} por mês enquanto a assinatura estiver ativa (restam ${promo.remaining} de ${promo.limit} vagas). Cancelamento com aviso de 30 dias.`
+              : selectedPlan.payment}
+          </p>
 
           <div className="grid gap-4">
             <div className="space-y-1.5"><Label htmlFor="n">Nome completo</Label>
