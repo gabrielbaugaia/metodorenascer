@@ -71,6 +71,9 @@ export default function AdminPagamentos() {
           </Button>
         </header>
 
+        <StartPromoCard />
+
+
         {env && (
           <div className="flex flex-wrap gap-2 text-xs">
             <Badge variant="outline">Ambiente: {env.env === "production" ? "produção" : "teste"}</Badge>

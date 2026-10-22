@@ -2482,6 +2482,71 @@ export type Database = {
           },
         ]
       }
+      plan_promotion_claims: {
+        Row: {
+          asaas_subscription_id: string | null
+          created_at: string
+          id: string
+          idempotency_key: string
+          paid_at: string | null
+          promotion_slug: string
+          status: string
+        }
+        Insert: {
+          asaas_subscription_id?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          paid_at?: string | null
+          promotion_slug: string
+          status?: string
+        }
+        Update: {
+          asaas_subscription_id?: string | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          paid_at?: string | null
+          promotion_slug?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_promotion_claims_promotion_slug_fkey"
+            columns: ["promotion_slug"]
+            isOneToOne: false
+            referencedRelation: "plan_promotions"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      plan_promotions: {
+        Row: {
+          active: boolean
+          created_at: string
+          plan_slug: string
+          promo_value_cents: number
+          slot_limit: number
+          slug: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          plan_slug: string
+          promo_value_cents: number
+          slot_limit: number
+          slug: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          plan_slug?: string
+          promo_value_cents?: number
+          slot_limit?: number
+          slug?: string
+        }
+        Relationships: []
+      }
       prescription_engine_config: {
         Row: {
           active: boolean
@@ -4495,6 +4560,15 @@ export type Database = {
     Functions: {
       cleanup_expired_pending_logins: { Args: never; Returns: undefined }
       cleanup_old_events: { Args: never; Returns: undefined }
+      get_promotion_status: {
+        Args: { _slug: string }
+        Returns: {
+          active: boolean
+          promo_value_cents: number
+          remaining: number
+          slot_limit: number
+        }[]
+      }
       get_referrer_name_by_code: {
         Args: { lookup_code: string }
         Returns: string
@@ -4510,6 +4584,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
+      promotion_used: { Args: { _slug: string }; Returns: number }
       recalculate_engagement: {
         Args: { target_user_id: string }
         Returns: undefined
@@ -4517,6 +4592,10 @@ export type Database = {
       recalculate_funnel_status: {
         Args: { target_user_id: string }
         Returns: string
+      }
+      reserve_promotion_slot: {
+        Args: { _key: string; _slug: string }
+        Returns: boolean
       }
       validate_referral_code: {
         Args: { lookup_code: string }

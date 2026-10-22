@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import { Check, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CONSULTORIA_PLANS, CONSULTORIA_COMPARISON } from "@/lib/consultoriaPlans";
+import { useStartPromotion } from "@/hooks/useStartPromotion";
 
 export function ConsultoriaPlansSection() {
+  const promo = useStartPromotion();
   return (
     <section id="planos" className="consultoria-plans" aria-labelledby="consultoria-plans-title">
       <div className="w">
@@ -17,7 +19,9 @@ export function ConsultoriaPlansSection() {
             <article key={plan.slug} className={`cp-plan${"recommended" in plan && plan.recommended ? " cp-recommended" : ""}`} aria-labelledby={`plan-${plan.slug}`}>
               <div className="cp-badge-slot">{"recommended" in plan && plan.recommended && <span className="cp-badge">Mais recomendado</span>}</div>
               <h3 id={`plan-${plan.slug}`} className="cp-name">{plan.name}</h3>
-              <p className="cp-price"><span>R$ {plan.price}</span><span className="cp-period">/mês</span></p>
+              {plan.slug === "start" && promo
+                ? <><p className="cp-price"><span>R$ {promo.price}</span><span className="cp-period">/mês</span></p><p className="cp-payment">De R$ {plan.price} por R$ {promo.price}/mês enquanto a assinatura estiver ativa. Restam {promo.remaining} de {promo.limit} vagas.</p></>
+                : <p className="cp-price"><span>R$ {plan.price}</span><span className="cp-period">/mês</span></p>}
               <p className="cp-intro">{plan.intro}</p>
               <ul className="cp-checklist">
                 {plan.features.map((feature) => <li key={feature}><Check aria-hidden="true" /><span>{feature}</span></li>)}

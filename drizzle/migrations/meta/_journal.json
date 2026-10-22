@@ -64,6 +64,13 @@
       "when": 1792552324915,
       "tag": "0008_movement_draft_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792629795924,
+      "tag": "0009_start_promo_slots",
+      "breakpoints": true
     }
   ]
 }
