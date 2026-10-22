@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
           email: ownerEmail, userId: sub?.user_id ?? order?.user_id ?? null, planSlug: slug, planName: plan?.name ?? slug,
           valueCents: expectedCents ?? 0, paidUntil, ref: subId ?? p.id,
         });
+        if (subId) await db.from("plan_promotion_claims").update({ status: "paid", paid_at: new Date().toISOString() }).eq("asaas_subscription_id", subId).eq("status", "reserved");
         if (sub) await db.from("asaas_subscriptions").update({ status: "active", paid_until: paidUntil.toISOString(), user_id: uid ?? sub.user_id }).eq("id", sub.id);
         if (order && !order.user_id && uid) await db.from("asaas_payment_orders").update({ user_id: uid }).eq("id", order.id);
       } else if (body.event === "PAYMENT_OVERDUE" && sub) {

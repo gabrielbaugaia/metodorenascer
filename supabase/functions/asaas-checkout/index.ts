@@ -2,6 +2,8 @@ import { z } from "https://esm.sh/zod@3.23.8";
 import { getCorsHeaders, handleCorsPreflightRequest } from "../_shared/cors.ts";
 import { ASAAS_PLANS, adminClient, asaas, asaasEnv, hasAsaasKey, json } from "../_shared/asaas.ts";
 
+const START_PROMO_SLUG = "start-97-20";
+
 const Body = z.object({
   plan_slug: z.enum(["start", "mensal", "premium", "elite"]),
   mode: z.enum(["subscription", "pix", "card"]),
@@ -103,7 +105,7 @@ Deno.serve(async (req) => {
 
     await db.from("asaas_payment_orders").insert({
       user_id: userId, email, idempotency_key: b.idempotency_key, asaas_payment_id: paymentId, asaas_subscription_id: subId,
-      plan_slug: b.plan_slug, value_cents: plan.value_cents, billing_type: billingType, invoice_url: invoiceUrl,
+      plan_slug: b.plan_slug, value_cents: valueCents, billing_type: billingType, invoice_url: invoiceUrl,
       due_date: today, environment: asaasEnv(),
     });
     return json({ url: invoiceUrl }, 200, cors);
