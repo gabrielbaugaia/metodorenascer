@@ -63,22 +63,32 @@ Deno.serve(async (req) => {
     }
 
     const today = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10);
-    const value = plan.value_cents / 100;
+    let valueCents = plan.value_cents;
+    let promo = false;
+    if (b.plan_slug === "start" && b.mode === "subscription") {
+      const { data: ok } = await db.rpc("reserve_promotion_slot", { _slug: START_PROMO_SLUG, _key: b.idempotency_key });
+      if (ok === true) {
+        const { data: pr } = await db.from("plan_promotions").select("promo_value_cents").eq("slug", START_PROMO_SLUG).maybeSingle();
+        if (pr?.promo_value_cents) { valueCents = pr.promo_value_cents; promo = true; }
+      }
+    }
+    const value = valueCents / 100;
     let invoiceUrl: string, paymentId: string | null = null, subId: string | null = null, billingType: string;
 
     if (b.mode === "subscription") {
       billingType = "CREDIT_CARD"; // recorrente só no cartão
       const s = await asaas<{ id: string }>("/subscriptions", {
         method: "POST",
-        body: JSON.stringify({ customer: customerId, billingType, value, nextDueDate: today, cycle: "MONTHLY", description: `Consultoria Gabriel Baú — ${plan.name}`, externalReference: b.idempotency_key }),
+        body: JSON.stringify({ customer: customerId, billingType, value, nextDueDate: today, cycle: "MONTHLY", description: `Consultoria Gabriel Baú — ${plan.name}${promo ? " (condição fundador)" : ""}`, externalReference: b.idempotency_key }),
       });
       subId = s.id;
+      if (promo) await db.from("plan_promotion_claims").update({ asaas_subscription_id: s.id }).eq("idempotency_key", b.idempotency_key);
       const pays = await asaas<{ data: { id: string; invoiceUrl: string }[] }>(`/subscriptions/${s.id}/payments`);
       paymentId = pays.data[0]?.id ?? null;
       invoiceUrl = pays.data[0]?.invoiceUrl;
       await db.from("asaas_subscriptions").insert({
         user_id: userId, email, asaas_customer_id: customerId, asaas_subscription_id: s.id, plan_slug: b.plan_slug,
-        plan_name: plan.name, value_cents: plan.value_cents, status: "pending", next_due_date: today, environment: asaasEnv(),
+        plan_name: plan.name, value_cents: valueCents, status: "pending", next_due_date: today, environment: asaasEnv(),
       });
     } else {
       billingType = b.mode === "pix" ? "PIX" : "CREDIT_CARD";
