@@ -24,6 +24,7 @@ const Quiz = lazy(() => import("./pages/Quiz"));
 // Lazy-loaded routes for better code splitting
 const Auth = lazy(() => import("./pages/Auth"));
 const Convite = lazy(() => import("./pages/Convite"));
+const ConviteLink = lazy(() => import("./pages/ConviteLink"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Anamnese = lazy(() => import("./pages/Anamnese"));
 const CheckoutSuccess = lazy(() => import("./pages/CheckoutSuccess"));
@@ -143,6 +144,7 @@ const App = () => {
             <Route path="/entrar" element={<Auth />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/convite" element={<Convite />} />
+            <Route path="/convite/:slug" element={<ConviteLink />} />
             <Route path="/checkout-success" element={<CheckoutSuccess />} />
             <Route path="/checkout" element={<CheckoutAsaas />} />
             <Route path="/acesso-bloqueado" element={<AcessoBloqueado />} />

@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientLayout } from "@/components/layout/ClientLayout";
+import { InviteLinksCard } from "@/components/admin/InviteLinksCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -206,6 +207,8 @@ export default function AdminConvites() {
             Convide um cliente com link e email automático
           </p>
         </div>
+
+        <InviteLinksCard />
 
         {inviteResult && (
           <Card className={inviteResult.requiresPayment ? "border-primary/50 bg-primary/10" : "border-green-500/50 bg-green-500/10"}>
