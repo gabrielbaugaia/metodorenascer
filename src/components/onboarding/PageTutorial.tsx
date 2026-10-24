@@ -125,8 +125,8 @@ const TUTORIALS: Record<string, { title: string; steps: TutorialStep[] }> = {
     title: "Como usar o Suporte",
     steps: [
       {
-        title: "Envie mensagem ao mentor",
-        description: "Use o chat da Equipe GB para tirar dúvidas sobre treino, nutrição ou mindset. As orientações automáticas consideram as informações do seu perfil.",
+        title: "Envie mensagem ao Gabriel Baú",
+        description: "Use o chat da Equipe GB para tirar dúvidas sobre treino, nutrição ou mindset. Suas mensagens são respondidas com base no seu perfil e histórico.",
         icon: MessageCircle,
       },
       {
@@ -136,7 +136,7 @@ const TUTORIALS: Record<string, { title: string; steps: TutorialStep[] }> = {
       },
       {
         title: "Tempo de resposta",
-        description: "O chat oferece respostas automáticas. Para solicitar atenção humana, use \"falar com humano\". Não é um canal de emergência.",
+        description: "Respondemos o mais breve possível, conforme o seu plano. Não é um canal de emergência.",
         icon: Clock,
       },
     ],

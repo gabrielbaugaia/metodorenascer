@@ -67,11 +67,11 @@ const steps: Step[] = [
   },
   {
     icon: MessageCircle,
-    title: "Fale com seu Mentor",
+    title: "Fale com o Gabriel Baú",
     description:
-      "Tire dúvidas 24h por dia com nosso mentor virtual inteligente.",
+      "Tire suas dúvidas com o Gabriel Baú e a Equipe GB, que acompanham você de perto.",
     color: "from-primary to-primary",
-    tip: "Não hesite em perguntar - estou aqui para ajudar!",
+    tip: "Não hesite em perguntar. Estou aqui para cuidar da sua evolução.",
   },
 ];
 

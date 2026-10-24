@@ -84,7 +84,7 @@ const faqs = [
   },
   {
     question: "Posso alterar meu protocolo?",
-    answer: "Sim! A qualquer momento você pode conversar com seu mentor para solicitar ajustes no seu protocolo de acordo com suas necessidades ou preferências."
+    answer: "Sim! A qualquer momento você pode falar com o Gabriel Baú para solicitar ajustes no seu protocolo de acordo com suas necessidades ou preferências."
   },
   {
     question: "Como faço para gerar receitas?",
@@ -92,7 +92,7 @@ const faqs = [
   },
   {
     question: "O suporte funciona 24 horas?",
-    answer: "O chat da Equipe GB oferece orientações automáticas sobre treino, nutrição e mindset. O atendimento pessoal segue as condições do seu plano; não é um canal de emergência."
+    answer: "O Gabriel Baú e a Equipe GB respondem conforme as condições do seu plano. Não é um canal de emergência."
   },
   {
     question: "Como funciona o acompanhamento de evolução?",
@@ -108,7 +108,7 @@ const faqs = [
   },
   {
     question: "O que fazer se não tiver vídeo para um exercício?",
-    answer: "Caso algum exercício ainda não tenha vídeo demonstrativo, você pode perguntar ao mentor como executar corretamente ou pesquisar pelo nome do exercício."
+    answer: "Caso algum exercício ainda não tenha vídeo demonstrativo, você pode perguntar ao Gabriel Baú como executar corretamente ou pesquisar pelo nome do exercício."
   }
 ];
 
@@ -587,7 +587,7 @@ export default function Suporte() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold uppercase">Suporte</h1>
-            <p className="text-muted-foreground">Tire suas dúvidas com nosso mentor ou consulte o FAQ</p>
+            <p className="text-muted-foreground">Fale com o Gabriel Baú e a Equipe GB ou consulte o FAQ</p>
           </div>
           <PageTutorial pageId="suporte" />
         </div>
@@ -598,7 +598,7 @@ export default function Suporte() {
           <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="chat" className="gap-2">
               <MessageCircle className="h-4 w-4" />
-              Chat com Mentor
+              Fale com o Gabriel Baú
             </TabsTrigger>
             <TabsTrigger value="faq" className="gap-2">
               <HelpCircle className="h-4 w-4" />
@@ -610,7 +610,7 @@ export default function Suporte() {
             <Card variant="glass" className="h-[600px] flex flex-col">
               <CardHeader className="border-b border-border/50 flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-lg uppercase">
-                  <Bot className="h-5 w-5 text-foreground" />
+                  <MessageCircle className="h-5 w-5 text-foreground" />
                   Como posso te ajudar?
                 </CardTitle>
                 {messages.length > 0 && (
@@ -630,11 +630,11 @@ export default function Suporte() {
                   {messages.length === 0 ? (
                     <div className="h-full flex items-center justify-center text-center">
                       <div className="space-y-4">
-                        <Bot className="h-16 w-16 mx-auto text-muted-foreground" />
+                        <MessageCircle className="h-16 w-16 mx-auto text-muted-foreground" />
                         <div>
                           <h3 className="font-semibold uppercase">Olá, {profile?.full_name?.split(' ')[0] || 'Bem-vindo'}!</h3>
                           <p className="text-sm text-muted-foreground">
-                            Sou seu mentor. Você pode me perguntar sobre seu treino, nutrição, mindset ou qualquer dúvida relacionada que estou aqui para te ajudar!
+                            Aqui é o Gabriel Baú. Você pode me perguntar sobre seu treino, nutrição, mindset ou qualquer dúvida relacionada que estou aqui para cuidar de você.
                           </p>
                         </div>
                       </div>
@@ -651,7 +651,7 @@ export default function Suporte() {
                         >
                           {message.role === "assistant" && (
                             <div className="h-8 w-8 rounded-full bg-foreground/20 flex items-center justify-center shrink-0">
-                              <Bot className="h-4 w-4 text-foreground" />
+                              <MessageCircle className="h-4 w-4 text-foreground" />
                             </div>
                           )}
                           <div
@@ -674,7 +674,7 @@ export default function Suporte() {
                       {isLoading && messages[messages.length - 1]?.content === "" && (
                         <div className="flex gap-3">
                           <div className="h-8 w-8 rounded-full bg-foreground/20 flex items-center justify-center shrink-0">
-                            <Bot className="h-4 w-4 text-foreground" />
+                            <MessageCircle className="h-4 w-4 text-foreground" />
                           </div>
                           <div className="bg-muted rounded-2xl px-4 py-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
