@@ -78,6 +78,13 @@
       "when": 1792851289645,
       "tag": "0010_invite_links",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792876770078,
+      "tag": "0011_invite_grants_full_entitlement",
+      "breakpoints": true
     }
   ]
 }
