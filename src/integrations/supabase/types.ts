@@ -1547,6 +1547,74 @@ export type Database = {
           },
         ]
       }
+      invite_link_claims: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          link_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          link_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          link_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_link_claims_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "invite_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invite_links: {
+        Row: {
+          access_days: number
+          active: boolean
+          created_at: string
+          id: string
+          label: string
+          offer_days_before: number
+          offer_plan_slug: string
+          slot_limit: number
+          slug: string
+        }
+        Insert: {
+          access_days?: number
+          active?: boolean
+          created_at?: string
+          id?: string
+          label: string
+          offer_days_before?: number
+          offer_plan_slug?: string
+          slot_limit?: number
+          slug: string
+        }
+        Update: {
+          access_days?: number
+          active?: boolean
+          created_at?: string
+          id?: string
+          label?: string
+          offer_days_before?: number
+          offer_plan_slug?: string
+          slot_limit?: number
+          slug?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           converted: boolean | null
@@ -4558,8 +4626,26 @@ export type Database = {
       }
     }
     Functions: {
+      claim_invite_link: { Args: { _slug: string }; Returns: string }
       cleanup_expired_pending_logins: { Args: never; Returns: undefined }
       cleanup_old_events: { Args: never; Returns: undefined }
+      get_invite_link_status: {
+        Args: { _slug: string }
+        Returns: {
+          access_days: number
+          available: boolean
+          label: string
+          remaining: number
+        }[]
+      }
+      get_my_invite_offer: {
+        Args: never
+        Returns: {
+          expires_at: string
+          offer_plan_slug: string
+          offer_starts_at: string
+        }[]
+      }
       get_promotion_status: {
         Args: { _slug: string }
         Returns: {

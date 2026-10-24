@@ -71,6 +71,13 @@
       "when": 1792629795924,
       "tag": "0009_start_promo_slots",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792851289645,
+      "tag": "0010_invite_links",
+      "breakpoints": true
     }
   ]
 }
