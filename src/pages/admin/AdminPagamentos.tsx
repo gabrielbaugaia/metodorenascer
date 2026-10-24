@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ClientLayout } from "@/components/layout/ClientLayout";
+import { StartPromoCard } from "@/components/admin/StartPromoCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
