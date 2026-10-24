@@ -311,84 +311,13 @@ export default function Assinatura() {
           </Card>
         )}
 
-        {/* Planos */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">{subscription ? "Renovar ou Estender Plano" : "Escolha seu Plano"}</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {availablePlans.map((plan) => (
-              <Card
-                key={plan.id}
-                className={`relative transition-all hover:border-foreground/50 ${
-                  plan.popular ? "border-foreground ring-1 ring-primary/20" : ""
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-foreground text-foreground-foreground">Mais Popular</Badge>
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">{plan.name}</CardTitle>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold">{plan.priceDisplay}</span>
-                    <span className="text-muted-foreground">{plan.period}</span>
-                  </div>
-                  {cashbackAmount > 0 && (
-                    <p className="text-sm text-green-400 mt-1">
-                      Com cashback: R$ {((plan.price - (plan.price * cashbackValue) / 100) / 100).toFixed(2).replace(".", ",")}
-                    </p>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2">
-                    {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-foreground" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {plan.dualCta ? (
-                    <div className="space-y-2">
-                      <Button
-                        variant="default"
-                        className="w-full"
-                        onClick={() => window.open(STRIPE_TRIAL_LINK, "_blank")}
-                      >
-                        Testar 7 dias grátis
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => window.open(STRIPE_DIRECT_LINK, "_blank")}
-                      >
-                        Assinar agora
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={() => handleRenewPlan(plan)}
-                      disabled={processingPlan === plan.id}
-                      className="w-full"
-                      variant={plan.popular ? "default" : "outline"}
-                    >
-                      {processingPlan === plan.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          {subscription ? "Renovar" : "Assinar"}
-                          <ArrowRight className="h-4 w-4 ml-2" />
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        {/* Planos antigos removidos: preços vigentes ficam no checkout */}
+        <Card>
+          <CardContent className="py-6 space-y-3">
+            <p className="text-sm text-muted-foreground">Para renovar ou mudar de plano, veja os planos atuais da consultoria.</p>
+            <Button className="w-full sm:w-auto" onClick={() => navigate("/checkout?plano=start")}>Ver planos atuais <ArrowRight className="h-4 w-4 ml-2" /></Button>
+          </CardContent>
+        </Card>
 
         {/* Link para Indicações */}
         <Card className="bg-muted/30">
