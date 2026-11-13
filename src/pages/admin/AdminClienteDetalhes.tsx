@@ -39,6 +39,7 @@ import { AdminEvolutionSection } from "@/components/admin/AdminEvolutionSection"
 import { AdminAccessControlSection } from "@/components/admin/AdminAccessControlSection";
 import { AdminGabrielBauSection } from "@/components/admin/AdminGabrielBauSection";
 import { BodyAssessmentImport } from "@/components/admin/BodyAssessmentImport";
+import { ClientDocumentsSection } from "@/components/admin/ClientDocumentsSection";
 import { MindsetInsightsPanel } from "@/components/mindset/MindsetInsightsPanel";
 import {
   Dialog,
@@ -1290,6 +1291,8 @@ export default function AdminClienteDetalhes() {
           clientId={id!} 
           onAssessmentImported={() => fetchProfile()} 
         />
+
+        <ClientDocumentsSection userId={id!} />
 
         {/* Evolução do Cliente */}
         <AdminEvolutionSection

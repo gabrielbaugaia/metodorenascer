@@ -812,6 +812,71 @@ export type Database = {
         }
         Relationships: []
       }
+      client_documents: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          document_date: string | null
+          error_message: string | null
+          extracted_data: Json | null
+          extracted_summary: string | null
+          id: string
+          mime_type: string
+          reviewed_summary: string | null
+          status: string
+          storage_path: string
+          title: string
+          updated_at: string
+          use_in_protocol: boolean
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          document_date?: string | null
+          error_message?: string | null
+          extracted_data?: Json | null
+          extracted_summary?: string | null
+          id?: string
+          mime_type: string
+          reviewed_summary?: string | null
+          status?: string
+          storage_path: string
+          title: string
+          updated_at?: string
+          use_in_protocol?: boolean
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          document_date?: string | null
+          error_message?: string | null
+          extracted_data?: Json | null
+          extracted_summary?: string | null
+          id?: string
+          mime_type?: string
+          reviewed_summary?: string | null
+          status?: string
+          storage_path?: string
+          title?: string
+          updated_at?: string
+          use_in_protocol?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commercial_plans: {
         Row: {
           created_at: string | null

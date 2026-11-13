@@ -494,6 +494,28 @@ ${sisScore ? `- Score SIS (Shape Intelligence): ${sisScore}/100` : ""}
       }
     }
 
+    // Laudos e exames anexados e revisados pelo treinador (Equipe GB).
+    if (tipo === "treino" || tipo === "nutricao") {
+      try {
+        const { data: docs } = await supabaseClient
+          .from("client_documents")
+          .select("category, title, document_date, reviewed_summary")
+          .eq("user_id", targetUserId)
+          .eq("use_in_protocol", true)
+          .eq("status", "reviewed")
+          .order("document_date", { ascending: false, nullsFirst: false })
+          .limit(12);
+        const labels: Record<string, string> = { composicao_corporal: "Composição corporal", movimento: "Avaliação de movimento", exame_medico: "Exame médico" };
+        const lines = (docs ?? []).filter((d: any) => d.reviewed_summary?.trim()).map((d: any) => `- [${labels[d.category] ?? d.category}] ${d.title}${d.document_date ? ` (${d.document_date})` : ""}: ${d.reviewed_summary.trim()}`);
+        if (lines.length) {
+          const block = `DOCUMENTOS ANEXADOS E REVISADOS PELO TREINADOR (obrigatório respeitar restrições e orientações médicas; não ultrapassar limites do motor nem substituir prescrições manuais; não fazer diagnóstico):\n${lines.join("\n")}`;
+          assessmentGuidance = assessmentGuidance ? `${assessmentGuidance}\n\n${block}` : block;
+        }
+      } catch (e) {
+        console.error("[documents] falha ao carregar documentos:", e);
+      }
+    }
+
     // Selecionar prompts baseado no tipo
     if (tipo === "treino") {
       // P1 FIX: Passar lista de exercícios para o prompt
