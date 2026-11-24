@@ -51,6 +51,7 @@ export type Database = {
         Row: {
           created_at: string
           ended_at: string | null
+          feedback: Json | null
           id: string
           last_seen_at: string | null
           started_at: string
@@ -62,6 +63,7 @@ export type Database = {
         Insert: {
           created_at?: string
           ended_at?: string | null
+          feedback?: Json | null
           id?: string
           last_seen_at?: string | null
           started_at?: string
@@ -73,6 +75,7 @@ export type Database = {
         Update: {
           created_at?: string
           ended_at?: string | null
+          feedback?: Json | null
           id?: string
           last_seen_at?: string | null
           started_at?: string

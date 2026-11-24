@@ -38,7 +38,7 @@ interface BatchFitnessUploadProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function isDateInWindow(dateStr: string, windowDays = 45): boolean {
+function isDateInWindow(dateStr: string, windowDays = 60): boolean {
   const date = new Date(dateStr + "T12:00:00");
   const today = startOfDay(new Date());
   today.setHours(23, 59, 59, 999);
@@ -58,7 +58,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState<"upload" | "review" | "done">("upload");
 
-  const maxImages = 7;
+  const maxImages = 30;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || []);
@@ -406,7 +406,7 @@ export function BatchFitnessUpload({ open, onOpenChange }: BatchFitnessUploadPro
               <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
                 <AlertTriangle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                 <p className="text-xs text-primary dark:text-primary">
-                  Algumas datas parecem incorretas (fora dos últimos 10 dias). Corrija antes de salvar.
+                  Algumas datas parecem incorretas (fora dos últimos 60 dias). Corrija antes de salvar.
                 </p>
               </div>
             )}

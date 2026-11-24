@@ -1,0 +1,1 @@
+ALTER TABLE public.active_workout_sessions ADD COLUMN IF NOT EXISTS feedback jsonb;

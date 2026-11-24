@@ -408,7 +408,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
 
   const canCompleteWorkout = !restTimer.active;
 
-  const finishSession = useCallback(async (): Promise<SessionSummary | null> => {
+  const finishSession = useCallback(async (feedback?: Record<string, unknown>): Promise<SessionSummary | null> => {
     if (!user || !sessionId) return null;
     setSaving(true);
 
@@ -425,6 +425,7 @@ export function useWorkoutSession(exercises: Exercise[]) {
           ended_at: now.toISOString(),
           total_duration_seconds: totalDuration,
           status: "finished",
+          ...(feedback ? { feedback: feedback as any } : {}),
         })
         .eq("id", sessionId);
 

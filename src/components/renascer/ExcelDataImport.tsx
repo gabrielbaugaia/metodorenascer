@@ -218,7 +218,11 @@ export function ExcelDataImport({ open, onOpenChange, targetUserId }: Props) {
         if (entry.date) parsed.push(entry as ParsedRow);
       }
 
-      if (!parsed.length) { toast.error("Nenhuma linha válida encontrada"); return; }
+      const cutoff = format(new Date(Date.now() - 60 * 86400000), "yyyy-MM-dd");
+      const total = parsed.length;
+      parsed.splice(0, parsed.length, ...parsed.filter(r => r.date >= cutoff));
+      if (total > parsed.length) toast.info(`${total - parsed.length} linhas com mais de 60 dias foram ignoradas.`);
+      if (!parsed.length) { toast.error("Nenhuma linha válida nos últimos 60 dias"); return; }
 
       const dates = parsed.map(r => r.date);
       const { data: existing } = await supabase

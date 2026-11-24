@@ -9,6 +9,8 @@ import { RestCountdown } from "./RestCountdown";
 import { WorkoutSummary } from "./WorkoutSummary";
 import { ExerciseVideoModal } from "./ExerciseVideoModal";
 import { cn } from "@/lib/utils";
+import { WorkoutFeedbackDialog, WorkoutFeedback } from "./WorkoutFeedbackDialog";
+import { useWakeLock } from "@/hooks/useWakeLock";
 
 interface Exercise {
   name: string;
@@ -47,6 +49,8 @@ export function WorkoutSessionManager({
   // Modal state for exercise GIF + inline tracking
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  useWakeLock(started && !summary);
 
   // Attempt to rehydrate active session on mount
   useEffect(() => {
@@ -76,8 +80,11 @@ export function WorkoutSessionManager({
     setStarted(true);
   };
 
-  const handleFinish = async () => {
-    const result = await session.finishSession();
+  const handleFinish = () => setFeedbackOpen(true);
+
+  const handleFeedbackSubmit = async (feedback: WorkoutFeedback) => {
+    const result = await session.finishSession(feedback as unknown as Record<string, unknown>);
+    setFeedbackOpen(false);
     if (result) {
       setSummary(result);
     }
@@ -245,6 +252,13 @@ export function WorkoutSessionManager({
         )}
         Concluir Treino
       </Button>
+
+      <WorkoutFeedbackDialog
+        open={feedbackOpen}
+        onOpenChange={setFeedbackOpen}
+        saving={session.saving}
+        onSubmit={handleFeedbackSubmit}
+      />
 
       {/* Exercise Video Modal with inline session tracking */}
       <ExerciseVideoModal
