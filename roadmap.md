@@ -1,5 +1,10 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — base de estudo por cliente no Admin
+- [x] Buscar clientes do cadastro e mostrar dados informados, sem gerar prescrições hormonais.
+- [x] Incluir índice de substâncias, notas e referências de estudo no PDF; descartar rascunho ao trocar de cliente com confirmação.
+- [x] Validar busca real com sessão admin, notas e conteúdo do PDF, celular/desktop sem transbordamento, limpeza das notas ao remover cliente, teste de isolamento e compilação OK; sem sessão redireciona ao login. Não publicado.
+
 ## Pedido atual — página enviada de ciclos e TPC
 - [x] Adaptar para acompanhamento médico no Admin, sem recomendações automáticas de doses, ciclos ou TPC.
 - [x] Incluir registro, observações, checklist de exames solicitados e relatório PDF, sem armazenamento local de dados sensíveis.

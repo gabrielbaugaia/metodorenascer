@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { HormonalStudyPanel, StudyClientPicker, type StudyClient } from "@/components/admin/HormonalStudyPanel";
+import { createStudyNotes } from "@/lib/hormonalStudy";
 
 type Exam = { id: string; name: string; date: string; done: boolean };
 
@@ -18,6 +20,19 @@ export default function AdminAcompanhamentoHormonal() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [examName, setExamName] = useState("");
   const [tab, setTab] = useState("registro");
+  const [client, setClient] = useState<StudyClient | null>(null);
+  const [study, setStudy] = useState(createStudyNotes);
+  function resetDraft(nextClient: StudyClient | null) {
+    setClient(nextClient);
+    setProfile({ reference: nextClient?.full_name ?? "", doctor: "", date: "", history: "", prescription: "", symptoms: "", questions: "" });
+    setStudy(createStudyNotes()); setExams([]); setExamName("");
+  }
+  function selectClient(nextClient: StudyClient | null) {
+    if (client?.id === nextClient?.id) return;
+    const hasDraft = Object.entries(profile).some(([key, value]) => key !== "reference" && Boolean(value.trim())) || exams.length > 0 || Object.values(study).some((value) => value.trim());
+    if (hasDraft && !window.confirm("Trocar de cliente descarta o rascunho atual. Baixe o PDF antes se quiser guardar. Continuar?")) return;
+    resetDraft(nextClient);
+  }
   const update = (key: keyof typeof profile, value: string) => setProfile((current) => ({ ...current, [key]: value }));
   const completed = exams.filter((exam) => exam.done).length;
 
@@ -44,10 +59,18 @@ export default function AdminAcompanhamentoHormonal() {
     text("Registro de acompanhamento hormonal", 13);
     text(`Data do relatório: ${new Date().toLocaleDateString("pt-BR")}`);
     text("Registro informativo. Não constitui prescrição, diagnóstico ou validação de segurança de ciclos ou TPC.");
+    if (client) {
+      text(`Cliente: ${client.full_name}`);
+      text(`Idade cadastrada: ${client.age ?? "Não informada"} · Peso cadastrado: ${client.weight ?? "Não informado"} · Sexo: ${client.sexo || "Não informado"}`);
+      text(`Restrições médicas: ${client.restricoes_medicas || "Não informadas"}`);
+      text(`Lesões informadas: ${client.injuries || "Não informadas"}`);
+    }
     const sections = [
       ["Referência", profile.reference], ["Médico responsável", profile.doctor], ["Data da consulta", profile.date],
       ["Histórico informado", profile.history], ["Prescrição médica transcrita", profile.prescription],
       ["Sintomas e observações", profile.symptoms], ["Questões para a próxima consulta", profile.questions],
+      ["Tema de estudo", study.topic], ["Substância de referência (não é indicação)", study.substance],
+      ["Notas de estudo", study.notes], ["Referências consultadas", study.references],
     ];
     for (const [title, value] of sections) {
       pdf.setFont("helvetica", "bold"); text(title, 11);
@@ -57,6 +80,10 @@ export default function AdminAcompanhamentoHormonal() {
     pdf.setFont("helvetica", "normal");
     if (!exams.length) text("Nenhum exame registrado.");
     exams.forEach((exam) => text(`${exam.done ? "Realizado" : "Pendente"} — ${exam.name}${exam.date ? ` — ${exam.date}` : ""}`));
+    for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
+      pdf.setPage(page); pdf.setFontSize(8);
+      pdf.text(`Equipe GB · Estudo restrito ao Admin · Página ${page} de ${pdf.getNumberOfPages()}`, 18, 289);
+    }
     pdf.save("registro-acompanhamento-hormonal.pdf");
     toast.success("Relatório baixado.");
   }
@@ -80,12 +107,17 @@ export default function AdminAcompanhamentoHormonal() {
           <p className="text-muted-foreground">Ciclos, doses, associações e TPC exigem avaliação e prescrição médica individual. Este registro não calcula nem recomenda medicamentos. Não inicie ou altere tratamento por conta própria.</p>
         </aside>
 
+        <StudyClientPicker client={client} onSelect={selectClient} />
+
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1 bg-transparent border-b border-border rounded-none p-0 pb-2">
             <TabsTrigger value="registro" className="gap-2 py-3"><ClipboardList className="size-4" />Registro médico</TabsTrigger>
             <TabsTrigger value="acompanhamento" className="gap-2 py-3"><Activity className="size-4" />Acompanhamento</TabsTrigger>
             <TabsTrigger value="exames" className="gap-2 py-3"><FileCheck className="size-4" />Exames</TabsTrigger>
+            <TabsTrigger value="estudo" className="gap-2 py-3"><ClipboardList className="size-4" />Base de estudo</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="estudo" className="pt-6"><HormonalStudyPanel value={study} onChange={setStudy} /></TabsContent>
 
           <TabsContent value="registro" className="pt-6 space-y-6">
             <h2 className="font-serif text-2xl">Informações da consulta</h2>
@@ -136,8 +168,7 @@ export default function AdminAcompanhamentoHormonal() {
           <p className="text-xs text-muted-foreground">As informações desta página não ficam salvas no cadastro e são descartadas ao sair. Baixe o relatório antes de fechar.</p>
           <Button variant="ghost" onClick={() => {
             if (!window.confirm("Descartar somente o rascunho desta página?")) return;
-            setProfile({ reference: "", doctor: "", date: "", history: "", prescription: "", symptoms: "", questions: "" });
-            setExams([]); setExamName(""); setTab("registro");
+            resetDraft(null); setTab("registro");
           }}><Trash2 /> Descartar rascunho</Button>
         </footer>
       </div>
