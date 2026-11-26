@@ -1,5 +1,10 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — página enviada de ciclos e TPC
+- [x] Adaptar para acompanhamento médico no Admin, sem recomendações automáticas de doses, ciclos ou TPC.
+- [x] Incluir registro, observações, checklist de exames solicitados e relatório PDF, sem armazenamento local de dados sensíveis.
+- [x] Validar com sessão admin: registro temporário, checklist, exclusão e PDF sintético; acesso sem sessão redireciona ao login; 375px/550px/desktop sem transbordamento; compilação OK. Não publicado.
+
 ## Pedido atual — marcações posturais automáticas
 - [x] Sugerir pontos e linhas nas fotos com explicações, sem inventar medidas ou classificações clínicas.
 - [x] Permitir revisão/correção no admin e incluir marcações no laudo do aluno e PDF.
