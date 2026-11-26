@@ -15,6 +15,13 @@ export function addPrescriptionWeek(table: PrescriptionTable): PrescriptionTable
   return { ...table, weeks: [...table.weeks, { id: crypto.randomUUID(), entries: {} }] };
 }
 
+export function resizePrescriptionWeeks(table: PrescriptionTable, count: number): PrescriptionTable {
+  if (!Number.isInteger(count) || count < 1 || count > 104) return table;
+  const weeks = table.weeks.slice(0, count);
+  while (weeks.length < count) weeks.push({ id: crypto.randomUUID(), entries: {} });
+  return { ...table, weeks };
+}
+
 export function setPrescriptionEntry(table: PrescriptionTable, weekId: string, medicationId: string, text: string): PrescriptionTable {
   if (!table.medications.some((medication) => medication.id === medicationId)) return table;
   return { ...table, weeks: table.weeks.map((week) => week.id === weekId ? { ...week, entries: { ...week.entries, [medicationId]: text } } : week) };

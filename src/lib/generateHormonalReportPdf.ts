@@ -3,7 +3,7 @@ import type { PrescriptionTable } from "./hormonalPrescription";
 import type { StudyNotes } from "./hormonalStudy";
 import { drawContinuationHeader, drawFooters, drawHeader, PDF_COLORS, PDF_MARGIN, setDraw, setFill, setText } from "./pdfTheme";
 
-export type HormonalProfile = { reference: string; doctor: string; date: string; history: string; prescription: string; symptoms: string; questions: string };
+export type HormonalProfile = { reference: string; doctor: string; date: string; history: string; prescription: string; symptoms: string; questions: string; weight?: string; gender?: string };
 export type HormonalExam = { id: string; name: string; date: string; done: boolean };
 type ReportClient = { full_name: string; age: number | null; weight: number | null; sexo: string | null; restricoes_medicas: string | null; injuries: string | null };
 type Report = { profile: HormonalProfile; client: ReportClient | null; study: StudyNotes; exams: HormonalExam[]; table: PrescriptionTable };
@@ -43,6 +43,7 @@ export function generateHormonalReportPdf({ profile, client, study, exams, table
     text(`Lesões informadas: ${client.injuries || "Não informadas"}`);
   }
   text(`Médico responsável / CRM: ${profile.doctor || "Não informado"}`);
+  text(`Peso do registro: ${profile.weight ? `${profile.weight} kg` : "Não informado"} · Sexo / gênero informado: ${profile.gender || "Não informado"}`);
   text(`Data da consulta: ${profile.date || "Não informada"}`);
   if (profile.history.trim()) { text("Histórico informado", 10, true); text(profile.history); }
   if (profile.prescription.trim()) { section("Prescrição médica existente — transcrição"); text(profile.prescription); }

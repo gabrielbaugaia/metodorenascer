@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { addPrescriptionMedication, addPrescriptionWeek, createPrescriptionTable, removePrescriptionMedication, setPrescriptionEntry } from "./hormonalPrescription";
+import { addPrescriptionMedication, addPrescriptionWeek, createPrescriptionTable, removePrescriptionMedication, setPrescriptionEntry, resizePrescriptionWeeks } from "./hormonalPrescription";
 
 test("adicionar medicamento e semana não gera doses nem instruções", () => {
   const table = addPrescriptionWeek(addPrescriptionMedication(createPrescriptionTable(), "Medicamento do documento"));
@@ -32,4 +32,20 @@ test("remover medicamento remove também os registros associados na tabela", () 
   table = removePrescriptionMedication(table, id);
   assert.deepEqual(table.medications, []);
   assert.deepEqual(table.weeks[0].entries, {});
+});
+
+test("grade de 12 semanas mantém todas as células sem doses automáticas", () => {
+  const table = resizePrescriptionWeeks(addPrescriptionMedication(createPrescriptionTable(), "Registro do documento"), 12);
+  assert.equal(table.weeks.length, 12);
+  assert.ok(table.weeks.every((week) => Object.keys(week.entries).length === 0));
+  assert.equal(table.medications[0].instructions, "");
+});
+
+test("aumento das semanas preserva transcrição sem copiar para as novas", () => {
+  let table = resizePrescriptionWeeks(addPrescriptionMedication(createPrescriptionTable(), "Registro"), 8);
+  table = setPrescriptionEntry(table, table.weeks[0].id, table.medications[0].id, "Transcrição literal");
+  const next = resizePrescriptionWeeks(table, 10);
+  assert.equal(next.weeks[0].entries[table.medications[0].id], "Transcrição literal");
+  assert.deepEqual(next.weeks[8].entries, {});
+  assert.deepEqual(next.weeks[9].entries, {});
 });

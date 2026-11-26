@@ -1,5 +1,10 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — catálogo editável e grade semanal
+- [x] Criar catálogo admin com concentração, meia-vida e fonte transcritas, sem doses-base ou preenchimento automático.
+- [x] Gerar semanas em branco para transcrição, dados informativos do cliente e PDF Gabriel Baú.
+- [x] Testar sessão admin, cadastro/edição/exclusão com leitura após recarga, 12 semanas/2 compostos, PDF de duas páginas e isolamento ao remover cliente; 375/550px sem transbordamento, sete testes e compilação OK. Registros sintéticos excluídos; sem sessão redireciona ao login. Verificação de segurança sem críticos; publicação solicitada ao final deste pedido. Impressão física não testada.
+
 ## Pedido atual — tabela da prescrição médica e PDF
 - [x] Incluir tabela semanal manual, com dados opcionais do cliente cadastrado, sem cálculo de doses, combinações ou TPC.
 - [x] Aplicar identidade Gabriel Baú ao registro e PDF; manter rascunhos restritos à sessão e limpar ao trocar cliente.

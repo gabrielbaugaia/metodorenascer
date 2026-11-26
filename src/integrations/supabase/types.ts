@@ -1615,6 +1615,39 @@ export type Database = {
           },
         ]
       }
+      hormonal_compounds: {
+        Row: {
+          class_name: string
+          concentration_reference: string
+          created_at: string
+          half_life_reference: string
+          id: string
+          name: string
+          route: string
+          source_reference: string
+        }
+        Insert: {
+          class_name?: string
+          concentration_reference?: string
+          created_at?: string
+          half_life_reference?: string
+          id?: string
+          name: string
+          route?: string
+          source_reference?: string
+        }
+        Update: {
+          class_name?: string
+          concentration_reference?: string
+          created_at?: string
+          half_life_reference?: string
+          id?: string
+          name?: string
+          route?: string
+          source_reference?: string
+        }
+        Relationships: []
+      }
       invite_link_claims: {
         Row: {
           created_at: string

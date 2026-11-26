@@ -12,13 +12,14 @@ import { toast } from "sonner";
 import { HormonalStudyPanel, StudyClientPicker, type StudyClient } from "@/components/admin/HormonalStudyPanel";
 import { createStudyNotes } from "@/lib/hormonalStudy";
 import { PrescriptionTablePanel } from "@/components/admin/PrescriptionTablePanel";
+import { HormonalCompoundCatalog } from "@/components/admin/HormonalCompoundCatalog";
 import { createPrescriptionTable, hasPrescriptionDraft } from "@/lib/hormonalPrescription";
 import { generateHormonalReportPdf, type HormonalExam } from "@/lib/generateHormonalReportPdf";
 
 type Exam = HormonalExam;
 
 export default function AdminAcompanhamentoHormonal() {
-  const [profile, setProfile] = useState({ reference: "", doctor: "", date: "", history: "", prescription: "", symptoms: "", questions: "" });
+  const [profile, setProfile] = useState({ reference: "", doctor: "", date: "", history: "", prescription: "", symptoms: "", questions: "", weight: "", gender: "" });
   const [exams, setExams] = useState<Exam[]>([]);
   const [examName, setExamName] = useState("");
   const [tab, setTab] = useState("registro");
@@ -28,7 +29,7 @@ export default function AdminAcompanhamentoHormonal() {
   const [draftVersion, setDraftVersion] = useState(0);
   function resetDraft(nextClient: StudyClient | null) {
     setClient(nextClient);
-    setProfile({ reference: nextClient?.full_name ?? "", doctor: "", date: "", history: "", prescription: "", symptoms: "", questions: "" });
+    setProfile({ reference: nextClient?.full_name ?? "", doctor: "", date: "", history: "", prescription: "", symptoms: "", questions: "", weight: nextClient?.weight == null ? "" : String(nextClient.weight), gender: nextClient?.sexo ?? "" });
     setStudy(createStudyNotes()); setExams([]); setExamName("");
     setPrescriptionTable(createPrescriptionTable()); setDraftVersion((version) => version + 1);
   }
@@ -78,12 +79,14 @@ export default function AdminAcompanhamentoHormonal() {
           <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1 bg-transparent border-b border-border rounded-none p-0 pb-2">
             <TabsTrigger value="registro" className="gap-2 py-3"><ClipboardList className="size-4" />Registro médico</TabsTrigger>
             <TabsTrigger value="prescricao" className="gap-2 py-3"><ClipboardList className="size-4" />Tabela da prescrição</TabsTrigger>
+            <TabsTrigger value="catalogo" className="gap-2 py-3"><ClipboardList className="size-4" />Catálogo de fármacos</TabsTrigger>
             <TabsTrigger value="acompanhamento" className="gap-2 py-3"><Activity className="size-4" />Acompanhamento</TabsTrigger>
             <TabsTrigger value="exames" className="gap-2 py-3"><FileCheck className="size-4" />Exames</TabsTrigger>
             <TabsTrigger value="estudo" className="gap-2 py-3"><ClipboardList className="size-4" />Base de estudo</TabsTrigger>
           </TabsList>
 
           <TabsContent value="estudo" className="pt-6"><HormonalStudyPanel value={study} onChange={setStudy} /></TabsContent>
+          <TabsContent value="catalogo" className="pt-6"><HormonalCompoundCatalog /></TabsContent>
           <TabsContent value="prescricao" className="pt-6"><PrescriptionTablePanel key={draftVersion} value={prescriptionTable} onChange={setPrescriptionTable} /></TabsContent>
 
           <TabsContent value="registro" className="pt-6 space-y-6">
@@ -92,6 +95,8 @@ export default function AdminAcompanhamentoHormonal() {
               <div className="space-y-2"><Label htmlFor="reference">Referência do cliente</Label><Input id="reference" value={profile.reference} onChange={(event) => update("reference", event.target.value)} /></div>
               <div className="space-y-2"><Label htmlFor="doctor">Médico responsável / CRM</Label><Input id="doctor" value={profile.doctor} onChange={(event) => update("doctor", event.target.value)} /></div>
               <div className="space-y-2"><Label htmlFor="consult-date">Data da consulta</Label><Input id="consult-date" type="date" value={profile.date} onChange={(event) => update("date", event.target.value)} /></div>
+              <div className="space-y-2"><Label htmlFor="record-weight">Peso do registro (kg)</Label><Input id="record-weight" inputMode="decimal" value={profile.weight} onChange={(event) => update("weight", event.target.value)} /></div>
+              <div className="space-y-2"><Label htmlFor="record-gender">Sexo / gênero informado</Label><Input id="record-gender" value={profile.gender} onChange={(event) => update("gender", event.target.value)} /></div>
             </div>
             <div className="space-y-2"><Label htmlFor="history">Histórico informado e restrições médicas</Label><Textarea id="history" rows={4} value={profile.history} onChange={(event) => update("history", event.target.value)} /></div>
             <div className="space-y-2"><Label htmlFor="prescription">Prescrição médica existente — transcrição fiel</Label><Textarea id="prescription" rows={5} value={profile.prescription} onChange={(event) => update("prescription", event.target.value)} /><p className="text-xs text-muted-foreground">Sem prescrição disponível, deixe em branco. A transcrição não valida o tratamento.</p></div>
