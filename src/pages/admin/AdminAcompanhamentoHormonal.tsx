@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { jsPDF } from "jspdf";
 import { Activity, ClipboardList, Download, FileCheck, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { Button } from "@/components/ui/button";
@@ -12,8 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { HormonalStudyPanel, StudyClientPicker, type StudyClient } from "@/components/admin/HormonalStudyPanel";
 import { createStudyNotes } from "@/lib/hormonalStudy";
+import { PrescriptionTablePanel } from "@/components/admin/PrescriptionTablePanel";
+import { createPrescriptionTable, hasPrescriptionDraft } from "@/lib/hormonalPrescription";
+import { generateHormonalReportPdf, type HormonalExam } from "@/lib/generateHormonalReportPdf";
 
-type Exam = { id: string; name: string; date: string; done: boolean };
+type Exam = HormonalExam;
 
 export default function AdminAcompanhamentoHormonal() {
   const [profile, setProfile] = useState({ reference: "", doctor: "", date: "", history: "", prescription: "", symptoms: "", questions: "" });
@@ -22,14 +24,17 @@ export default function AdminAcompanhamentoHormonal() {
   const [tab, setTab] = useState("registro");
   const [client, setClient] = useState<StudyClient | null>(null);
   const [study, setStudy] = useState(createStudyNotes);
+  const [prescriptionTable, setPrescriptionTable] = useState(createPrescriptionTable);
+  const [draftVersion, setDraftVersion] = useState(0);
   function resetDraft(nextClient: StudyClient | null) {
     setClient(nextClient);
     setProfile({ reference: nextClient?.full_name ?? "", doctor: "", date: "", history: "", prescription: "", symptoms: "", questions: "" });
     setStudy(createStudyNotes()); setExams([]); setExamName("");
+    setPrescriptionTable(createPrescriptionTable()); setDraftVersion((version) => version + 1);
   }
   function selectClient(nextClient: StudyClient | null) {
     if (client?.id === nextClient?.id) return;
-    const hasDraft = Object.entries(profile).some(([key, value]) => key !== "reference" && Boolean(value.trim())) || exams.length > 0 || Object.values(study).some((value) => value.trim());
+    const hasDraft = Object.entries(profile).some(([key, value]) => key !== "reference" && Boolean(value.trim())) || exams.length > 0 || Object.values(study).some((value) => value.trim()) || hasPrescriptionDraft(prescriptionTable);
     if (hasDraft && !window.confirm("Trocar de cliente descarta o rascunho atual. Baixe o PDF antes se quiser guardar. Continuar?")) return;
     resetDraft(nextClient);
   }
@@ -43,47 +48,7 @@ export default function AdminAcompanhamentoHormonal() {
   }
 
   function exportReport() {
-    const pdf = new jsPDF();
-    let y = 22;
-    const text = (content: string, size = 10) => {
-      pdf.setFontSize(size);
-      const lines: string[] = pdf.splitTextToSize(content, 174);
-      for (const line of lines) {
-        if (y > 275) { pdf.addPage(); y = 22; }
-        pdf.text(line, 18, y);
-        y += size * 0.5;
-      }
-      y += 4;
-    };
-    text("Gabriel Baú Consultoria", 17);
-    text("Registro de acompanhamento hormonal", 13);
-    text(`Data do relatório: ${new Date().toLocaleDateString("pt-BR")}`);
-    text("Registro informativo. Não constitui prescrição, diagnóstico ou validação de segurança de ciclos ou TPC.");
-    if (client) {
-      text(`Cliente: ${client.full_name}`);
-      text(`Idade cadastrada: ${client.age ?? "Não informada"} · Peso cadastrado: ${client.weight ?? "Não informado"} · Sexo: ${client.sexo || "Não informado"}`);
-      text(`Restrições médicas: ${client.restricoes_medicas || "Não informadas"}`);
-      text(`Lesões informadas: ${client.injuries || "Não informadas"}`);
-    }
-    const sections = [
-      ["Referência", profile.reference], ["Médico responsável", profile.doctor], ["Data da consulta", profile.date],
-      ["Histórico informado", profile.history], ["Prescrição médica transcrita", profile.prescription],
-      ["Sintomas e observações", profile.symptoms], ["Questões para a próxima consulta", profile.questions],
-      ["Tema de estudo", study.topic], ["Substância de referência (não é indicação)", study.substance],
-      ["Notas de estudo", study.notes], ["Referências consultadas", study.references],
-    ];
-    for (const [title, value] of sections) {
-      pdf.setFont("helvetica", "bold"); text(title, 11);
-      pdf.setFont("helvetica", "normal"); text(value || "Não informado");
-    }
-    pdf.setFont("helvetica", "bold"); text("Exames solicitados pelo médico", 11);
-    pdf.setFont("helvetica", "normal");
-    if (!exams.length) text("Nenhum exame registrado.");
-    exams.forEach((exam) => text(`${exam.done ? "Realizado" : "Pendente"} — ${exam.name}${exam.date ? ` — ${exam.date}` : ""}`));
-    for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
-      pdf.setPage(page); pdf.setFontSize(8);
-      pdf.text(`Equipe GB · Estudo restrito ao Admin · Página ${page} de ${pdf.getNumberOfPages()}`, 18, 289);
-    }
+    const pdf = generateHormonalReportPdf({ profile, client, study, exams, table: prescriptionTable });
     pdf.save("registro-acompanhamento-hormonal.pdf");
     toast.success("Relatório baixado.");
   }
@@ -92,11 +57,11 @@ export default function AdminAcompanhamentoHormonal() {
     <ClientLayout>
       <div className="space-y-8 min-w-0">
         <header className="border-b border-border pb-6 space-y-4">
-          <p className="text-xs uppercase text-primary">Gabriel Baú · Acompanhamento</p>
+          <p className="text-xs uppercase text-primary">Gabriel Baú · Consultoria</p>
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
             <div className="min-w-0 space-y-2">
-              <h1 className="font-serif text-3xl sm:text-4xl break-words">Acompanhamento hormonal</h1>
-              <p className="text-muted-foreground text-sm">Registro médico, observações e exames · Rascunho desta sessão</p>
+              <h1 className="display-title tracking-normal break-words">Acompanhamento hormonal</h1>
+              <p className="text-muted-foreground text-sm">Prescrição médica transcrita, acompanhamento e estudo · Rascunho desta sessão</p>
             </div>
             <Button variant="outline" onClick={exportReport} className="shrink-0 self-start"><Download /> Baixar relatório PDF</Button>
           </div>
@@ -112,15 +77,17 @@ export default function AdminAcompanhamentoHormonal() {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-full h-auto flex flex-wrap justify-start gap-1 bg-transparent border-b border-border rounded-none p-0 pb-2">
             <TabsTrigger value="registro" className="gap-2 py-3"><ClipboardList className="size-4" />Registro médico</TabsTrigger>
+            <TabsTrigger value="prescricao" className="gap-2 py-3"><ClipboardList className="size-4" />Tabela da prescrição</TabsTrigger>
             <TabsTrigger value="acompanhamento" className="gap-2 py-3"><Activity className="size-4" />Acompanhamento</TabsTrigger>
             <TabsTrigger value="exames" className="gap-2 py-3"><FileCheck className="size-4" />Exames</TabsTrigger>
             <TabsTrigger value="estudo" className="gap-2 py-3"><ClipboardList className="size-4" />Base de estudo</TabsTrigger>
           </TabsList>
 
           <TabsContent value="estudo" className="pt-6"><HormonalStudyPanel value={study} onChange={setStudy} /></TabsContent>
+          <TabsContent value="prescricao" className="pt-6"><PrescriptionTablePanel key={draftVersion} value={prescriptionTable} onChange={setPrescriptionTable} /></TabsContent>
 
           <TabsContent value="registro" className="pt-6 space-y-6">
-            <h2 className="font-serif text-2xl">Informações da consulta</h2>
+            <h2 className="section-title tracking-normal">Informações da consulta</h2>
             <div className="grid sm:grid-cols-2 gap-5">
               <div className="space-y-2"><Label htmlFor="reference">Referência do cliente</Label><Input id="reference" value={profile.reference} onChange={(event) => update("reference", event.target.value)} /></div>
               <div className="space-y-2"><Label htmlFor="doctor">Médico responsável / CRM</Label><Input id="doctor" value={profile.doctor} onChange={(event) => update("doctor", event.target.value)} /></div>
@@ -132,7 +99,7 @@ export default function AdminAcompanhamentoHormonal() {
           </TabsContent>
 
           <TabsContent value="acompanhamento" className="pt-6 space-y-6">
-            <h2 className="font-serif text-2xl">Observações para a consulta</h2>
+            <h2 className="section-title tracking-normal">Observações para a consulta</h2>
             <div className="grid sm:grid-cols-3 border-y border-border divide-y sm:divide-y-0 sm:divide-x divide-border">
               <div className="py-5 sm:pr-5"><p className="text-xs text-muted-foreground">Exames registrados</p><p className="text-3xl font-serif mt-2">{exams.length}</p></div>
               <div className="py-5 sm:px-5"><p className="text-xs text-muted-foreground">Realizados</p><p className="text-3xl font-serif mt-2 text-primary">{completed}</p></div>
@@ -144,7 +111,7 @@ export default function AdminAcompanhamentoHormonal() {
           </TabsContent>
 
           <TabsContent value="exames" className="pt-6 space-y-6">
-            <div><h2 className="font-serif text-2xl">Exames solicitados</h2><p className="text-sm text-muted-foreground mt-2">Registre somente os exames solicitados pelo médico responsável.</p></div>
+            <div><h2 className="section-title tracking-normal">Exames solicitados</h2><p className="text-sm text-muted-foreground mt-2">Registre somente os exames solicitados pelo médico responsável.</p></div>
             <form onSubmit={(event) => { event.preventDefault(); addExam(); }} className="flex flex-col sm:flex-row items-end gap-3">
               <div className="space-y-2 flex-1 w-full"><Label htmlFor="exam-name">Nome do exame</Label><Input id="exam-name" value={examName} onChange={(event) => setExamName(event.target.value)} /></div>
               <Button type="submit" className="w-full sm:w-auto"><Plus /> Adicionar exame</Button>

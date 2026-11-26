@@ -36,7 +36,7 @@ export function StudyClientPicker({ client, onSelect }: { client: StudyClient | 
   }, [search]);
 
   return <section className="space-y-4 border-b border-border pb-6">
-    <h2 className="font-serif text-2xl flex items-center gap-2"><UserRound className="size-5 text-primary" />Cliente do estudo</h2>
+    <h2 className="section-title tracking-normal flex items-center gap-2"><UserRound className="size-5 text-primary" />Cliente do registro (opcional)</h2>
     <div className="space-y-2 max-w-xl"><Label htmlFor="study-client-search">Buscar cliente pelo nome</Label><div className="relative"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><Input id="study-client-search" className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} autoComplete="off" /></div></div>
     {loading && <p role="status" className="text-sm text-muted-foreground">Buscando clientes…</p>}
     {error && <p role="alert" className="text-sm text-destructive">Não foi possível buscar. Altere a busca para tentar novamente.</p>}
@@ -55,7 +55,7 @@ export function StudyClientPicker({ client, onSelect }: { client: StudyClient | 
 export function HormonalStudyPanel({ value, onChange }: { value: StudyNotes; onChange: (value: StudyNotes) => void }) {
   const update = (key: keyof StudyNotes, text: string) => onChange({ ...value, [key]: text });
   return <div className="space-y-6">
-    <h2 className="font-serif text-2xl flex items-center gap-2"><BookOpen className="size-5 text-primary" />Base de estudo</h2>
+    <h2 className="section-title tracking-normal flex items-center gap-2"><BookOpen className="size-5 text-primary" />Base de estudo</h2>
     <div className="grid sm:grid-cols-2 gap-5">
       <div className="space-y-2"><Label htmlFor="study-topic">Tema do estudo</Label><Input id="study-topic" value={value.topic} onChange={(e) => update("topic", e.target.value)} /></div>
       <div className="space-y-2"><Label htmlFor="study-substance">Substância de referência</Label><Select value={value.substance || "none"} onValueChange={(s) => update("substance", s === "none" ? "" : s)}><SelectTrigger id="study-substance"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Nenhuma selecionada</SelectItem>{studySubstances.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select></div>

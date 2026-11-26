@@ -1,5 +1,10 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — tabela da prescrição médica e PDF
+- [x] Incluir tabela semanal manual, com dados opcionais do cliente cadastrado, sem cálculo de doses, combinações ou TPC.
+- [x] Aplicar identidade Gabriel Baú ao registro e PDF; manter rascunhos restritos à sessão e limpar ao trocar cliente.
+- [x] Validar com sessão admin: busca real, dados no PDF, transcrição sem propagação, limpeza ao remover cliente, tabela de 10 semanas/4 medicamentos preservada no PDF, 375/550/1280px sem transbordamento e sem erros de execução; acesso sem sessão redireciona ao login. Cinco testes e compilação OK; não publicado.
+
 ## Pedido atual — base de estudo por cliente no Admin
 - [x] Buscar clientes do cadastro e mostrar dados informados, sem gerar prescrições hormonais.
 - [x] Incluir índice de substâncias, notas e referências de estudo no PDF; descartar rascunho ao trocar de cliente com confirmação.
