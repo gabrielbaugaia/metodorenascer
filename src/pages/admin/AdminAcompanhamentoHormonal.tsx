@@ -70,7 +70,7 @@ export default function AdminAcompanhamentoHormonal() {
 
         <aside className="flex gap-3 border-l-2 border-primary pl-4 text-sm">
           <ShieldCheck className="size-5 shrink-0 text-primary" />
-          <p className="text-muted-foreground">Ciclos, doses, associações e TPC exigem avaliação e prescrição médica individual. Este registro não calcula nem recomenda medicamentos. Não inicie ou altere tratamento por conta própria.</p>
+          <p className="text-muted-foreground">Ciclos, doses, associações e TPC exigem avaliação e prescrição médica individual. O sistema não sugere doses: você digita o que está na receita e ele converte em ml, aplicações e insumos. Não inicie ou altere tratamento por conta própria.</p>
         </aside>
 
         <StudyClientPicker client={client} onSelect={selectClient} />
@@ -131,6 +131,11 @@ export default function AdminAcompanhamentoHormonal() {
                 </li>)}
               </ul>
             )}
+            <Button variant="outline" onClick={() => setExams((current) => {
+              const names = new Set(current.map((exam) => exam.name));
+              const preset = ["Pré-ciclo: Testosterona total", "Pré-ciclo: Testosterona livre", "Pré-ciclo: Estradiol (E2)", "Pré-ciclo: Perfil lipídico", "Pré-ciclo: TGO/TGP", "Pré-ciclo: Creatinina", "Pré-ciclo: Hemograma completo", "Intraciclo: Estradiol", "Intraciclo: TGO/TGP", "Intraciclo: Hematócrito", "Intraciclo: Prolactina", "Pós-TPC: LH", "Pós-TPC: FSH", "Pós-TPC: Testosterona total", "Pós-TPC: Estradiol", "Pós-TPC: Perfil lipídico"];
+              return [...current, ...preset.filter((name) => !names.has(name)).map((name) => ({ id: crypto.randomUUID(), name, date: "", done: false }))];
+            })}><Plus /> Adicionar checklist padrão (pré, intra e pós-TPC)</Button>
             <Button variant="outline" asChild><Link to="/admin/clientes"><ClipboardList /> Abrir cadastro de clientes</Link></Button>
             <p className="text-xs text-muted-foreground">Laudos e prescrições podem ser anexados em Avaliações e exames no cadastro do cliente.</p>
           </TabsContent>

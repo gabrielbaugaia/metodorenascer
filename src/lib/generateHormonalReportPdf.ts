@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import type { PrescriptionTable } from "./hormonalPrescription";
+import { frequencyText, suppliesText, weeklyEntryText, type PrescriptionTable } from "./hormonalPrescription";
 import type { StudyNotes } from "./hormonalStudy";
 import { drawContinuationHeader, drawFooters, drawHeader, PDF_COLORS, PDF_MARGIN, setDraw, setFill, setText } from "./pdfTheme";
 
@@ -34,7 +34,7 @@ export function generateHormonalReportPdf({ profile, client, study, exams, table
     pdf.text(title, PDF_MARGIN, y); y += 9;
   }
   text(`Data do relatório: ${new Date().toLocaleDateString("pt-BR")}`);
-  text("Transcrição informativa de prescrição médica existente. Não constitui prescrição, diagnóstico, recomendação de doses ou validação de ciclos e TPC.");
+  text("Transcrição informativa de prescrição médica existente. Doses, protetores e TPC copiados da receita médica; o sistema apenas converte unidades. Não constitui prescrição.");
   section("Cliente e documento médico");
   text(`Cliente / referência: ${client?.full_name || profile.reference || "Não informado"}`, 10, true);
   if (client) {
@@ -55,6 +55,16 @@ export function generateHormonalReportPdf({ profile, client, study, exams, table
       text(medication.instructions || "Orientações não transcritas.");
     }
   }
+  if (table.medications.some((m) => frequencyText(m.dose))) {
+    section("Frequência e fracionamento");
+    for (const m of table.medications) { const f = frequencyText(m.dose); if (f) { text(`${m.name} — ${weeklyEntryText(m.dose)} por semana`, 10, true); text(f); } }
+  }
+  if (table.weeks.length && table.medications.some((m) => suppliesText(m.dose, table.weeks.length))) {
+    section(`Estimativa de insumos · ${table.weeks.length} semana(s)`);
+    for (const m of table.medications) { const t = suppliesText(m.dose, table.weeks.length); if (t) text(`${m.name}: ${t}`); }
+  }
+  if (table.protectors?.trim()) { section("Protetores durante o ciclo — conforme prescrição"); text(table.protectors); }
+  if (table.pct?.trim()) { section("Cronograma de TPC — conforme prescrição"); text(table.pct); }
   if (table.weeks.length && table.medications.length) {
     // Split wide tables, repeat every week in each group; never truncate data.
     for (let start = 0; start < table.medications.length; start += 3) {
@@ -110,7 +120,7 @@ export function generateHormonalReportPdf({ profile, client, study, exams, table
     }
   }
   section("Aviso e confidencialidade");
-  text("Documento restrito ao Admin. As informações foram registradas manualmente e não são validadas pelo sistema. Dados do cadastro não determinam doses, frequências, associações, ciclos ou TPC.");
+  text("Documento restrito ao Admin. As informações foram registradas manualmente e não são validadas pelo sistema. Esta ferramenta tem caráter educativo e computacional para redução de danos e não substitui orientação médica.");
   text("Este registro não substitui orientação médica. Consulte um profissional de saúde habilitado antes de iniciar ou alterar qualquer tratamento. O uso de anabolizantes sem prescrição pode ser ilegal conforme a legislação aplicável.");
   drawFooters(pdf);
   return pdf;
