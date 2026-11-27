@@ -1,5 +1,10 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — correções de SEO
+- [x] Corrigir título principal do blog e informações de compartilhamento da página inicial.
+- [x] Criar mapa das páginas públicas e artigos publicados, com referência em robots.txt.
+- [x] Verificar blog no celular/computador, artigo, retorno à página inicial e mapa com 16 artigos; registrar correções na revisão e salvar sem publicar.
+
 ## Pedido atual — catálogo editável e grade semanal
 - [x] Criar catálogo admin com concentração, meia-vida e fonte transcritas, sem doses-base ou preenchimento automático.
 - [x] Gerar semanas em branco para transcrição, dados informativos do cliente e PDF Gabriel Baú.

@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PUBLIC_APP_URL } from "@/lib/appConfig";
+import { capturePublicMetadata } from "@/lib/publicMetadata";
 
 interface BlogPostData {
   id: string;
@@ -55,8 +56,10 @@ export default function BlogPost() {
 
   useEffect(() => {
     if (post) {
+      const restoreMetadata = capturePublicMetadata();
       updatePostMetaTags(post);
       incrementViews(post.id);
+      return restoreMetadata;
     }
   }, [post]);
 

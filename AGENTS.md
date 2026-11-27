@@ -1,5 +1,8 @@
 # Project rules
 
+- Generate the sitemap before dev/build from public editorial routes and every published blog slug, using only public credentials and failing on fetch errors; omit lastmod because view-count updates do not prove significant content changes.
+- Capture and restore public route head metadata on unmount so blog/article metadata never leaks into the homepage or other screens.
+
 - Keep online consultancy plan presentation in `src/lib/consultoriaPlans.ts` and reuse it in public pricing and checkout; this prevents display drift while preserving existing payment slugs and contracts.
 - Use `ConsultoriaPlansSection` for public online plan cards and comparisons; legacy landing routes remain unchanged unless explicitly requested.
 - Scope public consultancy styling to `.consultoria-plans` using global semantic tokens; changes must not restyle protected app screens.

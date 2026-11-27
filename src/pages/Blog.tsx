@@ -11,6 +11,7 @@ import { Menu, X as CloseIcon } from "lucide-react";
 import { Link as RouterLink } from "react-router-dom";
 import { useState as useMenuState } from "react";
 import { PUBLIC_APP_URL } from "@/lib/appConfig";
+import { capturePublicMetadata } from "@/lib/publicMetadata";
 
 interface BlogPost {
   id: string;
@@ -100,8 +101,10 @@ export default function Blog() {
   const [mobileMenuOpen, setMobileMenuOpen] = useMenuState(false);
 
   useEffect(() => {
+    const restoreMetadata = capturePublicMetadata();
     updateMetaTags();
     fetchPosts();
+    return restoreMetadata;
   }, []);
 
   useEffect(() => {
@@ -300,6 +303,13 @@ export default function Blog() {
 
       {/* Spacer for fixed header */}
       <div className="h-20" />
+
+      <section className="px-4 pb-8 pt-6">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h1 className="font-display text-3xl md:text-5xl text-foreground mb-3">Blog de treinamento e transformação física</h1>
+          <p className="text-muted-foreground text-base md:text-lg">Artigos sobre treino, nutrição e mindset para evoluir com consistência.</p>
+        </div>
+      </section>
 
       {/* Featured Posts - First 3 */}
       <section className="pb-8 px-4">
