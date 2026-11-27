@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssessments } from "@/hooks/usePhysicalAssessments";
-import { ComparisonPanel, EvolutionCharts, METRICS, PhotoGrid, dateBR } from "@/components/assessment/AssessmentEvolution";
+import { EvolutionCharts, METRICS, PhotoGrid, dateBR } from "@/components/assessment/AssessmentEvolution";
+import { AssessmentCompare } from "@/components/assessment/AssessmentCompare";
 import { diff, fmt } from "@/lib/physicalAssessment";
 
 const db = supabase as any;
@@ -100,7 +101,7 @@ export default function AdminEvolucaoFisica() {
               </CardContent>
             </Card>
 
-            <ComparisonPanel items={items} />
+            <AssessmentCompare items={items} studentName={student?.full_name || student?.email || "Aluno"} />
           </>
         ))}
       </div>

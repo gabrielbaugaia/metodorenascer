@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { CIRCUMFERENCES, METHOD_NOTE, PHOTO_POSITIONS, SKINFOLDS, fmt } from "@/lib/physicalAssessment";
 import { PDF_COLORS, drawFooters, setDraw, setFill, setText } from "@/lib/pdfTheme";
+import { HIGHLIGHT_KEYS, buildComparison } from "@/lib/assessmentComparison";
 import type { AssessmentPhoto, AssessmentRow } from "@/hooks/usePhysicalAssessments";
 
 /**
@@ -202,4 +203,115 @@ export async function exportAssessmentPdf(a: AssessmentRow, photos: AssessmentPh
 
   drawFooters(doc);
   doc.save(`avaliacao-${a.assessed_at}.pdf`);
+}
+
+/** PDF de comparação entre duas avaliações (antes → depois), no padrão Gabriel Baú. */
+export async function exportComparisonPdf(before: AssessmentRow, after: AssessmentRow, photosBefore: AssessmentPhoto[], photosAfter: AssessmentPhoto[], studentName: string) {
+  const cmp = buildComparison(before, after);
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const W = 210, M = 15, CW = W - M * 2;
+  let y = 18;
+  const signed = (n: number | null, d: number) => (n == null ? "—" : `${n > 0 ? "+" : ""}${fmt(n, d)}`);
+  const ensure = (h: number) => { if (y + h > 275) { doc.addPage(); y = 18; } };
+  const heading = (t: string) => { ensure(14); setText(doc, PDF_COLORS.bronze); doc.setFont("helvetica", "bold").setFontSize(9).text(t.toUpperCase(), M, y); y += 6; };
+
+  doc.setFont("times", "bold").setFontSize(18); setText(doc, PDF_COLORS.text); doc.text("Comparação de Avaliações Físicas", M, y);
+  setText(doc, PDF_COLORS.bronze); doc.setFont("helvetica", "normal").setFontSize(9).text("GABRIEL BAÚ | ENGENHARIA DO MOVIMENTO", M, y + 6);
+  setText(doc, PDF_COLORS.text); doc.setFontSize(10).text(`${studentName}  ·  ${dateBR(cmp.before.assessed_at)} a ${dateBR(cmp.after.assessed_at)}  ·  ${cmp.days} dias`, M, y + 12);
+  y += 18; setDraw(doc, PDF_COLORS.bronze); doc.line(M, y, W - M, y); y += 8;
+
+  // Quadro resumo
+  heading("Resumo da evolução");
+  const hl = HIGHLIGHT_KEYS.map((k) => cmp.rows.find((r) => r.metric.key === k)).filter(Boolean) as typeof cmp.rows;
+  const cols = 4, gap = 3, bw = (CW - gap * (cols - 1)) / cols, bh = 22;
+  hl.forEach((r, i) => {
+    const cx = M + (i % cols) * (bw + gap), cy = y + Math.floor(i / cols) * (bh + gap);
+    setFill(doc, PDF_COLORS.surface); doc.roundedRect(cx, cy, bw, bh, 2, 2, "F");
+    setText(doc, PDF_COLORS.muted); doc.setFont("helvetica", "normal").setFontSize(7).text(r.metric.label.toUpperCase(), cx + 3, cy + 5, { maxWidth: bw - 6 });
+    setText(doc, PDF_COLORS.text); doc.setFont("times", "bold").setFontSize(13).text(`${fmt(r.after, r.metric.digits)} ${r.metric.unit}`, cx + 3, cy + 12.5);
+    setText(doc, r.trend.tone === "good" ? PDF_COLORS.bronze : PDF_COLORS.muted); doc.setFont("helvetica", "normal").setFontSize(7.5)
+      .text(`${signed(r.abs, r.metric.digits)} ${r.metric.unit}  (antes ${fmt(r.before, r.metric.digits)})`, cx + 3, cy + 18.5, { maxWidth: bw - 6 });
+  });
+  y += Math.ceil(hl.length / cols) * (bh + gap) + 6;
+
+  // Tabela completa
+  heading("Tabela completa");
+  const cx = [M, M + 70, M + 98, M + 126, M + 152];
+  const head = () => {
+    setFill(doc, PDF_COLORS.graphite); doc.rect(M, y - 4, CW, 7, "F");
+    setText(doc, PDF_COLORS.offWhite); doc.setFont("helvetica", "bold").setFontSize(8);
+    ["Indicador", dateBR(cmp.before.assessed_at), dateBR(cmp.after.assessed_at), "Diferença", "%"].forEach((t, i) => doc.text(t, cx[i] + (i ? 0 : 2), y + 0.5));
+    y += 7;
+  };
+  head();
+  cmp.rows.forEach((r, i) => {
+    if (y > 272) { doc.addPage(); y = 22; head(); }
+    if (i % 2 === 0) { setFill(doc, PDF_COLORS.offWhite); doc.rect(M, y - 4, CW, 6, "F"); }
+    setText(doc, PDF_COLORS.text); doc.setFont("helvetica", "normal").setFontSize(8);
+    doc.text(`${r.metric.label}${r.metric.unit ? ` (${r.metric.unit})` : ""}`, cx[0] + 2, y);
+    doc.text(fmt(r.before, r.metric.digits), cx[1], y); doc.text(fmt(r.after, r.metric.digits), cx[2], y);
+    setText(doc, r.trend.tone === "good" ? PDF_COLORS.bronze : PDF_COLORS.text);
+    doc.text(signed(r.abs, r.metric.digits), cx[3], y); doc.text(r.pct == null ? "—" : `${signed(r.pct, 1)}%`, cx[4], y);
+    y += 6;
+  });
+  y += 4;
+  setText(doc, PDF_COLORS.muted); doc.setFontSize(7.5).text(doc.splitTextToSize("Peso, IMC, dobras isoladas e circunferências são variações neutras: dependem do objetivo e são interpretadas no acompanhamento.", CW), M, y);
+  y += 10;
+
+  // Barras antes/depois
+  const dual = (title: string, rows: typeof cmp.rows) => {
+    if (!rows.length) return;
+    doc.addPage(); y = 18;
+    heading(title);
+    setFill(doc, PDF_COLORS.hairline); doc.rect(M, y - 2.5, 4, 2, "F"); setText(doc, PDF_COLORS.muted); doc.setFontSize(7.5).text(`Antes (${dateBR(cmp.before.assessed_at)})`, M + 6, y - 0.8);
+    setFill(doc, PDF_COLORS.bronze); doc.rect(M + 55, y - 2.5, 4, 2, "F"); doc.text(`Depois (${dateBR(cmp.after.assessed_at)})`, M + 61, y - 0.8);
+    y += 6;
+    const max = Math.max(...rows.flatMap((r) => [r.before ?? 0, r.after ?? 0]), 1e-9);
+    const lw = 38, vw = 34, bm = CW - lw - vw - 4;
+    for (const r of rows) {
+      ensure(12);
+      setText(doc, PDF_COLORS.text); doc.setFont("helvetica", "normal").setFontSize(8).text(r.metric.label.replace(/^Dobra /, ""), M, y + 3, { maxWidth: lw });
+      setFill(doc, PDF_COLORS.hairline); doc.roundedRect(M + lw, y, Math.max(((r.before ?? 0) / max) * bm, 1), 3, 1, 1, "F");
+      setFill(doc, PDF_COLORS.bronze); doc.roundedRect(M + lw, y + 4, Math.max(((r.after ?? 0) / max) * bm, 1), 3, 1, 1, "F");
+      setText(doc, PDF_COLORS.muted); doc.text(`${fmt(r.before, 1)} > ${fmt(r.after, 1)} (${signed(r.abs, 1)})`, M + lw + bm + 3, y + 5);
+      y += 11;
+    }
+  };
+  dual("Dobras cutâneas (mm)", cmp.rows.filter((r) => r.metric.key.startsWith("sf_")));
+  dual("Circunferências (cm)", cmp.rows.filter((r) => r.metric.key.startsWith("c_") || r.metric.key === "waist"));
+
+  // Fotos lado a lado por posição
+  const pairs = PHOTO_POSITIONS.map((p) => ({ p, a: photosBefore.find((x) => x.position === p.key), b: photosAfter.find((x) => x.position === p.key) })).filter((x) => x.a?.url || x.b?.url);
+  if (pairs.length) {
+    const cellW = (CW - 6) / 2, cellH = 105;
+    let row = 0;
+    for (const { p, a, b } of pairs) {
+      if (row % 2 === 0) { doc.addPage(); y = 18; setText(doc, PDF_COLORS.text); doc.setFont("times", "bold").setFontSize(14).text("Registro fotográfico", M, y); y += 8; }
+      setText(doc, PDF_COLORS.bronze); doc.setFont("helvetica", "bold").setFontSize(8).text(p.label.toUpperCase(), M, y);
+      const items = [{ ph: a, d: cmp.before.assessed_at }, { ph: b, d: cmp.after.assessed_at }];
+      for (let i = 0; i < 2; i++) {
+        const x0 = M + i * (cellW + 6);
+        setText(doc, PDF_COLORS.muted); doc.setFont("helvetica", "normal").setFontSize(7.5).text(dateBR(items[i].d), x0, y + 5);
+        const img = items[i].ph?.url ? await loadImageOriented(items[i].ph!.url!) : null;
+        if (img) { const r = Math.min(cellW / img.w, (cellH - 10) / img.h); const w = img.w * r, h = img.h * r; doc.addImage(img.data, "JPEG", x0 + (cellW - w) / 2, y + 8, w, h); }
+        else { setDraw(doc, PDF_COLORS.hairline); doc.rect(x0, y + 8, cellW, cellH - 10); doc.text("Sem foto", x0 + cellW / 2, y + cellH / 2, { align: "center" }); }
+      }
+      y += cellH + 8; row++;
+    }
+  }
+
+  doc.addPage(); y = 20;
+  const para = (title: string, text: string | null) => {
+    if (!text) return;
+    heading(title);
+    setText(doc, PDF_COLORS.text); doc.setFont("helvetica", "normal").setFontSize(9);
+    const lines = doc.splitTextToSize(text, CW); ensure(lines.length * 4.4); doc.text(lines, M, y); y += lines.length * 4.4 + 5;
+  };
+  para(`Observações (${dateBR(cmp.after.assessed_at)})`, cmp.after.notes);
+  para(`Recomendações (${dateBR(cmp.after.assessed_at)})`, cmp.after.recommendations);
+  para("Nota metodológica", METHOD_NOTE);
+  setText(doc, PDF_COLORS.muted); doc.setFontSize(8).text("Equipe GB · Gabriel Baú Consultoria", M, 285);
+
+  drawFooters(doc);
+  doc.save(`comparacao-${cmp.before.assessed_at}-${cmp.after.assessed_at}.pdf`);
 }

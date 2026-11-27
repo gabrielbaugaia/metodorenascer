@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAssessments } from "@/hooks/usePhysicalAssessments";
-import { AssessmentSummary, ComparisonPanel, EvolutionCharts, dateBR } from "@/components/assessment/AssessmentEvolution";
+import { AssessmentSummary, EvolutionCharts, dateBR } from "@/components/assessment/AssessmentEvolution";
+import { AssessmentCompare } from "@/components/assessment/AssessmentCompare";
 import { fmt } from "@/lib/physicalAssessment";
 
 export default function MinhasAvaliacoes() {
@@ -49,7 +50,7 @@ export default function MinhasAvaliacoes() {
             </nav>
             {current && <AssessmentSummary a={current} studentName={name} />}
             <EvolutionCharts items={items} />
-            <ComparisonPanel items={items} />
+            <AssessmentCompare items={items} studentName={name} />
           </>
         )}
       </div>

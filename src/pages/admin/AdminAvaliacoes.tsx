@@ -18,7 +18,8 @@ import {
   parseDecimal, validateForm, type FormValues, type PhotoPosition,
 } from "@/lib/physicalAssessment";
 import { ASSESSMENT_BUCKET, assessmentKeys, useAssessmentPhotos, useAssessments, type AssessmentRow } from "@/hooks/usePhysicalAssessments";
-import { AssessmentSummary, ComparisonPanel, EvolutionCharts, dateBR } from "@/components/assessment/AssessmentEvolution";
+import { AssessmentSummary, EvolutionCharts, dateBR } from "@/components/assessment/AssessmentEvolution";
+import { AssessmentCompare } from "@/components/assessment/AssessmentCompare";
 
 const db = supabase as any;
 const STATUS: Record<AssessmentRow["status"], string> = { draft: "Rascunho", published: "Publicada", unpublished: "Despublicada", superseded: "Substituída" };
@@ -64,6 +65,8 @@ export default function AdminAvaliacoes() {
   const [editingId, setEditingId] = useState<string>("");
   const editing = items.find((x) => x.id === editingId);
   const published = items.filter((x) => x.status === "published");
+  const [viewId, setViewId] = useState<string>("");
+  const viewed = items.find((x) => x.id === viewId && x.results) ?? published[published.length - 1];
   const refresh = () => qc.invalidateQueries({ queryKey: ["physical-assessments"] });
 
   const createDraft = async () => {
@@ -174,6 +177,7 @@ export default function AdminAvaliacoes() {
                             </p>
                           </div>
                           <div className="flex flex-wrap gap-2">
+                            {a.results && <Button size="sm" variant={viewId === a.id ? "default" : "outline"} onClick={() => { setViewId(a.id); setTimeout(() => document.getElementById("avaliacao-aberta")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }), 50); }}>Abrir</Button>}
                             {a.status === "draft" && <Button size="sm" variant="outline" onClick={() => setEditingId(a.id)}>Editar</Button>}
                             {a.status === "draft" && (
                               <Button size="sm" variant="ghost" onClick={async () => {
@@ -193,9 +197,9 @@ export default function AdminAvaliacoes() {
               </CardContent>
             </Card>
 
-            {published.length > 0 && <AssessmentSummary a={published[published.length - 1]} studentName={student.full_name || "Aluno"} />}
+            {viewed && <div id="avaliacao-aberta"><AssessmentSummary a={viewed} studentName={student.full_name || "Aluno"} /></div>}
             <EvolutionCharts items={published} />
-            <ComparisonPanel items={items.filter((x) => x.results)} />
+            <AssessmentCompare items={items.filter((x) => x.results && x.status !== "superseded")} studentName={student.full_name || "Aluno"} />
           </>
         )}
       </div>
