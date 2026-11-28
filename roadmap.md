@@ -4,7 +4,9 @@
 - [x] Conferir site oficial no navegador: título inicial, imagem de compartilhamento 1200×630, blog, artigo e restauração ao voltar; mapa válido com 18 URLs públicas (16 artigos) e robots.txt apontando para ele.
 - [x] Corrigir erro 401 do gerador no rascunho usando conexão pública local; três testes aprovados, app abriu no navegador e compilação OK.
 - [ ] Publicar esta versão: ferramenta bloqueia publicação em rascunhos; depende de aceitar o rascunho e publicar no projeto principal. Verificação de segurança do projeto sem apontamentos, nova verificação indisponível neste rascunho.
-- [ ] Criar protocolo HYROX de 90 dias para Lemuel: nome completo e e-mail informados não localizaram perfil no app nem no rascunho; a conta de acesso também não foi localizada no app. Aguarda captura do cadastro no Admin e dados reais; não criar duplicata, inventar prescrição nem sobrescrever protocolo manual.
+- [x] Criar cadastro de Lemuel neste rascunho com nome, e-mail e senha fornecidos: perfil lido após criação e entrada validada no navegador; sem envio de e-mail, sem adicionar dados pessoais ao arquivo de exemplos, sem conceder assinatura nem acesso admin. O cadastro não se transfere ao site oficial ao aceitar o rascunho.
+- [ ] Criar cadastro no site oficial: o cadastro acima existe apenas neste rascunho; usar a criação de clientes do Admin no site oficial.
+- [ ] Criar protocolo HYROX de 90 dias para Lemuel: cadastro local criado, porém sem anamnese, avaliações ou histórico de treino; aguarda dados reais para prescrição segura, sem inventar medidas nem sobrescrever protocolo manual.
 
 ## Pedido atual — correções de SEO
 - [x] Corrigir título principal do blog e informações de compartilhamento da página inicial.
