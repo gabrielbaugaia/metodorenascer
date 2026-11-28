@@ -1292,7 +1292,7 @@ export default function AdminClienteDetalhes() {
           onAssessmentImported={() => fetchProfile()} 
         />
 
-        <ClientDocumentsSection userId={id!} />
+        {id && <ClientDocumentsSection userId={id} onProfileUpdated={fetchProfile} />}
 
         {/* Evolução do Cliente */}
         <AdminEvolutionSection

@@ -1,5 +1,11 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — anexos e cadastro do cliente
+- [x] Vincular valores revisados dos anexos ao cadastro com data e fonte, sem aplicar unidades ambíguas.
+- [x] Incluir todos os documentos revisados no contexto das novas prescrições e impedir falha silenciosa; função atualizada, sem gerar nem substituir protocolo real.
+- [x] Atualizar medidas confirmadas do Lemuel e percentual de gordura documentado; salvamento e leitura após recarga validados no Admin, celular/computador e 18 testes aprovados.
+- [ ] Publicar os novos controles da tela: aguarda autorização de Gabriel; dados do cadastro já foram atualizados.
+
 ## Pedido atual — pacote HYROX 90
 - [x] Ler briefing e seis PDFs; Gabriel confirmou ciência/autorização de Lemuel para uso privado dos documentos.
 - [x] Criar acompanhamento reutilizável de 90 dias: calendário, fases, séries, corrida/HYROX, revisões e painel do treinador.

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Loader2, Upload, Trash2, Eye, RefreshCw, Check } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { DocumentProfileReview } from "./DocumentProfileReview";
 
 type Category = "composicao_corporal" | "movimento" | "exame_medico";
 const CATEGORIES: { value: Category; label: string }[] = [
@@ -20,10 +21,10 @@ const CATEGORIES: { value: Category; label: string }[] = [
 ];
 const STATUS: Record<string, string> = { pending: "Aguardando leitura", processing: "Lendo", extracted: "Lido — revisar", reviewed: "Revisado", failed: "Falhou" };
 
-interface Doc { id: string; category: Category; title: string; storage_path: string; mime_type: string; document_date: string | null; status: string; reviewed_summary: string | null; use_in_protocol: boolean; error_message: string | null; created_at: string; }
+interface Doc { id: string; category: Category; title: string; storage_path: string; mime_type: string; document_date: string | null; status: string; reviewed_summary: string | null; use_in_protocol: boolean; error_message: string | null; created_at: string; updated_at: string; extracted_data: unknown; reviewed_profile: unknown; profile_applied_at: string | null; }
 interface SysAssessment { id: string; kind: string; date: string; }
 
-export function ClientDocumentsSection({ userId }: { userId: string }) {
+export function ClientDocumentsSection({ userId, onProfileUpdated }: { userId: string; onProfileUpdated?: () => Promise<void> }) {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [sys, setSys] = useState<SysAssessment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,14 +80,20 @@ export function ClientDocumentsSection({ userId }: { userId: string }) {
     if (data) window.open(data.signedUrl, "_blank", "noopener");
   };
 
-  const save = async (d: Doc, use: boolean) => {
+  const save = async (d: Doc, use: boolean, measuredDate = d.document_date, profileValues: Record<string, number> = {}) => {
     const summary = drafts[d.id] ?? d.reviewed_summary ?? "";
-    if (use && !summary.trim()) return toast.error("Escreva o resumo antes de usar no protocolo");
-    const { error } = await supabase.from("client_documents").update({ reviewed_summary: summary, status: "reviewed", use_in_protocol: use }).eq("id", d.id);
-    if (error) return toast.error("Falha ao salvar");
-    toast.success(use ? "Revisado e ligado aos próximos protocolos" : "Revisado");
-    load();
+    if (!summary.trim()) throw new Error("Escreva o resumo antes de salvar a revisão");
+    setBusy(d.id);
+    try {
+      const { data, error } = await supabase.rpc("review_client_document", { _id: d.id, _summary: summary, _use: use, _date: measuredDate, _profile: profileValues });
+      if (error) throw error;
+      const skipped = data && typeof data === "object" && !Array.isArray(data) && "skipped" in data && Array.isArray(data.skipped) ? data.skipped : [];
+      if (skipped.length) toast.info("Medidas anteriores preservadas no documento; o cadastro manteve os dados mais recentes.");
+      else toast.success(Object.keys(profileValues).length ? "Cadastro atualizado com os valores revisados" : use ? "Revisado e ligado aos próximos protocolos" : "Revisado");
+      await Promise.all([load(), onProfileUpdated?.()]);
+    } finally { setBusy(null); }
   };
+  const saveReview = (d: Doc, use: boolean) => save(d, use).catch(() => toast.error("Não foi possível salvar a revisão"));
 
   const remove = async (d: Doc) => {
     if (!confirm("Excluir este documento?")) return;
@@ -138,7 +145,8 @@ export function ClientDocumentsSection({ userId }: { userId: string }) {
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={d.status === "reviewed" ? "default" : "outline"}>{STATUS[d.status] ?? d.status}</Badge>
-                    {d.use_in_protocol && <Badge>No protocolo</Badge>}
+                    {d.use_in_protocol && d.status === "reviewed" && <Badge>No protocolo</Badge>}
+                    {d.profile_applied_at && <Badge variant="secondary">Cadastro atualizado</Badge>}
                     <Button size="icon" variant="ghost" onClick={() => view(d)} aria-label="Ver arquivo"><Eye className="h-4 w-4" /></Button>
                     <Button size="icon" variant="ghost" onClick={() => read(d.id)} disabled={busy === d.id} aria-label="Ler novamente">{busy === d.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}</Button>
                     <Button size="icon" variant="ghost" onClick={() => remove(d)} aria-label="Excluir"><Trash2 className="h-4 w-4" /></Button>
@@ -148,10 +156,11 @@ export function ClientDocumentsSection({ userId }: { userId: string }) {
                 <Textarea rows={5} value={drafts[d.id] ?? d.reviewed_summary ?? ""} onChange={e => setDrafts(s => ({ ...s, [d.id]: e.target.value }))} placeholder="Resumo, restrições e orientações para o protocolo" />
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <label className="flex items-center gap-2 text-sm">
-                    <Switch checked={d.use_in_protocol} onCheckedChange={v => save(d, v)} /> Usar nos próximos protocolos
+                    <Switch checked={d.use_in_protocol} disabled={busy === d.id} onCheckedChange={v => saveReview(d, v)} /> Usar nos próximos protocolos
                   </label>
-                  <Button size="sm" variant="outline" onClick={() => save(d, d.use_in_protocol)}><Check className="h-4 w-4 mr-1" /> Salvar revisão</Button>
+                  <Button size="sm" variant="outline" disabled={busy === d.id} onClick={() => saveReview(d, d.use_in_protocol)}><Check className="h-4 w-4 mr-1" /> Salvar revisão</Button>
                 </div>
+                <DocumentProfileReview key={`${d.id}-${d.updated_at ?? d.status}-${d.profile_applied_at}`} data={d.extracted_data} reviewedProfile={d.reviewed_profile} summary={d.reviewed_summary ?? ""} date={d.document_date} applied={!!d.profile_applied_at} disabled={busy === d.id} onApply={(measuredDate, values) => save(d, d.use_in_protocol, measuredDate, values)} />
               </div>
             ))}
           </div>

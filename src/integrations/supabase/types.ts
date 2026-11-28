@@ -826,6 +826,8 @@ export type Database = {
           extracted_summary: string | null
           id: string
           mime_type: string
+          profile_applied_at: string | null
+          reviewed_profile: Json
           reviewed_summary: string | null
           status: string
           storage_path: string
@@ -844,6 +846,8 @@ export type Database = {
           extracted_summary?: string | null
           id?: string
           mime_type: string
+          profile_applied_at?: string | null
+          reviewed_profile?: Json
           reviewed_summary?: string | null
           status?: string
           storage_path: string
@@ -862,6 +866,8 @@ export type Database = {
           extracted_summary?: string | null
           id?: string
           mime_type?: string
+          profile_applied_at?: string | null
+          reviewed_profile?: Json
           reviewed_summary?: string | null
           status?: string
           storage_path?: string
@@ -5153,6 +5159,16 @@ export type Database = {
       reserve_promotion_slot: {
         Args: { _key: string; _slug: string }
         Returns: boolean
+      }
+      review_client_document: {
+        Args: {
+          _date: string
+          _id: string
+          _profile?: Json
+          _summary: string
+          _use: boolean
+        }
+        Returns: Json
       }
       validate_referral_code: {
         Args: { lookup_code: string }

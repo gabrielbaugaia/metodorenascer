@@ -134,6 +134,13 @@
       "when": 1795863731006,
       "tag": "0018_hyrox_checkins_triage_status",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795869288528,
+      "tag": "0019_client_document_profile_review",
+      "breakpoints": true
     }
   ]
 }
