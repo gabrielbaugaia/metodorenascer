@@ -1,6 +1,7 @@
 # Project rules
 
 - Generate the sitemap before dev/build from public editorial routes and every published blog slug, using only public credentials and failing on fetch errors; omit lastmod because view-count updates do not prove significant content changes.
+- Sitemap scripts resolve draft preview addresses to the local public endpoint with public credentials only; browser preview addresses require editor login and fail in Node.
 - Capture and restore public route head metadata on unmount so blog/article metadata never leaks into the homepage or other screens.
 
 - Keep online consultancy plan presentation in `src/lib/consultoriaPlans.ts` and reuse it in public pricing and checkout; this prevents display drift while preserving existing payment slugs and contracts.

@@ -2,15 +2,14 @@
 import { writeFileSync } from "fs";
 import { resolve } from "path";
 import { loadEnv } from "vite";
+import { sitemapPublicConfig } from "./sitemapConfig";
 
 const BASE_URL = "https://app.gabrielbau.com.br";
 type Entry = { path: string; changefreq?: string; priority?: string };
 const environment = { ...loadEnv(process.env.NODE_ENV || "production", process.cwd(), "VITE_"), ...process.env };
 
 async function postEntries(): Promise<Entry[]> {
-  const url = environment.VITE_SUPABASE_URL;
-  const key = environment.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) throw new Error("Missing public configuration for sitemap generation.");
+  const { url, key } = sitemapPublicConfig(environment);
   const entries: Entry[] = [];
   const pageSize = 1000;
   for (let offset = 0; ; offset += pageSize) {

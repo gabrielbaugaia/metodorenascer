@@ -1,5 +1,11 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — publicação e protocolo de 90 dias
+- [x] Conferir site oficial no navegador: título inicial, imagem de compartilhamento 1200×630, blog, artigo e restauração ao voltar; mapa válido com 18 URLs públicas (16 artigos) e robots.txt apontando para ele.
+- [x] Corrigir erro 401 do gerador no rascunho usando conexão pública local; três testes aprovados, app abriu no navegador e compilação OK.
+- [ ] Publicar esta versão: ferramenta bloqueia publicação em rascunhos; depende de aceitar o rascunho e publicar no projeto principal. Verificação de segurança do projeto sem apontamentos, nova verificação indisponível neste rascunho.
+- [ ] Criar protocolo HYROX de 90 dias para Lemuel: nome não localizado no cadastro real; aguarda nome completo/e-mail e dados reais; não inventar prescrição nem sobrescrever protocolo manual.
+
 ## Pedido atual — correções de SEO
 - [x] Corrigir título principal do blog e informações de compartilhamento da página inicial.
 - [x] Criar mapa das páginas públicas e artigos publicados, com referência em robots.txt.
