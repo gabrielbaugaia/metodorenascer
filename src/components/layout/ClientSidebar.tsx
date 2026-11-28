@@ -76,6 +76,7 @@ const clientContentItems = [
 ];
 
 const clientMoreItems = [
+  { title: "Meu protocolo", url: "/meu-protocolo", icon: ClipboardList },
   { title: "Diário nutricional", url: "/nutricao-diario", icon: NotebookPen },
   { title: "Minhas Avaliações", url: "/minhas-avaliacoes", icon: ClipboardList },
   { title: "Avaliações de Movimento", url: "/minhas-avaliacoes-movimento", icon: Activity },
@@ -97,6 +98,7 @@ const adminSections: AdminSection[] = [
     items: [
       { title: "Dashboard", url: "/admin", icon: Shield },
       { title: "Clientes", url: "/admin/clientes", icon: User },
+      { title: "Protocolos de 90 dias", url: "/admin/protocolos-90", icon: ClipboardList },
       { title: "Avaliações Físicas", url: "/admin/avaliacoes", icon: ClipboardList },
       { title: "Evolução Física", url: "/admin/evolucao-fisica", icon: LineChart },
       { title: "Avaliação de Movimento", url: "/admin/avaliacoes-movimento", icon: ClipboardList },

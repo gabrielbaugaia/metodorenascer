@@ -39,6 +39,7 @@ const contentItems = [
 ];
 
 const secondaryItems = [
+  { icon: ClipboardList, label: "Meu protocolo", href: "/meu-protocolo" },
   { icon: HeartPulse, label: "Aeróbico", href: "/cardio" },
   { icon: NotebookPen, label: "Diário", href: "/nutricao-diario" },
   { icon: Activity, label: "Painel", href: "/renascer" },

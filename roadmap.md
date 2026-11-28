@@ -1,12 +1,19 @@
 # Roadmap — Planos de consultoria online
 
+## Pedido atual — pacote HYROX 90
+- [x] Ler briefing e seis PDFs; Gabriel confirmou ciência/autorização de Lemuel para uso privado dos documentos.
+- [x] Criar acompanhamento reutilizável de 90 dias: calendário, fases, séries, corrida/HYROX, revisões e painel do treinador.
+- [x] Vincular os dados documentados e seis PDFs privados ao cadastro deste rascunho, sem dados pessoais no repositório e sem liberar prescrição antes da aprovação.
+- [x] Validar aluno/admin em conta sintética, isolamento e PDFs privados, persistência de séries/revisões, datas e telas no celular/computador; 15 testes aprovados e PDF conferido visualmente.
+- [ ] Liberar o protocolo real de Lemuel: aguarda revisão e aprovação de Gabriel, confirmação de triagem, prova e distribuição da corrida; nenhum acesso pago concedido.
+
 ## Pedido atual — publicação e protocolo de 90 dias
 - [x] Conferir site oficial no navegador: título inicial, imagem de compartilhamento 1200×630, blog, artigo e restauração ao voltar; mapa válido com 18 URLs públicas (16 artigos) e robots.txt apontando para ele.
 - [x] Corrigir erro 401 do gerador no rascunho usando conexão pública local; três testes aprovados, app abriu no navegador e compilação OK.
 - [ ] Publicar esta versão: ferramenta bloqueia publicação em rascunhos; depende de aceitar o rascunho e publicar no projeto principal. Verificação de segurança do projeto sem apontamentos, nova verificação indisponível neste rascunho.
 - [x] Criar cadastro de Lemuel neste rascunho com nome, e-mail e senha fornecidos: perfil lido após criação e entrada validada no navegador; sem envio de e-mail, sem adicionar dados pessoais ao arquivo de exemplos, sem conceder assinatura nem acesso admin. O cadastro não se transfere ao site oficial ao aceitar o rascunho.
 - [ ] Criar cadastro no site oficial: o cadastro acima existe apenas neste rascunho; usar a criação de clientes do Admin no site oficial.
-- [ ] Criar protocolo HYROX de 90 dias para Lemuel: cadastro local criado, porém sem anamnese, avaliações ou histórico de treino; aguarda dados reais para prescrição segura, sem inventar medidas nem sobrescrever protocolo manual.
+- [x] Preparar protocolo HYROX de 90 dias para Lemuel neste rascunho usando o pacote autorizado: início 01/12/2026, revisões 30/12/2026, 29/01/2027 e 28/02/2027; rascunho privado aguardando revisão, preservando prescrições externas.
 
 ## Pedido atual — correções de SEO
 - [x] Corrigir título principal do blog e informações de compartilhamento da página inicial.

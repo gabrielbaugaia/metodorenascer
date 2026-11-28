@@ -9,6 +9,7 @@ import { AdminSupportNotifications } from "@/components/admin/AdminSupportNotifi
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Loader2, Menu } from "lucide-react";
 import { InviteOfferBanner } from "@/components/invite/InviteOfferBanner";
+import { HyroxReminders } from "@/components/hyrox/HyroxReminders";
 
 
 interface ClientLayoutProps {
@@ -64,6 +65,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
           )}
           <div className={`app-content min-w-0 px-4 py-6 sm:px-6 md:px-8 md:py-10 xl:px-12 max-w-[1280px] mx-auto w-full ${isAdmin ? "pb-10 md:pb-16" : "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-16"}`}>
             {!isAdmin && <InviteOfferBanner />}
+            {!isAdmin && <HyroxReminders userId={user.id} />}
             {children}
           </div>
 

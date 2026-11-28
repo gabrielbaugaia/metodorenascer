@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
-  }
   public: {
     Tables: {
       achievement_types: {
@@ -1647,6 +1642,340 @@ export type Database = {
           source_reference?: string
         }
         Relationships: []
+      }
+      hyrox_activities: {
+        Row: {
+          actual_date: string | null
+          created_at: string
+          discomfort: string
+          distance_km: number | null
+          duration_min: number | null
+          energy: number | null
+          fatigue: number | null
+          heart_rate: number | null
+          id: string
+          kind: string
+          notes: string
+          pace: string | null
+          planned_date: string
+          planned_time: string | null
+          program_id: string
+          rpe: number | null
+          set_entries: Json
+          sleep_hours: number | null
+          station_notes: string
+          status: string
+          updated_at: string
+          workout_key: string | null
+        }
+        Insert: {
+          actual_date?: string | null
+          created_at?: string
+          discomfort?: string
+          distance_km?: number | null
+          duration_min?: number | null
+          energy?: number | null
+          fatigue?: number | null
+          heart_rate?: number | null
+          id?: string
+          kind: string
+          notes?: string
+          pace?: string | null
+          planned_date: string
+          planned_time?: string | null
+          program_id: string
+          rpe?: number | null
+          set_entries?: Json
+          sleep_hours?: number | null
+          station_notes?: string
+          status?: string
+          updated_at?: string
+          workout_key?: string | null
+        }
+        Update: {
+          actual_date?: string | null
+          created_at?: string
+          discomfort?: string
+          distance_km?: number | null
+          duration_min?: number | null
+          energy?: number | null
+          fatigue?: number | null
+          heart_rate?: number | null
+          id?: string
+          kind?: string
+          notes?: string
+          pace?: string | null
+          planned_date?: string
+          planned_time?: string | null
+          program_id?: string
+          rpe?: number | null
+          set_entries?: Json
+          sleep_hours?: number | null
+          station_notes?: string
+          status?: string
+          updated_at?: string
+          workout_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hyrox_activities_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "hyrox_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hyrox_activity_audit: {
+        Row: {
+          activity_id: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          program_id: string
+          snapshot: Json
+        }
+        Insert: {
+          activity_id: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          program_id: string
+          snapshot: Json
+        }
+        Update: {
+          activity_id?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          program_id?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hyrox_activity_audit_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "hyrox_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hyrox_activity_audit_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hyrox_activity_audit_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "hyrox_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hyrox_coach_notes: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          program_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          program_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          program_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hyrox_coach_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hyrox_coach_notes_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "hyrox_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hyrox_documents: {
+        Row: {
+          author: string
+          category: string
+          created_at: string
+          document_date: string | null
+          id: string
+          program_id: string
+          storage_path: string
+          title: string
+        }
+        Insert: {
+          author: string
+          category: string
+          created_at?: string
+          document_date?: string | null
+          id?: string
+          program_id: string
+          storage_path: string
+          title: string
+        }
+        Update: {
+          author?: string
+          category?: string
+          created_at?: string
+          document_date?: string | null
+          id?: string
+          program_id?: string
+          storage_path?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hyrox_documents_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "hyrox_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hyrox_programs: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          config: Json
+          consent_at: string
+          created_at: string
+          created_by: string
+          id: string
+          start_date: string
+          status: string
+          supersedes_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          config?: Json
+          consent_at: string
+          created_at?: string
+          created_by: string
+          id?: string
+          start_date: string
+          status?: string
+          supersedes_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          config?: Json
+          consent_at?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          start_date?: string
+          status?: string
+          supersedes_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hyrox_programs_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hyrox_programs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hyrox_programs_supersedes_id_fkey"
+            columns: ["supersedes_id"]
+            isOneToOne: false
+            referencedRelation: "hyrox_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hyrox_programs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hyrox_reviews: {
+        Row: {
+          checkpoint: number
+          feedback: string
+          id: string
+          program_id: string
+          responses: Json
+          reviewed_at: string | null
+          reviewed_by: string | null
+          submitted_at: string | null
+        }
+        Insert: {
+          checkpoint: number
+          feedback?: string
+          id?: string
+          program_id: string
+          responses?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submitted_at?: string | null
+        }
+        Update: {
+          checkpoint?: number
+          feedback?: string
+          id?: string
+          program_id?: string
+          responses?: Json
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hyrox_reviews_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "hyrox_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hyrox_reviews_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invite_link_claims: {
         Row: {
@@ -4767,6 +5096,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      hyrox_can_record: { Args: { _program_id: string }; Returns: boolean }
+      hyrox_save_draft: {
+        Args: { _config: Json; _id: string; _start: string; _title: string }
+        Returns: string
+      }
       increment_cashback_balance: {
         Args: { target_user_id: string }
         Returns: undefined
@@ -4926,3 +5260,4 @@ export const Constants = {
     },
   },
 } as const
+

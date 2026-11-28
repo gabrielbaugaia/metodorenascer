@@ -88,6 +88,8 @@ const AdminEvolucaoFisica = lazy(() => import("./pages/admin/AdminEvolucaoFisica
 const AdminAvaliacoesMovimento = lazy(() => import("./pages/admin/AdminAvaliacoesMovimento"));
 const AdminAcompanhamentoHormonal = lazy(() => import("./pages/admin/AdminAcompanhamentoHormonal"));
 const MinhasAvaliacoesMovimento = lazy(() => import("./pages/MinhasAvaliacoesMovimento"));
+const MeuProtocolo90 = lazy(() => import("./pages/MeuProtocolo90"));
+const AdminHyrox90 = lazy(() => import("./pages/admin/AdminHyrox90"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -159,6 +161,7 @@ const App = () => {
             <Route path="/anamnese" element={<AuthGuard><Anamnese /></AuthGuard>} />
             <Route path="/minhas-avaliacoes" element={<AuthGuard><MinhasAvaliacoes /></AuthGuard>} />
             <Route path="/minhas-avaliacoes-movimento" element={<AuthGuard><MinhasAvaliacoesMovimento /></AuthGuard>} />
+            <Route path="/meu-protocolo" element={<AuthGuard><MeuProtocolo90 /></AuthGuard>} />
 
             {/* ROTAS QUE REQUEREM ASSINATURA ATIVA */}
             <Route path="/treino" element={<SubscriptionGuard><Treino /></SubscriptionGuard>} />
@@ -184,6 +187,7 @@ const App = () => {
             <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
             <Route path="/admin/clientes" element={<AdminGuard><AdminClientes /></AdminGuard>} />
             <Route path="/admin/avaliacoes" element={<AdminGuard><AdminAvaliacoes /></AdminGuard>} />
+            <Route path="/admin/protocolos-90" element={<AdminGuard><AdminHyrox90 /></AdminGuard>} />
             <Route path="/admin/evolucao-fisica" element={<AdminGuard><AdminEvolucaoFisica /></AdminGuard>} />
             <Route path="/admin/avaliacoes-movimento" element={<AdminGuard><AdminAvaliacoesMovimento /></AdminGuard>} />
             <Route path="/admin/acompanhamento-hormonal" element={<AdminGuard><AdminAcompanhamentoHormonal /></AdminGuard>} />
