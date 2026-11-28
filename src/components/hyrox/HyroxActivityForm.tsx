@@ -17,6 +17,9 @@ import { useWakeLock } from "@/hooks/useWakeLock";
 import type { Activity, Program } from "@/hooks/useHyrox90";
 import {
   blankSets,
+  blankStations,
+  previousSets,
+  type StationEntry,
   kindLabel,
   validateSets,
   type SetEntry,
@@ -24,11 +27,13 @@ import {
 import type { Json } from "@/integrations/supabase/types";
 export function HyroxActivityForm({
   activity,
+  activities = [],
   program,
   close,
   refresh,
 }: {
   activity: Activity;
+  activities?: Activity[];
   program: Program;
   close: () => void;
   refresh: () => Promise<void>;
@@ -44,6 +49,11 @@ export function HyroxActivityForm({
     Array.isArray(activity.set_entries) && activity.set_entries.length
       ? (activity.set_entries as unknown as SetEntry[])
       : blankSets(workout),
+  );
+  const [stations, setStations] = useState<StationEntry[]>(
+    Array.isArray(activity.station_entries) && activity.station_entries.length
+      ? (activity.station_entries as unknown as StationEntry[])
+      : blankStations(),
   );
   const [busy, setBusy] = useState(false);
   useWakeLock(activity.kind === "strength");
@@ -77,6 +87,9 @@ export function HyroxActivityForm({
           notes: form.notes,
           station_notes: form.station_notes,
           set_entries: entries as unknown as Json,
+          station_entries: (activity.kind === "hyrox"
+            ? stations.filter((x) => x.time_s || x.distance_m || x.reps || x.load_kg || x.pauses)
+            : []) as unknown as Json,
         })
         .eq("id", activity.id);
       if (error) throw error;
@@ -188,6 +201,14 @@ export function HyroxActivityForm({
                     Planejado: {ex.sets} × {ex.reps} · RIR {ex.rir} · pausa{" "}
                     {ex.rest}
                   </p>
+                  {(() => {
+                    const prev = previousSets(activities, activity.id, ex.id);
+                    return prev.length ? (
+                      <p className="text-xs text-primary">
+                        Sessão anterior: {prev.map((e) => `${e.weight ?? "—"} kg × ${e.reps ?? "—"}`).join(" · ")}
+                      </p>
+                    ) : null;
+                  })()}
                   {entries.map(
                     (entry, i) =>
                       entry.exercise_id === ex.id && (
@@ -295,8 +316,33 @@ export function HyroxActivityForm({
             )}
           </div>
           {activity.kind === "hyrox" && (
+            <div className="space-y-3">
+              <h3 className="font-medium">Estações</h3>
+              <p className="text-xs text-muted-foreground">Preencha só o que fez. Tempo em segundos.</p>
+              {stations.map((st, i) => (
+                <div key={st.station} className={`grid grid-cols-2 sm:grid-cols-6 gap-2 items-end border-b border-border pb-3 ${/Burpee|Wall/.test(st.station) ? "border-l-2 border-l-primary pl-2" : ""}`}>
+                  <p className="col-span-2 sm:col-span-1 text-sm font-medium">{st.station}</p>
+                  {([["time_s", "Tempo (s)"], ["distance_m", "Distância (m)"], ["reps", "Reps"], ["load_kg", "Carga (kg)"], ["pauses", "Pausas"]] as const).map(([k, label]) => (
+                    <label key={k} className="space-y-1">
+                      <span className="text-xs text-muted-foreground">{label}</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        aria-label={`${st.station} ${label}`}
+                        value={st[k] ?? ""}
+                        onChange={(e) =>
+                          setStations((all) => all.map((x, j) => (j === i ? { ...x, [k]: e.target.value === "" ? null : Number(e.target.value) } : x)))
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+          {activity.kind === "hyrox" && (
             <label className="space-y-2 block">
-              <Label>Estações, tempos, Burpees e Wall Balls</Label>
+              <Label>Observações das estações</Label>
               <Textarea
                 value={form.station_notes}
                 onChange={(e) => update("station_notes", e.target.value)}

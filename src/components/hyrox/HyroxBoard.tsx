@@ -39,6 +39,7 @@ import {
 } from "@/hooks/useHyrox90";
 import {
   dateBR,
+  dayDate,
   phaseDay,
   checkpoints,
   schedule90,
@@ -56,6 +57,14 @@ import { HyroxActivityForm } from "./HyroxActivityForm";
 import { HyroxDocuments } from "./HyroxDocuments";
 import { HyroxReviews } from "./HyroxReviews";
 import { HyroxEditor } from "./HyroxEditor";
+import { HyroxCheckin } from "./HyroxCheckin";
+import { HyroxCharts } from "./HyroxCharts";
+import {
+  activeSpecialPeriod,
+  checkinAlerts,
+  durationOf,
+  reviewStatusLabel,
+} from "@/lib/hyrox90";
 export function HyroxBoard({
   program,
   admin,
@@ -66,11 +75,13 @@ export function HyroxBoard({
   onSaved?: (id: string) => Promise<void>;
 }) {
   const today = format(new Date(), "yyyy-MM-dd");
-  const day = phaseDay(program.start_date, today);
+  const duration = durationOf(program.config);
+  const day = phaseDay(program.start_date, today, duration);
+  const cps = checkpoints(program.start_date, duration);
   const initial = day.upcoming
     ? program.start_date
     : day.ended
-      ? checkpoints(program.start_date)[2].date
+      ? cps[cps.length - 1].date
       : today;
   const [date, setDate] = useState(initial);
   const [month, setMonth] = useState(startOfMonth(parseISO(initial)));
@@ -103,17 +114,51 @@ export function HyroxBoard({
     start: startOfMonth(month),
     end: endOfMonth(month),
   });
-  const pending = checkpoints(program.start_date).filter(
+  const pending = cps.filter(
     (c) =>
       c.date <= today &&
       !data.reviews.find((r) => r.checkpoint === c.day)?.reviewed_at,
   );
   const eligible = activities.filter((a) => a.planned_date <= today);
-  const percent = participation(eligible);
+  const special = program.config.special_periods ?? [];
+  const percent = participation(eligible, special);
+  const period = activeSpecialPeriod(program.config, today);
   const recent = activities.filter((a) => a.status === "completed").slice(-7);
   const highFatigue = recent.some(
-    (a) => (a.fatigue ?? 0) >= 4 || a.discomfort.trim(),
+    (a) =>
+      checkinAlerts({
+        fatigue: a.fatigue,
+        recovery: a.recovery,
+        discomfort: a.discomfort,
+        difficulty: a.difficulty,
+      }).length > 0,
   );
+  const strengthDone = activities.filter(
+    (a) => a.kind === "strength" && a.status === "completed",
+  );
+  const rirPairs = strengthDone.flatMap((a) => {
+    const w = program.config.workouts.find((x) => x.key === a.workout_key);
+    return (a.set_entries as unknown as SetEntry[])
+      .filter((e) => e.done && e.rir !== null)
+      .map((e) => {
+        const target = w?.exercises.find((x) => x.id === e.exercise_id)?.rir ?? "";
+        const nums = target.match(/\d+/g)?.map(Number) ?? [];
+        return nums.length ? { real: e.rir!, target: nums.reduce((t, n) => t + n, 0) / nums.length } : null;
+      })
+      .filter(Boolean) as { real: number; target: number }[];
+  });
+  const avg = (xs: number[]) => (xs.length ? (xs.reduce((t, x) => t + x, 0) / xs.length).toFixed(1) : "—");
+  const weekAgo = format(new Date(Date.now() - 7 * 864e5), "yyyy-MM-dd");
+  async function confirmTriage() {
+    if (!user || !confirm("Confirmar que a triagem de saúde foi concluída?")) return;
+    const { error } = await supabase
+      .from("hyrox_programs")
+      .update({ triage_confirmed_at: new Date().toISOString(), triage_confirmed_by: user.id })
+      .eq("id", program.id);
+    if (error) return toast.error("Não foi possível confirmar a triagem.");
+    await refresh();
+    toast.success("Triagem confirmada.");
+  }
   const canRecord = admin || isFull;
   async function approve() {
     if (!user) return;
@@ -150,7 +195,7 @@ export function HyroxBoard({
   }
   async function fillCalendar() {
     if (activities.length) return;
-    const rows = schedule90(program.start_date, program.config.schedule).map(
+    const rows = schedule90(program.start_date, program.config.schedule, duration).map(
       (a) => ({ ...a, program_id: program.id }),
     );
     if (!rows.length)
@@ -167,7 +212,7 @@ export function HyroxBoard({
       setBusy(false);
     }
   }
-  const end = checkpoints(program.start_date)[2].date;
+  const end = cps.length ? dayDate(program.start_date, duration) : program.start_date;
   return (
     <div className="space-y-8 min-w-0">
       <header className="space-y-4 border-b border-border pb-6">
@@ -187,9 +232,14 @@ export function HyroxBoard({
               {day.upcoming
                 ? "Início programado"
                 : day.ended
-                  ? "90 dias concluídos"
-                  : `Dia ${day.day} de 90`}
+                  ? `${duration} dias concluídos`
+                  : `Dia ${day.day} de ${duration} · ${program.config.phases[day.phase]?.name ?? ""}`}
             </p>
+            {!day.upcoming && (
+              <div className="h-1 w-full max-w-sm bg-border mt-3" aria-label="Progresso do protocolo">
+                <div className="h-1 bg-primary" style={{ width: `${Math.round((day.day / duration) * 100)}%` }} />
+              </div>
+            )}
           </div>
           <Button
             variant="outline"
@@ -209,7 +259,7 @@ export function HyroxBoard({
         </p>
       </header>
       <div className="grid md:grid-cols-3 gap-5 border-b border-border pb-6">
-        {program.config.phases.map((p, i) => (
+        {program.config.phases.slice(0, Math.max(1, duration / 30)).map((p, i) => (
           <section
             key={i}
             className={`border-l-2 pl-4 ${i === day.phase ? "border-primary" : "border-border"}`}
@@ -229,6 +279,27 @@ export function HyroxBoard({
           </section>
         ))}
       </div>
+      {period && (
+        <aside className="border-l-2 border-primary pl-4 space-y-1">
+          <p className="font-medium">{period.title}</p>
+          <p className="text-sm text-muted-foreground whitespace-pre-line">{period.guidance}</p>
+        </aside>
+      )}
+      {!program.triage_confirmed_at && (
+        <aside className="border-l-2 border-border pl-4 space-y-2 text-sm">
+          <p>Triagem de saúde ainda não confirmada pelo treinador. Não intensifique o treinamento até a confirmação.</p>
+          {admin && (
+            <Button variant="outline" size="sm" onClick={confirmTriage}>Confirmar triagem concluída</Button>
+          )}
+        </aside>
+      )}
+      {program.config.trainer_guidance && (
+        <aside className="space-y-1">
+          <p className="text-xs text-primary uppercase">Orientações do treinador</p>
+          <p className="text-sm whitespace-pre-line">{program.config.trainer_guidance}</p>
+          <p className="text-xs text-muted-foreground">Gabriel Baú | Treinador</p>
+        </aside>
+      )}
       {(pending.length > 0 || highFatigue) && (
         <aside className="border-l-2 border-primary pl-4 space-y-2">
           <p className="font-medium">
@@ -260,6 +331,7 @@ export function HyroxBoard({
             ["calendar", "Calendário"],
             ["workouts", "Musculação"],
             ["evolution", "Evolução"],
+            ["checkin", "Check-in"],
             ["documents", "Documentos"],
             ["reviews", "Revisões"],
             ...(admin ? [["coach", "Treinador"]] : []),
@@ -471,7 +543,9 @@ export function HyroxBoard({
               </p>
             </div>
           </div>
-          <h3 className="section-title">Avaliações de terceiros</h3>
+          <h3 className="section-title">Corrida, HYROX e cargas</h3>
+          <HyroxCharts activities={activities} />
+          <h3 className="section-title">Evolução corporal</h3>
           <div className="grid sm:grid-cols-2 gap-6">
             {[
               ["weight", "Peso (kg)"],
@@ -549,7 +623,7 @@ export function HyroxBoard({
           <h3 className="section-title">Histórico de registros</h3>
           <ul className="divide-y divide-border">
             {activities
-              .filter((a) => a.status === "completed")
+              .filter((a) => a.status === "completed" && a.kind !== "checkin")
               .map((a) => (
                 <li key={a.id} className="py-4 space-y-2 text-sm">
                   <div className="flex flex-wrap gap-3 items-center">
@@ -584,6 +658,9 @@ export function HyroxBoard({
               ))}
           </ul>
         </TabsContent>
+        <TabsContent value="checkin" className="pt-5">
+          <HyroxCheckin program={program} activities={activities} admin={admin} canRecord={canRecord} refresh={refresh} />
+        </TabsContent>
         <TabsContent value="documents" className="pt-5">
           <HyroxDocuments
             program={program}
@@ -602,6 +679,21 @@ export function HyroxBoard({
         </TabsContent>
         {admin && (
           <TabsContent value="coach" className="space-y-8 pt-5">
+            <section className="space-y-3">
+              <h3 className="section-title">Indicadores</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 text-sm">
+                <div><p className="text-xs text-muted-foreground">Adesão</p><p className="font-serif text-2xl">{percent === null ? "—" : `${percent}%`}</p></div>
+                <div><p className="text-xs text-muted-foreground">Sessões nos últimos 7 dias</p><p className="font-serif text-2xl">{activities.filter((a) => a.status === "completed" && a.kind !== "checkin" && (a.actual_date ?? "") >= weekAgo).length}</p></div>
+                <div><p className="text-xs text-muted-foreground">RIR prescrito × realizado</p><p className="font-serif text-2xl">{avg(rirPairs.map((p) => p.target))} × {avg(rirPairs.map((p) => p.real))}</p></div>
+                <div><p className="text-xs text-muted-foreground">Check-ins com alerta</p><p className="font-serif text-2xl">{activities.filter((a) => a.kind === "checkin" && checkinAlerts({ fatigue: a.fatigue, recovery: a.recovery, discomfort: a.discomfort, difficulty: a.difficulty }).length).length}</p></div>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                {cps.map((c) => {
+                  const r = data.reviews.find((x) => x.checkpoint === c.day);
+                  return <li key={c.day}>Revisão {c.day} dias · {dateBR(c.date)} · {reviewStatusLabel[(r?.status ?? "pending") as keyof typeof reviewStatusLabel]}</li>;
+                })}
+              </ul>
+            </section>
             <CoachNotes programId={program.id} />
             {program.status === "draft" && (
               <section className="border-y border-border py-5 space-y-4">
@@ -636,6 +728,7 @@ export function HyroxBoard({
       </Tabs>
       {active && canRecord && (
         <HyroxActivityForm
+          activities={activities}
           key={active.id}
           activity={active}
           program={program}

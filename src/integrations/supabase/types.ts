@@ -1652,6 +1652,7 @@ export type Database = {
         Row: {
           actual_date: string | null
           created_at: string
+          difficulty: number | null
           discomfort: string
           distance_km: number | null
           duration_min: number | null
@@ -1665,17 +1666,22 @@ export type Database = {
           planned_date: string
           planned_time: string | null
           program_id: string
+          recovery: number | null
           rpe: number | null
           set_entries: Json
           sleep_hours: number | null
+          sleep_quality: number | null
+          station_entries: Json
           station_notes: string
           status: string
           updated_at: string
+          weight_kg: number | null
           workout_key: string | null
         }
         Insert: {
           actual_date?: string | null
           created_at?: string
+          difficulty?: number | null
           discomfort?: string
           distance_km?: number | null
           duration_min?: number | null
@@ -1689,17 +1695,22 @@ export type Database = {
           planned_date: string
           planned_time?: string | null
           program_id: string
+          recovery?: number | null
           rpe?: number | null
           set_entries?: Json
           sleep_hours?: number | null
+          sleep_quality?: number | null
+          station_entries?: Json
           station_notes?: string
           status?: string
           updated_at?: string
+          weight_kg?: number | null
           workout_key?: string | null
         }
         Update: {
           actual_date?: string | null
           created_at?: string
+          difficulty?: number | null
           discomfort?: string
           distance_km?: number | null
           duration_min?: number | null
@@ -1713,12 +1724,16 @@ export type Database = {
           planned_date?: string
           planned_time?: string | null
           program_id?: string
+          recovery?: number | null
           rpe?: number | null
           set_entries?: Json
           sleep_hours?: number | null
+          sleep_quality?: number | null
+          station_entries?: Json
           station_notes?: string
           status?: string
           updated_at?: string
+          weight_kg?: number | null
           workout_key?: string | null
         }
         Relationships: [
@@ -1873,6 +1888,8 @@ export type Database = {
           status: string
           supersedes_id: string | null
           title: string
+          triage_confirmed_at: string | null
+          triage_confirmed_by: string | null
           user_id: string
         }
         Insert: {
@@ -1887,6 +1904,8 @@ export type Database = {
           status?: string
           supersedes_id?: string | null
           title: string
+          triage_confirmed_at?: string | null
+          triage_confirmed_by?: string | null
           user_id: string
         }
         Update: {
@@ -1901,6 +1920,8 @@ export type Database = {
           status?: string
           supersedes_id?: string | null
           title?: string
+          triage_confirmed_at?: string | null
+          triage_confirmed_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1926,6 +1947,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "hyrox_programs_triage_confirmed_by_fkey"
+            columns: ["triage_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "hyrox_programs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -1943,6 +1971,7 @@ export type Database = {
           responses: Json
           reviewed_at: string | null
           reviewed_by: string | null
+          status: string
           submitted_at: string | null
         }
         Insert: {
@@ -1953,6 +1982,7 @@ export type Database = {
           responses?: Json
           reviewed_at?: string | null
           reviewed_by?: string | null
+          status?: string
           submitted_at?: string | null
         }
         Update: {
@@ -1963,6 +1993,7 @@ export type Database = {
           responses?: Json
           reviewed_at?: string | null
           reviewed_by?: string | null
+          status?: string
           submitted_at?: string | null
         }
         Relationships: [

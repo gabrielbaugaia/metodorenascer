@@ -109,7 +109,7 @@ export function HyroxEditor({
           <Input value={title} onChange={(e) => setTitle(e.target.value)} />
         </label>
         <label className="space-y-2">
-          <Label>Início dos 90 dias</Label>
+          <Label>Início do protocolo</Label>
           <Input
             type="date"
             value={start}
@@ -432,6 +432,49 @@ export function HyroxEditor({
           onChange={(e) => setConfig((c) => ({ ...c, safety: e.target.value }))}
         />
       </label>
+      <label className="space-y-2 block max-w-[220px]">
+        <Label>Duração</Label>
+        <select
+          className="h-10 w-full rounded-md border border-input bg-background px-3"
+          value={config.duration_days ?? 90}
+          onChange={(e) => setConfig((c) => ({ ...c, duration_days: Number(e.target.value) as 30 | 60 | 90 }))}
+        >
+          <option value={30}>30 dias</option>
+          <option value={60}>60 dias</option>
+          <option value={90}>90 dias</option>
+        </select>
+      </label>
+      <label className="space-y-2 block">
+        <Label>Orientações do treinador ao aluno</Label>
+        <Textarea
+          value={config.trainer_guidance ?? ""}
+          onChange={(e) => setConfig((c) => ({ ...c, trainer_guidance: e.target.value }))}
+        />
+      </label>
+      <section className="space-y-3">
+        <Label>Períodos especiais (ex.: Natal e Ano Novo)</Label>
+        {(config.special_periods ?? []).map((sp, i) => {
+          const set = (k: string, v: string) =>
+            setConfig((c) => ({
+              ...c,
+              special_periods: (c.special_periods ?? []).map((x, j) => (j === i ? { ...x, [k]: v } : x)),
+            }));
+          return (
+            <div key={i} className="grid sm:grid-cols-3 gap-2 border-b border-border pb-3">
+              <Input placeholder="Título" value={sp.title} onChange={(e) => set("title", e.target.value)} />
+              <Input type="date" value={sp.start} onChange={(e) => set("start", e.target.value)} />
+              <Input type="date" value={sp.end} onChange={(e) => set("end", e.target.value)} />
+              <Textarea className="sm:col-span-3" placeholder="Orientações exibidas ao aluno" value={sp.guidance} onChange={(e) => set("guidance", e.target.value)} />
+              <Button variant="ghost" size="sm" className="justify-self-start" onClick={() => setConfig((c) => ({ ...c, special_periods: (c.special_periods ?? []).filter((_, j) => j !== i) }))}>
+                <Trash2 /> Remover período
+              </Button>
+            </div>
+          );
+        })}
+        <Button variant="outline" size="sm" onClick={() => setConfig((c) => ({ ...c, special_periods: [...(c.special_periods ?? []), { title: "", start: start, end: start, guidance: "" }] }))}>
+          <Plus /> Adicionar período
+        </Button>
+      </section>
       <label className="flex gap-3 items-center text-sm">
         <Checkbox
           checked={consent}

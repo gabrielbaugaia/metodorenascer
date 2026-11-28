@@ -87,3 +87,43 @@ test("reprogramar início recalcula somente datas sem compensar férias", () =>
     checkpoints("2026-12-08").map((c) => c.date),
     ["2027-01-06", "2027-02-05", "2027-03-07"],
   ));
+import {
+  activeSpecialPeriod,
+  checkinAlerts,
+  paceSeconds,
+  emptyConfig as emptyCfg,
+  participation as part2,
+  checkpoints as cps,
+  phaseDay as pd,
+} from "./hyrox90";
+const natal = { start: "2026-12-21", end: "2027-01-03", title: "Natal", guidance: "" };
+test("Lemuel: fases em 01/12, 31/12 e 30/01; revisões 30/12, 29/01, 28/02", () => {
+  assert.equal(pd("2026-12-01", "2026-12-30").phase, 0);
+  assert.equal(pd("2026-12-01", "2026-12-31").phase, 1);
+  assert.equal(pd("2026-12-01", "2027-01-30").phase, 2);
+  assert.deepEqual(cps("2026-12-01").map((c) => c.date), ["2026-12-30", "2027-01-29", "2027-02-28"]);
+});
+test("protocolo de 30 dias tem só a revisão de 30", () =>
+  assert.deepEqual(cps("2026-12-01", 30).map((c) => c.day), [30]));
+test("período de festas 21/12–03/01 aparece e não conta falta", () => {
+  const c = { ...emptyCfg(), special_periods: [natal] };
+  assert.ok(activeSpecialPeriod(c, "2026-12-25"));
+  assert.equal(activeSpecialPeriod(c, "2027-01-04"), null);
+  assert.equal(
+    part2([
+      { status: "completed", planned_date: "2026-12-14" },
+      { status: "planned", planned_date: "2026-12-24" },
+      { status: "planned", planned_date: "2027-01-05" },
+    ], [natal]),
+    50,
+  );
+});
+test("check-in gera alerta com dor ou fadiga alta, sem alerta quando tudo bem", () => {
+  assert.deepEqual(checkinAlerts({ fatigue: 2, recovery: 4, discomfort: "", difficulty: 2 }), []);
+  assert.ok(checkinAlerts({ fatigue: 4, recovery: 4, discomfort: "", difficulty: 2 }).includes("Fadiga elevada"));
+  assert.ok(checkinAlerts({ fatigue: 1, recovery: 4, discomfort: "joelho", difficulty: 1 }).length === 1);
+});
+test("pace 5:40 = 340 s", () => {
+  assert.equal(paceSeconds("5:40"), 340);
+  assert.equal(paceSeconds("abc"), null);
+});

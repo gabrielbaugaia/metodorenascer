@@ -81,3 +81,8 @@
 - [ ] 4. Unificar navegação desktop/mobile (5 itens + Mais, 44px, dvh)
 - [ ] 5. Instrumentar eventos de produto P0
 - [ ] 6. Typecheck/build + validação de navegação e fluxos
+
+## Pedido atual — HYROX 90 oficial do Lemuel
+- [x] Protocolo do Lemuel cadastrado como rascunho no app oficial (treinos A/B/C, rotina, fases, festas, referência inicial).
+- [x] Check-in semanal, triagem, status das revisões, carga anterior, estações HYROX, gráficos, indicadores, 30/60/90 dias; 12 testes OK.
+- [ ] Aprovar o protocolo e testar como Lemuel: aguarda revisão de Gabriel; acesso completo do Lemuel ainda não concedido.

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import type { Program, Review } from "@/hooks/useHyrox90";
-import { checkpoints, dateBR } from "@/lib/hyrox90";
+import { checkpoints, dateBR, durationOf, reviewStatusLabel } from "@/lib/hyrox90";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,12 +13,14 @@ import type { Json } from "@/integrations/supabase/types";
 const fields = [
   ["weight", "Peso (kg)"],
   ["waist", "Cintura (cm)"],
+  ["abdomen", "Abdômen (cm)"],
   ["running", "Corrida: distância, pace e percepção"],
   ["stations", "Burpees e Wall Balls: evolução e dificuldades"],
   ["strength", "Cargas, repetições e RIR"],
   ["recovery", "Sono, fadiga e dor"],
   ["nutrition", "Adesão percebida, fome e energia (opcional)"],
-  ["questions", "Rotina e questões para Gabriel"],
+  ["questions", "Dificuldades e rotina"],
+  ["adjustments", "Solicitação de ajustes"],
 ];
 export function HyroxReviews({
   program,
@@ -37,7 +39,7 @@ export function HyroxReviews({
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap gap-2">
-        {checkpoints(program.start_date).map((c) => (
+        {checkpoints(program.start_date, durationOf(program.config)).map((c) => (
           <Button
             key={c.day}
             variant={day === c.day ? "default" : "outline"}
@@ -77,12 +79,19 @@ function ReviewForm({
   userId?: string;
 }) {
   const { isFull } = useEntitlements();
-  const readOnly = admin || !isFull || !!existing?.reviewed_at;
+  const readOnly =
+    admin || !isFull || !!existing?.reviewed_at || existing?.status === "in_review";
   const [answers, setAnswers] = useState<Record<string, string>>(
     (existing?.responses as Record<string, string>) ?? {},
   );
   const [feedback, setFeedback] = useState(existing?.feedback ?? "");
   const [busy, setBusy] = useState(false);
+  async function markInReview() {
+    if (!existing) return;
+    const { error } = await supabase.from("hyrox_reviews").update({ status: "in_review" }).eq("id", existing.id);
+    if (error) return toast.error("Não foi possível atualizar o status.");
+    await refresh();
+  }
   async function save(review = false) {
     if (!userId) return;
     setBusy(true);
@@ -92,10 +101,12 @@ function ReviewForm({
             feedback,
             reviewed_at: new Date().toISOString(),
             reviewed_by: userId,
+            status: "updated",
           }
         : {
             responses: answers as Json,
             submitted_at: new Date().toISOString(),
+            status: "submitted",
           };
       const q = existing
         ? supabase.from("hyrox_reviews").update(patch).eq("id", existing.id)
@@ -119,20 +130,15 @@ function ReviewForm({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-        <span>
-          {existing?.submitted_at ? "Enviada pelo aluno" : "Pendente de envio"}
-        </span>
-        <span>
-          {existing?.reviewed_at
-            ? "Revisada pelo treinador"
-            : "Aguardando revisão do treinador"}
+        <span className="text-primary">
+          {reviewStatusLabel[(existing?.status ?? "pending") as keyof typeof reviewStatusLabel]}
         </span>
       </div>
       <div className="grid sm:grid-cols-2 gap-5">
         {fields.map(([key, label]) => (
           <label key={key} className="space-y-2">
             <Label>{label}</Label>
-            {key === "weight" || key === "waist" ? (
+            {key === "weight" || key === "waist" || key === "abdomen" ? (
               <Input
                 type="number"
                 min={1}
@@ -171,6 +177,9 @@ function ReviewForm({
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
           />
+          {existing?.status === "submitted" && (
+            <Button variant="outline" onClick={markInReview}>Marcar como em análise</Button>
+          )}
           <Button
             disabled={busy || !existing?.submitted_at}
             onClick={() => save(true)}
